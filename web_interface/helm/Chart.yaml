@@ -1,0 +1,26 @@
+apiVersion: v2
+name: reveng-enhanced
+description: A Helm chart for REVENG AI-Enhanced Universal Analysis Engine
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - reverse-engineering
+  - security-analysis
+  - ai-analysis
+  - binary-analysis
+home: https://github.com/your-org/reveng
+sources:
+  - https://github.com/your-org/reveng
+maintainers:
+  - name: REVENG Team
+    email: team@reveng.example.com
+dependencies:
+  - name: mongodb
+    version: "13.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: mongodb.enabled
+  - name: redis
+    version: "17.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled

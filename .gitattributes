@@ -1,0 +1,104 @@
+# Git attributes for REVENG project
+# =====================================
+
+# Python files
+*.py text eol=lf
+*.pyi text eol=lf
+
+# Documentation
+*.md text eol=lf
+*.rst text eol=lf
+
+# Configuration files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# JSON files
+*.json text eol=lf
+
+# Docker files
+Dockerfile* text eol=lf
+docker-compose*.yml text eol=lf
+
+# Binary files (track but don't diff)
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.bin binary
+*.elf binary
+*.jar binary
+*.war binary
+*.ear binary
+*.class binary
+
+# Model files
+*.pkl binary
+*.h5 binary
+*.pt binary
+*.pth binary
+*.onnx binary
+*.tflite binary
+*.pb binary
+
+# Archive files
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+*.rar binary
+
+# Image files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text eol=lf
+
+# Log files
+*.log text eol=lf
+
+# Temporary files
+*.tmp text eol=lf
+*.temp text eol=lf
+*.bak text eol=lf
+*.backup text eol=lf
+
+# OS specific
+.DS_Store binary
+Thumbs.db binary
+desktop.ini text eol=crlf
+
+# IDE files
+*.swp text eol=lf
+*.swo text eol=lf
+*~ text eol=lf
+
+# Jupyter notebooks
+*.ipynb text eol=lf
+
+# Web files
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.jsx text eol=lf
+*.tsx text eol=lf
+
+# Large files (use Git LFS)
+*.pkl filter=lfs diff=lfs merge=lfs -text
+*.h5 filter=lfs diff=lfs merge=lfs -text
+*.pt filter=lfs diff=lfs merge=lfs -text
+*.pth filter=lfs diff=lfs merge=lfs -text
+*.onnx filter=lfs diff=lfs merge=lfs -text
+*.tflite filter=lfs diff=lfs merge=lfs -text
+*.pb filter=lfs diff=lfs merge=lfs -text

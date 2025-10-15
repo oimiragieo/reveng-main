@@ -1,0 +1,10 @@
+# Kubernetes Namespace
+# ====================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: reveng
+  labels:
+    name: reveng
+    app: reveng-web-interface

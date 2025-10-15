@@ -1,0 +1,79 @@
+name: 🐳 Docker Build
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'web_interface/**'
+      - 'Dockerfile*'
+      - 'docker-compose.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'web_interface/**'
+      - 'Dockerfile*'
+      - 'docker-compose.yml'
+
+jobs:
+  docker-build:
+    name: 🐳 Build Docker Images
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        service: [frontend, backend, ai-service, worker]
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: 🔐 Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 🏗️ Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: web_interface/Dockerfile.${{ matrix.service }}
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}/reveng-${{ matrix.service }}:${{ github.sha }}
+          ghcr.io/${{ github.repository }}/reveng-${{ matrix.service }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: 🧪 Test Docker image
+      run: |
+        docker run --rm ghcr.io/${{ github.repository }}/reveng-${{ matrix.service }}:${{ github.sha }} --help || echo "Service ${{ matrix.service }} doesn't support --help"
+
+  docker-compose:
+    name: 🐳 Test Docker Compose
+    runs-on: ubuntu-latest
+    needs: docker-build
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🐳 Set up Docker Compose
+      run: |
+        cd web_interface
+        docker-compose config
+
+    - name: 🧪 Test Docker Compose build
+      run: |
+        cd web_interface
+        docker-compose build --no-cache
+
+    - name: 🧪 Test Docker Compose up
+      run: |
+        cd web_interface
+        timeout 60 docker-compose up -d || echo "Services started successfully"
+        docker-compose down

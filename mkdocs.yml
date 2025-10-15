@@ -1,0 +1,132 @@
+site_name: REVENG Documentation
+site_url: https://docs.reveng-toolkit.org
+repo_url: https://github.com/oimiragieo/reveng-main
+repo_name: oimiragieo/reveng-main
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started/quick-start.md
+    - Installation: getting-started/installation.md
+    - First Analysis: getting-started/first-analysis.md
+    - Troubleshooting: getting-started/troubleshooting.md
+  - User Guide:
+    - Overview: user-guide/README.md
+    - CLI Usage: user-guide/cli-usage.md
+    - Web Interface: user-guide/web-interface.md
+    - Binary Analysis: user-guide/binary-analysis.md
+    - Multi-Language Support: user-guide/multi-language.md
+    - AI Features: user-guide/ai-features.md
+    - Advanced Features: user-guide/advanced-features.md
+    - Configuration: user-guide/configuration.md
+  - Developer Guide:
+    - Overview: developer-guide/README.md
+    - Architecture: developer-guide/architecture.md
+    - Contributing: developer-guide/contributing.md
+    - Tool Development: developer-guide/tool-development.md
+    - API Reference: developer-guide/api-reference.md
+    - Testing: developer-guide/testing.md
+  - AI Assistant Guide:
+    - Overview: ai-assistant-guide/README.md
+    - Claude Integration: ai-assistant-guide/claude-integration.md
+    - Tool Selection: ai-assistant-guide/tool-selection.md
+    - Automation: ai-assistant-guide/automation.md
+    - Best Practices: ai-assistant-guide/best-practices.md
+  - Deployment:
+    - Docker: deployment/docker.md
+    - Kubernetes: deployment/kubernetes.md
+    - Cloud Providers: deployment/cloud-providers.md
+    - Enterprise: deployment/enterprise.md
+
+plugins:
+  - search:
+      lang: en
+  - mermaid2:
+      arguments:
+        theme: base
+        themeVariables:
+          primaryColor: '#6366f1'
+          primaryTextColor: '#ffffff'
+          primaryBorderColor: '#4f46e5'
+          lineColor: '#6b7280'
+          secondaryColor: '#f3f4f6'
+          tertiaryColor: '#ffffff'
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite:
+      css_class: highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/oimiragieo/reveng-main
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/reveng_toolkit
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/reveng/cli
+  version:
+    provider: mike

@@ -1,0 +1,312 @@
+# Kubernetes Deployments
+# =======================
+
+# MongoDB Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb
+  namespace: reveng
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:6.0
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: reveng-secrets
+              key: mongo-username
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: reveng-secrets
+              key: mongo-password
+        - name: MONGO_INITDB_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: reveng-config
+              key: MONGO_DATABASE
+        volumeMounts:
+        - name: mongodb-storage
+          mountPath: /data/db
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: mongodb-storage
+        persistentVolumeClaim:
+          claimName: mongodb-pvc
+
+---
+# Redis Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: reveng
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+        command:
+        - redis-server
+        - --requirepass
+        - $(REDIS_PASSWORD)
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: reveng-secrets
+              key: redis-password
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+      volumes:
+      - name: redis-storage
+        persistentVolumeClaim:
+          claimName: redis-pvc
+
+---
+# Backend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reveng-backend
+  namespace: reveng
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reveng-backend
+  template:
+    metadata:
+      labels:
+        app: reveng-backend
+    spec:
+      containers:
+      - name: backend
+        image: reveng/backend:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: reveng-config
+              key: NODE_ENV
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: reveng-secrets
+              key: jwt-secret
+        - name: MONGO_URI
+          value: "mongodb://$(MONGO_USERNAME):$(MONGO_PASSWORD)@mongodb:27017/$(MONGO_DATABASE)?authSource=admin"
+        - name: MONGO_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: reveng-secrets
+              key: mongo-username
+        - name: MONGO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: reveng-secrets
+              key: mongo-password
+        - name: MONGO_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: reveng-config
+              key: MONGO_DATABASE
+        - name: REDIS_URL
+          value: "redis://:$(REDIS_PASSWORD)@redis:6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: reveng-secrets
+              key: redis-password
+        - name: CLIENT_URL
+          valueFrom:
+            configMapKeyRef:
+              name: reveng-config
+              key: CLIENT_URL
+        - name: PYTHON_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: reveng-config
+              key: PYTHON_PATH
+        - name: ANALYZER_PATH
+          valueFrom:
+            configMapKeyRef:
+              name: reveng-config
+              key: ANALYZER_PATH
+        volumeMounts:
+        - name: uploads-storage
+          mountPath: /app/uploads
+        - name: reports-storage
+          mountPath: /app/reports
+        - name: temp-storage
+          mountPath: /app/temp
+        - name: logs-storage
+          mountPath: /app/logs
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+      volumes:
+      - name: uploads-storage
+        persistentVolumeClaim:
+          claimName: uploads-pvc
+      - name: reports-storage
+        persistentVolumeClaim:
+          claimName: reports-pvc
+      - name: temp-storage
+        emptyDir: {}
+      - name: logs-storage
+        persistentVolumeClaim:
+          claimName: logs-pvc
+
+---
+# Frontend Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reveng-frontend
+  namespace: reveng
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reveng-frontend
+  template:
+    metadata:
+      labels:
+        app: reveng-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: reveng/frontend:latest
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+
+---
+# Nginx Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: reveng
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: ssl-certs
+          mountPath: /etc/nginx/ssl
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+      - name: ssl-certs
+        secret:
+          secretName: reveng-tls

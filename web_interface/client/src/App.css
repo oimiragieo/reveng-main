@@ -1,0 +1,52 @@
+/* REVENG Web Interface Styles */
+
+.App {
+  text-align: left;
+}
+
+/* Tailwind CSS will be imported via index.css */
+
+/* Custom animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Progress bar animations */
+.progress-bar {
+  transition: width 0.3s ease-in-out;
+}
+
+/* File upload dropzone */
+.dropzone {
+  transition: all 0.2s ease-in-out;
+}
+
+.dropzone:hover {
+  transform: translateY(-2px);
+}
+
+.dropzone.active {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+}
+
+/* Code syntax highlighting */
+.code-block {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Toast notifications positioning */
+.toast-container {
+  z-index: 9999;
+}

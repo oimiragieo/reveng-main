@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "REVENG validation policy configuration - define custom smoke tests per binary",
+  "version": "1.0",
+
+  "default_policy": {
+    "mode": "checksum",
+    "timeout": 30,
+    "smoke_tests": [
+      {
+        "args": ["--version"],
+        "expected_exit_code": null,
+        "timeout": 5,
+        "description": "Try --version flag"
+      },
+      {
+        "args": ["--help"],
+        "expected_exit_code": null,
+        "timeout": 5,
+        "description": "Try --help flag"
+      },
+      {
+        "args": ["-h"],
+        "expected_exit_code": null,
+        "timeout": 5,
+        "description": "Try -h flag"
+      }
+    ]
+  },
+
+  "binary_policies": {
+    "droid.exe": {
+      "mode": "smoke_test",
+      "timeout": 60,
+      "smoke_tests": [
+        {
+          "args": [],
+          "expected_exit_code": 0,
+          "timeout": 10,
+          "description": "Run without arguments"
+        }
+      ]
+    },
+
+    "example_daemon": {
+      "mode": "hash_diff",
+      "timeout": 120,
+      "smoke_tests": [],
+      "sandbox": {
+        "enabled": true,
+        "allow_network": false,
+        "max_runtime": 10
+      }
+    },
+
+    "example_library.so": {
+      "mode": "checksum",
+      "timeout": 30,
+      "smoke_tests": []
+    }
+  },
+
+  "validation_modes": {
+    "checksum": "Quick hash comparison - verifies byte-for-byte match",
+    "hash_diff": "Detailed structural comparison using LIEF - allows relocation differences",
+    "smoke_test": "Execute binary with test arguments - verifies runtime behavior",
+    "sandbox": "Full sandboxed execution with network/filesystem isolation"
+  },
+
+  "global_settings": {
+    "fail_on_missing_compiler": false,
+    "use_lief_validation": true,
+    "allow_size_variance_percent": 5,
+    "defang_iocs": true
+  }
+}

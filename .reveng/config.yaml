@@ -1,0 +1,56 @@
+ai:
+  provider: ollama
+  ollama:
+    host: http://localhost:11434
+    model: hf.co/unsloth/Qwen2.5-Coder-14B-Instruct-128K-GGUF:latest
+    timeout: 60
+    temperature: 0.1
+    max_tokens: 500
+  anthropic:
+    api_key: ''
+    model: claude-3-5-sonnet-20241022
+    max_tokens: 4000
+  openai:
+    api_key: ''
+    model: gpt-4
+    max_tokens: 4000
+analysis:
+  enable_ai: true
+  fallback_to_heuristics: true
+  max_ai_functions: 0
+  batch_size: 10
+  show_progress: true
+ghidra:
+  enabled: true
+  mcp_url: http://localhost:13337
+  timeout: 10
+  fallback: true
+validation:
+  default_mode: checksum
+  smoke_test_timeout: 30
+  use_lief: true
+compilation:
+  auto_detect_compiler: true
+  preferred_compiler: auto
+  platform_aware: true
+  test_during_pipeline: false
+output:
+  analysis_folder: analysis_{binary_name}
+  clean_before_analysis: false
+  save_intermediate: true
+  export_formats:
+  - json
+  - markdown
+performance:
+  max_workers: 4
+  enable_cache: true
+  cache_dir: .reveng/cache
+security:
+  enable_security_analysis: true
+  security_errors: false
+  defang_iocs: true
+logging:
+  level: INFO
+  file: reveng_analyzer.log
+  console: true
+  verbose: false

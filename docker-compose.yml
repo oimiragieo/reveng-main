@@ -1,0 +1,165 @@
+# REVENG Universal Reverse Engineering Platform - Development Environment
+# =======================================================================
+
+version: '3.8'
+
+services:
+  # Main REVENG development environment
+  reveng-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: reveng-dev
+    volumes:
+      - .:/workspace
+      - reveng-cache:/root/.cache
+      - reveng-models:/workspace/models
+    ports:
+      - "3000:3000"  # Web interface
+      - "5000:5000"  # API server
+      - "8000:8000"  # Documentation
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REVENG_ENV=development
+      - REVENG_LOG_LEVEL=INFO
+      - REVENG_CACHE_DIR=/root/.cache
+    command: reveng serve --reload --host 0.0.0.0
+    networks:
+      - reveng-network
+    depends_on:
+      - redis
+      - mongodb
+
+  # Web Interface (React)
+  reveng-web:
+    build:
+      context: web_interface
+      dockerfile: Dockerfile.frontend
+    container_name: reveng-web
+    volumes:
+      - ./web_interface:/app
+      - /app/node_modules
+    ports:
+      - "3001:3000"
+    environment:
+      - REACT_APP_SERVER_URL=http://localhost:5000
+      - NODE_ENV=development
+    networks:
+      - reveng-network
+    depends_on:
+      - reveng-dev
+
+  # Backend API (Node.js)
+  reveng-backend:
+    build:
+      context: web_interface
+      dockerfile: Dockerfile.backend
+    container_name: reveng-backend
+    volumes:
+      - ./web_interface:/app
+      - /app/node_modules
+    ports:
+      - "5001:5000"
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/reveng
+      - REDIS_URL=redis://redis:6379
+      - PYTHON_PATH=/usr/local/bin/python3
+      - ANALYZER_PATH=/workspace/src/reveng/analyzer.py
+    networks:
+      - reveng-network
+    depends_on:
+      - redis
+      - mongodb
+
+  # Redis (Cache and Session Store)
+  redis:
+    image: redis:7-alpine
+    container_name: reveng-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - reveng-network
+    command: redis-server --appendonly yes
+
+  # MongoDB (Database)
+  mongodb:
+    image: mongo:7
+    container_name: reveng-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+      - MONGO_INITDB_DATABASE=reveng
+    networks:
+      - reveng-network
+
+  # Nginx (Load Balancer)
+  nginx:
+    image: nginx:alpine
+    container_name: reveng-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./web_interface/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - reveng-network
+    depends_on:
+      - reveng-web
+      - reveng-backend
+
+  # Jupyter Notebook (Analysis Environment)
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.jupyter
+    container_name: reveng-jupyter
+    volumes:
+      - .:/workspace
+      - reveng-notebooks:/workspace/notebooks
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=reveng
+    networks:
+      - reveng-network
+    depends_on:
+      - reveng-dev
+
+volumes:
+  reveng-cache:
+    driver: local
+  reveng-models:
+    driver: local
+  reveng-notebooks:
+    driver: local
+  redis-data:
+    driver: local
+  mongodb-data:
+    driver: local
+
+networks:
+  reveng-network:
+    driver: bridge
+
+# Development overrides
+# ====================
+# To use development overrides, create docker-compose.override.yml:
+#
+# version: '3.8'
+# services:
+#   reveng-dev:
+#     volumes:
+#       - ./src:/workspace/src
+#       - ./tests:/workspace/tests
+#     environment:
+#       - REVENG_DEBUG=true
+#       - REVENG_LOG_LEVEL=DEBUG

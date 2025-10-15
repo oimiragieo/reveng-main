@@ -1,0 +1,211 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Analysis outputs (runtime generated)
+analysis_*/
+ai_recompiler_analysis_*/
+ai_enhanced_analysis_*/
+src_optimal_analysis_*/
+human_readable_code/
+enhanced_code*/
+deobfuscated_app/
+SPECS/
+implementations/
+outputs/
+
+# Test outputs
+test_generated*.c
+test_disasm.asm
+test_analysis.json
+ai_test_summary.json
+
+# Test coverage
+tests/coverage/
+htmlcov/
+.coverage
+*.cover
+.pytest_cache/
+coverage.xml
+coverage.json
+
+# ML Models (download via models/download_models.py)
+models/*.pkl
+models/*.h5
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.tflite
+models/*.pb
+models/datasets/*.json
+models/datasets/real_world_samples/*.json
+
+# Keep model directory structure and metadata
+!models/.gitkeep
+!models/README.md
+!models/download_models.py
+!models/*_metadata.json
+
+# Environment files (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# Compiled binaries and executables
+*.exe
+!test_samples/*.exe  # Allow example binaries in test_samples
+*.dll
+*.so
+*.dylib
+*.bin
+*.elf
+*.app
+reassembled_*
+patched_*
+droid.exe
+
+# Temporary files
+temp_*/
+tmp_*/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Deprecated/Legacy (archived)
+deprecated_legacy/
+
+# Testing
+test_binaries/
+test_outputs/
+test_samples/*.exe
+test_samples/*.dll
+test_samples/*.so
+
+# Documentation build artifacts
+docs/_build/
+docs/build/
+*.pdf
+*.epub
+*.mobi
+
+# Node modules (web_interface)
+web_interface/client/node_modules/
+web_interface/server/node_modules/
+web_interface/client/build/
+web_interface/server/dist/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# MacOS
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Configuration files with secrets
+config.json
+secrets.json
+.secrets

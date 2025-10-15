@@ -1,0 +1,221 @@
+{
+  "core_analysis": [
+    "ai_recompiler_converter.py",
+    "optimal_binary_analysis.py",
+    "ai_source_inspector.py",
+    "human_readable_converter_fixed.py",
+    "deobfuscation_tool.py",
+    "implementation_tool.py",
+    "binary_reassembler_v2.py",
+    "binary_validator.py"
+  ],
+  "multi_language": [
+    "language_detector.py",
+    "java_bytecode_analyzer.py",
+    "csharp_il_analyzer.py",
+    "python_bytecode_analyzer.py",
+    "java_project_reconstructor.py",
+    "java_deobfuscator_advanced.py"
+  ],
+  "ai_enhancement": [
+    "ai_analyzer_enhanced.py",
+    "ollama_analyzer.py",
+    "ollama_preflight.py",
+    "ai_enhanced_analyzer.py",
+    "ai_enhanced_data_models.py"
+  ],
+  "code_quality": [
+    "code_formatter.py",
+    "type_inference_engine.py",
+    "c_type_parser.py",
+    "compilation_tester.py"
+  ],
+  "binary_operations": [
+    "binary_reassembler_v2.py",
+    "binary_validator.py",
+    "binary_diff.py",
+    "check_toolchain.py",
+    "validation_config.py"
+  ],
+  "visualization": [
+    "code_visualizer.py",
+    "executive_reporting_engine.py",
+    "technical_reporting_engine.py"
+  ],
+  "enterprise": [
+    "audit_trail.py",
+    "plugin_system.py",
+    "gpu_accelerator.py",
+    "enhanced_health_monitor.py"
+  ],
+  "ml_security": [
+    "ml_malware_classifier.py",
+    "ml_vulnerability_predictor.py",
+    "vulnerability_discovery_engine.py",
+    "threat_intelligence_correlator.py",
+    "corporate_exposure_detector.py",
+    "mitre_attack_mapper.py",
+    "complexity_scorer.py",
+    "nlp_code_analyzer.py"
+  ],
+  "configuration": [
+    "config_manager.py",
+    "enhanced_config_manager.py",
+    "validation_manifest_loader.py",
+    "c_implementation_generator.py"
+  ],
+  "utilities": [
+    "ghidra_mcp_connector.py",
+    "progress_reporter.py",
+    "export_formats.py",
+    "export_integration_engine.py",
+    "functional_code_generator.py",
+    "enhanced_code_generator.py",
+    "reconstruction_comparator.py",
+    "purge_stubs.py",
+    "proguard_mapper.py",
+    "interactive_mode.py",
+    "live_demonstration_engine.py",
+    "demonstration_generator.py",
+    "educational_content_generator.py",
+    "training_material_generator.py",
+    "comprehensive_reporting_system.py",
+    "ml_pipeline_orchestrator.py",
+    "vulnerability_dataset_loader.py",
+    "enhanced_health_monitor.py",
+    "test_file.txt"
+  ],
+  "workflows": {
+    "basic_analysis": [
+      "ai_recompiler_converter.py",
+      "optimal_binary_analysis.py",
+      "human_readable_converter_fixed.py",
+      "code_formatter.py",
+      "type_inference_engine.py",
+      "binary_reassembler_v2.py"
+    ],
+    "multi_language_analysis": [
+      "language_detector.py",
+      "java_bytecode_analyzer.py",
+      "csharp_il_analyzer.py",
+      "python_bytecode_analyzer.py"
+    ],
+    "ai_enhanced_analysis": [
+      "ollama_preflight.py",
+      "ai_analyzer_enhanced.py",
+      "ai_enhanced_analyzer.py",
+      "executive_reporting_engine.py"
+    ],
+    "enterprise_analysis": [
+      "audit_trail.py",
+      "vulnerability_discovery_engine.py",
+      "threat_intelligence_correlator.py",
+      "corporate_exposure_detector.py"
+    ],
+    "binary_reconstruction": [
+      "binary_reassembler_v2.py",
+      "binary_validator.py",
+      "compilation_tester.py",
+      "code_formatter.py"
+    ]
+  },
+  "dependencies": {
+    "core": [
+      "requests",
+      "lief",
+      "keystone-engine",
+      "capstone"
+    ],
+    "ai_ml": [
+      "ollama",
+      "anthropic",
+      "openai",
+      "scikit-learn",
+      "tensorflow"
+    ],
+    "visualization": [
+      "networkx",
+      "pydot",
+      "matplotlib",
+      "plotly"
+    ],
+    "enterprise": [
+      "docker",
+      "kubernetes",
+      "redis",
+      "mongodb"
+    ]
+  },
+  "usage_patterns": {
+    "beginner": [
+      "language_detector.py",
+      "ai_recompiler_converter.py",
+      "human_readable_converter_fixed.py",
+      "code_formatter.py"
+    ],
+    "intermediate": [
+      "optimal_binary_analysis.py",
+      "type_inference_engine.py",
+      "binary_reassembler_v2.py",
+      "java_bytecode_analyzer.py"
+    ],
+    "advanced": [
+      "ai_enhanced_analyzer.py",
+      "vulnerability_discovery_engine.py",
+      "threat_intelligence_correlator.py",
+      "gpu_accelerator.py"
+    ],
+    "enterprise": [
+      "audit_trail.py",
+      "plugin_system.py",
+      "enhanced_health_monitor.py",
+      "comprehensive_reporting_system.py"
+    ]
+  },
+  "file_types": {
+    "java": [
+      "java_bytecode_analyzer.py",
+      "java_project_reconstructor.py",
+      "java_deobfuscator_advanced.py"
+    ],
+    "csharp": [
+      "csharp_il_analyzer.py"
+    ],
+    "python": [
+      "python_bytecode_analyzer.py"
+    ],
+    "native": [
+      "ai_recompiler_converter.py",
+      "optimal_binary_analysis.py",
+      "binary_reassembler_v2.py"
+    ],
+    "universal": [
+      "language_detector.py",
+      "ai_enhanced_analyzer.py",
+      "code_visualizer.py"
+    ]
+  },
+  "output_types": {
+    "source_code": [
+      "human_readable_converter_fixed.py",
+      "enhanced_code_generator.py",
+      "functional_code_generator.py"
+    ],
+    "analysis_reports": [
+      "executive_reporting_engine.py",
+      "technical_reporting_engine.py",
+      "comprehensive_reporting_system.py"
+    ],
+    "visualizations": [
+      "code_visualizer.py",
+      "executive_reporting_engine.py"
+    ],
+    "binaries": [
+      "binary_reassembler_v2.py",
+      "binary_validator.py"
+    ],
+    "projects": [
+      "java_project_reconstructor.py"
+    ]
+  }
+}

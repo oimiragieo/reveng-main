@@ -1,0 +1,102 @@
+# Enhanced Kubernetes Services
+# ============================
+
+# Analysis Worker Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: analysis-worker
+  namespace: reveng
+  labels:
+    app: analysis-worker
+    component: worker
+spec:
+  selector:
+    app: analysis-worker
+  ports:
+  - name: http
+    port: 3001
+    targetPort: 3001
+    protocol: TCP
+  type: ClusterIP
+
+---
+# AI Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service
+  namespace: reveng
+  labels:
+    app: ai-service
+    component: ai
+spec:
+  selector:
+    app: ai-service
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Enhanced Backend Service with Session Affinity
+apiVersion: v1
+kind: Service
+metadata:
+  name: reveng-backend-enhanced
+  namespace: reveng
+  labels:
+    app: reveng-backend
+    component: api
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "300"
+spec:
+  selector:
+    app: reveng-backend
+  ports:
+  - name: http
+    port: 5000
+    targetPort: 5000
+    protocol: TCP
+  type: ClusterIP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+
+---
+# Load Balancer Service for External Access
+apiVersion: v1
+kind: Service
+metadata:
+  name: reveng-loadbalancer
+  namespace: reveng
+  labels:
+    app: reveng
+    component: loadbalancer
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: "/health"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval-seconds: "30"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-timeout-seconds: "5"
+    service.beta.kubernetes.io/aws-load-balancer-healthy-threshold-count: "2"
+    service.beta.kubernetes.io/aws-load-balancer-unhealthy-threshold-count: "3"
+spec:
+  selector:
+    app: nginx
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 443
+    protocol: TCP
+  type: LoadBalancer

@@ -1,0 +1,18 @@
+# ML Models (download via models/download_models.py)
+*.pkl
+*.h5
+*.pt
+*.pth
+*.onnx
+*.tflite
+*.pb
+
+# Model datasets
+datasets/*.json
+datasets/real_world_samples/*.json
+
+# Keep directory structure and metadata
+!.gitkeep
+!README.md
+!download_models.py
+!*_metadata.json

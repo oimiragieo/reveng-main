@@ -1,0 +1,58 @@
+[MASTER]
+# Python version
+py-version=3.9
+
+# Files/directories to ignore
+ignore=CVS,deprecated_legacy,test_samples,.git
+
+# Maximum line length
+max-line-length=120
+
+[MESSAGES CONTROL]
+# Disable specific warnings that are acceptable in this codebase
+disable=
+    C0301,  # line-too-long (handled by max-line-length)
+    C0103,  # invalid-name (allow short variable names like 'e', 'f', 'i')
+    W1203,  # logging-fstring-interpolation (f-strings in logging are acceptable)
+    C0415,  # import-outside-toplevel (lazy imports are intentional for performance)
+    R0902,  # too-many-instance-attributes (complex dataclasses need many attributes)
+    R0903,  # too-few-public-methods (dataclasses and configs are acceptable)
+    R0912,  # too-many-branches (complex business logic requires branching)
+    R0911,  # too-many-return-statements (guard clauses are preferable)
+    C0303,  # trailing-whitespace (handled by formatters)
+    E0401,  # import-error (optional dependencies like lief)
+    R1705,  # no-else-return (elif after return is acceptable for clarity)
+    W0613,  # unused-argument (interface compliance)
+    W1309,  # f-string-without-interpolation (string consistency)
+
+[BASIC]
+# Good variable names
+good-names=i,j,k,e,f,x,y,z,_,logger,app
+
+[DESIGN]
+# Maximum number of arguments for function/method
+max-args=8
+
+# Maximum number of attributes for a class
+max-attributes=10
+
+# Maximum number of public methods for a class
+max-public-methods=25
+
+[FORMAT]
+# Maximum number of characters on a single line
+max-line-length=120
+
+# Maximum number of lines in a module
+max-module-lines=1000
+
+[LOGGING]
+# Format style for logging functions
+logging-format-style=new
+
+[REPORTS]
+# Set to yes for full reports
+reports=no
+
+# Score evaluation
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)

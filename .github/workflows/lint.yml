@@ -1,0 +1,78 @@
+name: Code Quality
+
+on: [push, pull_request]
+
+jobs:
+  lint-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run black
+        run: black --check src/ tests/
+
+      - name: Run isort
+        run: isort --check-only src/ tests/
+
+      - name: Run pylint
+        run: pylint src/
+
+      - name: Run mypy
+        run: mypy src/
+
+  lint-javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: |
+          cd web_interface/client
+          npm install
+
+      - name: Run ESLint
+        run: |
+          cd web_interface/client
+          npm run lint
+
+      - name: Run Prettier
+        run: |
+          cd web_interface/client
+          npm run format:check
+
+  lint-yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run yamllint
+        uses: karancode/yamllint-github-action@v2.1.0
+        with:
+          yamllint_file_or_dir: '.'
+          yamllint_config_filepath: '.yamllint'
+
+  lint-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: 'Dockerfile'
+          ignore: DL3008,DL3009

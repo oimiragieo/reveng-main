@@ -1,0 +1,120 @@
+# Monitoring and Observability Configuration
+# ==========================================
+
+# ServiceMonitor for Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: reveng-metrics
+  namespace: reveng
+  labels:
+    app: reveng
+    component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: reveng-backend
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+# ServiceMonitor for Analysis Workers
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: analysis-worker-metrics
+  namespace: reveng
+  labels:
+    app: analysis-worker
+    component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: analysis-worker
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+# ServiceMonitor for AI Service
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ai-service-metrics
+  namespace: reveng
+  labels:
+    app: ai-service
+    component: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: ai-service
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+# PrometheusRule for alerting
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: reveng-alerts
+  namespace: reveng
+  labels:
+    app: reveng
+    component: monitoring
+spec:
+  groups:
+  - name: reveng.rules
+    rules:
+    - alert: REVENGBackendDown
+      expr: up{job="reveng-backend"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "REVENG Backend is down"
+        description: "REVENG Backend has been down for more than 1 minute"
+    
+    - alert: REVENGHighCPUUsage
+      expr: rate(container_cpu_usage_seconds_total{pod=~"reveng-.*"}[5m]) > 0.8
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage detected"
+        description: "Pod {{ $labels.pod }} has high CPU usage: {{ $value }}"
+    
+    - alert: REVENGHighMemoryUsage
+      expr: container_memory_usage_bytes{pod=~"reveng-.*"} / container_spec_memory_limit_bytes > 0.9
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage detected"
+        description: "Pod {{ $labels.pod }} has high memory usage: {{ $value }}"
+    
+    - alert: REVENGAnalysisQueueBacklog
+      expr: redis_list_length{key="analysis:queue"} > 100
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Analysis queue backlog detected"
+        description: "Analysis queue has {{ $value }} pending jobs"
+    
+    - alert: REVENGFailedAnalyses
+      expr: increase(reveng_analysis_failures_total[5m]) > 5
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High analysis failure rate"
+        description: "{{ $value }} analysis failures in the last 5 minutes"

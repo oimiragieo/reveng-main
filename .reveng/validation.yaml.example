@@ -1,0 +1,114 @@
+# REVENG Validation Manifest Example
+# ====================================
+#
+# Per-binary validation configuration for reassembled binaries.
+# Copy this file to .reveng/validation.yaml and customize for your targets.
+#
+# Usage:
+#   1. Copy: cp .reveng/validation.yaml.example .reveng/validation.yaml
+#   2. Edit validation.yaml with your binary-specific tests
+#   3. Run: python reveng_analyzer.py your_binary.exe
+#
+# The analyzer will automatically load and use this validation config.
+
+# Default validation mode (if not specified per-binary)
+# Options: checksum, smoke_test, sandboxed, none
+default_mode: checksum
+
+# Global settings
+global:
+  # Maximum runtime for any test (seconds)
+  max_runtime: 10
+
+  # Allow network access during validation
+  allow_network: false
+
+  # Enable sandboxed execution (requires Docker)
+  sandbox_enabled: false
+
+# Per-binary validation rules
+# Key is the binary filename (or glob pattern)
+binaries:
+
+  # Example: CLI tool with --help and --version
+  "mytool.exe":
+    mode: smoke_test
+    smoke_tests:
+      - description: "Check --help flag"
+        args: ["--help"]
+        expected_exit_code: 0
+        timeout: 5
+
+      - description: "Check --version flag"
+        args: ["--version"]
+        expected_exit_code: 0
+        timeout: 5
+        expected_output_contains: "version"  # Optional
+
+  # Example: Service/daemon with no CLI interface
+  "myservice.exe":
+    mode: checksum
+    # No smoke tests - just verify binary checksum matches
+
+  # Example: Game or GUI app
+  "mygame.exe":
+    mode: none
+    # Skip validation entirely (manual testing required)
+
+  # Example: Custom validation with specific arguments
+  "processor.exe":
+    mode: smoke_test
+    smoke_tests:
+      - description: "Process test file"
+        args: ["--input", "test.dat", "--output", "/dev/null"]
+        expected_exit_code: 0
+        timeout: 30
+
+      - description: "Verify it rejects invalid input"
+        args: ["--input", "invalid.dat"]
+        expected_exit_code: 1  # Should fail
+        timeout: 5
+
+  # Example: Wildcard pattern for multiple binaries
+  "libcrypto_*.so":
+    mode: checksum
+    checksum_algorithm: sha256
+
+# Advanced: Sandboxed validation
+# Requires Docker and --sandbox flag
+sandbox:
+  # Docker image to use for sandboxed execution
+  image: "ubuntu:22.04"
+
+  # Volume mounts (host_path:container_path)
+  volumes:
+    - "./test_data:/data:ro"
+
+  # Environment variables
+  environment:
+    - "LD_LIBRARY_PATH=/usr/local/lib"
+
+  # Network mode: none, bridge, host
+  network_mode: "none"
+
+# Custom validation hooks (optional)
+# Execute custom scripts after validation
+hooks:
+  post_validation:
+    # Run custom verification script
+    script: "scripts/custom_verify.sh"
+    args: ["${BINARY_PATH}", "${OUTPUT_DIR}"]
+    timeout: 60
+
+# Checksum allowances
+# Some binaries have non-deterministic sections (timestamps, etc.)
+# Specify which differences to ignore
+checksum_allowances:
+  # Ignore PE timestamps
+  ignore_pe_timestamps: true
+
+  # Ignore debug sections
+  ignore_debug_sections: true
+
+  # Allow up to N bytes difference in .data section (for initialized globals)
+  data_section_tolerance: 256

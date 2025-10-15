@@ -1,0 +1,231 @@
+# Default values for reveng-enhanced
+# ===================================
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Image configuration
+image:
+  registry: your-registry.com
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+# Backend configuration
+backend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: reveng-backend
+  service:
+    type: ClusterIP
+    port: 5000
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Frontend configuration
+frontend:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: reveng-frontend
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+# Analysis Worker configuration
+analysisWorker:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: reveng-analysis-worker
+  service:
+    type: ClusterIP
+    port: 3001
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "4Gi"
+      cpu: "2000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  config:
+    workerConcurrency: 2
+    maxJobTime: 3600000
+
+# AI Service configuration
+aiService:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: reveng-ai-service
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1000m"
+    limits:
+      memory: "8Gi"
+      cpu: "4000m"
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 75
+    targetMemoryUtilizationPercentage: 85
+
+# MongoDB configuration
+mongodb:
+  enabled: true
+  auth:
+    enabled: true
+    rootUser: admin
+    rootPassword: "password123"
+    database: reveng
+  persistence:
+    enabled: true
+    size: 100Gi
+    storageClass: "gp3"
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+# Redis configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "redis123"
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: "gp3"
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "250m"
+
+# Persistent storage configuration
+persistence:
+  uploads:
+    enabled: true
+    size: 500Gi
+    storageClass: "efs"
+    accessMode: ReadWriteMany
+  reports:
+    enabled: true
+    size: 1Ti
+    storageClass: "efs"
+    accessMode: ReadWriteMany
+  logs:
+    enabled: true
+    size: 100Gi
+    storageClass: "efs"
+    accessMode: ReadWriteMany
+  modelCache:
+    enabled: true
+    size: 200Gi
+    storageClass: "efs"
+    accessMode: ReadWriteMany
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "1g"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  hosts:
+    - host: reveng.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+        - path: /api
+          pathType: Prefix
+          service: backend
+  tls:
+    - secretName: reveng-tls
+      hosts:
+        - reveng.example.com
+
+# Istio Gateway configuration
+istio:
+  enabled: false
+  gateway:
+    hosts:
+      - reveng.example.com
+      - api.reveng.example.com
+  virtualService:
+    enabled: true
+
+# Load Balancer configuration
+loadBalancer:
+  enabled: true
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+
+# Security configuration
+security:
+  podSecurityPolicy:
+    enabled: false
+  networkPolicy:
+    enabled: false
+  
+# Monitoring configuration
+monitoring:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+  prometheusRule:
+    enabled: false
+
+# Configuration
+config:
+  nodeEnv: production
+  logLevel: info
+  pythonPath: python3
+  analyzerPath: /app/reveng_analyzer.py
+  maxFileSize: "1GB"
+  analysisTimeout: 3600
+  concurrentAnalyses: 5
