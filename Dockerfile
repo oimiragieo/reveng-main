@@ -68,7 +68,7 @@ USER reveng
 CMD ["reveng", "serve", "--reload", "--host", "0.0.0.0", "--port", "3000"]
 
 # Multi-stage build for web interface
-FROM node:18-alpine as web-builder
+FROM node:24-alpine as web-builder
 
 WORKDIR /app/web
 COPY web_interface/package*.json ./
