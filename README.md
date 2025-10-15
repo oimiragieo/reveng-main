@@ -1,4 +1,7 @@
-# REVENG - Universal Reverse Engineering Platform
+<div align="center">
+  <img src="assets/logo.png" alt="REVENG Logo" width="200" height="200">
+  <h1>REVENG - Universal Reverse Engineering Platform</h1>
+</div>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
