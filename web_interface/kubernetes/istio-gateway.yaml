@@ -1,0 +1,156 @@
+# Istio API Gateway Configuration
+# ===============================
+
+# Gateway for external traffic
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: reveng-gateway
+  namespace: reveng
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "reveng.example.com"
+    - "api.reveng.example.com"
+    tls:
+      httpsRedirect: true
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: reveng-tls-secret
+    hosts:
+    - "reveng.example.com"
+    - "api.reveng.example.com"
+
+---
+# Virtual Service for routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: reveng-routes
+  namespace: reveng
+spec:
+  hosts:
+  - "reveng.example.com"
+  - "api.reveng.example.com"
+  gateways:
+  - reveng-gateway
+  http:
+  # API routes
+  - match:
+    - uri:
+        prefix: "/api/v1/"
+    - headers:
+        host:
+          exact: "api.reveng.example.com"
+    route:
+    - destination:
+        host: reveng-backend
+        port:
+          number: 5000
+    timeout: 300s
+    retries:
+      attempts: 3
+      perTryTimeout: 60s
+  # Frontend routes
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: reveng-frontend
+        port:
+          number: 80
+    timeout: 30s
+
+---
+# Destination Rules for load balancing
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: reveng-backend-dr
+  namespace: reveng
+spec:
+  host: reveng-backend
+  trafficPolicy:
+    loadBalancer:
+      consistentHash:
+        httpHeaderName: "x-session-id"
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+        consecutiveGatewayErrors: 5
+        interval: 30s
+        baseEjectionTime: 30s
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: reveng-frontend-dr
+  namespace: reveng
+spec:
+  host: reveng-frontend
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+    connectionPool:
+      tcp:
+        maxConnections: 50
+      http:
+        http1MaxPendingRequests: 25
+        http2MaxRequests: 50
+        maxRequestsPerConnection: 5
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: analysis-worker-dr
+  namespace: reveng
+spec:
+  host: analysis-worker
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 20
+      http:
+        http1MaxPendingRequests: 10
+        http2MaxRequests: 20
+        maxRequestsPerConnection: 2
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: ai-service-dr
+  namespace: reveng
+spec:
+  host: ai-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 10
+      http:
+        http1MaxPendingRequests: 5
+        http2MaxRequests: 10
+        maxRequestsPerConnection: 1
+        h2UpgradePolicy: UPGRADE

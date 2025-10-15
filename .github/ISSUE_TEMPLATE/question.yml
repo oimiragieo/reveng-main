@@ -1,0 +1,70 @@
+name: ❓ Question
+description: Ask a question about REVENG
+title: "[Question]: "
+labels: ["question", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your question! We're here to help. Please provide as much context as possible.
+
+  - type: dropdown
+    id: question-type
+    attributes:
+      label: Question Type
+      description: What type of question is this?
+      options:
+        - Usage/How-to
+        - Installation
+        - Configuration
+        - Troubleshooting
+        - Development
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What would you like to know?
+      placeholder: "Ask your question here..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide any relevant context about your question
+      placeholder: "I'm trying to..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What I've Tried
+      description: Describe what you've already tried
+      placeholder: "I've tried..."
+    validations:
+      required: false
+
+  - type: input
+    id: system-info
+    attributes:
+      label: System Information
+      description: Your system details (if relevant)
+      placeholder: "OS: Windows 11, Python: 3.11.5, REVENG: 2.0.0"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

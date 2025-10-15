@@ -1,0 +1,66 @@
+# AI Service Dockerfile
+# ======================
+# 
+# Dedicated container for AI-enhanced analysis services
+
+FROM python:3.11-slim AS base
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install additional AI/ML dependencies
+RUN pip install --no-cache-dir \
+    torch \
+    transformers \
+    scikit-learn \
+    numpy \
+    pandas \
+    requests \
+    flask \
+    gunicorn
+
+# Create non-root user
+RUN groupadd -r aiservice && useradd -r -g aiservice aiservice
+
+# Create required directories
+RUN mkdir -p models cache logs && \
+    chown -R aiservice:aiservice /app
+
+# Copy AI service components
+COPY tools/ai_enhanced_analyzer.py ./
+COPY tools/corporate_exposure_detector.py ./
+COPY tools/vulnerability_discovery_engine.py ./
+COPY tools/threat_intelligence_correlator.py ./
+COPY tools/demonstration_generator.py ./
+
+# Copy AI service server
+COPY server/services/aiService.py ./
+
+# Set permissions
+RUN chown -R aiservice:aiservice /app
+
+# Switch to non-root user
+USER aiservice
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Start the AI service
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "300", "aiService:app"]

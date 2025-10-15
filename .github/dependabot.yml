@@ -1,0 +1,84 @@
+version: 2
+updates:
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "reveng-maintainers"
+    assignees:
+      - "reveng-maintainers"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+    ignore:
+      # Ignore major version updates for critical dependencies
+      - dependency-name: "python"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "ghidramcp"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "reveng-maintainers"
+    assignees:
+      - "reveng-maintainers"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "reveng-maintainers"
+    assignees:
+      - "reveng-maintainers"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # Web interface dependencies
+  - package-ecosystem: "npm"
+    directory: "/web_interface"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "reveng-maintainers"
+    assignees:
+      - "reveng-maintainers"
+    commit-message:
+      prefix: "web"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "web-interface"

@@ -1,0 +1,58 @@
+# Analysis Worker Dockerfile
+# ==========================
+# 
+# Specialized container for running analysis tasks
+
+FROM python:3.11-slim AS base
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    curl \
+    git \
+    nodejs \
+    npm \
+    openjdk-17-jdk \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set Java environment
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+# Create app directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Node.js dependencies for worker
+COPY server/package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Create non-root user
+RUN groupadd -r worker && useradd -r -g worker worker
+
+# Create required directories
+RUN mkdir -p uploads reports temp logs tools && \
+    chown -R worker:worker /app
+
+# Copy analysis tools and scripts
+COPY tools/ ./tools/
+COPY reveng_analyzer.py ./
+COPY server/services/analysisWorker.js ./
+COPY server/services/queueManager.js ./
+
+# Set permissions
+RUN chown -R worker:worker /app
+
+# Switch to non-root user
+USER worker
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3001/health || exit 1
+
+# Start the worker
+CMD ["node", "analysisWorker.js"]

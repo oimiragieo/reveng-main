@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(grep:*)",
+      "Bash(gcc:*)",
+      "Bash(where cl)",
+      "Bash(where:*)",
+      "Bash(cat:*)",
+      "Bash(move universal_binary_analyzer.py reveng_analyzer.py)",
+      "Bash(dir:*)",
+      "Read(//c/**)",
+      "Bash(ollama list:*)",
+      "Bash(tee:*)",
+      "Bash(findstr:*)",
+      "Bash(pip show:*)",
+      "Bash(pylint:*)",
+      "Bash(timeout 10 tail -f reveng_test_output.log)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

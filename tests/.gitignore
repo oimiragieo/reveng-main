@@ -1,0 +1,24 @@
+# Test coverage artifacts
+coverage/
+htmlcov/
+.coverage
+*.cover
+.pytest_cache/
+.coverage.*
+coverage.xml
+coverage.json
+
+# Test outputs
+test_outputs/
+test_binaries/
+test_*.exe
+test_*.dll
+test_*.so
+test_*.pyc
+test_*.class
+
+# Temporary test files
+temp_*/
+tmp_*/
+*.tmp
+*.temp

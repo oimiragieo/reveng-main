@@ -1,0 +1,48 @@
+# Enhanced Configuration and Secrets
+# ==================================
+
+# Enhanced ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reveng-config
+  namespace: reveng
+data:
+  NODE_ENV: "production"
+  MONGO_DATABASE: "reveng"
+  CLIENT_URL: "https://reveng.example.com"
+  PYTHON_PATH: "python3"
+  ANALYZER_PATH: "/app/reveng_analyzer.py"
+  WORKER_CONCURRENCY: "2"
+  MAX_JOB_TIME: "3600000"
+  DEBUG: "false"
+  
+  # AI Service Configuration
+  AI_SERVICE_WORKERS: "2"
+  AI_SERVICE_TIMEOUT: "300"
+  MODEL_CACHE_SIZE: "10GB"
+  
+  # Analysis Configuration
+  MAX_FILE_SIZE: "1GB"
+  ANALYSIS_TIMEOUT: "3600"
+  CONCURRENT_ANALYSES: "5"
+  
+  # Logging Configuration
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  LOG_RETENTION_DAYS: "30"
+
+---
+# Secrets (base64 encoded values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: reveng-secrets
+  namespace: reveng
+type: Opaque
+data:
+  # These should be replaced with actual base64 encoded values
+  mongo-username: YWRtaW4=  # admin
+  mongo-password: cGFzc3dvcmQxMjM=  # password123
+  redis-password: cmVkaXMxMjM=  # redis123
+  jwt-secret: eW91ci1zdXBlci1zZWNyZXQtand0LWtleQ==  # your-super-secret-jwt-key
