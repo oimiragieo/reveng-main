@@ -1,7 +1,7 @@
 # REVENG Universal Reverse Engineering Platform - Production Docker Image
 # ======================================================================
 
-FROM python:3.11-slim as base
+FROM python:3.14-slim as base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -92,7 +92,7 @@ WORKDIR /app/web
 RUN npm run build
 
 # Final web interface image
-FROM python:3.11-slim as web
+FROM python:3.14-slim as web
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
