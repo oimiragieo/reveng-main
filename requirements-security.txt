@@ -34,7 +34,7 @@ capstone>=5.0.1,<6.0.0
 networkx>=3.1,<4.0.0
 
 # Graph visualization (security updates)
-pydot>=1.4.2,<2.0.0
+pydot>=1.4.2,<5.0.0
 
 # Progress bars for long-running operations (security updates)
 tqdm>=4.66.0,<5.0.0
