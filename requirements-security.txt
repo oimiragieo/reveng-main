@@ -47,7 +47,7 @@ pyyaml>=6.0.1,<7.0.0
 # =============================================================================
 
 # Replace pypdf2 with pypdf (actively maintained, secure)
-pypdf>=3.17.0,<4.0.0
+pypdf>=3.17.0,<7.0.0
 
 # Replace ecdsa with cryptography (more secure, actively maintained)
 cryptography>=41.0.0,<42.0.0
