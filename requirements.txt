@@ -19,7 +19,7 @@ ghidramcp>=0.1.0,<1.0.0
 # =============================================================================
 
 # Binary parsing and patching (NOT optional!) - security updates
-lief>=0.13.2,<0.14.0
+lief>=0.13.2,<0.18.0
 
 # Multi-architecture assembler (NOT optional!)
 keystone-engine>=0.9.2,<1.0.0
