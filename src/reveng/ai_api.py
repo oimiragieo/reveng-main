@@ -22,7 +22,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 
 # Import REVENG components
-from ..tools.instant_triage import InstantTriageEngine, ThreatLevel
+from ..tools.tools.ai_enhanced.instant_triage import InstantTriageEngine, ThreatLevel
 from ..tools.tools.ai_enhanced.nl_interface import NaturalLanguageInterface, NLResponse
 from ..tools.tools.translation import generate_translation_hints, generate_translation_guide
 

@@ -88,17 +88,24 @@ class NaturalLanguageInterface:
         Initialize natural language interface.
 
         Args:
-            model: LLM model to use ('auto', 'llama3', 'mistral', etc.)
+            model: LLM model to use ('auto', 'llama3', 'mistral', etc.')
             use_ollama: Whether to use Ollama (local) or external APIs
         """
         self.use_ollama = use_ollama and OLLAMA_AVAILABLE
         self.model = model
 
         if self.use_ollama:
-            # Auto-detect available model
-            if model == "auto":
-                self.model = self._detect_ollama_model()
-            logger.info(f"Using Ollama model: {self.model}")
+            # Test Ollama connection
+            try:
+                ollama.list()  # Test if server is reachable
+                # Auto-detect available model
+                if model == "auto":
+                    self.model = self._detect_ollama_model()
+                logger.info(f"Using Ollama model: {self.model}")
+            except Exception as e:
+                logger.warning(f"Ollama server not reachable: {e}")
+                logger.warning("Falling back to heuristic answers")
+                self.use_ollama = False
         else:
             logger.warning("Ollama not available, using fallback heuristics")
 
@@ -346,7 +353,7 @@ class NaturalLanguageInterface:
         # If analysis results not provided, need to analyze first
         if not analysis_results and binary_path:
             logger.info(f"No analysis results provided, analyzing {binary_path}...")
-            from ...reveng.analyzer import REVENGAnalyzer
+            from reveng.analyzer import REVENGAnalyzer
 
             analyzer = REVENGAnalyzer(binary_path)
             success = analyzer.analyze_binary()

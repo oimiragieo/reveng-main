@@ -29,6 +29,27 @@ reveng serve --port 3000
 # Opens browser to http://localhost:3000
 ```
 
+## 📦 Complete Setup Guide (First Time Users)
+
+**New to REVENG?** Follow our comprehensive step-by-step guide:
+
+### **[🔧 Complete Setup Guide](docs/guides/COMPLETE_SETUP_GUIDE.md)**
+
+Includes everything you need:
+- ✅ Step-by-step installation (Python, Ghidra, Java, Ollama)
+- ✅ IDA Pro Free integration guide (optional)
+- ✅ AI integration setup (Claude Code, Ollama, Gemini CLI)
+- ✅ Verification & testing scripts
+- ✅ Detailed workflow walkthrough with code flow
+- ✅ Troubleshooting common issues
+
+**Estimated setup time**: 30 minutes (includes downloads)
+
+**Quick verify your setup**:
+```bash
+python scripts/setup/verify_ai_setup.py
+```
+
 ## ✨ Key Features
 
 - 🔄 **Complete Binary Reconstruction** - Disassemble, modify, reassemble any binary
