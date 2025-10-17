@@ -196,6 +196,42 @@ results = analyzer.analyze_binary()
 print(f"Analysis completed: {results['status']}")
 ```
 
+### AI-Optimized Python API (NEW in v2.2.0)
+**Designed specifically for AI agents (Claude, GPT, etc.)**
+
+```python
+from reveng.ai_api import REVENG_AI_API
+
+# Initialize AI-optimized API
+api = REVENG_AI_API()
+
+# Quick triage (< 30 seconds)
+triage = api.triage_binary("suspicious.exe")
+print(f"Threat: {triage.threat_level} (score: {triage.threat_score}/100)")
+
+# Natural language queries
+response = api.ask("What does this binary do?", "suspicious.exe")
+print(f"Answer: {response.answer} (confidence: {response.confidence})")
+
+# Get translation hints for C→Python rebuild
+hints = api.get_translation_hints("decompiled_code.c")
+print(f"Need to import: {', '.join(hints.imports_needed)}")
+
+# Extract IOCs
+iocs = api.extract_iocs("malware.exe")
+print(f"IOCs found: {iocs.answer}")
+```
+
+**Key Features for AI Agents:**
+- ✅ Structured responses with confidence scores
+- ✅ Type-hinted for better code generation
+- ✅ Natural language interface built-in
+- ✅ C→Python translation hints for binary rebuilds
+- ✅ JSON serialization for easy integration
+- ✅ Comprehensive API documentation
+
+📖 See [AI API Reference](docs/api/AI_API_REFERENCE.md) for complete documentation.
+
 ### Web Interface
 ```bash
 # Start web server

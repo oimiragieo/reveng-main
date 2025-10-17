@@ -1,0 +1,116 @@
+# REVENG Universal Reverse Engineering Platform - Optional Feature Dependencies
+# ===============================================================================
+# This file contains optional dependencies for advanced REVENG features.
+# Install with: pip install -r requirements-optional.txt
+#
+# Note: Core REVENG functionality works without these dependencies.
+# Individual features will gracefully degrade if dependencies are unavailable.
+# ===============================================================================
+
+# =============================================================================
+# THREAT INTELLIGENCE - VirusTotal Integration
+# =============================================================================
+# Provides malware family detection, IOC extraction, and threat intelligence
+# enrichment through VirusTotal API integration.
+#
+# Setup:
+#   1. Get API key from https://www.virustotal.com/gui/my-apikey
+#   2. Set environment variable: export VT_API_KEY=your_api_key_here
+#
+# Commands enabled:
+#   - reveng vt-lookup <file>        # Lookup file hash on VirusTotal
+#   - reveng vt-submit <file>        # Submit file to VirusTotal
+vt-py>=0.18.0,<1.0.0
+
+# =============================================================================
+# YARA - Malware Detection Rules
+# =============================================================================
+# Enables YARA rule generation from analyzed binaries and YARA-based scanning
+# for malware detection and classification.
+#
+# System requirement:
+#   - Linux: sudo apt install libyara-dev
+#   - macOS: brew install yara
+#   - Windows: Download YARA from https://github.com/VirusTotal/yara/releases
+#
+# Commands enabled:
+#   - reveng generate-yara <file>    # Generate YARA rule from binary
+#   - reveng scan-yara <file>        # Scan binary with YARA rules
+yara-python>=4.3.0,<5.0.0
+
+# =============================================================================
+# AI ENHANCEMENT - Ollama Local LLM
+# =============================================================================
+# Powers natural language queries, code quality enhancement, and intelligent
+# analysis through local LLM inference.
+#
+# Setup:
+#   1. Install Ollama from https://ollama.ai
+#   2. Pull a model: ollama pull llama3 (or codellama for code analysis)
+#   3. Start Ollama server: ollama serve
+#
+# Commands enabled:
+#   - reveng ask "question" <file>   # Natural language queries
+#   - reveng enhance-code <file>     # AI code quality improvement
+#   - reveng triage <file>           # Instant threat assessment
+ollama>=0.1.0,<1.0.0
+
+# =============================================================================
+# CODE ANALYSIS - C Parser and AST Generation
+# =============================================================================
+# Provides C code parsing and AST generation for translation hints and
+# structured code analysis. Used by the Python API for advanced features.
+#
+# Commands enabled:
+#   - Python API: analyzer.get_ast()
+#   - Python API: analyzer.get_translation_hints()
+pycparser>=2.22,<3.0.0
+
+# =============================================================================
+# DEVELOPMENT TOOLS - Formatting and Linting
+# =============================================================================
+# Code quality tools for maintaining consistent code style.
+#
+# Usage:
+#   black src/ --line-length 100  # Format code
+#   pylint src/                    # Lint code
+black>=24.0.0,<25.0.0
+pylint>=3.0.0,<4.0.0
+
+# =============================================================================
+# INSTALLATION INSTRUCTIONS
+# =============================================================================
+
+# Install all optional features:
+#   pip install -r requirements-optional.txt
+
+# Install specific feature dependencies only:
+#   pip install vt-py                # VirusTotal only
+#   pip install yara-python          # YARA only
+#   pip install ollama               # AI features only
+
+# Verify optional features:
+#   reveng --help                    # Shows all available commands
+#   python -c "import vt; print('VirusTotal: OK')"
+#   python -c "import yara; print('YARA: OK')"
+#   python -c "import ollama; print('Ollama: OK')"
+
+# =============================================================================
+# FEATURE MATRIX
+# =============================================================================
+#
+# Feature                  | Dependency    | Environment Variable | System Requirement
+# -------------------------|---------------|---------------------|-------------------
+# VirusTotal Integration   | vt-py         | VT_API_KEY          | None
+# YARA Rule Generation     | yara-python   | None                | libyara-dev
+# YARA Scanning            | yara-python   | None                | libyara-dev
+# Natural Language Queries | ollama        | None                | Ollama server
+# Code Quality Enhancement | ollama        | None                | Ollama server
+# Instant Triage           | ollama        | None                | Ollama server
+# Python API               | pycparser     | None                | None
+# Translation Hints        | pycparser     | None                | None
+# AST Generation           | pycparser     | None                | None
+# Binary Diffing           | None          | None                | None (built-in)
+# Patch Analysis           | None          | None                | None (built-in)
+# Packer Detection         | None          | None                | None (built-in)
+# Universal Unpacker       | None          | None                | UPX tool (optional)
