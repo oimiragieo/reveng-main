@@ -208,6 +208,15 @@ $RECYCLE.BIN/
 *.sqlite
 *.sqlite3
 
+# Analysis artifacts and large files
+*.nessus
+examples/case-studies/karp-analysis/21778.nessus
+test_samples/*.exe
+test_samples/*.dll
+test_samples/*.so
+test_samples/*.bin
+test_samples/*.elf
+
 # Configuration files with secrets
 config.json
 secrets.json
