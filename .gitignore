@@ -24,6 +24,9 @@ build/
 *.log
 logs/
 *.log.*
+reveng_analyzer.log
+bandit-report.json
+safety-report.json
 
 # Analysis outputs (runtime generated)
 analysis_*/

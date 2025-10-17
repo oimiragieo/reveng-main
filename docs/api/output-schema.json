@@ -1,0 +1,205 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "REVENG Analysis Output Schema",
+  "description": "Standardized output format for REVENG binary analysis",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "REVENG API version",
+      "example": "2.1.0"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of analysis completion",
+      "example": "2025-01-15T10:30:00Z"
+    },
+    "binary": {
+      "type": "object",
+      "description": "Information about the analyzed binary file",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to the binary file"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "description": "File size in bytes",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA256 hash of the file"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["PE32", "ELF", "Mach-O", "JAR/ZIP", "Unknown"],
+          "description": "Binary format type"
+        },
+        "architecture": {
+          "type": "string",
+          "enum": ["x86", "x86-64", "ARM", "ARM64", "Unknown"],
+          "description": "Target architecture"
+        }
+      },
+      "required": ["path", "size_bytes", "sha256", "type", "architecture"]
+    },
+    "classification": {
+      "type": "object",
+      "description": "Binary classification results",
+      "properties": {
+        "language": {
+          "type": "string",
+          "description": "Programming language (c, csharp, java, python, etc.)"
+        },
+        "framework": {
+          "type": "string",
+          "description": "Framework or runtime (.NET, Java, Python, etc.)"
+        },
+        "gui_type": {
+          "type": "string",
+          "description": "GUI framework (WinForms, WPF, Swing, etc.)"
+        },
+        "application_type": {
+          "type": "string",
+          "description": "Application category (malware, security_tool, game, etc.)"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Classification confidence score"
+        }
+      },
+      "required": ["language", "framework", "gui_type", "application_type", "confidence"]
+    },
+    "analysis": {
+      "type": "object",
+      "description": "Detailed analysis results",
+      "properties": {
+        "imports": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of imported functions/APIs"
+        },
+        "exports": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of exported functions"
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {"type": "string"},
+              "name": {"type": "string"},
+              "size": {"type": "integer"}
+            }
+          },
+          "description": "Embedded resources"
+        },
+        "strings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Extracted strings"
+        },
+        "functions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "address": {"type": "string"},
+              "size": {"type": "integer"},
+              "calling_convention": {"type": "string"}
+            }
+          },
+          "description": "Function information"
+        }
+      },
+      "required": ["imports", "exports", "resources", "strings", "functions"]
+    },
+    "ml_insights": {
+      "type": "object",
+      "description": "Machine learning analysis insights",
+      "properties": {
+        "malware_probability": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Probability of being malware"
+        },
+        "threat_level": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Assessed threat level"
+        },
+        "anomalies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {"type": "string"},
+              "description": {"type": "string"},
+              "severity": {"type": "string"}
+            }
+          },
+          "description": "Detected anomalies"
+        },
+        "business_logic": {
+          "type": "object",
+          "description": "Extracted business logic patterns"
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Analysis errors"
+    },
+    "warnings": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Analysis warnings"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Analysis metadata",
+      "properties": {
+        "analysis_time_seconds": {
+          "type": "number",
+          "description": "Analysis duration in seconds"
+        },
+        "tools_used": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Tools used in analysis"
+        },
+        "reveng_version": {
+          "type": "string",
+          "description": "REVENG version used"
+        }
+      },
+      "required": ["analysis_time_seconds", "tools_used", "reveng_version"]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Overall analysis confidence score"
+    }
+  },
+  "required": [
+    "version", "timestamp", "binary", "classification",
+    "analysis", "errors", "warnings", "metadata", "confidence"
+  ]
+}

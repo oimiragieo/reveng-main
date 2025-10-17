@@ -1,82 +1,115 @@
-# Welcome to REVENG
+# REVENG Documentation Hub
 
-<div align="center">
-  <img src="../assets/logo.png" alt="REVENG Logo" width="150" height="150">
-  <h1>Universal Reverse Engineering Platform</h1>
-  <p><em>The ONLY open-source tool with complete binary reconstruction capabilities</em></p>
-</div>
+Welcome to the REVENG Universal Reverse Engineering Platform documentation. This hub provides comprehensive guides for users, developers, and AI agents.
 
-## What is REVENG?
+## 🚀 Quick Start
 
-REVENG is an enterprise-grade, AI-powered reverse engineering platform that supports analysis and reconstruction of Java, C#, Python, and native binaries. It's the only open-source tool that can disassemble, modify, and reassemble binaries into working executables.
+- [Installation Guide](getting-started/installation.md) - Platform-specific setup instructions
+- [Quick Start](getting-started/quick-start.md) - Get up and running in 3 commands
+- [Troubleshooting](getting-started/troubleshooting.md) - Common issues and solutions
 
-## Key Features
+## 👥 User Guides
 
-- 🔄 **Complete Binary Reconstruction** - Disassemble, modify, reassemble any binary
-- 🤖 **AI-Powered Analysis** - Ollama, Claude, OpenAI integration for intelligent insights  
-- 🌐 **Multi-Language Support** - Java, C#, Python, Native (PE/ELF/Mach-O)
-- 🎨 **Modern Web Interface** - React-based UI with real-time collaboration
-- 🏢 **Enterprise Ready** - Audit trails, plugins, SOC 2 compliance
-- 🧠 **ML-Powered Security** - Malware classification, vulnerability detection
+### CLI Usage
+- [Command Reference](user-guide/cli-usage.md) - Complete CLI documentation
+- [Binary Analysis](user-guide/binary-analysis.md) - Analysis workflows and examples
+- [Multi-Language Support](user-guide/multi-language.md) - Java, C#, Python analysis
+- [Configuration](user-guide/configuration.md) - Settings and customization
 
-## Quick Start
+### Web Interface
+- [Web UI Guide](user-guide/web-interface.md) - Visual interface documentation
+- [Known Limitations](web_interface/STATUS.md) - Current experimental status
 
-```bash
-# Install REVENG
-pip install reveng-toolkit
+## 🛠️ Developer Resources
 
-# Analyze a binary (CLI)
-reveng analyze binary.exe
+### Architecture & Development
+- [System Architecture](architecture/ARCHITECTURE.md) - High-level system design
+- [Contributing Guide](development/CONTRIBUTING.md) - How to contribute
+- [Tool Development](development/tool-development.md) - Creating custom tools
+- [Plugin Development](guides/plugin-development.md) - Plugin system guide
+- [API Reference](api/API_REFERENCE.md) - Complete API documentation
+- [Testing Guidelines](development/testing.md) - Test development guide
 
-# Launch web interface  
-reveng serve --port 3000
-# Opens browser to http://localhost:3000
-```
+### Advanced Topics
+- [Advanced Analysis](guides/advanced-analysis.md) - Advanced techniques
+- [Windows Analysis](guides/windows-analysis.md) - Windows-specific workflows
+- [Pipeline Development](guides/pipeline-development.md) - Custom analysis pipelines
 
-## Choose Your Interface
+## 🤖 AI Assistant Guide
 
-### CLI Users
-**Command-line power users** who prefer terminal workflows:
-- [CLI Usage Guide →](user-guide/cli-usage.md)
-- [Advanced Features →](user-guide/advanced-features.md)
+- [Claude Integration](ai-assistant-guide/claude-integration.md) - AI-specific setup
+- [Tool Selection Matrix](ai-assistant-guide/tool-selection-matrix.md) - Decision guide for AI agents
+- [Automation Workflows](ai-assistant-guide/automation.md) - Workflow automation
 
-### Web Users  
-**Visual interface enthusiasts** who prefer modern web UIs:
-- [Web Interface Guide →](user-guide/web-interface.md)
-- [Deployment Options →](deployment/docker.md)
+## 🚀 Deployment
 
-### Developers
-**Contributors and integrators** who want to extend REVENG:
-- [Developer Guide →](developer-guide/README.md)
-- [API Reference →](developer-guide/api-reference.md)
+- [Docker Deployment](deployment/docker.md) - Container deployment
+- [Kubernetes Deployment](deployment/kubernetes.md) - K8s orchestration
+- [Production Setup](deployment/production.md) - Production deployment guide
 
-### AI Agents
-**Automation and AI integration** for intelligent analysis:
-- [AI Assistant Guide →](ai-assistant-guide/README.md)
-- [Claude Integration →](ai-assistant-guide/claude-integration.md)
+## 📊 Case Studies & Reports
 
-## Documentation
+### Case Studies
+- [KARP Analysis](case-studies/karp-analysis.md) - Complete case study (50% → 90% accuracy)
 
-- [Getting Started](getting-started/) - Quick installation and first analysis
-- [User Guide](user-guide/) - Complete feature documentation  
-- [Developer Guide](developer-guide/) - Architecture and contribution
-- [AI Assistant Guide](ai-assistant-guide/) - For AI agents and automation
-- [Deployment](deployment/) - Docker, Kubernetes, cloud deployment
+### Technical Reports
+- [Implementation Complete](reports/implementation-complete.md) - Final implementation status
+- [Transformation Summary](reports/transformation-summary.md) - Platform transformation overview
+- [Security Audit](reports/security-audit.md) - Security assessment results
+- [Validation Report](reports/validation-report.md) - Testing and validation results
+- [Cross-Platform Testing](reports/cross-platform-testing.md) - Platform compatibility results
 
-## Community & Support
+## 📚 Training Materials
+
+- [Malware Analysis Fundamentals](training/610.1-malware-analysis-fundamentals.pdf) - SANS FOR610 training materials
+
+## 🔗 External Resources
 
 - [GitHub Repository](https://github.com/oimiragieo/reveng-main)
 - [Issue Tracker](https://github.com/oimiragieo/reveng-main/issues)
 - [Discussions](https://github.com/oimiragieo/reveng-main/discussions)
-- [Contributing Guide](developer-guide/contributing.md)
+- [Releases](https://github.com/oimiragieo/reveng-main/releases)
 
-## License
+## 📋 Quick Reference
 
-MIT License - see [LICENSE](https://github.com/oimiragieo/reveng-main/blob/main/LICENSE)
+### Essential Commands
+```bash
+# Install
+pip install reveng-toolkit
+
+# Basic analysis
+reveng analyze malware.exe
+
+# Enhanced analysis
+reveng analyze --enhanced suspicious.jar
+
+# Web interface
+reveng serve --host 0.0.0.0 --port 3000
+```
+
+### Python API
+```python
+from reveng.api import REVENGAPI
+
+# Create API instance
+api = REVENGAPI()
+
+# Analyze binary
+result = api.analyze_binary('/path/to/binary.exe')
+
+# Detect malware
+threat = api.detect_malware('/suspicious.exe')
+
+# Reconstruct binary
+source = api.reconstruct_binary('/target.exe', output_format='c')
+```
+
+## 🆘 Support
+
+- **Documentation Issues**: [Create an issue](https://github.com/oimiragieo/reveng-main/issues)
+- **Feature Requests**: [Start a discussion](https://github.com/oimiragieo/reveng-main/discussions)
+- **Security Issues**: [Security Policy](SECURITY.md)
 
 ---
 
-<div align="center">
-  <p><strong>Ready to get started?</strong></p>
-  <p><a href="getting-started/quick-start.md" class="md-button md-button--primary">Quick Start Guide</a></p>
-</div>
+*This documentation is continuously updated. Last updated: January 2025*

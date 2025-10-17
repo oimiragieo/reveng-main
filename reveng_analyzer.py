@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 """
+DEPRECATED: This script is deprecated in favor of 'reveng.py'
+
+Legacy 12-step analysis pipeline for REVENG.
+For new projects, use: reveng analyze <binary>
+
+This script will be removed in v3.0.0
+
 REVENG - Reverse Engineering Toolkit
 =====================================
 
@@ -24,10 +31,18 @@ Version: 2.1 Enterprise (AI-Enhanced)
 import sys
 import json
 import time
+import warnings
 from pathlib import Path
 import logging
 import subprocess
 from typing import Optional, Dict, Any
+
+# Show deprecation warning
+warnings.warn(
+    "reveng_analyzer.py is deprecated. Use 'reveng analyze' instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 # Configure logging
 logging.basicConfig(
@@ -50,21 +65,21 @@ class EnhancedAnalysisFeatures:
         self.enable_threat_intelligence = True
         self.enable_enhanced_reconstruction = True
         self.enable_demonstration_generation = True
-    
+
     def from_config(self, config_dict: Dict[str, Any]) -> 'EnhancedAnalysisFeatures':
         """Load feature flags from configuration dictionary"""
         for key, value in config_dict.items():
             if hasattr(self, key):
                 setattr(self, key, value)
         return self
-    
+
     def is_any_enhanced_enabled(self) -> bool:
         """Check if any enhanced analysis features are enabled"""
-        return (self.enable_enhanced_analysis and 
-                (self.enable_corporate_exposure or 
-                 self.enable_vulnerability_discovery or 
-                 self.enable_threat_intelligence or 
-                 self.enable_enhanced_reconstruction or 
+        return (self.enable_enhanced_analysis and
+                (self.enable_corporate_exposure or
+                 self.enable_vulnerability_discovery or
+                 self.enable_threat_intelligence or
+                 self.enable_enhanced_reconstruction or
                  self.enable_demonstration_generation))
 
 class REVENGAnalyzer:
@@ -81,7 +96,7 @@ class REVENGAnalyzer:
     - Implementation of missing features
     """
 
-    def __init__(self, binary_path: str = None, check_ollama: bool = True, 
+    def __init__(self, binary_path: str = None, check_ollama: bool = True,
                  enhanced_features: Optional[EnhancedAnalysisFeatures] = None):
         """
         Initialize the REVENG analyzer
@@ -100,10 +115,10 @@ class REVENGAnalyzer:
         self.ai_config = None
         self.file_type = None
         self.audit_logger = None
-        
+
         # Enhanced analysis configuration
         self.enhanced_features = enhanced_features or EnhancedAnalysisFeatures()
-        
+
         # Enhanced analysis components (lazy loaded)
         self.ai_enhanced_analyzer = None
         self.corporate_exposure_detector = None
@@ -125,7 +140,7 @@ class REVENGAnalyzer:
         logger.info("REVENG Analyzer initialized")
         logger.info(f"Target binary: {self.binary_path}")
         logger.info("Enterprise-grade binary analysis for ANY binary")
-        
+
         # Log enhanced analysis status
         if self.enhanced_features.is_any_enhanced_enabled():
             logger.info("AI-Enhanced analysis modules: ENABLED")
@@ -150,7 +165,7 @@ class REVENGAnalyzer:
         # Run Ollama preflight check if requested
         if check_ollama:
             self._check_ollama_availability()
-    
+
     def _find_binary(self) -> str:
         """Find the target binary in the current directory"""
         # Look for common binary and bytecode extensions
@@ -266,27 +281,27 @@ class REVENGAnalyzer:
             # Step 1: AI-powered binary analysis
             print("[CHART] Step 1: AI-Powered Binary Analysis...")
             self._step1_ai_analysis()
-            
+
             # Step 2: Complete disassembly
             print("[SEARCH] Step 2: Complete Disassembly...")
             self._step2_disassembly()
-            
+
             # Step 3: AI inspection with extra thinking
             print("[BRAIN] Step 3: AI Inspection with Extra Thinking...")
             self._step3_ai_inspection()
-            
+
             # Step 4: Specification library creation
             print("[BOOKS] Step 4: Specification Library Creation...")
             self._step4_specifications()
-            
+
             # Step 5: Human-readable code conversion
             print("[WRITE] Step 5: Human-Readable Code Conversion...")
             self._step5_human_readable()
-            
+
             # Step 6: Deobfuscation and domain splitting
             print("[TOOLS] Step 6: Deobfuscation and Domain Splitting...")
             self._step6_deobfuscation()
-            
+
             # Step 7: Implementation of missing features
             print("[POWER] Step 7: Implementation of Missing Features...")
             self._step7_implementation()
@@ -300,27 +315,27 @@ class REVENGAnalyzer:
                 print("\n" + "=" * 70)
                 print(" AI-ENHANCED ANALYSIS MODULES")
                 print("=" * 70)
-                
+
                 # Step 9: Corporate data exposure analysis
                 if self.enhanced_features.enable_corporate_exposure:
                     print("[EXPOSURE] Step 9: Corporate Data Exposure Analysis...")
                     self._step9_corporate_exposure()
-                
+
                 # Step 10: Automated vulnerability discovery
                 if self.enhanced_features.enable_vulnerability_discovery:
                     print("[VULNERABILITY] Step 10: Automated Vulnerability Discovery...")
                     self._step10_vulnerability_discovery()
-                
+
                 # Step 11: Threat intelligence correlation
                 if self.enhanced_features.enable_threat_intelligence:
                     print("[INTELLIGENCE] Step 11: Threat Intelligence Correlation...")
                     self._step11_threat_intelligence()
-                
+
                 # Step 12: Enhanced binary reconstruction
                 if self.enhanced_features.enable_enhanced_reconstruction:
                     print("[RECONSTRUCTION] Step 12: Enhanced Binary Reconstruction...")
                     self._step12_enhanced_reconstruction()
-                
+
                 # Step 13: Security demonstration generation
                 if self.enhanced_features.enable_demonstration_generation:
                     print("[DEMONSTRATION] Step 13: Security Demonstration Generation...")
@@ -359,17 +374,17 @@ class REVENGAnalyzer:
             return False
 
         return True
-    
+
     def _step1_ai_analysis(self):
         """Step 1: AI-powered binary analysis"""
         logger.info("Step 1: AI-powered binary analysis")
-        
+
         # Run AI recompiler converter
         try:
             result = subprocess.run([
                 sys.executable, "tools/core/ai_recompiler_converter.py", self.binary_path
             ], capture_output=True, text=True, timeout=300, check=False)
-            
+
             if result.returncode == 0:
                 logger.info("AI analysis completed successfully")
                 self.results['step1'] = {'status': 'success', 'output': result.stdout}
@@ -382,7 +397,7 @@ class REVENGAnalyzer:
         except Exception as e:
             logger.error(f"Error in AI analysis: {e}")
             self.results['step1'] = {'status': 'error', 'error': str(e)}
-    
+
     def _step2_disassembly(self):
         """Step 2: Complete disassembly with multi-language support"""
         logger.info("Step 2: Complete disassembly with multi-language support")
@@ -544,17 +559,17 @@ class REVENGAnalyzer:
         except Exception as e:
             logger.error(f"Error in disassembly: {e}")
             self.results['step2'] = {'status': 'error', 'error': str(e)}
-    
+
     def _step3_ai_inspection(self):
         """Step 3: AI inspection with extra thinking"""
         logger.info("Step 3: AI inspection with extra thinking")
-        
+
         # Run AI source inspector
         try:
             result = subprocess.run([
                 sys.executable, "tools/core/ai_source_inspector.py"
             ], capture_output=True, text=True, timeout=300, check=False)
-            
+
             if result.returncode == 0:
                 logger.info("AI inspection completed successfully")
                 self.results['step3'] = {'status': 'success', 'output': result.stdout}
@@ -567,11 +582,11 @@ class REVENGAnalyzer:
         except Exception as e:
             logger.error(f"Error in AI inspection: {e}")
             self.results['step3'] = {'status': 'error', 'error': str(e)}
-    
+
     def _step4_specifications(self):
         """Step 4: Specification library creation"""
         logger.info("Step 4: Specification library creation")
-        
+
         # Check if SPECS folder exists
         specs_folder = Path("SPECS")
         if specs_folder.exists():
@@ -580,7 +595,7 @@ class REVENGAnalyzer:
         else:
             logger.warning("SPECS folder not found - may need to run AI inspection first")
             self.results['step4'] = {'status': 'warning', 'message': 'SPECS folder not found'}
-    
+
     def _step5_human_readable(self):
         """Step 5: Human-readable code conversion"""
         logger.info("Step 5: Human-readable code conversion")
@@ -590,7 +605,7 @@ class REVENGAnalyzer:
             result = subprocess.run([
                 sys.executable, "tools/core/human_readable_converter_fixed.py"
             ], capture_output=True, text=True, timeout=300, check=False)
-            
+
             if result.returncode == 0:
                 logger.info("Human-readable conversion completed successfully")
                 self.results['step5'] = {'status': 'success', 'output': result.stdout}
@@ -603,17 +618,17 @@ class REVENGAnalyzer:
         except Exception as e:
             logger.error(f"Error in human-readable conversion: {e}")
             self.results['step5'] = {'status': 'error', 'error': str(e)}
-    
+
     def _step6_deobfuscation(self):
         """Step 6: Deobfuscation and domain splitting"""
         logger.info("Step 6: Deobfuscation and domain splitting")
-        
+
         # Run deobfuscation tool
         try:
             result = subprocess.run([
                 sys.executable, "tools/core/deobfuscation_tool.py"
             ], capture_output=True, text=True, timeout=300, check=False)
-            
+
             if result.returncode == 0:
                 logger.info("Deobfuscation completed successfully")
                 self.results['step6'] = {'status': 'success', 'output': result.stdout}
@@ -626,7 +641,7 @@ class REVENGAnalyzer:
         except Exception as e:
             logger.error(f"Error in deobfuscation: {e}")
             self.results['step6'] = {'status': 'error', 'error': str(e)}
-    
+
     def _step7_implementation(self):
         """Step 7: Implementation of missing features"""
         logger.info("Step 7: Implementation of missing features")
@@ -726,18 +741,18 @@ class REVENGAnalyzer:
     def _step9_corporate_exposure(self):
         """Step 9: Corporate data exposure analysis"""
         logger.info("Step 9: Corporate data exposure analysis")
-        
+
         try:
             # Lazy load corporate exposure detector
             if not self.corporate_exposure_detector:
                 from tools.security.corporate_exposure_detector import CorporateExposureDetector
                 self.corporate_exposure_detector = CorporateExposureDetector()
-            
+
             # Run corporate exposure analysis
             exposure_report = self.corporate_exposure_detector.analyze_file(self.binary_path)
-            
+
             logger.info(f"Corporate exposure analysis completed - {len(exposure_report.credentials_found)} credentials found")
-            
+
             self.enhanced_results['step9'] = {
                 'status': 'success',
                 'credentials_count': len(exposure_report.credentials_found),
@@ -746,7 +761,7 @@ class REVENGAnalyzer:
                 'risk_level': exposure_report.risk_level,
                 'report': exposure_report
             }
-            
+
         except ImportError as e:
             logger.warning(f"Corporate exposure detector not available: {e}")
             self.enhanced_results['step9'] = {'status': 'skipped', 'error': 'module_not_found'}
@@ -757,18 +772,18 @@ class REVENGAnalyzer:
     def _step10_vulnerability_discovery(self):
         """Step 10: Automated vulnerability discovery"""
         logger.info("Step 10: Automated vulnerability discovery")
-        
+
         try:
             # Lazy load vulnerability discovery engine
             if not self.vulnerability_discovery_engine:
                 from tools.security.vulnerability_discovery_engine import VulnerabilityDiscoveryEngine
                 self.vulnerability_discovery_engine = VulnerabilityDiscoveryEngine()
-            
+
             # Run vulnerability discovery
             vuln_report = self.vulnerability_discovery_engine.analyze_file(self.binary_path)
-            
+
             logger.info(f"Vulnerability discovery completed - {vuln_report.total_vulnerabilities} vulnerabilities found")
-            
+
             self.enhanced_results['step10'] = {
                 'status': 'success',
                 'total_vulnerabilities': vuln_report.total_vulnerabilities,
@@ -778,7 +793,7 @@ class REVENGAnalyzer:
                 'low_count': vuln_report.low_count,
                 'report': vuln_report
             }
-            
+
         except ImportError as e:
             logger.warning(f"Vulnerability discovery engine not available: {e}")
             self.enhanced_results['step10'] = {'status': 'skipped', 'error': 'module_not_found'}
@@ -789,18 +804,18 @@ class REVENGAnalyzer:
     def _step11_threat_intelligence(self):
         """Step 11: Threat intelligence correlation"""
         logger.info("Step 11: Threat intelligence correlation")
-        
+
         try:
             # Lazy load threat intelligence correlator
             if not self.threat_intelligence_correlator:
                 from tools.security.threat_intelligence_correlator import ThreatIntelligenceCorrelator
                 self.threat_intelligence_correlator = ThreatIntelligenceCorrelator()
-            
+
             # Run threat intelligence correlation
             threat_report = self.threat_intelligence_correlator.analyze_file(self.binary_path)
-            
+
             logger.info(f"Threat intelligence correlation completed - threat level: {threat_report.threat_level}")
-            
+
             self.enhanced_results['step11'] = {
                 'status': 'success',
                 'threat_level': threat_report.threat_level,
@@ -809,7 +824,7 @@ class REVENGAnalyzer:
                 'malware_classification': threat_report.malware_classification,
                 'report': threat_report
             }
-            
+
         except ImportError as e:
             logger.warning(f"Threat intelligence correlator not available: {e}")
             self.enhanced_results['step11'] = {'status': 'skipped', 'error': 'module_not_found'}
@@ -820,13 +835,13 @@ class REVENGAnalyzer:
     def _step12_enhanced_reconstruction(self):
         """Step 12: Enhanced binary reconstruction"""
         logger.info("Step 12: Enhanced binary reconstruction")
-        
+
         try:
             # Run enhanced binary reconstruction using existing binary reassembler
             result = subprocess.run([
                 sys.executable, "tools/core/binary_reassembler_v2.py", self.binary_path
             ], capture_output=True, text=True, timeout=600, check=False)
-            
+
             if result.returncode == 0:
                 logger.info("Enhanced binary reconstruction completed successfully")
                 self.enhanced_results['step12'] = {
@@ -841,7 +856,7 @@ class REVENGAnalyzer:
                     'output': result.stdout,
                     'error': result.stderr
                 }
-                
+
         except subprocess.TimeoutExpired:
             logger.error("Enhanced binary reconstruction timed out")
             self.enhanced_results['step12'] = {'status': 'timeout'}
@@ -852,28 +867,28 @@ class REVENGAnalyzer:
     def _step13_demonstration_generation(self):
         """Step 13: Security demonstration generation"""
         logger.info("Step 13: Security demonstration generation")
-        
+
         try:
             # Lazy load demonstration generator
             if not self.demonstration_generator:
                 from tools.utils.demonstration_generator import DemonstrationGenerator
                 self.demonstration_generator = DemonstrationGenerator()
-            
+
             # Generate security demonstrations
             demo_package = self.demonstration_generator.create_demonstration_package(
                 binary_path=self.binary_path,
                 analysis_results=self.results,
                 enhanced_results=self.enhanced_results
             )
-            
+
             logger.info(f"Security demonstration generation completed - {len(demo_package.components)} components created")
-            
+
             self.enhanced_results['step13'] = {
                 'status': 'success',
                 'components_count': len(demo_package.components),
                 'demo_package': demo_package
             }
-            
+
         except ImportError as e:
             logger.warning(f"Demonstration generator not available: {e}")
             self.enhanced_results['step13'] = {'status': 'skipped', 'error': 'module_not_found'}
@@ -899,10 +914,10 @@ class REVENGAnalyzer:
     def _generate_final_report(self):
         """Generate final analysis report"""
         logger.info("Generating final analysis report...")
-        
+
         # Combine core and enhanced results
         all_results = {**self.results, **self.enhanced_results}
-        
+
         report = {
             "timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
             "binary_path": self.binary_path,
@@ -938,12 +953,12 @@ class REVENGAnalyzer:
                 "skipped_steps": len([s for s in all_results.values() if s.get('status') == 'skipped'])
             }
         }
-        
+
         # Save report
         report_file = self.analysis_folder / "universal_analysis_report.json"
         with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(report, f, indent=2, default=str)
-        
+
         logger.info("Final analysis report generated")
 
 def main():
@@ -952,9 +967,9 @@ def main():
 
     parser = argparse.ArgumentParser(description='REVENG - Enterprise Binary Analysis & Reverse Engineering')
     parser.add_argument('binary_path', nargs='?', help='Path to binary file (auto-detected if not provided)')
-    
+
     # Enhanced analysis feature flags
-    parser.add_argument('--no-enhanced', action='store_true', 
+    parser.add_argument('--no-enhanced', action='store_true',
                        help='Disable all enhanced analysis modules')
     parser.add_argument('--no-corporate', action='store_true',
                        help='Disable corporate exposure analysis')
@@ -966,15 +981,15 @@ def main():
                        help='Disable enhanced binary reconstruction')
     parser.add_argument('--no-demo', action='store_true',
                        help='Disable demonstration generation')
-    
+
     # Configuration file support
     parser.add_argument('--config', help='Path to enhanced analysis configuration file')
-    
+
     args = parser.parse_args()
 
     # Create enhanced analysis features configuration
     enhanced_features = EnhancedAnalysisFeatures()
-    
+
     # Apply command line overrides
     if args.no_enhanced:
         enhanced_features.enable_enhanced_analysis = False
@@ -988,7 +1003,7 @@ def main():
         enhanced_features.enable_enhanced_reconstruction = False
     if args.no_demo:
         enhanced_features.enable_demonstration_generation = False
-    
+
     # Load configuration file if provided
     if args.config and Path(args.config).exists():
         try:

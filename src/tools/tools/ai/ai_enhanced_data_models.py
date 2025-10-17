@@ -57,7 +57,7 @@ class Evidence:
     confidence: float = 0.0
     timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def get_confidence_level(self) -> ConfidenceLevel:
         """Get confidence level enum based on score"""
         if self.confidence >= 0.9:
@@ -225,12 +225,12 @@ class VulnerabilityReport:
     medium_count: int = 0
     low_count: int = 0
     info_count: int = 0
-    
+
     memory_vulnerabilities: List[MemoryVulnerability] = field(default_factory=list)
     injection_vulnerabilities: List[InjectionVulnerability] = field(default_factory=list)
     authentication_issues: List[AuthenticationIssue] = field(default_factory=list)
     cryptographic_weaknesses: List[CryptographicWeakness] = field(default_factory=list)
-    
+
     severity_distribution: Dict[str, int] = field(default_factory=dict)
     exploit_potential: str = ""
     remediation_priority: List[str] = field(default_factory=list)
@@ -351,33 +351,33 @@ class UniversalAnalysisResult:
     analysis_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     analysis_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
     analysis_duration: float = 0.0
-    
+
     # Analysis results
     reveng_analysis: Dict[str, Any] = field(default_factory=dict)
     enhanced_analysis: Dict[str, Any] = field(default_factory=dict)
-    
+
     # Detailed reports
     corporate_exposure: Optional[CorporateExposureReport] = None
     vulnerabilities: Optional[VulnerabilityReport] = None
     threat_intelligence: Optional[ThreatIntelligenceReport] = None
     reconstruction_demo: Optional[ReconstructionDemo] = None
     executive_summary: Optional[ExecutiveSummary] = None
-    
+
     # Meta information
     confidence_scores: Dict[str, float] = field(default_factory=dict)
     evidence_chain: List[Evidence] = field(default_factory=list)
     analysis_modules_used: List[str] = field(default_factory=list)
-    
+
     def add_evidence(self, evidence: Evidence):
         """Add evidence to the evidence chain"""
         self.evidence_chain.append(evidence)
-    
+
     def get_overall_confidence(self) -> float:
         """Calculate overall confidence score"""
         if not self.confidence_scores:
             return 0.0
         return sum(self.confidence_scores.values()) / len(self.confidence_scores)
-    
+
     def get_risk_level(self) -> RiskLevel:
         """Determine overall risk level"""
         if self.vulnerabilities and self.vulnerabilities.critical_count > 0:
@@ -441,44 +441,44 @@ class CorporateRiskAssessment:
 
 class UniversalAnalysisSerializer:
     """Serialization utilities for analysis results"""
-    
+
     @staticmethod
     def to_json(result: UniversalAnalysisResult, indent: int = 2) -> str:
         """Serialize to JSON string"""
         return json.dumps(asdict(result), indent=indent, default=str)
-    
+
     @staticmethod
     def from_json(json_str: str) -> UniversalAnalysisResult:
         """Deserialize from JSON string"""
         data = json.loads(json_str)
         return UniversalAnalysisResult(**data)
-    
+
     @staticmethod
     def to_xml(result: UniversalAnalysisResult) -> str:
         """Serialize to XML string"""
         root = ET.Element("UniversalAnalysisResult")
-        
+
         # Add basic info
         info_elem = ET.SubElement(root, "FileInfo")
         for key, value in asdict(result.file_info).items():
             elem = ET.SubElement(info_elem, key)
             elem.text = str(value)
-        
+
         # Add analysis metadata
         meta_elem = ET.SubElement(root, "AnalysisMetadata")
         ET.SubElement(meta_elem, "analysis_id").text = result.analysis_id
         ET.SubElement(meta_elem, "timestamp").text = str(result.analysis_timestamp)
         ET.SubElement(meta_elem, "duration").text = str(result.analysis_duration)
-        
+
         # Add confidence scores
         conf_elem = ET.SubElement(root, "ConfidenceScores")
         for module, score in result.confidence_scores.items():
             score_elem = ET.SubElement(conf_elem, "Score")
             score_elem.set("module", module)
             score_elem.text = str(score)
-        
+
         return ET.tostring(root, encoding='unicode')
-    
+
     @staticmethod
     def save_to_file(result: UniversalAnalysisResult, file_path: str, format_type: str = "json"):
         """Save analysis result to file"""
@@ -490,7 +490,7 @@ class UniversalAnalysisSerializer:
                 f.write(UniversalAnalysisSerializer.to_xml(result))
         else:
             raise ValueError(f"Unsupported format: {format_type}")
-    
+
     @staticmethod
     def load_from_file(file_path: str, format_type: str = "json") -> UniversalAnalysisResult:
         """Load analysis result from file"""
@@ -503,11 +503,11 @@ class UniversalAnalysisSerializer:
 
 class EvidenceTracker:
     """Evidence tracking and confidence scoring system"""
-    
+
     def __init__(self):
         self.evidence_chain: List[Evidence] = []
-    
-    def add_evidence(self, evidence_type: str, description: str, source: str, 
+
+    def add_evidence(self, evidence_type: str, description: str, source: str,
                     confidence: float, metadata: Dict[str, Any] = None) -> Evidence:
         """Add new evidence to the chain"""
         evidence = Evidence(
@@ -519,26 +519,26 @@ class EvidenceTracker:
         )
         self.evidence_chain.append(evidence)
         return evidence
-    
+
     def get_evidence_by_type(self, evidence_type: str) -> List[Evidence]:
         """Get all evidence of a specific type"""
         return [e for e in self.evidence_chain if e.type == evidence_type]
-    
+
     def get_confidence_for_finding(self, finding_id: str) -> float:
         """Calculate confidence score for a specific finding"""
-        related_evidence = [e for e in self.evidence_chain 
+        related_evidence = [e for e in self.evidence_chain
                           if e.metadata.get('finding_id') == finding_id]
         if not related_evidence:
             return 0.0
-        
+
         # Weighted average of evidence confidence
         total_weight = sum(e.confidence for e in related_evidence)
         if total_weight == 0:
             return 0.0
-        
+
         weighted_sum = sum(e.confidence * e.confidence for e in related_evidence)
         return weighted_sum / total_weight
-    
+
     def generate_evidence_report(self) -> Dict[str, Any]:
         """Generate comprehensive evidence report"""
         return {
@@ -556,7 +556,7 @@ def create_file_info_from_path(file_path: str) -> FileInfo:
     """Create FileInfo from file path"""
     from pathlib import Path
     import hashlib
-    
+
     path = Path(file_path)
     if not path.exists():
         return FileInfo(
@@ -567,16 +567,19 @@ def create_file_info_from_path(file_path: str) -> FileInfo:
             format_type="unknown",
             detection_confidence=0.0
         )
-    
+
     stat = path.stat()
-    
+
     # Calculate hashes
     with open(path, 'rb') as f:
         content = f.read()
-        md5_hash = hashlib.md5(content).hexdigest()
-        sha1_hash = hashlib.sha1(content).hexdigest()
+        # Use secure hashing algorithms
         sha256_hash = hashlib.sha256(content).hexdigest()
-    
+        sha512_hash = hashlib.sha512(content).hexdigest()
+        # Keep MD5/SHA1 only for compatibility with existing databases
+        md5_hash = hashlib.md5(content).hexdigest()  # nosec B303 - Compatibility only
+        sha1_hash = hashlib.sha1(content).hexdigest()  # nosec B303 - Compatibility only
+
     return FileInfo(
         path=file_path,
         name=path.name,
@@ -596,16 +599,16 @@ def merge_confidence_scores(scores: List[float], weights: List[float] = None) ->
     """Merge multiple confidence scores with optional weights"""
     if not scores:
         return 0.0
-    
+
     if weights is None:
         weights = [1.0] * len(scores)
-    
+
     if len(scores) != len(weights):
         raise ValueError("Scores and weights must have the same length")
-    
+
     weighted_sum = sum(score * weight for score, weight in zip(scores, weights))
     total_weight = sum(weights)
-    
+
     return weighted_sum / total_weight if total_weight > 0 else 0.0
 
 
@@ -620,7 +623,7 @@ if __name__ == "__main__":
         format_type="executable",
         detection_confidence=0.95
     )
-    
+
     # Create evidence tracker
     tracker = EvidenceTracker()
     evidence1 = tracker.add_evidence(
@@ -630,25 +633,25 @@ if __name__ == "__main__":
         0.9,
         {"finding_id": "cred_001", "location": "0x401000"}
     )
-    
+
     # Create analysis result
     result = UniversalAnalysisResult(
         file_info=file_info,
         confidence_scores={"corporate_exposure": 0.8, "vulnerability_discovery": 0.7},
         evidence_chain=tracker.evidence_chain
     )
-    
+
     # Test serialization
     json_output = UniversalAnalysisSerializer.to_json(result)
     print("JSON serialization successful")
-    
+
     xml_output = UniversalAnalysisSerializer.to_xml(result)
     print("XML serialization successful")
-    
+
     # Test evidence tracking
     evidence_report = tracker.generate_evidence_report()
     print(f"Evidence report: {evidence_report}")
-    
+
     print("Data models validation completed successfully!")
 
 
@@ -859,29 +862,29 @@ class EnhancedUniversalAnalysisResult:
     file_info: 'FileInfo'
     reveng_analysis: Dict[str, Any] = field(default_factory=dict)
     enhanced_analysis: Dict[str, Any] = field(default_factory=dict)
-    
+
     # ML-enhanced results
     ml_pipeline_result: Optional[MLPipelineResult] = None
     vulnerability_predictions: List[VulnerabilityPrediction] = field(default_factory=list)
     malware_classification: Optional[MalwareClassification] = None
     code_summary: Optional[CodeSummary] = None
     similarity_analysis: Optional[SimilarityAnalysis] = None
-    
+
     # Metadata
     analysis_timestamp: float = 0.0
     analysis_duration: float = 0.0
     ml_models_used: List[str] = field(default_factory=list)
     confidence_scores: Dict[str, float] = field(default_factory=dict)
     evidence_chain: List['Evidence'] = field(default_factory=list)
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return asdict(self)
-    
+
     def to_json(self) -> str:
         """Convert to JSON string"""
         return json.dumps(self.to_dict(), indent=2, default=str)
-    
+
     def save_to_file(self, file_path: str, format_type: str = "json"):
         """Save results to file in specified format"""
         if format_type.lower() == "json":
@@ -891,24 +894,24 @@ class EnhancedUniversalAnalysisResult:
             self._save_as_xml(file_path)
         else:
             raise ValueError(f"Unsupported format: {format_type}")
-    
+
     def _save_as_xml(self, file_path: str):
         """Save results as XML"""
         root = ET.Element("EnhancedAnalysisResult")
-        
+
         # Add file info
         file_elem = ET.SubElement(root, "FileInfo")
         if self.file_info:
             for key, value in asdict(self.file_info).items():
                 elem = ET.SubElement(file_elem, key)
                 elem.text = str(value)
-        
+
         # Add ML results
         if self.ml_pipeline_result:
             ml_elem = ET.SubElement(root, "MLPipelineResult")
             ml_elem.set("pipeline_name", self.ml_pipeline_result.pipeline_name)
             ml_elem.set("success", str(self.ml_pipeline_result.success))
-        
+
         # Write to file
         tree = ET.ElementTree(root)
         tree.write(file_path, encoding='utf-8', xml_declaration=True)

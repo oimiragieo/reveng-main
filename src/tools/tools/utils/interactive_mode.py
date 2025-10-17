@@ -499,8 +499,16 @@ class REVENGShell(cmd.Cmd):
 
     def do_clear(self, arg):
         """Clear the screen."""
-        import os
-        os.system('cls' if os.name == 'nt' else 'clear')
+        import subprocess
+        import sys
+        try:
+            if sys.platform == 'win32':
+                subprocess.run(['cls'], shell=True, check=True)
+            else:
+                subprocess.run(['clear'], check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            # Fallback: print newlines to clear screen
+            print('\n' * 50)
 
     def do_exit(self, arg):
         """Exit REVENG interactive mode."""

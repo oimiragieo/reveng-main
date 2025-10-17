@@ -163,7 +163,7 @@ pip install -e .
 
 ## 📖 Usage Examples
 
-### CLI Analysis
+### Modern CLI (Recommended) ✅
 ```bash
 # Basic analysis
 reveng analyze malware.exe
@@ -174,6 +174,13 @@ reveng analyze --enhanced suspicious.jar
 # Web interface
 reveng serve --host 0.0.0.0 --port 3000
 ```
+
+### Legacy CLI (Deprecated) ⚠️
+```bash
+# For compatibility with existing scripts
+python reveng_analyzer.py malware.exe
+```
+> ⚠️ **Note**: `reveng_analyzer.py` is deprecated. Use `reveng` command instead.
 
 ### Python API
 ```python

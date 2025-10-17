@@ -43,6 +43,9 @@ tqdm>=4.66.0,<5.0.0
 # Configuration file support (security updates)
 pyyaml>=6.0.1,<7.0.0
 
+# Secure model serialization (replaces unsafe pickle)
+joblib>=1.3.0,<2.0.0
+
 # =============================================================================
 # AI/ML SUPPORT - Optional but recommended
 # =============================================================================

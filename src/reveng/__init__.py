@@ -21,12 +21,24 @@ from .analyzer import REVENGAnalyzer
 from .cli import main
 from .version import get_version, get_version_info
 
+# ML integration
+from .ml import MLIntegration, MLIntegrationConfig
+
+# Unified API
+from .api import REVENGAPI, analyze_binary, detect_malware, reconstruct_binary
+
 # Public API
 __all__ = [
     "REVENGAnalyzer",
     "main",
     "get_version",
     "get_version_info",
+    "MLIntegration",
+    "MLIntegrationConfig",
+    "REVENGAPI",
+    "analyze_binary",
+    "detect_malware",
+    "reconstruct_binary",
     "__version__",
     "__author__",
     "__email__",
