@@ -117,7 +117,7 @@ class REVENGAnalyzer:
 
         # Initialize audit logging (optional - graceful fallback if unavailable)
         try:
-            from ..tools.enterprise.audit_trail import AuditLogger
+            from ..tools.tools.enterprise.audit_trail import AuditLogger
             self.audit_logger = AuditLogger(log_dir=str(self.analysis_folder / "audit_logs"))
             logger.info("Audit trail initialized")
         except ImportError:
@@ -168,7 +168,7 @@ class REVENGAnalyzer:
     def _detect_file_type(self):
         """Detect file type using language detector"""
         try:
-            from ..tools.languages.language_detector import LanguageDetector
+            from ..tools.tools.languages.language_detector import LanguageDetector
 
             detector = LanguageDetector()
             self.file_type = detector.detect(self.binary_path)
@@ -189,8 +189,8 @@ class REVENGAnalyzer:
     def _check_ollama_availability(self):
         """Check if Ollama is available and properly configured"""
         try:
-            from ..tools.ai.ollama_preflight import OllamaPreflightChecker
-            from ..tools.config.config_manager import get_config
+            from ..tools.tools.ai.ollama_preflight import OllamaPreflightChecker
+            from ..tools.tools.config.config_manager import get_config
 
             # Load AI configuration
             config = get_config()
@@ -368,7 +368,7 @@ class REVENGAnalyzer:
         # Run AI recompiler converter
         try:
             result = subprocess.run([
-                sys.executable, "src/tools/core/ai_recompiler_converter.py", self.binary_path
+                sys.executable, "src/tools/tools/core/ai_recompiler_converter.py", self.binary_path
             ], capture_output=True, text=True, timeout=300, check=False)
 
             if result.returncode == 0:
@@ -407,7 +407,7 @@ class REVENGAnalyzer:
         logger.info("Running Java bytecode analysis")
 
         try:
-            from ..tools.languages.java_bytecode_analyzer import JavaBytecodeAnalyzer
+            from ..tools.tools.languages.java_bytecode_analyzer import JavaBytecodeAnalyzer
 
             # Run Java analyzer
             analyzer = JavaBytecodeAnalyzer(output_dir=str(self.analysis_folder / "java_analysis"))
@@ -434,7 +434,7 @@ class REVENGAnalyzer:
         logger.info("Running C# IL analysis")
 
         try:
-            from ..tools.languages.csharp_il_analyzer import CSharpILAnalyzer
+            from ..tools.tools.languages.csharp_il_analyzer import CSharpILAnalyzer
 
             # Run C# IL analyzer
             analyzer = CSharpILAnalyzer(output_dir=str(self.analysis_folder / "csharp_analysis"))
@@ -464,7 +464,7 @@ class REVENGAnalyzer:
         logger.info("Running Python bytecode analysis")
 
         try:
-            from ..tools.languages.python_bytecode_analyzer import PythonBytecodeAnalyzer
+            from ..tools.tools.languages.python_bytecode_analyzer import PythonBytecodeAnalyzer
 
             # Run Python analyzer
             analyzer = PythonBytecodeAnalyzer(output_dir=str(self.analysis_folder / "python_analysis"))
@@ -493,7 +493,7 @@ class REVENGAnalyzer:
         """Disassembly for native binaries (PE/ELF/Mach-O)"""
         # Try Ghidra MCP connection first
         try:
-            from ..tools.config.ghidra_mcp_connector import GhidraMCPConnector
+            from ..tools.tools.config.ghidra_mcp_connector import GhidraMCPConnector
 
             ghidra = GhidraMCPConnector()
             if ghidra.connect():
@@ -521,7 +521,7 @@ class REVENGAnalyzer:
         # Fallback: Run optimal binary analysis
         try:
             result = subprocess.run([
-                sys.executable, "src/tools/core/optimal_binary_analysis.py", self.binary_path
+                sys.executable, "src/tools/tools/core/optimal_binary_analysis.py", self.binary_path
             ], capture_output=True, text=True, timeout=600, check=False)
 
             if result.returncode == 0:
@@ -553,7 +553,7 @@ class REVENGAnalyzer:
         # Run AI source inspector
         try:
             result = subprocess.run([
-                sys.executable, "src/tools/core/ai_source_inspector.py"
+                sys.executable, "src/tools/tools/core/ai_source_inspector.py"
             ], capture_output=True, text=True, timeout=300, check=False)
 
             if result.returncode == 0:
@@ -589,7 +589,7 @@ class REVENGAnalyzer:
         # Run FIXED human readable converter (generates real implementations)
         try:
             result = subprocess.run([
-                sys.executable, "src/tools/core/human_readable_converter_fixed.py"
+                sys.executable, "src/tools/tools/core/human_readable_converter_fixed.py"
             ], capture_output=True, text=True, timeout=300, check=False)
 
             if result.returncode == 0:
@@ -612,7 +612,7 @@ class REVENGAnalyzer:
         # Run deobfuscation tool
         try:
             result = subprocess.run([
-                sys.executable, "src/tools/core/deobfuscation_tool.py"
+                sys.executable, "src/tools/tools/core/deobfuscation_tool.py"
             ], capture_output=True, text=True, timeout=300, check=False)
 
             if result.returncode == 0:
@@ -635,7 +635,7 @@ class REVENGAnalyzer:
         # Run implementation tool
         try:
             result = subprocess.run([
-                sys.executable, "src/tools/core/implementation_tool.py"
+                sys.executable, "src/tools/tools/core/implementation_tool.py"
             ], capture_output=True, text=True, timeout=300, check=False)
 
             if result.returncode == 0:
@@ -679,8 +679,8 @@ class REVENGAnalyzer:
 
         # Run binary validator
         try:
-            from ..tools.core.binary_validator import BinaryValidator
-            from ..tools.binary.validation_manifest_loader import load_validation_manifest
+            from ..tools.tools.core.binary_validator import BinaryValidator
+            from ..tools.tools.binary.validation_manifest_loader import load_validation_manifest
 
             validator = BinaryValidator()
 
@@ -731,7 +731,7 @@ class REVENGAnalyzer:
         try:
             # Lazy load corporate exposure detector
             if not self.corporate_exposure_detector:
-                from ..tools.security.corporate_exposure_detector import CorporateExposureDetector
+                from ..tools.tools.security.corporate_exposure_detector import CorporateExposureDetector
                 self.corporate_exposure_detector = CorporateExposureDetector()
 
             # Run corporate exposure analysis
@@ -762,7 +762,7 @@ class REVENGAnalyzer:
         try:
             # Lazy load vulnerability discovery engine
             if not self.vulnerability_discovery_engine:
-                from ..tools.security.vulnerability_discovery_engine import VulnerabilityDiscoveryEngine
+                from ..tools.tools.security.vulnerability_discovery_engine import VulnerabilityDiscoveryEngine
                 self.vulnerability_discovery_engine = VulnerabilityDiscoveryEngine()
 
             # Run vulnerability discovery
@@ -794,7 +794,7 @@ class REVENGAnalyzer:
         try:
             # Lazy load threat intelligence correlator
             if not self.threat_intelligence_correlator:
-                from ..tools.security.threat_intelligence_correlator import ThreatIntelligenceCorrelator
+                from ..tools.tools.security.threat_intelligence_correlator import ThreatIntelligenceCorrelator
                 self.threat_intelligence_correlator = ThreatIntelligenceCorrelator()
 
             # Run threat intelligence correlation
@@ -825,7 +825,7 @@ class REVENGAnalyzer:
         try:
             # Run enhanced binary reconstruction using existing binary reassembler
             result = subprocess.run([
-                sys.executable, "src/tools/core/binary_reassembler_v2.py", self.binary_path
+                sys.executable, "src/tools/tools/core/binary_reassembler_v2.py", self.binary_path
             ], capture_output=True, text=True, timeout=600, check=False)
 
             if result.returncode == 0:
@@ -857,7 +857,7 @@ class REVENGAnalyzer:
         try:
             # Lazy load demonstration generator
             if not self.demonstration_generator:
-                from ..tools.utils.demonstration_generator import DemonstrationGenerator
+                from ..tools.tools.utils.demonstration_generator import DemonstrationGenerator
                 self.demonstration_generator = DemonstrationGenerator()
 
             # Generate security demonstrations
