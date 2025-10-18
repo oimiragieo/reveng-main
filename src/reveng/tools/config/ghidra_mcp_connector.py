@@ -382,9 +382,8 @@ class GhidraMCPConnector:
     def _get_all_functions(self) -> List[Dict[str, Any]]:
         """Get all functions in the binary from Ghidra server"""
         try:
-            functions = self.http_client.get_json(
-                "list_functions", params={"limit": 10000}, default=[]
-            )
+            # Note: Ghidra MCP bridge uses 'methods' endpoint, not 'list_functions'
+            functions = self.http_client.get_json("methods", params={"limit": 10000}, default=[])
             self.logger.info(f"Retrieved {len(functions)} functions from Ghidra")
             return functions
         except Exception as e:
@@ -467,9 +466,8 @@ class GhidraMCPConnector:
     def get_strings(self, min_length: int = 4) -> List[Dict[str, Any]]:
         """Get all strings from binary via Ghidra"""
         try:
-            strings = self.http_client.get_json(
-                "list_strings", params={"minLength": min_length}, default=[]
-            )
+            # Note: Ghidra MCP bridge uses 'strings' endpoint
+            strings = self.http_client.get_json("strings", params={"limit": 2000}, default=[])
             self.logger.info(f"Retrieved {len(strings)} strings from Ghidra")
             return strings
         except Exception as e:

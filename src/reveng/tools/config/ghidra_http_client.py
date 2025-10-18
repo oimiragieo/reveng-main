@@ -50,12 +50,13 @@ class GhidraHTTPClient:
         # Create a session for connection pooling
         self.session = requests.Session()
 
-        # Configure retry strategy
+        # Configure retry strategy (optimized for faster fallback)
         retry_strategy = Retry(
             total=max_retries,
             backoff_factor=backoff_factor,
             status_forcelist=[429, 500, 502, 503, 504],
             allowed_methods=["GET", "POST", "HEAD"],
+            connect=2,  # Only 2 connection retries for faster fallback
         )
 
         # Mount adapter with retry strategy
