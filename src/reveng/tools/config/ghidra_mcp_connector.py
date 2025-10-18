@@ -570,4 +570,292 @@ class GhidraMCPConnector:
         self.get_imports.cache_clear()
         self.get_exports.cache_clear()
         self.get_segments.cache_clear()
+        self.get_stack_strings.cache_clear()
+        self.get_control_flow_graph.cache_clear()
+        self.get_function_complexity.cache_clear()
+        self.get_data_references.cache_clear()
+        self.get_defined_data.cache_clear()
         self.logger.info("Cleared all Ghidra data caches")
+
+    # Advanced Ghidra API methods
+    @lru_cache(maxsize=128)
+    def get_stack_strings(self) -> List[Dict[str, Any]]:
+        """Get stack strings (anti-analysis evasion detection)"""
+        try:
+            strings = self.http_client.get_json("get_stack_strings", default=[])
+            self.logger.info(f"Retrieved {len(strings)} stack strings from Ghidra")
+            return strings
+        except Exception as e:
+            self.logger.error(f"Failed to get stack strings: {e}")
+            return []
+
+    @lru_cache(maxsize=64)
+    def detect_packer(self) -> Dict[str, Any]:
+        """Detect if binary is packed/obfuscated"""
+        try:
+            result = self.http_client.get_json("detect_packer", default={})
+            self.logger.info(
+                f"Packer detection: {result.get('is_packed', False)} - {result.get('packer_name', 'Unknown')}"
+            )
+            return result
+        except Exception as e:
+            self.logger.error(f"Failed to detect packer: {e}")
+            return {"is_packed": False, "confidence": 0.0, "packer_name": "Unknown"}
+
+    @lru_cache(maxsize=256)
+    def get_suspicious_api_calls(self) -> List[Dict[str, Any]]:
+        """Get suspicious Windows API calls (malware indicators)"""
+        try:
+            apis = self.http_client.get_json("get_suspicious_apis", default=[])
+            self.logger.info(f"Retrieved {len(apis)} suspicious API calls from Ghidra")
+            return apis
+        except Exception as e:
+            self.logger.error(f"Failed to get suspicious APIs: {e}")
+            return []
+
+    @lru_cache(maxsize=128)
+    def get_control_flow_graph(self, function_name: str) -> Dict[str, Any]:
+        """Get control flow graph for visualization"""
+        try:
+            cfg = self.http_client.get_json(f"get_cfg/{function_name}", default={})
+            return cfg
+        except Exception as e:
+            self.logger.error(f"Failed to get CFG for {function_name}: {e}")
+            return {"nodes": [], "edges": []}
+
+    @lru_cache(maxsize=128)
+    def get_function_complexity(self, function_name: str) -> Dict[str, Any]:
+        """Calculate cyclomatic complexity and other metrics"""
+        try:
+            complexity = self.http_client.get_json(f"get_complexity/{function_name}", default={})
+            return complexity
+        except Exception as e:
+            self.logger.error(f"Failed to get complexity for {function_name}: {e}")
+            return {"cyclomatic_complexity": 0, "lines_of_code": 0, "parameters": 0}
+
+    def find_code_patterns(self, pattern: str) -> List[Dict[str, Any]]:
+        """Search for specific code patterns (regex on disassembly)"""
+        try:
+            matches = self.http_client.post_json(
+                "search_patterns", json={"pattern": pattern}, default=[]
+            )
+            self.logger.info(f"Found {len(matches)} matches for pattern '{pattern}'")
+            return matches
+        except Exception as e:
+            self.logger.error(f"Failed to search for pattern '{pattern}': {e}")
+            return []
+
+    @lru_cache(maxsize=256)
+    def get_data_flow(self, function_name: str, variable: str = None) -> Dict[str, Any]:
+        """Perform data flow analysis for a function"""
+        try:
+            params = {"function": function_name}
+            if variable:
+                params["variable"] = variable
+            data_flow = self.http_client.get_json("analyze_data_flow", params=params, default={})
+            return data_flow
+        except Exception as e:
+            self.logger.error(f"Failed to get data flow for {function_name}: {e}")
+            return {"sources": [], "sinks": [], "paths": []}
+
+    @lru_cache(maxsize=512)
+    def get_data_references(self, address: str) -> List[Dict[str, Any]]:
+        """Get data references to/from an address"""
+        try:
+            refs = self.http_client.get_json(f"get_data_refs/{address}", default=[])
+            return refs
+        except Exception as e:
+            self.logger.error(f"Failed to get data references for {address}: {e}")
+            return []
+
+    @lru_cache(maxsize=128)
+    def get_defined_data(self) -> List[Dict[str, Any]]:
+        """Get all defined data in the binary"""
+        try:
+            data = self.http_client.get_json("list_defined_data", default=[])
+            self.logger.info(f"Retrieved {len(data)} defined data items from Ghidra")
+            return data
+        except Exception as e:
+            self.logger.error(f"Failed to get defined data: {e}")
+            return []
+
+    def get_disassembly(self, start_address: str, length: int = 100) -> Dict[str, Any]:
+        """Get disassembly from a specific address"""
+        try:
+            disasm = self.http_client.get_json(
+                "get_disassembly",
+                params={"address": start_address, "length": length},
+                default={},
+            )
+            return disasm
+        except Exception as e:
+            self.logger.error(f"Failed to get disassembly at {start_address}: {e}")
+            return {"instructions": []}
+
+    @lru_cache(maxsize=64)
+    def get_entry_points(self) -> List[Dict[str, Any]]:
+        """Get all entry points in the binary"""
+        try:
+            entry_points = self.http_client.get_json("get_entry_points", default=[])
+            self.logger.info(f"Retrieved {len(entry_points)} entry points from Ghidra")
+            return entry_points
+        except Exception as e:
+            self.logger.error(f"Failed to get entry points: {e}")
+            return []
+
+    def get_function_signature(self, function_name: str) -> Dict[str, Any]:
+        """Get detailed function signature"""
+        try:
+            signature = self.http_client.get_json(f"get_signature/{function_name}", default={})
+            return signature
+        except Exception as e:
+            self.logger.error(f"Failed to get signature for {function_name}: {e}")
+            return {"return_type": "unknown", "parameters": [], "calling_convention": "unknown"}
+
+    def get_comments(self, address: str = None) -> List[Dict[str, Any]]:
+        """Get comments (optionally at specific address)"""
+        try:
+            if address:
+                comments = self.http_client.get_json(f"get_comments/{address}", default=[])
+            else:
+                comments = self.http_client.get_json("get_all_comments", default=[])
+            return comments
+        except Exception as e:
+            self.logger.error(f"Failed to get comments: {e}")
+            return []
+
+    def set_comment(self, address: str, comment: str, comment_type: str = "EOL") -> bool:
+        """Set a comment at a specific address"""
+        try:
+            response = self.http_client.post_json(
+                "set_comment",
+                json={"address": address, "comment": comment, "type": comment_type},
+                default={},
+            )
+            return response.get("success", False)
+        except Exception as e:
+            self.logger.error(f"Failed to set comment at {address}: {e}")
+            return False
+
+    def rename_function(self, old_name: str, new_name: str) -> bool:
+        """Rename a function in Ghidra"""
+        try:
+            response = self.http_client.post_json(
+                "rename_function", json={"old_name": old_name, "new_name": new_name}, default={}
+            )
+            success = response.get("success", False)
+            if success:
+                self.logger.info(f"Renamed function '{old_name}' to '{new_name}'")
+            return success
+        except Exception as e:
+            self.logger.error(f"Failed to rename function '{old_name}': {e}")
+            return False
+
+    def get_register_usage(self, function_name: str) -> Dict[str, Any]:
+        """Get register usage analysis for a function"""
+        try:
+            usage = self.http_client.get_json(f"get_register_usage/{function_name}", default={})
+            return usage
+        except Exception as e:
+            self.logger.error(f"Failed to get register usage for {function_name}: {e}")
+            return {"registers_read": [], "registers_written": []}
+
+    # Batch operations for performance
+    def batch_decompile(self, function_names: List[str]) -> Dict[str, str]:
+        """Batch decompile multiple functions in one request"""
+        try:
+            response = self.http_client.post_json(
+                "batch_decompile", json={"functions": function_names}, timeout=120, default={}
+            )
+            self.logger.info(f"Batch decompiled {len(response)} functions")
+            return response
+        except Exception as e:
+            self.logger.error(f"Batch decompilation failed: {e}")
+            # Fallback to individual decompilation
+            return {name: self._get_function_decompilation(name) for name in function_names}
+
+    def batch_get_function_info(self, addresses: List[str]) -> Dict[str, Dict[str, Any]]:
+        """Batch get function information for multiple addresses"""
+        try:
+            response = self.http_client.post_json(
+                "batch_get_functions", json={"addresses": addresses}, default={}
+            )
+            return response
+        except Exception as e:
+            self.logger.error(f"Batch function info retrieval failed: {e}")
+            return {}
+
+    # Advanced analysis methods
+    def find_crypto_constants(self) -> List[Dict[str, Any]]:
+        """Find cryptographic constants (AES S-boxes, RC4 tables, etc.)"""
+        try:
+            constants = self.http_client.get_json("find_crypto_constants", default=[])
+            self.logger.info(f"Found {len(constants)} potential crypto constants")
+            return constants
+        except Exception as e:
+            self.logger.error(f"Failed to find crypto constants: {e}")
+            return []
+
+    def detect_encryption_loops(self) -> List[Dict[str, Any]]:
+        """Detect loops that might be encryption/decryption routines"""
+        try:
+            loops = self.http_client.get_json("detect_encryption_loops", default=[])
+            self.logger.info(f"Found {len(loops)} potential encryption loops")
+            return loops
+        except Exception as e:
+            self.logger.error(f"Failed to detect encryption loops: {e}")
+            return []
+
+    def get_function_call_graph(self, max_depth: int = 3) -> Dict[str, Any]:
+        """Get complete function call graph"""
+        try:
+            call_graph = self.http_client.get_json(
+                "get_call_graph", params={"max_depth": max_depth}, default={}
+            )
+            return call_graph
+        except Exception as e:
+            self.logger.error(f"Failed to get call graph: {e}")
+            return {"nodes": [], "edges": []}
+
+    def execute_ghidra_script(
+        self, script_name: str, params: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
+        """Execute a custom Ghidra script via HTTP"""
+        try:
+            payload = {"script": script_name}
+            if params:
+                payload["parameters"] = params
+
+            response = self.http_client.post_json(
+                "execute_script", json=payload, timeout=120, default={}
+            )
+            self.logger.info(f"Executed Ghidra script: {script_name}")
+            return response
+        except Exception as e:
+            self.logger.error(f"Ghidra script execution failed for '{script_name}': {e}")
+            return {"error": str(e), "success": False}
+
+    def save_ghidra_project(self, project_name: str) -> bool:
+        """Save current Ghidra analysis as a project"""
+        try:
+            response = self.http_client.post_json("save_project", json={"name": project_name})
+            success = response.get("success", False)
+            if success:
+                self.logger.info(f"Saved Ghidra project: {project_name}")
+            return success
+        except Exception as e:
+            self.logger.error(f"Failed to save Ghidra project: {e}")
+            return False
+
+    def load_ghidra_project(self, project_name: str) -> bool:
+        """Load a previously saved Ghidra project"""
+        try:
+            response = self.http_client.post_json("load_project", json={"name": project_name})
+            success = response.get("success", False)
+            if success:
+                self.logger.info(f"Loaded Ghidra project: {project_name}")
+                self.clear_cache()  # Clear cache after loading new project
+            return success
+        except Exception as e:
+            self.logger.error(f"Failed to load Ghidra project: {e}")
+            return False
