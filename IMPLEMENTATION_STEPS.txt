@@ -1,0 +1,51 @@
+SEQUENTIAL IMPLEMENTATION STEPS - Ghidra Integration Fix
+
+Step 1: Create GhidraHTTPClient base class
+- File: src/reveng/tools/config/ghidra_http_client.py
+- Features: requests.Session, connection pooling, error handling
+- Methods: get(), post(), health_check()
+- Time: 1 hour
+
+Step 2: Refactor GhidraMCPConnector
+- Replace lines 272-438 with real HTTP calls
+- Use GhidraHTTPClient for all communication
+- Add proper error handling
+- Time: 2 hours
+
+Step 3: Add caching layer
+- Use functools.lru_cache on expensive methods
+- Cache decompilation results
+- Cache function listings
+- Time: 30 minutes
+
+Step 4: Test implementations
+- Unit tests for HTTP client
+- Integration tests with Ghidra server
+- Verify all endpoints work
+- Time: 1 hour
+
+Step 5: Lint and format
+- Run black on modified files
+- Run isort on modified files
+- Fix any linting errors
+- Time: 15 minutes
+
+Step 6: Security scan
+- Run semgrep
+- Fix any vulnerabilities
+- Re-lint after fixes
+- Time: 30 minutes
+
+Step 7: End-to-end test
+- Test on KARP.exe
+- Verify improvements
+- Document results
+- Time: 30 minutes
+
+Step 8: Git commit and push
+- Stage changes
+- Commit with descriptive message
+- Push to GitHub
+- Time: 15 minutes
+
+Total Time: ~6 hours

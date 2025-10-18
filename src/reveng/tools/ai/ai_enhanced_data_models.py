@@ -772,8 +772,8 @@ class ThreatFamily:
 
 
 @dataclass
-class MalwareClassification:
-    """ML-based malware classification result"""
+class MLMalwareClassificationResult:
+    """ML-based malware classification result (advanced version)"""
 
     family: str
     confidence: float
@@ -910,7 +910,7 @@ class MLPipelineResult:
     pipeline_name: str
     stages_completed: List[str] = field(default_factory=list)
     vulnerability_predictions: List[VulnerabilityPrediction] = field(default_factory=list)
-    malware_classifications: List[MalwareClassification] = field(default_factory=list)
+    malware_classifications: List[MLMalwareClassificationResult] = field(default_factory=list)
     code_summaries: List[CodeSummary] = field(default_factory=list)
     performance_metrics: Dict[str, ModelPerformanceMetrics] = field(default_factory=dict)
     execution_time: float = 0.0
@@ -932,7 +932,7 @@ class EnhancedUniversalAnalysisResult:
     # ML-enhanced results
     ml_pipeline_result: Optional[MLPipelineResult] = None
     vulnerability_predictions: List[VulnerabilityPrediction] = field(default_factory=list)
-    malware_classification: Optional[MalwareClassification] = None
+    malware_classification: Optional[MLMalwareClassificationResult] = None
     code_summary: Optional[CodeSummary] = None
     similarity_analysis: Optional[SimilarityAnalysis] = None
 
