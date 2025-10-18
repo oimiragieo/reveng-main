@@ -48,8 +48,19 @@ This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDU
 
 3. **Verify Installation**
    ```bash
-   python reveng_analyzer.py --help
+   reveng --help
    python -m pytest tests/
+   ```
+
+4. **Ghidra Integration (Optional)**
+   ```bash
+   # For advanced binary analysis
+   cd external/ghidra
+   ./gradlew buildGhidra
+   
+   # For AI-powered Ghidra automation
+   cd external/ghidra-mcp
+   pip install -r requirements.txt
    ```
 
 ## How to Contribute
@@ -112,6 +123,22 @@ We welcome several types of contributions:
    git push origin feature/your-feature-name
    ```
    Then create a pull request on GitHub.
+
+## Project Structure
+
+REVENG follows a modular structure with clear separation of concerns:
+
+- `src/reveng/` - Main package source code
+  - `tools/` - Analysis tools (categorized by function)
+  - `web/` - Web interface backend
+  - `ghidra/` - Ghidra integration
+- `external/` - External tools and dependencies
+  - `ghidra/` - Ghidra source code
+  - `ghidra-mcp/` - Ghidra MCP bridge
+- `docs/` - Documentation
+- `tests/` - Test suite
+
+For detailed structure information, see [Project Structure](docs/development/PROJECT_STRUCTURE.md).
 
 ## Code Style Guidelines
 

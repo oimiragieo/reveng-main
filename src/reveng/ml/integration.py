@@ -4,24 +4,26 @@ ML Integration Module for REVENG
 Integrates ML-powered features with the core REVENG analysis pipeline.
 """
 
+import json
 import os
 import sys
-import json
 import time
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, Union
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..core.errors import REVENGError, AnalysisFailureError, create_error_context
+from ..core.errors import AnalysisFailureError, REVENGError, create_error_context
 from ..core.logger import get_logger
-from .code_reconstruction import MLCodeReconstruction, CodeFragment, ReconstructionTask, ModelType
-from .anomaly_detection import MLAnomalyDetection, AnomalyType, AnomalySeverity
+from .anomaly_detection import AnomalySeverity, AnomalyType, MLAnomalyDetection
+from .code_reconstruction import CodeFragment, MLCodeReconstruction, ModelType, ReconstructionTask
 
 logger = get_logger(__name__)
+
 
 @dataclass
 class MLIntegrationConfig:
     """Configuration for ML integration"""
+
     enable_code_reconstruction: bool = True
     enable_anomaly_detection: bool = True
     enable_threat_intelligence: bool = True
@@ -34,8 +36,9 @@ class MLIntegrationConfig:
             self.model_preferences = {
                 "decompilation": "codebert",
                 "anomaly_detection": "isolation_forest",
-                "threat_intelligence": "gpt"
+                "threat_intelligence": "gpt",
             }
+
 
 class MLIntegration:
     """ML integration engine for REVENG"""
@@ -79,13 +82,15 @@ class MLIntegration:
             results = {
                 "binary_path": binary_path,
                 "analysis_timestamp": time.time(),
-                "ml_analysis": {}
+                "ml_analysis": {},
             }
 
             # Code reconstruction
             if self.code_reconstruction and self.config.enable_code_reconstruction:
                 self.logger.info("Performing code reconstruction...")
-                reconstruction_results = self._perform_code_reconstruction(binary_path, analysis_data)
+                reconstruction_results = self._perform_code_reconstruction(
+                    binary_path, analysis_data
+                )
                 results["ml_analysis"]["code_reconstruction"] = reconstruction_results
 
             # Anomaly detection
@@ -111,14 +116,13 @@ class MLIntegration:
             self.logger.error(f"ML analysis failed: {e}")
             raise
 
-    def _perform_code_reconstruction(self, binary_path: str, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _perform_code_reconstruction(
+        self, binary_path: str, analysis_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Perform code reconstruction analysis"""
 
         try:
-            reconstruction_results = {
-                "reconstructions": [],
-                "summary": {}
-            }
+            reconstruction_results = {"reconstructions": [], "summary": {}}
 
             # Extract code fragments from analysis data
             code_fragments = self._extract_code_fragments(analysis_data)
@@ -134,10 +138,14 @@ class MLIntegration:
                     reconstruction_results["reconstructions"].append(result)
 
                 except Exception as e:
-                    self.logger.warning(f"Failed to reconstruct code fragment at {hex(fragment.address)}: {e}")
+                    self.logger.warning(
+                        f"Failed to reconstruct code fragment at {hex(fragment.address)}: {e}"
+                    )
 
             # Generate summary
-            reconstruction_results["summary"] = self._generate_reconstruction_summary(reconstruction_results["reconstructions"])
+            reconstruction_results["summary"] = self._generate_reconstruction_summary(
+                reconstruction_results["reconstructions"]
+            )
 
             return reconstruction_results
 
@@ -155,10 +163,7 @@ class MLIntegration:
             # Generate summary
             summary = self._generate_anomaly_summary(anomalies)
 
-            return {
-                "anomalies": anomalies,
-                "summary": summary
-            }
+            return {"anomalies": anomalies, "summary": summary}
 
         except Exception as e:
             self.logger.error(f"Anomaly detection failed: {e}")
@@ -172,15 +177,14 @@ class MLIntegration:
                 return {"error": "Code reconstruction not available"}
 
             # Generate threat intelligence
-            threat_intelligence = self.code_reconstruction.generate_threat_intelligence(analysis_data)
+            threat_intelligence = self.code_reconstruction.generate_threat_intelligence(
+                analysis_data
+            )
 
             # Generate summary
             summary = self._generate_threat_summary(threat_intelligence)
 
-            return {
-                "threat_intelligence": threat_intelligence,
-                "summary": summary
-            }
+            return {"threat_intelligence": threat_intelligence, "summary": summary}
 
         except Exception as e:
             self.logger.error(f"Threat intelligence generation failed: {e}")
@@ -201,7 +205,7 @@ class MLIntegration:
                         size=instruction.get("size", 0),
                         assembly_code=instruction.get("mnemonic", ""),
                         hex_data=bytes.fromhex(instruction.get("bytes", "")),
-                        context={"function": instruction.get("function", "")}
+                        context={"function": instruction.get("function", "")},
                     )
                     fragments.append(fragment)
 
@@ -214,7 +218,7 @@ class MLIntegration:
                         size=func.get("size", 0),
                         assembly_code=func.get("disassembly", ""),
                         hex_data=b"",  # Would need to extract from binary
-                        context={"function_name": func.get("name", "")}
+                        context={"function_name": func.get("name", "")},
                     )
                     fragments.append(fragment)
 
@@ -224,7 +228,9 @@ class MLIntegration:
             self.logger.error(f"Failed to extract code fragments: {e}")
             return []
 
-    def _select_reconstruction_task(self, fragment: CodeFragment, analysis_data: Dict[str, Any]) -> ReconstructionTask:
+    def _select_reconstruction_task(
+        self, fragment: CodeFragment, analysis_data: Dict[str, Any]
+    ) -> ReconstructionTask:
         """Select appropriate reconstruction task for fragment"""
 
         try:
@@ -271,7 +277,7 @@ class MLIntegration:
                 "average_confidence": average_confidence,
                 "total_processing_time": total_processing_time,
                 "task_distribution": task_distribution,
-                "model_distribution": model_distribution
+                "model_distribution": model_distribution,
             }
 
         except Exception as e:
@@ -307,7 +313,7 @@ class MLIntegration:
                 "average_confidence": average_confidence,
                 "average_score": average_score,
                 "severity_distribution": severity_distribution,
-                "type_distribution": type_distribution
+                "type_distribution": type_distribution,
             }
 
         except Exception as e:
@@ -341,7 +347,7 @@ class MLIntegration:
                 "total_threats": total_threats,
                 "average_confidence": average_confidence,
                 "severity_distribution": severity_distribution,
-                "type_distribution": type_distribution
+                "type_distribution": type_distribution,
             }
 
         except Exception as e:
@@ -354,10 +360,12 @@ class MLIntegration:
         try:
             # Create output filename
             binary_name = Path(binary_path).stem
-            output_file = os.path.join(self.config.output_directory, f"{binary_name}_ml_analysis.json")
+            output_file = os.path.join(
+                self.config.output_directory, f"{binary_name}_ml_analysis.json"
+            )
 
             # Save results
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 json.dump(results, f, indent=2, default=str)
 
             self.logger.info(f"ML analysis results saved to: {output_file}")
@@ -374,12 +382,12 @@ class MLIntegration:
             status = {
                 "code_reconstruction": {
                     "available": self.code_reconstruction is not None,
-                    "models": {}
+                    "models": {},
                 },
                 "anomaly_detection": {
                     "available": self.anomaly_detection is not None,
-                    "models": {}
-                }
+                    "models": {},
+                },
             }
 
             # Get code reconstruction model status
@@ -388,7 +396,7 @@ class MLIntegration:
                     status["code_reconstruction"]["models"][model_type.value] = {
                         "loaded": model_info.get("loaded", False),
                         "local": model_info.get("local", False),
-                        "config": model_info.get("config", {})
+                        "config": model_info.get("config", {}),
                     }
 
             # Get anomaly detection model status
@@ -399,7 +407,7 @@ class MLIntegration:
                         "type": model.type.value,
                         "features": model.features,
                         "threshold": model.threshold,
-                        "performance": model.performance
+                        "performance": model.performance,
                     }
 
             return status

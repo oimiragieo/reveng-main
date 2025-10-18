@@ -5,23 +5,25 @@ Comprehensive .NET assembly analysis with framework detection, GUI recognition,
 and business logic extraction.
 """
 
+import json
+import logging
 import os
-import sys
 import subprocess
+import sys
 import tempfile
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from enum import Enum
-import logging
-import json
-import xml.etree.ElementTree as ET
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..core.errors import AnalysisFailureError, MissingDependencyError, create_error_context
 from ..core.logger import get_logger
 
+
 class DotNetFramework(Enum):
     """.NET Framework versions"""
+
     FRAMEWORK_2_0 = "2.0"
     FRAMEWORK_3_0 = "3.0"
     FRAMEWORK_3_5 = "3.5"
@@ -35,8 +37,10 @@ class DotNetFramework(Enum):
     NET_7_0 = "7.0"
     NET_8_0 = "8.0"
 
+
 class GUIFramework(Enum):
     """GUI Framework types"""
+
     WINFORMS = "Windows Forms"
     WPF = "Windows Presentation Foundation"
     UWP = "Universal Windows Platform"
@@ -45,9 +49,11 @@ class GUIFramework(Enum):
     SERVICE = "Windows Service"
     UNKNOWN = "Unknown"
 
+
 @dataclass
 class DotNetAnalysisResult:
     """Result of .NET analysis"""
+
     framework_version: str
     runtime_version: str
     assembly_name: str
@@ -63,14 +69,17 @@ class DotNetAnalysisResult:
     pe_sections: Dict[str, Any]
     analysis_confidence: float
 
+
 @dataclass
 class AssemblyInfo:
     """Assembly information"""
+
     name: str
     version: str
     culture: str
     public_key_token: str
     processor_architecture: str
+
 
 class DotNetAnalyzer:
     """Comprehensive .NET assembly analyzer"""
@@ -138,7 +147,7 @@ class DotNetAnalyzer:
                 obfuscation_level=obfuscation_level,
                 api_calls=api_calls,
                 pe_sections=pe_sections,
-                analysis_confidence=confidence
+                analysis_confidence=confidence,
             )
 
             self.logger.info(f"Completed .NET analysis with {confidence:.2f} confidence")
@@ -146,16 +155,14 @@ class DotNetAnalyzer:
 
         except Exception as e:
             context = create_error_context(
-                "dotnet_analyzer",
-                "analyze_assembly",
-                binary_path=binary_path
+                "dotnet_analyzer", "analyze_assembly", binary_path=binary_path
             )
             raise AnalysisFailureError(
                 "dotnet_analysis",
                 binary_path,
                 context=context,
                 fallback_available=True,
-                original_exception=e
+                original_exception=e,
             )
 
     def _get_assembly_info(self, binary_path: str) -> AssemblyInfo:
@@ -167,11 +174,12 @@ class DotNetAnalyzer:
                 raise MissingDependencyError("ilspy")
 
             # Run ILSpy to get assembly metadata
-            result = subprocess.run([
-                ilspy_path,
-                "--list",
-                binary_path
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                [ilspy_path, "--list", binary_path],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             if result.returncode != 0:
                 raise AnalysisFailureError("ilspy_metadata", binary_path)
@@ -187,18 +195,18 @@ class DotNetAnalyzer:
                 version="Unknown",
                 culture="",
                 public_key_token="",
-                processor_architecture=""
+                processor_architecture="",
             )
 
     def _detect_framework_version(self, binary_path: str) -> str:
         """Detect .NET framework version"""
         try:
             # Check PE headers for .NET metadata
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Look for .NET metadata directory
-            if b'.NET' in data:
+            if b".NET" in data:
                 # Try to extract version from metadata
                 version = self._extract_framework_version_from_metadata(data)
                 if version:
@@ -220,7 +228,7 @@ class DotNetAnalyzer:
         """Detect .NET runtime version"""
         try:
             # Check for runtime version in PE headers
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Look for runtime version string
@@ -288,11 +296,12 @@ class DotNetAnalyzer:
             # Use ILSpy to get dependencies
             ilspy_path = self._get_ilspy_path()
             if ilspy_path:
-                result = subprocess.run([
-                    ilspy_path,
-                    "--list",
-                    binary_path
-                ], capture_output=True, text=True, timeout=30)
+                result = subprocess.run(
+                    [ilspy_path, "--list", binary_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
 
                 if result.returncode == 0:
                     dependencies = self._parse_dependencies_from_ilspy(result.stdout)
@@ -307,10 +316,10 @@ class DotNetAnalyzer:
         """Extract embedded resources"""
         try:
             resources = {
-                'icons': [],
-                'strings': [],
-                'manifests': [],
-                'custom_resources': []
+                "icons": [],
+                "strings": [],
+                "manifests": [],
+                "custom_resources": [],
             }
 
             # Use Resource Hacker to extract resources
@@ -332,11 +341,12 @@ class DotNetAnalyzer:
             # Use ILSpy to find entry points
             ilspy_path = self._get_ilspy_path()
             if ilspy_path:
-                result = subprocess.run([
-                    ilspy_path,
-                    "--list",
-                    binary_path
-                ], capture_output=True, text=True, timeout=30)
+                result = subprocess.run(
+                    [ilspy_path, "--list", binary_path],
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                )
 
                 if result.returncode == 0:
                     entry_points = self._parse_entry_points_from_ilspy(result.stdout)
@@ -351,13 +361,13 @@ class DotNetAnalyzer:
         """Extract business logic and application purpose"""
         try:
             business_logic = {
-                'application_domain': 'Unknown',
-                'data_flows': [],
-                'file_operations': [],
-                'report_generation': False,
-                'network_operations': [],
-                'database_operations': [],
-                'security_features': []
+                "application_domain": "Unknown",
+                "data_flows": [],
+                "file_operations": [],
+                "report_generation": False,
+                "network_operations": [],
+                "database_operations": [],
+                "security_features": [],
             }
 
             # Analyze strings for business logic indicators
@@ -380,10 +390,9 @@ class DotNetAnalyzer:
             # Use Detect It Easy
             die_path = self._get_die_path()
             if die_path:
-                result = subprocess.run([
-                    die_path,
-                    binary_path
-                ], capture_output=True, text=True, timeout=30)
+                result = subprocess.run(
+                    [die_path, binary_path], capture_output=True, text=True, timeout=30
+                )
 
                 if result.returncode == 0:
                     return self._parse_die_output_for_packing(result.stdout)
@@ -402,11 +411,11 @@ class DotNetAnalyzer:
             strings = self._extract_strings(binary_path)
             obfuscation_indicators = self._detect_obfuscation_indicators(strings)
 
-            if obfuscation_indicators['high']:
+            if obfuscation_indicators["high"]:
                 return "High"
-            elif obfuscation_indicators['medium']:
+            elif obfuscation_indicators["medium"]:
                 return "Medium"
-            elif obfuscation_indicators['low']:
+            elif obfuscation_indicators["low"]:
                 return "Low"
             else:
                 return "None"
@@ -434,25 +443,25 @@ class DotNetAnalyzer:
         """Analyze PE sections"""
         try:
             sections = {
-                'text': {},
-                'data': {},
-                'resources': {},
-                'imports': {},
-                'exports': {}
+                "text": {},
+                "data": {},
+                "resources": {},
+                "imports": {},
+                "exports": {},
             }
 
             # Basic PE section analysis
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Analyze .text section
-            sections['text'] = self._analyze_text_section(data)
+            sections["text"] = self._analyze_text_section(data)
 
             # Analyze .data section
-            sections['data'] = self._analyze_data_section(data)
+            sections["data"] = self._analyze_data_section(data)
 
             # Analyze .rsrc section
-            sections['resources'] = self._analyze_resource_section(data)
+            sections["resources"] = self._analyze_resource_section(data)
 
             return sections
 
@@ -461,10 +470,7 @@ class DotNetAnalyzer:
             return {}
 
     def _calculate_analysis_confidence(
-        self,
-        framework_version: str,
-        gui_framework: str,
-        business_logic: Dict[str, Any]
+        self, framework_version: str, gui_framework: str, business_logic: Dict[str, Any]
     ) -> float:
         """Calculate analysis confidence score"""
         confidence = 0.0
@@ -478,16 +484,16 @@ class DotNetAnalyzer:
             confidence += 0.2
 
         # Business logic confidence
-        if business_logic.get('application_domain') != 'Unknown':
+        if business_logic.get("application_domain") != "Unknown":
             confidence += 0.2
 
-        if business_logic.get('data_flows'):
+        if business_logic.get("data_flows"):
             confidence += 0.1
 
-        if business_logic.get('file_operations'):
+        if business_logic.get("file_operations"):
             confidence += 0.1
 
-        if business_logic.get('report_generation'):
+        if business_logic.get("report_generation"):
             confidence += 0.1
 
         return min(confidence, 1.0)
@@ -497,18 +503,21 @@ class DotNetAnalyzer:
         """Get ILSpy executable path"""
         # Check if ILSpy is installed
         from ..core.dependency_manager import DependencyManager
+
         dm = DependencyManager()
         return dm.get_tool_path("ilspy")
 
     def _get_resource_hacker_path(self) -> Optional[str]:
         """Get Resource Hacker executable path"""
         from ..core.dependency_manager import DependencyManager
+
         dm = DependencyManager()
         return dm.get_tool_path("resource_hacker")
 
     def _get_die_path(self) -> Optional[str]:
         """Get Detect It Easy executable path"""
         from ..core.dependency_manager import DependencyManager
+
         dm = DependencyManager()
         return dm.get_tool_path("detect_it_easy")
 
@@ -516,7 +525,7 @@ class DotNetAnalyzer:
         """Extract strings from binary"""
         try:
             strings = []
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Simple string extraction
@@ -541,60 +550,38 @@ class DotNetAnalyzer:
             "Form",
             "Button",
             "TextBox",
-            "MessageBox"
+            "MessageBox",
         ]
         return any(indicator in strings for indicator in winforms_indicators)
 
     def _has_wpf_references(self, binary_path: str) -> bool:
         """Check for WPF references"""
         strings = self._extract_strings(binary_path)
-        wpf_indicators = [
-            "System.Windows",
-            "XAML",
-            "WPF",
-            "PresentationFramework"
-        ]
+        wpf_indicators = ["System.Windows", "XAML", "WPF", "PresentationFramework"]
         return any(indicator in strings for indicator in wpf_indicators)
 
     def _has_uwp_references(self, binary_path: str) -> bool:
         """Check for UWP references"""
         strings = self._extract_strings(binary_path)
-        uwp_indicators = [
-            "Windows.UI",
-            "Windows.ApplicationModel",
-            "UWP"
-        ]
+        uwp_indicators = ["Windows.UI", "Windows.ApplicationModel", "UWP"]
         return any(indicator in strings for indicator in uwp_indicators)
 
     def _has_web_references(self, binary_path: str) -> bool:
         """Check for Web application references"""
         strings = self._extract_strings(binary_path)
-        web_indicators = [
-            "System.Web",
-            "ASP.NET",
-            "HttpContext",
-            "WebRequest"
-        ]
+        web_indicators = ["System.Web", "ASP.NET", "HttpContext", "WebRequest"]
         return any(indicator in strings for indicator in web_indicators)
 
     def _has_service_references(self, binary_path: str) -> bool:
         """Check for Windows Service references"""
         strings = self._extract_strings(binary_path)
-        service_indicators = [
-            "System.ServiceProcess",
-            "ServiceBase",
-            "Windows Service"
-        ]
+        service_indicators = ["System.ServiceProcess", "ServiceBase", "Windows Service"]
         return any(indicator in strings for indicator in service_indicators)
 
     def _is_console_application(self, binary_path: str) -> bool:
         """Check if application is console application"""
         strings = self._extract_strings(binary_path)
-        console_indicators = [
-            "Console.WriteLine",
-            "Console.Read",
-            "System.Console"
-        ]
+        console_indicators = ["Console.WriteLine", "Console.Read", "System.Console"]
         return any(indicator in strings for indicator in console_indicators)
 
     def _analyze_strings_for_business_logic(self, strings: List[str]) -> Dict[str, Any]:
@@ -603,29 +590,30 @@ class DotNetAnalyzer:
 
         # Check for application domain indicators
         domain_indicators = {
-            'security': ['vulnerability', 'security', 'scan', 'audit'],
-            'reporting': ['report', 'export', 'generate', 'template'],
-            'database': ['database', 'sql', 'query', 'connection'],
-            'web': ['http', 'url', 'web', 'api'],
-            'malware': ['inject', 'hook', 'persist', 'steal']
+            "security": ["vulnerability", "security", "scan", "audit"],
+            "reporting": ["report", "export", "generate", "template"],
+            "database": ["database", "sql", "query", "connection"],
+            "web": ["http", "url", "web", "api"],
+            "malware": ["inject", "hook", "persist", "steal"],
         }
 
         for domain, indicators in domain_indicators.items():
-            if any(indicator in ' '.join(strings).lower() for indicator in indicators):
-                business_logic['application_domain'] = domain
+            if any(indicator in " ".join(strings).lower() for indicator in indicators):
+                business_logic["application_domain"] = domain
                 break
 
         # Check for file operations
-        file_indicators = ['.xml', '.xlsx', '.pdf', '.csv', '.json']
-        business_logic['file_operations'] = [
-            indicator for indicator in file_indicators
+        file_indicators = [".xml", ".xlsx", ".pdf", ".csv", ".json"]
+        business_logic["file_operations"] = [
+            indicator
+            for indicator in file_indicators
             if any(indicator in string.lower() for string in strings)
         ]
 
         # Check for report generation
-        report_indicators = ['excel', 'pdf', 'html', 'report', 'template']
-        business_logic['report_generation'] = any(
-            indicator in ' '.join(strings).lower() for indicator in report_indicators
+        report_indicators = ["excel", "pdf", "html", "report", "template"]
+        business_logic["report_generation"] = any(
+            indicator in " ".join(strings).lower() for indicator in report_indicators
         )
 
         return business_logic
@@ -636,17 +624,15 @@ class DotNetAnalyzer:
 
         # Categorize API calls
         api_categories = {
-            'file_io': ['CreateFile', 'ReadFile', 'WriteFile', 'DeleteFile'],
-            'network': ['socket', 'connect', 'send', 'recv'],
-            'registry': ['RegOpenKey', 'RegSetValue', 'RegQueryValue'],
-            'process': ['CreateProcess', 'TerminateProcess', 'OpenProcess'],
-            'crypto': ['CryptEncrypt', 'CryptDecrypt', 'CryptHash']
+            "file_io": ["CreateFile", "ReadFile", "WriteFile", "DeleteFile"],
+            "network": ["socket", "connect", "send", "recv"],
+            "registry": ["RegOpenKey", "RegSetValue", "RegQueryValue"],
+            "process": ["CreateProcess", "TerminateProcess", "OpenProcess"],
+            "crypto": ["CryptEncrypt", "CryptDecrypt", "CryptHash"],
         }
 
         for category, apis in api_categories.items():
-            business_logic[f'{category}_apis'] = [
-                api for api in api_calls if api in apis
-            ]
+            business_logic[f"{category}_apis"] = [api for api in api_calls if api in apis]
 
         return business_logic
 
@@ -654,11 +640,23 @@ class DotNetAnalyzer:
         """Filter API calls from strings"""
         api_calls = []
         common_apis = [
-            'CreateFile', 'ReadFile', 'WriteFile', 'DeleteFile',
-            'CreateProcess', 'TerminateProcess', 'OpenProcess',
-            'RegOpenKey', 'RegSetValue', 'RegQueryValue',
-            'socket', 'connect', 'send', 'recv',
-            'CryptEncrypt', 'CryptDecrypt', 'CryptHash'
+            "CreateFile",
+            "ReadFile",
+            "WriteFile",
+            "DeleteFile",
+            "CreateProcess",
+            "TerminateProcess",
+            "OpenProcess",
+            "RegOpenKey",
+            "RegSetValue",
+            "RegQueryValue",
+            "socket",
+            "connect",
+            "send",
+            "recv",
+            "CryptEncrypt",
+            "CryptDecrypt",
+            "CryptHash",
         ]
 
         for string in strings:
@@ -669,33 +667,29 @@ class DotNetAnalyzer:
 
     def _detect_obfuscation_indicators(self, strings: List[str]) -> Dict[str, bool]:
         """Detect obfuscation indicators"""
-        indicators = {
-            'high': False,
-            'medium': False,
-            'low': False
-        }
+        indicators = {"high": False, "medium": False, "low": False}
 
         # High obfuscation indicators
-        high_indicators = ['obfuscated', 'encrypted', 'packed']
-        if any(indicator in ' '.join(strings).lower() for indicator in high_indicators):
-            indicators['high'] = True
+        high_indicators = ["obfuscated", "encrypted", "packed"]
+        if any(indicator in " ".join(strings).lower() for indicator in high_indicators):
+            indicators["high"] = True
 
         # Medium obfuscation indicators
-        medium_indicators = ['xor', 'base64', 'encoded']
-        if any(indicator in ' '.join(strings).lower() for indicator in medium_indicators):
-            indicators['medium'] = True
+        medium_indicators = ["xor", "base64", "encoded"]
+        if any(indicator in " ".join(strings).lower() for indicator in medium_indicators):
+            indicators["medium"] = True
 
         # Low obfuscation indicators
-        low_indicators = ['random', 'temp', 'tmp']
-        if any(indicator in ' '.join(strings).lower() for indicator in low_indicators):
-            indicators['low'] = True
+        low_indicators = ["random", "temp", "tmp"]
+        if any(indicator in " ".join(strings).lower() for indicator in low_indicators):
+            indicators["low"] = True
 
         return indicators
 
     def _analyze_entropy_for_packing(self, binary_path: str) -> bool:
         """Analyze entropy to detect packing"""
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Calculate Shannon entropy
@@ -736,7 +730,7 @@ class DotNetAnalyzer:
             version="Unknown",
             culture="",
             public_key_token="",
-            processor_architecture=""
+            processor_architecture="",
         )
 
     def _extract_framework_version_from_metadata(self, data: bytes) -> Optional[str]:

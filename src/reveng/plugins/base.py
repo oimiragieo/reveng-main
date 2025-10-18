@@ -4,22 +4,24 @@ Plugin Base Classes for REVENG
 Base classes and interfaces for the REVENG plugin system.
 """
 
-import os
-import sys
 import abc
 import logging
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, Type, Union
+import os
+import sys
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
-from ..core.errors import REVENGError, PluginError, create_error_context
+from ..core.errors import PluginError, REVENGError, create_error_context
 from ..core.logger import get_logger
 
 logger = get_logger()
 
+
 class PluginCategory(Enum):
     """Plugin categories"""
+
     CORE_ANALYSIS = "core_analysis"
     MULTI_LANGUAGE = "multi_language"
     AI_ENHANCEMENT = "ai_enhancement"
@@ -31,25 +33,31 @@ class PluginCategory(Enum):
     CONFIGURATION = "configuration"
     UTILITIES = "utilities"
 
+
 class PluginStatus(Enum):
     """Plugin status"""
+
     ENABLED = "enabled"
     DISABLED = "disabled"
     LOADING = "loading"
     ERROR = "error"
     UNINSTALLED = "uninstalled"
 
+
 class PluginPriority(Enum):
     """Plugin priority levels"""
+
     CRITICAL = 1
     HIGH = 2
     NORMAL = 3
     LOW = 4
     OPTIONAL = 5
 
+
 @dataclass
 class PluginMetadata:
     """Plugin metadata"""
+
     name: str
     version: str
     description: str
@@ -72,9 +80,11 @@ class PluginMetadata:
         if self.tags is None:
             self.tags = []
 
+
 @dataclass
 class PluginContext:
     """Plugin execution context"""
+
     plugin_name: str
     binary_path: str
     output_dir: str
@@ -87,6 +97,7 @@ class PluginContext:
             self.config = {}
         if self.logger is None:
             self.logger = get_logger()
+
 
 class PluginBase(abc.ABC):
     """Base class for all REVENG plugins"""
@@ -194,6 +205,7 @@ class PluginBase(abc.ABC):
         """Get plugin category"""
         return self.metadata.category
 
+
 class AnalysisPlugin(PluginBase):
     """Base class for analysis plugins"""
 
@@ -209,7 +221,11 @@ class AnalysisPlugin(PluginBase):
             return self.analyze(context)
         except Exception as e:
             self.logger.error(f"Analysis plugin {self.metadata.name} failed: {e}")
-            raise PluginError(f"Analysis plugin {self.metadata.name} failed", plugin_name=self.metadata.name) from e
+            raise PluginError(
+                f"Analysis plugin {self.metadata.name} failed",
+                plugin_name=self.metadata.name,
+            ) from e
+
 
 class VisualizationPlugin(PluginBase):
     """Base class for visualization plugins"""
@@ -224,11 +240,15 @@ class VisualizationPlugin(PluginBase):
         try:
             self.logger.info(f"Executing visualization plugin: {self.metadata.name}")
             # Get data from context or previous plugins
-            data = context.config.get('analysis_data', {})
+            data = context.config.get("analysis_data", {})
             return self.visualize(context, data)
         except Exception as e:
             self.logger.error(f"Visualization plugin {self.metadata.name} failed: {e}")
-            raise PluginError(f"Visualization plugin {self.metadata.name} failed", plugin_name=self.metadata.name) from e
+            raise PluginError(
+                f"Visualization plugin {self.metadata.name} failed",
+                plugin_name=self.metadata.name,
+            ) from e
+
 
 class ExportPlugin(PluginBase):
     """Base class for export plugins"""
@@ -243,11 +263,15 @@ class ExportPlugin(PluginBase):
         try:
             self.logger.info(f"Executing export plugin: {self.metadata.name}")
             # Get data from context or previous plugins
-            data = context.config.get('analysis_data', {})
+            data = context.config.get("analysis_data", {})
             return self.export(context, data)
         except Exception as e:
             self.logger.error(f"Export plugin {self.metadata.name} failed: {e}")
-            raise PluginError(f"Export plugin {self.metadata.name} failed", plugin_name=self.metadata.name) from e
+            raise PluginError(
+                f"Export plugin {self.metadata.name} failed",
+                plugin_name=self.metadata.name,
+            ) from e
+
 
 class UtilityPlugin(PluginBase):
     """Base class for utility plugins"""
@@ -264,7 +288,11 @@ class UtilityPlugin(PluginBase):
             return self.utility_function(context)
         except Exception as e:
             self.logger.error(f"Utility plugin {self.metadata.name} failed: {e}")
-            raise PluginError(f"Utility plugin {self.metadata.name} failed", plugin_name=self.metadata.name) from e
+            raise PluginError(
+                f"Utility plugin {self.metadata.name} failed",
+                plugin_name=self.metadata.name,
+            ) from e
+
 
 class AIPlugin(PluginBase):
     """Base class for AI enhancement plugins"""
@@ -279,11 +307,14 @@ class AIPlugin(PluginBase):
         try:
             self.logger.info(f"Executing AI plugin: {self.metadata.name}")
             # Get data from context or previous plugins
-            data = context.config.get('analysis_data', {})
+            data = context.config.get("analysis_data", {})
             return self.ai_enhance(context, data)
         except Exception as e:
             self.logger.error(f"AI plugin {self.metadata.name} failed: {e}")
-            raise PluginError(f"AI plugin {self.metadata.name} failed", plugin_name=self.metadata.name) from e
+            raise PluginError(
+                f"AI plugin {self.metadata.name} failed", plugin_name=self.metadata.name
+            ) from e
+
 
 class SecurityPlugin(PluginBase):
     """Base class for security plugins"""
@@ -300,4 +331,7 @@ class SecurityPlugin(PluginBase):
             return self.security_analysis(context)
         except Exception as e:
             self.logger.error(f"Security plugin {self.metadata.name} failed: {e}")
-            raise PluginError(f"Security plugin {self.metadata.name} failed", plugin_name=self.metadata.name) from e
+            raise PluginError(
+                f"Security plugin {self.metadata.name} failed",
+                plugin_name=self.metadata.name,
+            ) from e

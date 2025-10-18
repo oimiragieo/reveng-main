@@ -3,9 +3,11 @@
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent / "tools"))
 
 from c_type_parser import CTypeParser
+
 
 def test_pointer_parsing():
     """Test pointer parameter parsing fixes"""
@@ -39,12 +41,15 @@ def test_pointer_parsing():
                 print(f"  [FAIL] Name WRONG: expected '{expected_name}', got '{param.name}'")
 
             # Verify type contains expected string
-            if expected_type_contains and expected_type_contains.replace('*', '').strip() in str(param.type):
+            if expected_type_contains and expected_type_contains.replace("*", "").strip() in str(
+                param.type
+            ):
                 print(f"  [OK] Type contains: {expected_type_contains}")
             else:
                 print(f"  Type info: {param.type}")
         else:
             print(f"  [FAIL] FAILED to parse")
+
 
 def test_address_field():
     """Test address field preservation"""
@@ -74,6 +79,7 @@ def test_address_field():
                 print(f"  [FAIL] Address WRONG: expected {expected_addr}, got {sig.address}")
         else:
             print(f"  [FAIL] FAILED to parse")
+
 
 if __name__ == "__main__":
     test_pointer_parsing()

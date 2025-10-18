@@ -2,22 +2,23 @@
 Ghidra installer for REVENG
 """
 
-import os
-import sys
-import subprocess
-import platform
-import shutil
-import zipfile
 import json
 import logging
+import os
+import platform
+import shutil
+import subprocess
+import sys
+import zipfile
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from urllib.parse import urljoin
 
-from .base_installer import BaseInstaller, InstallMethod
 from ..core.dependency_manager import ToolStatus
+from .base_installer import BaseInstaller, InstallMethod
 
 logger = logging.getLogger(__name__)
+
 
 class GhidraInstaller(BaseInstaller):
     """Installer for Ghidra reverse engineering framework"""
@@ -34,8 +35,8 @@ class GhidraInstaller(BaseInstaller):
 
     def get_version(self) -> str:
         """Get installed Ghidra version"""
-        if self.config.get('version'):
-            return self.config['version']
+        if self.config.get("version"):
+            return self.config["version"]
 
         # Try to get version from Ghidra executable
         ghidra_exe = self._find_ghidra_executable()
@@ -45,13 +46,13 @@ class GhidraInstaller(BaseInstaller):
                     [str(ghidra_exe), "--version"],
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=30,
                 )
                 if result.returncode == 0:
-                    version_line = result.stdout.strip().split('\n')[0]
-                    if 'Ghidra' in version_line:
+                    version_line = result.stdout.strip().split("\n")[0]
+                    if "Ghidra" in version_line:
                         version = version_line.split()[-1]
-                        self.config['version'] = version
+                        self.config["version"] = version
                         self._save_config(self.config)
                         return version
             except Exception as e:
@@ -115,11 +116,13 @@ class GhidraInstaller(BaseInstaller):
             archive_path.unlink()
 
             # Update config
-            self.config.update({
-                'version': self.ghidra_version,
-                'install_path': str(final_path),
-                'install_method': InstallMethod.DOWNLOAD.value
-            })
+            self.config.update(
+                {
+                    "version": self.ghidra_version,
+                    "install_path": str(final_path),
+                    "install_method": InstallMethod.DOWNLOAD.value,
+                }
+            )
             self._save_config(self.config)
 
             logger.info("Ghidra installed successfully")
@@ -156,19 +159,16 @@ Manual Ghidra Installation:
         """Check if Java 21+ is available"""
         try:
             result = subprocess.run(
-                ["java", "-version"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["java", "-version"], capture_output=True, text=True, timeout=10
             )
 
             if result.returncode == 0:
                 version_output = result.stderr.strip()
                 # Parse Java version (e.g., "openjdk version "21.0.1"")
                 if "version" in version_output:
-                    version_line = version_output.split('\n')[0]
+                    version_line = version_output.split("\n")[0]
                     version_str = version_line.split('"')[1]
-                    major_version = int(version_str.split('.')[0])
+                    major_version = int(version_str.split(".")[0])
                     return major_version >= 21
 
             return False
@@ -216,10 +216,7 @@ Manual Ghidra Installation:
         try:
             # Test with --help flag (non-interactive)
             result = subprocess.run(
-                [str(ghidra_exe), "--help"],
-                capture_output=True,
-                text=True,
-                timeout=30
+                [str(ghidra_exe), "--help"], capture_output=True, text=True, timeout=30
             )
 
             # Ghidra help should return non-zero exit code but show help text
@@ -235,12 +232,7 @@ Manual Ghidra Installation:
         if not ghidra_exe:
             raise RuntimeError("Ghidra not found")
 
-        return [
-            str(ghidra_exe),
-            "headless",
-            str(script_path),
-            str(binary_path)
-        ]
+        return [str(ghidra_exe), "headless", str(script_path), str(binary_path)]
 
     def get_analysis_command(self, binary_path: str, output_dir: str) -> list:
         """Get command to analyze binary with Ghidra"""
@@ -254,6 +246,7 @@ Manual Ghidra Installation:
             str(binary_path),
             "-import",
             str(binary_path),
-            "-analysisTimeoutPerFile", "300",
-            "-deleteProject"
+            "-analysisTimeoutPerFile",
+            "300",
+            "-deleteProject",
         ]

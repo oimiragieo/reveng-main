@@ -11,8 +11,8 @@ from pathlib import Path
 # Add tools to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
 
-from validation_config import ValidationConfig, ValidationMode, BinaryValidator
 from c_type_parser import CTypeParser
+from validation_config import BinaryValidator, ValidationConfig, ValidationMode
 
 
 class TestValidationDefaults(unittest.TestCase):
@@ -21,20 +21,19 @@ class TestValidationDefaults(unittest.TestCase):
     def test_default_mode_is_checksum(self):
         """Default validation mode should be CHECKSUM, not SMOKE_TEST"""
         config = ValidationConfig()
-        self.assertEqual(config.mode, ValidationMode.CHECKSUM,
-                        "Default validation should use CHECKSUM mode")
+        self.assertEqual(
+            config.mode, ValidationMode.CHECKSUM, "Default validation should use CHECKSUM mode"
+        )
 
     def test_no_smoke_tests_in_checksum_mode(self):
         """CHECKSUM mode should not populate smoke tests"""
         config = ValidationConfig()
-        self.assertEqual(len(config.smoke_tests), 0,
-                        "CHECKSUM mode should have no smoke tests")
+        self.assertEqual(len(config.smoke_tests), 0, "CHECKSUM mode should have no smoke tests")
 
     def test_smoke_tests_only_in_smoke_mode(self):
         """Smoke tests should only populate when explicitly requested"""
         config = ValidationConfig(mode=ValidationMode.SMOKE_TEST)
-        self.assertGreater(len(config.smoke_tests), 0,
-                          "SMOKE_TEST mode should have default tests")
+        self.assertGreater(len(config.smoke_tests), 0, "SMOKE_TEST mode should have default tests")
 
 
 class TestCTypeParser(unittest.TestCase):
@@ -98,7 +97,11 @@ class TestCTypeParser(unittest.TestCase):
                 self.assertGreater(len(sig.parameters), 0, "Should have at least one parameter")
 
                 param = sig.parameters[0]
-                self.assertEqual(param.name, expected_param_name, f"Parameter name should be {expected_param_name}")
+                self.assertEqual(
+                    param.name,
+                    expected_param_name,
+                    f"Parameter name should be {expected_param_name}",
+                )
 
                 # Type should include const and pointer
                 param_type_str = str(param.type).lower()
@@ -134,16 +137,14 @@ class TestPlatformAwareCompilation(unittest.TestCase):
         system = platform.system().lower()
         flags = ["-O2"]
 
-        if system in ['linux', 'darwin']:
+        if system in ["linux", "darwin"]:
             flags.append("-fPIC")
 
         # On Windows, flags should NOT contain -fPIC
-        if system == 'windows':
-            self.assertNotIn("-fPIC", flags,
-                           "Windows builds should not have -fPIC")
+        if system == "windows":
+            self.assertNotIn("-fPIC", flags, "Windows builds should not have -fPIC")
         else:
-            self.assertIn("-fPIC", flags,
-                        "Linux/macOS builds should have -fPIC")
+            self.assertIn("-fPIC", flags, "Linux/macOS builds should have -fPIC")
 
 
 class TestGeneratedCode(unittest.TestCase):
@@ -157,13 +158,13 @@ class TestGeneratedCode(unittest.TestCase):
             self.skipTest("human_readable_code directory not found")
 
         for c_file in human_readable_dir.glob("*.c"):
-            with open(c_file, 'r') as f:
+            with open(c_file, "r") as f:
                 content = f.read()
 
-            self.assertNotIn("#include <windows.h>", content,
-                           f"{c_file.name} should not include windows.h")
-            self.assertNotIn("GetLastError", content,
-                           f"{c_file.name} should not use GetLastError")
+            self.assertNotIn(
+                "#include <windows.h>", content, f"{c_file.name} should not include windows.h"
+            )
+            self.assertNotIn("GetLastError", content, f"{c_file.name} should not use GetLastError")
 
     def test_generated_functions_have_return_statements(self):
         """Generated functions should have return statements"""
@@ -176,13 +177,12 @@ class TestGeneratedCode(unittest.TestCase):
             if c_file.name == "main.c":
                 continue  # main.c has different structure
 
-            with open(c_file, 'r') as f:
+            with open(c_file, "r") as f:
                 content = f.read()
 
             # Functions returning int should have return statement
             if "int " in content and "() {" in content:
-                self.assertIn("return", content,
-                            f"{c_file.name} should have return statement")
+                self.assertIn("return", content, f"{c_file.name} should have return statement")
 
 
 if __name__ == "__main__":

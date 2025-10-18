@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test functional code generator with AI"""
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 # Add to path
@@ -11,10 +11,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 from tools.functional_code_generator import FunctionalCodeGenerator
 
 # Load test data
-with open('test_disasm.asm', 'r') as f:
+with open("test_disasm.asm", "r") as f:
     disassembly = f.read()
 
-with open('test_analysis.json', 'r') as f:
+with open("test_analysis.json", "r") as f:
     analysis = json.load(f)
 
 # Create generator with AI enabled
@@ -33,7 +33,7 @@ code = generator.generate_functional_code(
     function_name="file_encrypt",
     disassembly=disassembly,
     analysis=analysis,
-    output_path=Path("test_generated_ai.c")
+    output_path=Path("test_generated_ai.c"),
 )
 
 print("\nGenerated code:")

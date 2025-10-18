@@ -4,40 +4,47 @@ REVENG Automated Analysis Pipeline Engine
 Automated analysis pipeline with tool chaining, error handling, and result aggregation.
 """
 
+import json
+import logging
 import os
 import sys
-import json
-import yaml
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple, Union
-from dataclasses import dataclass, asdict
-from enum import Enum
-import logging
-import time
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import asdict, dataclass
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import yaml
 
 from ..core.errors import AnalysisFailureError, PipelineExecutionError, create_error_context
 from ..core.logger import get_logger
 
+
 class PipelineStatus(Enum):
     """Pipeline execution status"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
 class StageStatus(Enum):
     """Pipeline stage status"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
     SKIPPED = "skipped"
 
+
 class StageType(Enum):
     """Pipeline stage types"""
+
     STATIC_ANALYSIS = "static_analysis"
     DYNAMIC_ANALYSIS = "dynamic_analysis"
     PE_ANALYSIS = "pe_analysis"
@@ -47,9 +54,11 @@ class StageType(Enum):
     ML_ANALYSIS = "ml_analysis"
     REPORT_GENERATION = "report_generation"
 
+
 @dataclass
 class PipelineStage:
     """Pipeline stage definition"""
+
     name: str
     stage_type: StageType
     tool: str
@@ -59,9 +68,11 @@ class PipelineStage:
     retry_count: int = 3
     required: bool = True
 
+
 @dataclass
 class StageResult:
     """Pipeline stage execution result"""
+
     stage_name: str
     status: StageStatus
     output: Dict[str, Any]
@@ -69,18 +80,22 @@ class StageResult:
     execution_time: float
     retry_count: int
 
+
 @dataclass
 class Pipeline:
     """Pipeline definition"""
+
     name: str
     description: str
     stages: List[PipelineStage]
     created: str
     version: str = "1.0"
 
+
 @dataclass
 class PipelineResult:
     """Pipeline execution result"""
+
     pipeline_name: str
     binary_path: str
     status: PipelineStatus
@@ -89,6 +104,7 @@ class PipelineResult:
     success_count: int
     failure_count: int
     output: Dict[str, Any]
+
 
 class AnalysisPipeline:
     """Automated analysis pipeline with tool chaining"""
@@ -107,7 +123,7 @@ class AnalysisPipeline:
                 name=name,
                 description=description,
                 stages=[],
-                created=time.strftime("%Y-%m-%d %H:%M:%S")
+                created=time.strftime("%Y-%m-%d %H:%M:%S"),
             )
 
             self.pipelines[name] = pipeline
@@ -152,7 +168,9 @@ class AnalysisPipeline:
 
                         # Skip dependent stages if required stage failed
                         if stage.required:
-                            self.logger.warning(f"Required stage {stage.name} failed, skipping dependent stages")
+                            self.logger.warning(
+                                f"Required stage {stage.name} failed, skipping dependent stages"
+                            )
                             break
 
                 except Exception as e:
@@ -163,7 +181,7 @@ class AnalysisPipeline:
                         output={},
                         error=str(e),
                         execution_time=0.0,
-                        retry_count=0
+                        retry_count=0,
                     )
                     stage_results.append(stage_result)
                     failure_count += 1
@@ -189,23 +207,23 @@ class AnalysisPipeline:
                 total_execution_time=total_execution_time,
                 success_count=success_count,
                 failure_count=failure_count,
-                output=output
+                output=output,
             )
 
-            self.logger.info(f"Completed pipeline execution: {pipeline.name} in {total_execution_time:.2f} seconds")
+            self.logger.info(
+                f"Completed pipeline execution: {pipeline.name} in {total_execution_time:.2f} seconds"
+            )
             return result
 
         except Exception as e:
             context = create_error_context(
-                "pipeline_engine",
-                "execute_pipeline",
-                binary_path=binary_path
+                "pipeline_engine", "execute_pipeline", binary_path=binary_path
             )
             raise PipelineExecutionError(
                 pipeline.name,
                 "pipeline_execution",
                 context=context,
-                original_exception=e
+                original_exception=e,
             )
 
     def save_pipeline(self, pipeline: Pipeline, path: str):
@@ -213,7 +231,7 @@ class AnalysisPipeline:
         try:
             pipeline_data = asdict(pipeline)
 
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 yaml.dump(pipeline_data, f, default_flow_style=False)
 
             self.logger.info(f"Saved pipeline to {path}")
@@ -225,16 +243,16 @@ class AnalysisPipeline:
     def load_pipeline(self, path: str) -> Pipeline:
         """Load saved pipeline"""
         try:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 pipeline_data = yaml.safe_load(f)
 
             # Convert dict back to Pipeline object
             pipeline = Pipeline(
-                name=pipeline_data['name'],
-                description=pipeline_data['description'],
-                stages=[PipelineStage(**stage) for stage in pipeline_data['stages']],
-                created=pipeline_data['created'],
-                version=pipeline_data.get('version', '1.0')
+                name=pipeline_data["name"],
+                description=pipeline_data["description"],
+                stages=[PipelineStage(**stage) for stage in pipeline_data["stages"]],
+                created=pipeline_data["created"],
+                version=pipeline_data.get("version", "1.0"),
             )
 
             self.logger.info(f"Loaded pipeline from {path}")
@@ -288,13 +306,15 @@ class AnalysisPipeline:
                         output=output,
                         error=None,
                         execution_time=execution_time,
-                        retry_count=retry_count
+                        retry_count=retry_count,
                     )
 
                 except Exception as e:
                     retry_count += 1
                     if retry_count <= stage.retry_count:
-                        self.logger.warning(f"Stage {stage.name} failed, retrying ({retry_count}/{stage.retry_count}): {e}")
+                        self.logger.warning(
+                            f"Stage {stage.name} failed, retrying ({retry_count}/{stage.retry_count}): {e}"
+                        )
                         time.sleep(1)  # Wait before retry
                     else:
                         execution_time = time.time() - start_time
@@ -304,7 +324,7 @@ class AnalysisPipeline:
                             output={},
                             error=str(e),
                             execution_time=execution_time,
-                            retry_count=retry_count
+                            retry_count=retry_count,
                         )
 
         except Exception as e:
@@ -315,29 +335,29 @@ class AnalysisPipeline:
                 output={},
                 error=str(e),
                 execution_time=0.0,
-                retry_count=0
+                retry_count=0,
             )
 
     def _execute_static_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
         """Execute static analysis stage"""
         try:
             # Import analyzers
-            from ..analyzers.dotnet_analyzer import DotNetAnalyzer
             from ..analyzers.business_logic_extractor import BusinessLogicExtractor
+            from ..analyzers.dotnet_analyzer import DotNetAnalyzer
 
             results = {}
 
             # .NET analysis
-            if stage.config.get('dotnet_analysis', True):
+            if stage.config.get("dotnet_analysis", True):
                 dotnet_analyzer = DotNetAnalyzer()
                 dotnet_result = dotnet_analyzer.analyze_assembly(binary_path)
-                results['dotnet_analysis'] = asdict(dotnet_result)
+                results["dotnet_analysis"] = asdict(dotnet_result)
 
             # Business logic analysis
-            if stage.config.get('business_logic_analysis', True):
+            if stage.config.get("business_logic_analysis", True):
                 business_extractor = BusinessLogicExtractor()
                 business_result = business_extractor.analyze_application_domain(binary_path)
-                results['business_logic'] = asdict(business_result)
+                results["business_logic"] = asdict(business_result)
 
             return results
 
@@ -349,22 +369,22 @@ class AnalysisPipeline:
         """Execute PE analysis stage"""
         try:
             # Import PE analyzers
-            from ..pe.resource_extractor import PEResourceExtractor
             from ..pe.import_analyzer import ImportAnalyzer
+            from ..pe.resource_extractor import PEResourceExtractor
 
             results = {}
 
             # Resource extraction
-            if stage.config.get('resource_extraction', True):
+            if stage.config.get("resource_extraction", True):
                 resource_extractor = PEResourceExtractor()
                 resources = resource_extractor.extract_all_resources(binary_path)
-                results['resources'] = asdict(resources)
+                results["resources"] = asdict(resources)
 
             # Import analysis
-            if stage.config.get('import_analysis', True):
+            if stage.config.get("import_analysis", True):
                 import_analyzer = ImportAnalyzer()
                 imports = import_analyzer.analyze_imports(binary_path)
-                results['imports'] = asdict(imports)
+                results["imports"] = asdict(imports)
 
             return results
 
@@ -405,10 +425,7 @@ class AnalysisPipeline:
         try:
             # This would implement malware analysis
             # For now, return placeholder
-            return {
-                'malware_analysis': 'Not implemented yet',
-                'confidence': 0.0
-            }
+            return {"malware_analysis": "Not implemented yet", "confidence": 0.0}
 
         except Exception as e:
             self.logger.error(f"Malware analysis failed: {e}")
@@ -419,10 +436,7 @@ class AnalysisPipeline:
         try:
             # This would implement ML analysis
             # For now, return placeholder
-            return {
-                'ml_analysis': 'Not implemented yet',
-                'confidence': 0.0
-            }
+            return {"ml_analysis": "Not implemented yet", "confidence": 0.0}
 
         except Exception as e:
             self.logger.error(f"ML analysis failed: {e}")
@@ -434,8 +448,8 @@ class AnalysisPipeline:
             # This would implement report generation
             # For now, return placeholder
             return {
-                'report_generation': 'Not implemented yet',
-                'output_path': 'report.html'
+                "report_generation": "Not implemented yet",
+                "output_path": "report.html",
             }
 
         except Exception as e:
@@ -469,52 +483,55 @@ class AnalysisPipeline:
                         name="static_analysis",
                         stage_type=StageType.STATIC_ANALYSIS,
                         tool="reveng",
-                        config={'dotnet_analysis': True, 'business_logic_analysis': True},
+                        config={
+                            "dotnet_analysis": True,
+                            "business_logic_analysis": True,
+                        },
                         dependencies=[],
-                        timeout=300
+                        timeout=300,
                     ),
                     PipelineStage(
                         name="pe_analysis",
                         stage_type=StageType.PE_ANALYSIS,
                         tool="reveng",
-                        config={'resource_extraction': True, 'import_analysis': True},
-                        dependencies=['static_analysis'],
-                        timeout=300
+                        config={"resource_extraction": True, "import_analysis": True},
+                        dependencies=["static_analysis"],
+                        timeout=300,
                     ),
                     PipelineStage(
                         name="hex_analysis",
                         stage_type=StageType.HEX_ANALYSIS,
                         tool="reveng",
-                        config={'entropy_analysis': True, 'pattern_matching': True},
-                        dependencies=['pe_analysis'],
-                        timeout=300
+                        config={"entropy_analysis": True, "pattern_matching": True},
+                        dependencies=["pe_analysis"],
+                        timeout=300,
                     ),
                     PipelineStage(
                         name="ghidra_analysis",
                         stage_type=StageType.GHIDRA_ANALYSIS,
                         tool="ghidra",
-                        config={'auto_analyze': True, 'decompile': True},
-                        dependencies=['hex_analysis'],
-                        timeout=600
+                        config={"auto_analyze": True, "decompile": True},
+                        dependencies=["hex_analysis"],
+                        timeout=600,
                     ),
                     PipelineStage(
                         name="malware_analysis",
                         stage_type=StageType.MALWARE_ANALYSIS,
                         tool="reveng",
-                        config={'packer_detection': True, 'behavioral_analysis': True},
-                        dependencies=['ghidra_analysis'],
-                        timeout=300
+                        config={"packer_detection": True, "behavioral_analysis": True},
+                        dependencies=["ghidra_analysis"],
+                        timeout=300,
                     ),
                     PipelineStage(
                         name="report_generation",
                         stage_type=StageType.REPORT_GENERATION,
                         tool="reveng",
-                        config={'format': 'html', 'include_screenshots': True},
-                        dependencies=['malware_analysis'],
-                        timeout=60
-                    )
+                        config={"format": "html", "include_screenshots": True},
+                        dependencies=["malware_analysis"],
+                        timeout=60,
+                    ),
                 ],
-                created=time.strftime("%Y-%m-%d %H:%M:%S")
+                created=time.strftime("%Y-%m-%d %H:%M:%S"),
             )
 
             # .NET analysis pipeline
@@ -526,36 +543,39 @@ class AnalysisPipeline:
                         name="dotnet_analysis",
                         stage_type=StageType.STATIC_ANALYSIS,
                         tool="reveng",
-                        config={'dotnet_analysis': True, 'gui_detection': True},
+                        config={"dotnet_analysis": True, "gui_detection": True},
                         dependencies=[],
-                        timeout=300
+                        timeout=300,
                     ),
                     PipelineStage(
                         name="pe_resources",
                         stage_type=StageType.PE_ANALYSIS,
                         tool="reveng",
-                        config={'resource_extraction': True, 'icon_extraction': True},
-                        dependencies=['dotnet_analysis'],
-                        timeout=300
+                        config={"resource_extraction": True, "icon_extraction": True},
+                        dependencies=["dotnet_analysis"],
+                        timeout=300,
                     ),
                     PipelineStage(
                         name="business_logic",
                         stage_type=StageType.STATIC_ANALYSIS,
                         tool="reveng",
-                        config={'business_logic_analysis': True, 'data_flow_analysis': True},
-                        dependencies=['pe_resources'],
-                        timeout=300
+                        config={
+                            "business_logic_analysis": True,
+                            "data_flow_analysis": True,
+                        },
+                        dependencies=["pe_resources"],
+                        timeout=300,
                     ),
                     PipelineStage(
                         name="report_generation",
                         stage_type=StageType.REPORT_GENERATION,
                         tool="reveng",
-                        config={'format': 'html', 'include_resources': True},
-                        dependencies=['business_logic'],
-                        timeout=60
-                    )
+                        config={"format": "html", "include_resources": True},
+                        dependencies=["business_logic"],
+                        timeout=60,
+                    ),
                 ],
-                created=time.strftime("%Y-%m-%d %H:%M:%S")
+                created=time.strftime("%Y-%m-%d %H:%M:%S"),
             )
 
             # Quick triage pipeline
@@ -567,28 +587,31 @@ class AnalysisPipeline:
                         name="static_analysis",
                         stage_type=StageType.STATIC_ANALYSIS,
                         tool="reveng",
-                        config={'dotnet_analysis': True, 'business_logic_analysis': True},
+                        config={
+                            "dotnet_analysis": True,
+                            "business_logic_analysis": True,
+                        },
                         dependencies=[],
-                        timeout=120
+                        timeout=120,
                     ),
                     PipelineStage(
                         name="pe_analysis",
                         stage_type=StageType.PE_ANALYSIS,
                         tool="reveng",
-                        config={'import_analysis': True, 'resource_extraction': True},
-                        dependencies=['static_analysis'],
-                        timeout=120
+                        config={"import_analysis": True, "resource_extraction": True},
+                        dependencies=["static_analysis"],
+                        timeout=120,
                     ),
                     PipelineStage(
                         name="hex_analysis",
                         stage_type=StageType.HEX_ANALYSIS,
                         tool="reveng",
-                        config={'entropy_analysis': True, 'string_extraction': True},
-                        dependencies=['pe_analysis'],
-                        timeout=120
-                    )
+                        config={"entropy_analysis": True, "string_extraction": True},
+                        dependencies=["pe_analysis"],
+                        timeout=120,
+                    ),
                 ],
-                created=time.strftime("%Y-%m-%d %H:%M:%S")
+                created=time.strftime("%Y-%m-%d %H:%M:%S"),
             )
 
             # Deep analysis pipeline
@@ -600,52 +623,71 @@ class AnalysisPipeline:
                         name="static_analysis",
                         stage_type=StageType.STATIC_ANALYSIS,
                         tool="reveng",
-                        config={'dotnet_analysis': True, 'business_logic_analysis': True},
+                        config={
+                            "dotnet_analysis": True,
+                            "business_logic_analysis": True,
+                        },
                         dependencies=[],
-                        timeout=600
+                        timeout=600,
                     ),
                     PipelineStage(
                         name="pe_analysis",
                         stage_type=StageType.PE_ANALYSIS,
                         tool="reveng",
-                        config={'resource_extraction': True, 'import_analysis': True, 'export_analysis': True},
-                        dependencies=['static_analysis'],
-                        timeout=600
+                        config={
+                            "resource_extraction": True,
+                            "import_analysis": True,
+                            "export_analysis": True,
+                        },
+                        dependencies=["static_analysis"],
+                        timeout=600,
                     ),
                     PipelineStage(
                         name="hex_analysis",
                         stage_type=StageType.HEX_ANALYSIS,
                         tool="reveng",
-                        config={'entropy_analysis': True, 'pattern_matching': True, 'embedded_files': True},
-                        dependencies=['pe_analysis'],
-                        timeout=600
+                        config={
+                            "entropy_analysis": True,
+                            "pattern_matching": True,
+                            "embedded_files": True,
+                        },
+                        dependencies=["pe_analysis"],
+                        timeout=600,
                     ),
                     PipelineStage(
                         name="ghidra_analysis",
                         stage_type=StageType.GHIDRA_ANALYSIS,
                         tool="ghidra",
-                        config={'auto_analyze': True, 'decompile': True, 'call_graph': True},
-                        dependencies=['hex_analysis'],
-                        timeout=1200
+                        config={
+                            "auto_analyze": True,
+                            "decompile": True,
+                            "call_graph": True,
+                        },
+                        dependencies=["hex_analysis"],
+                        timeout=1200,
                     ),
                     PipelineStage(
                         name="ml_analysis",
                         stage_type=StageType.ML_ANALYSIS,
                         tool="reveng",
-                        config={'code_reconstruction': True, 'anomaly_detection': True},
-                        dependencies=['ghidra_analysis'],
-                        timeout=600
+                        config={"code_reconstruction": True, "anomaly_detection": True},
+                        dependencies=["ghidra_analysis"],
+                        timeout=600,
                     ),
                     PipelineStage(
                         name="report_generation",
                         stage_type=StageType.REPORT_GENERATION,
                         tool="reveng",
-                        config={'format': 'html', 'include_all': True, 'detailed_analysis': True},
-                        dependencies=['ml_analysis'],
-                        timeout=120
-                    )
+                        config={
+                            "format": "html",
+                            "include_all": True,
+                            "detailed_analysis": True,
+                        },
+                        dependencies=["ml_analysis"],
+                        timeout=120,
+                    ),
                 ],
-                created=time.strftime("%Y-%m-%d %H:%M:%S")
+                created=time.strftime("%Y-%m-%d %H:%M:%S"),
             )
 
             # Store pipelines
@@ -653,7 +695,7 @@ class AnalysisPipeline:
                 "malware_analysis": malware_pipeline,
                 "dotnet_analysis": dotnet_pipeline,
                 "quick_triage": triage_pipeline,
-                "deep_analysis": deep_pipeline
+                "deep_analysis": deep_pipeline,
             }
 
             self.logger.info(f"Loaded {len(self.pipelines)} prebuilt pipelines")

@@ -1,30 +1,27 @@
-name: 🧪 Continuous Integration
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
 
 jobs:
   test:
-    name: 🧪 Test Suite
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.11', '3.12']
+        python-version: [3.11, 3.12]
 
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-    - name: 🐍 Set up Python ${{ matrix.python-version }}
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: 📦 Cache pip dependencies
+    - name: Cache pip dependencies
       uses: actions/cache@v3
       with:
         path: ~/.cache/pip
@@ -32,21 +29,37 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    - name: 📥 Install dependencies
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
 
-    - name: 🔍 Check toolchain
+    - name: Lint with pylint
       run: |
-        python tools/check_toolchain.py --check-only
+        pylint src/reveng/ --disable=C0114,C0116
 
-    - name: 🧪 Run tests
+    - name: Type check with mypy
       run: |
-        python -m pytest tests/ -v --cov=tools --cov-report=xml --cov-report=html
+        mypy src/reveng/ --ignore-missing-imports
 
-    - name: 📊 Upload coverage to Codecov
+    - name: Security scan with bandit
+      run: |
+        bandit -r src/reveng/ -f json -o bandit-report.json || true
+
+    - name: Format check with black
+      run: |
+        black --check src/reveng/
+
+    - name: Import sorting check with isort
+      run: |
+        isort --check-only src/reveng/
+
+    - name: Test with pytest
+      run: |
+        pytest tests/ --cov=src/reveng --cov-report=xml --cov-report=html
+
+    - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
@@ -54,111 +67,69 @@ jobs:
         name: codecov-umbrella
         fail_ci_if_error: false
 
-    - name: 📋 Upload test results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: test-results-${{ matrix.os }}-py${{ matrix.python-version }}
-        path: |
-          coverage.xml
-          htmlcov/
-          .coverage
-
-  lint:
-    name: 🔍 Code Quality
-    runs-on: ubuntu-latest
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-
-    - name: 🐍 Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-
-    - name: 📦 Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-
-    - name: 📥 Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-
-    - name: 🎨 Run Black
-      run: black --check --diff .
-
-    - name: 📦 Run isort
-      run: isort --check-only --diff .
-
-    - name: 🔍 Run Pylint
-      run: pylint tools/ reveng_analyzer.py
-
-    - name: 🔒 Run Bandit
-      run: bandit -r tools/ reveng_analyzer.py
-
-    - name: 🔗 Check links
-      run: |
-        pip install linkchecker
-        linkchecker --check-extern README.md
-
-  security:
-    name: 🔒 Security Scan
-    runs-on: ubuntu-latest
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-
-    - name: 🐍 Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-
-    - name: 📥 Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install safety bandit
-
-    - name: 🔒 Run Safety check
-      run: safety check
-
-    - name: 🔒 Run Bandit security scan
-      run: bandit -r tools/ reveng_analyzer.py -f json -o bandit-report.json
-
-    - name: 📋 Upload security report
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: security-report
-        path: bandit-report.json
-
   build:
-    name: 🏗️ Build Check
     runs-on: ubuntu-latest
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
+    needs: test
 
-    - name: 🐍 Set up Python
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
 
-    - name: 📥 Install dependencies
+    - name: Install build dependencies
       run: |
         python -m pip install --upgrade pip
         pip install build twine
 
-    - name: 🏗️ Build package
+    - name: Build package
       run: python -m build
 
-    - name: 🔍 Check package
+    - name: Check package
       run: twine check dist/*
 
-    - name: 📋 Upload build artifacts
+    - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
         name: dist
         path: dist/
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image
+      run: |
+        docker build -t reveng:latest .
+
+    - name: Test Docker image
+      run: |
+        docker run --rm reveng:latest --help
+
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'

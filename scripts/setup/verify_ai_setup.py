@@ -9,9 +9,9 @@ Usage:
     python scripts/setup/verify_ai_setup.py
 """
 
-import sys
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -258,7 +258,9 @@ def print_summary(results):
     """Print summary and recommendations."""
     print_header("Summary")
 
-    required_checks = results["python"] and results["java"] and results["ghidra"] and results["core_deps"]
+    required_checks = (
+        results["python"] and results["java"] and results["ghidra"] and results["core_deps"]
+    )
 
     if required_checks:
         print("\n✅ Core setup COMPLETE! REVENG is ready to use.")
@@ -269,7 +271,9 @@ def print_summary(results):
         if not results["java"]:
             print("   • Install Java 21 from https://adoptium.net")
         if not results["ghidra"]:
-            print("   • Download Ghidra from https://github.com/NationalSecurityAgency/ghidra/releases")
+            print(
+                "   • Download Ghidra from https://github.com/NationalSecurityAgency/ghidra/releases"
+            )
         if not results["core_deps"]:
             print("   • Install dependencies: pip install -r requirements.txt")
 

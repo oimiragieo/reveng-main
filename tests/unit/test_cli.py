@@ -8,13 +8,14 @@ Author: REVENG Development Team
 Version: 2.1.0
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from click.testing import CliRunner
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
-from src.reveng.cli import main, create_parser, handle_analyze_command, handle_serve_command
+import pytest
+from click.testing import CliRunner
+
+from src.reveng.cli import create_parser, handle_analyze_command, handle_serve_command, main
 
 
 class TestCLIParser:
@@ -24,45 +25,42 @@ class TestCLIParser:
         """Test parser creation."""
         parser = create_parser()
 
-        assert parser.prog == 'reveng'
-        assert 'REVENG - Universal Reverse Engineering Platform' in parser.description
+        assert parser.prog == "reveng"
+        assert "REVENG - Universal Reverse Engineering Platform" in parser.description
 
     def test_parser_help(self):
         """Test parser help output."""
         parser = create_parser()
         help_text = parser.format_help()
 
-        assert 'REVENG - Universal Reverse Engineering Platform' in help_text
-        assert 'analyze' in help_text
-        assert 'serve' in help_text
-        assert '--version' in help_text
+        assert "REVENG - Universal Reverse Engineering Platform" in help_text
+        assert "analyze" in help_text
+        assert "serve" in help_text
+        assert "--version" in help_text
 
     def test_parser_analyze_command(self):
         """Test analyze command parsing."""
         parser = create_parser()
-        args = parser.parse_args(['analyze', 'test.exe'])
+        args = parser.parse_args(["analyze", "test.exe"])
 
-        assert args.command == 'analyze'
-        assert args.binary_path == 'test.exe'
+        assert args.command == "analyze"
+        assert args.binary_path == "test.exe"
 
     def test_parser_serve_command(self):
         """Test serve command parsing."""
         parser = create_parser()
-        args = parser.parse_args(['serve', '--host', '0.0.0.0', '--port', '3001'])
+        args = parser.parse_args(["serve", "--host", "0.0.0.0", "--port", "3001"])
 
-        assert args.command == 'serve'
-        assert args.host == '0.0.0.0'
+        assert args.command == "serve"
+        assert args.host == "0.0.0.0"
         assert args.port == 3001
 
     def test_parser_enhanced_options(self):
         """Test enhanced analysis options."""
         parser = create_parser()
-        args = parser.parse_args([
-            'analyze', 'test.exe',
-            '--no-enhanced',
-            '--no-corporate',
-            '--no-vuln'
-        ])
+        args = parser.parse_args(
+            ["analyze", "test.exe", "--no-enhanced", "--no-corporate", "--no-vuln"]
+        )
 
         assert args.no_enhanced is True
         assert args.no_corporate is True
@@ -71,27 +69,23 @@ class TestCLIParser:
     def test_parser_config_option(self):
         """Test configuration file option."""
         parser = create_parser()
-        args = parser.parse_args(['analyze', 'test.exe', '--config', 'config.yaml'])
+        args = parser.parse_args(["analyze", "test.exe", "--config", "config.yaml"])
 
-        assert args.config == 'config.yaml'
+        assert args.config == "config.yaml"
 
     def test_parser_logging_options(self):
         """Test logging options."""
         parser = create_parser()
-        args = parser.parse_args([
-            'analyze', 'test.exe',
-            '--verbose',
-            '--log-file', 'test.log'
-        ])
+        args = parser.parse_args(["analyze", "test.exe", "--verbose", "--log-file", "test.log"])
 
         assert args.verbose is True
-        assert args.log_file == 'test.log'
+        assert args.log_file == "test.log"
 
 
 class TestCLIHandlers:
     """Test CLI command handlers."""
 
-    @patch('src.reveng.cli.REVENGAnalyzer')
+    @patch("src.reveng.cli.REVENGAnalyzer")
     def test_handle_analyze_command_success(self, mock_analyzer_class, mock_binary_file):
         """Test successful analyze command."""
         # Mock analyzer
@@ -118,7 +112,7 @@ class TestCLIHandlers:
         mock_analyzer_class.assert_called_once()
         mock_analyzer.analyze_binary.assert_called_once()
 
-    @patch('src.reveng.cli.REVENGAnalyzer')
+    @patch("src.reveng.cli.REVENGAnalyzer")
     def test_handle_analyze_command_binary_not_found(self, mock_analyzer_class):
         """Test analyze command when binary not found."""
         # Mock analyzer
@@ -127,7 +121,7 @@ class TestCLIHandlers:
         mock_analyzer_class.return_value = mock_analyzer
 
         # Mock Path.exists to return False
-        with patch('src.reveng.cli.Path') as mock_path:
+        with patch("src.reveng.cli.Path") as mock_path:
             mock_path.return_value.exists.return_value = False
 
             args = Mock()
@@ -145,7 +139,7 @@ class TestCLIHandlers:
 
             assert result == 1
 
-    @patch('src.reveng.cli.REVENGAnalyzer')
+    @patch("src.reveng.cli.REVENGAnalyzer")
     def test_handle_analyze_command_failure(self, mock_analyzer_class, mock_binary_file):
         """Test analyze command failure."""
         # Mock analyzer
@@ -168,30 +162,26 @@ class TestCLIHandlers:
 
         assert result == 1
 
-    @patch('src.reveng.cli.start_server')
+    @patch("src.reveng.cli.start_server")
     def test_handle_serve_command_success(self, mock_start_server):
         """Test successful serve command."""
         args = Mock()
-        args.host = 'localhost'
+        args.host = "localhost"
         args.port = 3000
         args.reload = False
 
         result = handle_serve_command(args)
 
         assert result == 0
-        mock_start_server.assert_called_once_with(
-            host='localhost',
-            port=3000,
-            reload=False
-        )
+        mock_start_server.assert_called_once_with(host="localhost", port=3000, reload=False)
 
-    @patch('src.reveng.cli.start_server')
+    @patch("src.reveng.cli.start_server")
     def test_handle_serve_command_import_error(self, mock_start_server):
         """Test serve command with import error."""
         mock_start_server.side_effect = ImportError("Web interface not available")
 
         args = Mock()
-        args.host = 'localhost'
+        args.host = "localhost"
         args.port = 3000
         args.reload = False
 
@@ -199,13 +189,13 @@ class TestCLIHandlers:
 
         assert result == 1
 
-    @patch('src.reveng.cli.start_server')
+    @patch("src.reveng.cli.start_server")
     def test_handle_serve_command_exception(self, mock_start_server):
         """Test serve command with exception."""
         mock_start_server.side_effect = Exception("Server error")
 
         args = Mock()
-        args.host = 'localhost'
+        args.host = "localhost"
         args.port = 3000
         args.reload = False
 
@@ -217,7 +207,7 @@ class TestCLIHandlers:
 class TestCLIMain:
     """Test the main CLI function."""
 
-    @patch('src.reveng.cli.handle_analyze_command')
+    @patch("src.reveng.cli.handle_analyze_command")
     def test_main_analyze_command(self, mock_handle_analyze):
         """Test main function with analyze command."""
         mock_handle_analyze.return_value = 0
@@ -227,7 +217,7 @@ class TestCLIMain:
         assert result == 0
         mock_handle_analyze.assert_called_once()
 
-    @patch('src.reveng.cli.handle_serve_command')
+    @patch("src.reveng.cli.handle_serve_command")
     def test_main_serve_command(self, mock_handle_serve):
         """Test main function with serve command."""
         mock_handle_serve.return_value = 0
@@ -239,14 +229,14 @@ class TestCLIMain:
 
     def test_main_no_command(self):
         """Test main function with no command."""
-        with patch('sys.argv', ['reveng']):
+        with patch("sys.argv", ["reveng"]):
             result = main()
 
         assert result == 1
 
     def test_main_unknown_command(self):
         """Test main function with unknown command."""
-        with patch('sys.argv', ['reveng', 'unknown']):
+        with patch("sys.argv", ["reveng", "unknown"]):
             result = main()
 
         assert result == 1
@@ -255,8 +245,10 @@ class TestCLIMain:
 class TestCLIIntegration:
     """Test CLI integration scenarios."""
 
-    @patch('src.reveng.cli.REVENGAnalyzer')
-    def test_analyze_with_config_file(self, mock_analyzer_class, mock_binary_file, temp_analysis_dir):
+    @patch("src.reveng.cli.REVENGAnalyzer")
+    def test_analyze_with_config_file(
+        self, mock_analyzer_class, mock_binary_file, temp_analysis_dir
+    ):
         """Test analyze command with configuration file."""
         # Create config file
         config_file = temp_analysis_dir / "test_config.json"
@@ -283,12 +275,14 @@ class TestCLIIntegration:
         assert result == 0
         mock_analyzer_class.assert_called_once()
 
-    @patch('src.reveng.cli.REVENGAnalyzer')
-    def test_analyze_with_invalid_config(self, mock_analyzer_class, mock_binary_file, temp_analysis_dir):
+    @patch("src.reveng.cli.REVENGAnalyzer")
+    def test_analyze_with_invalid_config(
+        self, mock_analyzer_class, mock_binary_file, temp_analysis_dir
+    ):
         """Test analyze command with invalid configuration file."""
         # Create invalid config file
         config_file = temp_analysis_dir / "invalid_config.json"
-        config_file.write_text('invalid json')
+        config_file.write_text("invalid json")
 
         mock_analyzer = Mock()
         mock_analyzer.analyze_binary.return_value = True

@@ -4,17 +4,24 @@ Function Graph Visualization Plugin for REVENG
 Plugin for creating function call graphs and control flow visualizations.
 """
 
+import json
 import os
 import sys
-import json
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
-from ..base import VisualizationPlugin, PluginMetadata, PluginContext, PluginCategory, PluginPriority
 from ...core.errors import PluginError
 from ...core.logger import get_logger
+from ..base import (
+    PluginCategory,
+    PluginContext,
+    PluginMetadata,
+    PluginPriority,
+    VisualizationPlugin,
+)
 
 logger = get_logger()
+
 
 class FunctionGraphPlugin(VisualizationPlugin):
     """Function call graph visualization plugin"""
@@ -33,7 +40,7 @@ class FunctionGraphPlugin(VisualizationPlugin):
             tags=["visualization", "graph", "function", "call", "flow"],
             homepage="https://github.com/reveng/reveng",
             license="MIT",
-            min_reveng_version="1.0.0"
+            min_reveng_version="1.0.0",
         )
 
     def initialize(self, context: PluginContext) -> bool:
@@ -43,6 +50,7 @@ class FunctionGraphPlugin(VisualizationPlugin):
             try:
                 import graphviz
                 import networkx as nx
+
                 self.graphviz = graphviz
                 self.networkx = nx
             except ImportError as e:
@@ -70,7 +78,7 @@ class FunctionGraphPlugin(VisualizationPlugin):
                 return {
                     "visualization_type": "function_graph",
                     "success": False,
-                    "error": "No function data found"
+                    "error": "No function data found",
                 }
 
             # Create function call graph
@@ -109,7 +117,7 @@ class FunctionGraphPlugin(VisualizationPlugin):
                 "visualization_type": "function_graph",
                 "success": True,
                 "output_files": results,
-                "statistics": stats
+                "statistics": stats,
             }
 
         except Exception as e:
@@ -117,7 +125,7 @@ class FunctionGraphPlugin(VisualizationPlugin):
             return {
                 "visualization_type": "function_graph",
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
     def _extract_functions(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -142,7 +150,7 @@ class FunctionGraphPlugin(VisualizationPlugin):
 
         return functions
 
-    def _create_function_graph(self, functions: List[Dict[str, Any]]) -> 'networkx.DiGraph':
+    def _create_function_graph(self, functions: List[Dict[str, Any]]) -> "networkx.DiGraph":
         """Create function call graph"""
 
         graph = self.networkx.DiGraph()
@@ -158,7 +166,7 @@ class FunctionGraphPlugin(VisualizationPlugin):
                 address=func_address,
                 size=func_size,
                 calls=func.get("calls", []),
-                callers=func.get("callers", [])
+                callers=func.get("callers", []),
             )
 
         # Add edges (function calls)
@@ -179,31 +187,33 @@ class FunctionGraphPlugin(VisualizationPlugin):
 
         return graph
 
-    def _save_dot_format(self, graph: 'networkx.DiGraph', output_file: Path):
+    def _save_dot_format(self, graph: "networkx.DiGraph", output_file: Path):
         """Save graph in DOT format"""
 
         try:
             dot_content = self.networkx.nx_pydot.to_pydot(graph).to_string()
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write(dot_content)
             logger.info(f"DOT format saved to: {output_file}")
         except Exception as e:
             logger.error(f"Failed to save DOT format: {e}")
 
-    def _save_png_format(self, graph: 'networkx.DiGraph', output_file: Path):
+    def _save_png_format(self, graph: "networkx.DiGraph", output_file: Path):
         """Save graph as PNG image"""
 
         try:
             # Create Graphviz object
-            dot = self.graphviz.Digraph(comment='Function Call Graph')
-            dot.attr(rankdir='TB', size='12,8')
-            dot.attr('node', shape='box', style='rounded,filled', fillcolor='lightblue')
-            dot.attr('edge', color='gray')
+            dot = self.graphviz.Digraph(comment="Function Call Graph")
+            dot.attr(rankdir="TB", size="12,8")
+            dot.attr("node", shape="box", style="rounded,filled", fillcolor="lightblue")
+            dot.attr("edge", color="gray")
 
             # Add nodes
             for node in graph.nodes():
                 node_data = graph.nodes[node]
-                label = f"{node}\\n{node_data.get('address', '')}\\nSize: {node_data.get('size', 0)}"
+                label = (
+                    f"{node}\\n{node_data.get('address', '')}\\nSize: {node_data.get('size', 0)}"
+                )
                 dot.node(node, label)
 
             # Add edges
@@ -211,25 +221,27 @@ class FunctionGraphPlugin(VisualizationPlugin):
                 dot.edge(edge[0], edge[1])
 
             # Render PNG
-            dot.render(str(output_file.with_suffix('')), format='png', cleanup=True)
+            dot.render(str(output_file.with_suffix("")), format="png", cleanup=True)
             logger.info(f"PNG format saved to: {output_file}")
         except Exception as e:
             logger.error(f"Failed to save PNG format: {e}")
 
-    def _save_svg_format(self, graph: 'networkx.DiGraph', output_file: Path):
+    def _save_svg_format(self, graph: "networkx.DiGraph", output_file: Path):
         """Save graph as SVG image"""
 
         try:
             # Create Graphviz object
-            dot = self.graphviz.Digraph(comment='Function Call Graph')
-            dot.attr(rankdir='TB', size='12,8')
-            dot.attr('node', shape='box', style='rounded,filled', fillcolor='lightblue')
-            dot.attr('edge', color='gray')
+            dot = self.graphviz.Digraph(comment="Function Call Graph")
+            dot.attr(rankdir="TB", size="12,8")
+            dot.attr("node", shape="box", style="rounded,filled", fillcolor="lightblue")
+            dot.attr("edge", color="gray")
 
             # Add nodes
             for node in graph.nodes():
                 node_data = graph.nodes[node]
-                label = f"{node}\\n{node_data.get('address', '')}\\nSize: {node_data.get('size', 0)}"
+                label = (
+                    f"{node}\\n{node_data.get('address', '')}\\nSize: {node_data.get('size', 0)}"
+                )
                 dot.node(node, label)
 
             # Add edges
@@ -237,12 +249,12 @@ class FunctionGraphPlugin(VisualizationPlugin):
                 dot.edge(edge[0], edge[1])
 
             # Render SVG
-            dot.render(str(output_file.with_suffix('')), format='svg', cleanup=True)
+            dot.render(str(output_file.with_suffix("")), format="svg", cleanup=True)
             logger.info(f"SVG format saved to: {output_file}")
         except Exception as e:
             logger.error(f"Failed to save SVG format: {e}")
 
-    def _save_json_format(self, graph: 'networkx.DiGraph', output_file: Path):
+    def _save_json_format(self, graph: "networkx.DiGraph", output_file: Path):
         """Save graph in JSON format"""
 
         try:
@@ -254,26 +266,20 @@ class FunctionGraphPlugin(VisualizationPlugin):
                         "address": graph.nodes[node].get("address", ""),
                         "size": graph.nodes[node].get("size", 0),
                         "calls": graph.nodes[node].get("calls", []),
-                        "callers": graph.nodes[node].get("callers", [])
+                        "callers": graph.nodes[node].get("callers", []),
                     }
                     for node in graph.nodes()
                 ],
-                "edges": [
-                    {
-                        "source": edge[0],
-                        "target": edge[1]
-                    }
-                    for edge in graph.edges()
-                ]
+                "edges": [{"source": edge[0], "target": edge[1]} for edge in graph.edges()],
             }
 
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 json.dump(graph_data, f, indent=2)
             logger.info(f"JSON format saved to: {output_file}")
         except Exception as e:
             logger.error(f"Failed to save JSON format: {e}")
 
-    def _calculate_graph_statistics(self, graph: 'networkx.DiGraph') -> Dict[str, Any]:
+    def _calculate_graph_statistics(self, graph: "networkx.DiGraph") -> Dict[str, Any]:
         """Calculate graph statistics"""
 
         try:
@@ -283,9 +289,17 @@ class FunctionGraphPlugin(VisualizationPlugin):
                 "density": self.networkx.density(graph),
                 "is_connected": self.networkx.is_weakly_connected(graph),
                 "number_of_components": self.networkx.number_weakly_connected_components(graph),
-                "average_degree": sum(dict(graph.degree()).values()) / graph.number_of_nodes() if graph.number_of_nodes() > 0 else 0,
-                "max_degree": max(dict(graph.degree()).values()) if graph.number_of_nodes() > 0 else 0,
-                "min_degree": min(dict(graph.degree()).values()) if graph.number_of_nodes() > 0 else 0
+                "average_degree": (
+                    sum(dict(graph.degree()).values()) / graph.number_of_nodes()
+                    if graph.number_of_nodes() > 0
+                    else 0
+                ),
+                "max_degree": (
+                    max(dict(graph.degree()).values()) if graph.number_of_nodes() > 0 else 0
+                ),
+                "min_degree": (
+                    min(dict(graph.degree()).values()) if graph.number_of_nodes() > 0 else 0
+                ),
             }
 
             # Calculate centrality measures

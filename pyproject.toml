@@ -6,7 +6,7 @@ requires = ["setuptools>=65.0", "wheel", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "reveng-toolkit"
+name = "reveng"
 dynamic = ["version"]
 description = "Universal reverse engineering platform with AI-powered analysis"
 readme = "README.md"

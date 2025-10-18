@@ -5,24 +5,26 @@ Extract resources from PE files including icons, strings, manifests, version inf
 and custom resources.
 """
 
+import json
+import logging
 import os
-import sys
-import subprocess
-import tempfile
 import struct
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple, Union
+import subprocess
+import sys
+import tempfile
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from enum import Enum
-import logging
-import json
-import xml.etree.ElementTree as ET
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ..core.errors import AnalysisFailureError, MissingDependencyError, create_error_context
 from ..core.logger import get_logger
 
+
 class ResourceType(Enum):
     """PE resource types"""
+
     ICON = "icon"
     BITMAP = "bitmap"
     STRING = "string"
@@ -31,35 +33,43 @@ class ResourceType(Enum):
     CUSTOM = "custom"
     EMBEDDED_FILE = "embedded_file"
 
+
 @dataclass
 class IconResource:
     """Icon resource information"""
+
     id: str
     size: Tuple[int, int]
     format: str
     data: bytes
     file_path: Optional[str] = None
 
+
 @dataclass
 class StringResource:
     """String resource information"""
+
     id: str
     language: str
     value: str
     encoding: str = "utf-8"
 
+
 @dataclass
 class ManifestResource:
     """Manifest resource information"""
+
     id: str
     content: str
     version: str
     dependencies: List[str]
     capabilities: List[str]
 
+
 @dataclass
 class VersionResource:
     """Version resource information"""
+
     file_version: str
     product_version: str
     company_name: str
@@ -68,18 +78,22 @@ class VersionResource:
     legal_copyright: str
     legal_trademarks: str
 
+
 @dataclass
 class CustomResource:
     """Custom resource information"""
+
     id: str
     type: str
     data: bytes
     size: int
     file_path: Optional[str] = None
 
+
 @dataclass
 class ResourceCollection:
     """Collection of extracted resources"""
+
     icons: List[IconResource]
     bitmaps: List[IconResource]
     strings: List[StringResource]
@@ -87,6 +101,7 @@ class ResourceCollection:
     version_info: Optional[VersionResource]
     custom_resources: List[CustomResource]
     embedded_files: List[CustomResource]
+
 
 class PEResourceExtractor:
     """Extract resources from PE files"""
@@ -129,24 +144,26 @@ class PEResourceExtractor:
                 manifests=manifests,
                 version_info=version_info,
                 custom_resources=custom_resources,
-                embedded_files=embedded_files
+                embedded_files=embedded_files,
             )
 
-            self.logger.info(f"Extracted {len(icons)} icons, {len(strings)} strings, {len(manifests)} manifests")
+            self.logger.info(
+                f"Extracted {len(icons)} icons, {len(strings)} strings, {len(manifests)} manifests"
+            )
             return collection
 
         except Exception as e:
             context = create_error_context(
                 "pe_resource_extractor",
                 "extract_all_resources",
-                binary_path=binary_path
+                binary_path=binary_path,
             )
             raise AnalysisFailureError(
                 "pe_resource_extraction",
                 binary_path,
                 context=context,
                 fallback_available=True,
-                original_exception=e
+                original_exception=e,
             )
 
     def extract_icons(self, binary_path: str) -> List[IconResource]:
@@ -267,7 +284,7 @@ class PEResourceExtractor:
             embedded_files = []
 
             # Analyze resources for embedded files
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Look for embedded files by analyzing resource data
@@ -282,6 +299,7 @@ class PEResourceExtractor:
     def _get_resource_hacker_path(self) -> Optional[str]:
         """Get Resource Hacker executable path"""
         from ..core.dependency_manager import DependencyManager
+
         dm = DependencyManager()
         return dm.get_tool_path("resource_hacker")
 
@@ -293,13 +311,22 @@ class PEResourceExtractor:
             output_dir.mkdir(exist_ok=True)
 
             # Run Resource Hacker to extract icons
-            result = subprocess.run([
-                rh_path,
-                "-open", binary_path,
-                "-action", "extract",
-                "-mask", "ICON,*",
-                "-save", str(output_dir / "icons.rc")
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                [
+                    rh_path,
+                    "-open",
+                    binary_path,
+                    "-action",
+                    "extract",
+                    "-mask",
+                    "ICON,*",
+                    "-save",
+                    str(output_dir / "icons.rc"),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             if result.returncode == 0:
                 # Parse extracted icons
@@ -316,7 +343,7 @@ class PEResourceExtractor:
         try:
             icons = []
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Parse PE structure to find resource section
@@ -338,13 +365,22 @@ class PEResourceExtractor:
             output_dir.mkdir(exist_ok=True)
 
             # Run Resource Hacker to extract bitmaps
-            result = subprocess.run([
-                rh_path,
-                "-open", binary_path,
-                "-action", "extract",
-                "-mask", "BITMAP,*",
-                "-save", str(output_dir / "bitmaps.rc")
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                [
+                    rh_path,
+                    "-open",
+                    binary_path,
+                    "-action",
+                    "extract",
+                    "-mask",
+                    "BITMAP,*",
+                    "-save",
+                    str(output_dir / "bitmaps.rc"),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             if result.returncode == 0:
                 # Parse extracted bitmaps
@@ -361,7 +397,7 @@ class PEResourceExtractor:
         try:
             bitmaps = []
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Parse PE structure to find bitmap resources
@@ -381,13 +417,22 @@ class PEResourceExtractor:
             strings = []
 
             # Run Resource Hacker to extract strings
-            result = subprocess.run([
-                rh_path,
-                "-open", binary_path,
-                "-action", "extract",
-                "-mask", "STRING,*",
-                "-save", str(self.temp_dir / "strings.rc")
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                [
+                    rh_path,
+                    "-open",
+                    binary_path,
+                    "-action",
+                    "extract",
+                    "-mask",
+                    "STRING,*",
+                    "-save",
+                    str(self.temp_dir / "strings.rc"),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             if result.returncode == 0:
                 # Parse extracted strings
@@ -404,7 +449,7 @@ class PEResourceExtractor:
         try:
             strings = []
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Parse PE structure to find string resources
@@ -424,13 +469,22 @@ class PEResourceExtractor:
             manifests = []
 
             # Run Resource Hacker to extract manifests
-            result = subprocess.run([
-                rh_path,
-                "-open", binary_path,
-                "-action", "extract",
-                "-mask", "MANIFEST,*",
-                "-save", str(self.temp_dir / "manifests.rc")
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                [
+                    rh_path,
+                    "-open",
+                    binary_path,
+                    "-action",
+                    "extract",
+                    "-mask",
+                    "MANIFEST,*",
+                    "-save",
+                    str(self.temp_dir / "manifests.rc"),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             if result.returncode == 0:
                 # Parse extracted manifests
@@ -447,7 +501,7 @@ class PEResourceExtractor:
         try:
             manifests = []
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Parse PE structure to find manifest resources
@@ -465,13 +519,22 @@ class PEResourceExtractor:
         """Extract version info using Resource Hacker"""
         try:
             # Run Resource Hacker to extract version info
-            result = subprocess.run([
-                rh_path,
-                "-open", binary_path,
-                "-action", "extract",
-                "-mask", "VERSION,*",
-                "-save", str(self.temp_dir / "version.rc")
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                [
+                    rh_path,
+                    "-open",
+                    binary_path,
+                    "-action",
+                    "extract",
+                    "-mask",
+                    "VERSION,*",
+                    "-save",
+                    str(self.temp_dir / "version.rc"),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             if result.returncode == 0:
                 # Parse extracted version info
@@ -487,7 +550,7 @@ class PEResourceExtractor:
     def _extract_version_manual(self, binary_path: str) -> Optional[VersionResource]:
         """Extract version info manually"""
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Parse PE structure to find version resources
@@ -508,13 +571,22 @@ class PEResourceExtractor:
             custom_resources = []
 
             # Run Resource Hacker to extract custom resources
-            result = subprocess.run([
-                rh_path,
-                "-open", binary_path,
-                "-action", "extract",
-                "-mask", "CUSTOM,*",
-                "-save", str(self.temp_dir / "custom.rc")
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                [
+                    rh_path,
+                    "-open",
+                    binary_path,
+                    "-action",
+                    "extract",
+                    "-mask",
+                    "CUSTOM,*",
+                    "-save",
+                    str(self.temp_dir / "custom.rc"),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             if result.returncode == 0:
                 # Parse extracted custom resources
@@ -531,7 +603,7 @@ class PEResourceExtractor:
         try:
             custom_resources = []
 
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Parse PE structure to find custom resources
@@ -569,7 +641,7 @@ class PEResourceExtractor:
             # In practice, you would need to parse the PE structure properly
 
             # Look for resource section signature
-            resource_signature = b'.rsrc'
+            resource_signature = b".rsrc"
             offset = data.find(resource_signature)
             if offset != -1:
                 return (offset, len(data) - offset)
@@ -580,7 +652,9 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to find resource section: {e}")
             return None
 
-    def _parse_icon_resources(self, data: bytes, resource_section: Tuple[int, int]) -> List[IconResource]:
+    def _parse_icon_resources(
+        self, data: bytes, resource_section: Tuple[int, int]
+    ) -> List[IconResource]:
         """Parse icon resources from resource section"""
         try:
             icons = []
@@ -595,7 +669,9 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to parse icon resources: {e}")
             return []
 
-    def _parse_bitmap_resources(self, data: bytes, resource_section: Tuple[int, int]) -> List[IconResource]:
+    def _parse_bitmap_resources(
+        self, data: bytes, resource_section: Tuple[int, int]
+    ) -> List[IconResource]:
         """Parse bitmap resources from resource section"""
         try:
             bitmaps = []
@@ -609,7 +685,9 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to parse bitmap resources: {e}")
             return []
 
-    def _parse_string_resources(self, data: bytes, resource_section: Tuple[int, int]) -> List[StringResource]:
+    def _parse_string_resources(
+        self, data: bytes, resource_section: Tuple[int, int]
+    ) -> List[StringResource]:
         """Parse string resources from resource section"""
         try:
             strings = []
@@ -623,7 +701,9 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to parse string resources: {e}")
             return []
 
-    def _parse_manifest_resources(self, data: bytes, resource_section: Tuple[int, int]) -> List[ManifestResource]:
+    def _parse_manifest_resources(
+        self, data: bytes, resource_section: Tuple[int, int]
+    ) -> List[ManifestResource]:
         """Parse manifest resources from resource section"""
         try:
             manifests = []
@@ -637,7 +717,9 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to parse manifest resources: {e}")
             return []
 
-    def _parse_version_resources(self, data: bytes, resource_section: Tuple[int, int]) -> Optional[VersionResource]:
+    def _parse_version_resources(
+        self, data: bytes, resource_section: Tuple[int, int]
+    ) -> Optional[VersionResource]:
         """Parse version resources from resource section"""
         try:
             # Parse version resources
@@ -649,7 +731,9 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to parse version resources: {e}")
             return None
 
-    def _parse_custom_resources(self, data: bytes, resource_section: Tuple[int, int]) -> List[CustomResource]:
+    def _parse_custom_resources(
+        self, data: bytes, resource_section: Tuple[int, int]
+    ) -> List[CustomResource]:
         """Parse custom resources from resource section"""
         try:
             custom_resources = []

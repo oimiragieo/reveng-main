@@ -2,20 +2,21 @@
 CFR Java decompiler installer for REVENG
 """
 
-import os
-import sys
-import subprocess
-import platform
-import shutil
 import json
 import logging
+import os
+import platform
+import shutil
+import subprocess
+import sys
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from .base_installer import BaseInstaller, InstallMethod
 from ..core.dependency_manager import ToolStatus
+from .base_installer import BaseInstaller, InstallMethod
 
 logger = logging.getLogger(__name__)
+
 
 class CFRInstaller(BaseInstaller):
     """Installer for CFR Java decompiler"""
@@ -31,8 +32,8 @@ class CFRInstaller(BaseInstaller):
 
     def get_version(self) -> str:
         """Get installed CFR version"""
-        if self.config.get('version'):
-            return self.config['version']
+        if self.config.get("version"):
+            return self.config["version"]
 
         # Try to get version from CFR JAR
         cfr_jar = self._find_cfr_jar()
@@ -42,11 +43,11 @@ class CFRInstaller(BaseInstaller):
                     ["java", "-jar", str(cfr_jar), "--version"],
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=30,
                 )
                 if result.returncode == 0:
                     version = result.stdout.strip()
-                    self.config['version'] = version
+                    self.config["version"] = version
                     self._save_config(self.config)
                     return version
             except Exception as e:
@@ -90,11 +91,13 @@ class CFRInstaller(BaseInstaller):
             cfr_jar_path = self._download_file(self.cfr_url, "cfr.jar")
 
             # Update config
-            self.config.update({
-                'version': self.cfr_version,
-                'jar_path': str(cfr_jar_path),
-                'install_method': InstallMethod.DOWNLOAD.value
-            })
+            self.config.update(
+                {
+                    "version": self.cfr_version,
+                    "jar_path": str(cfr_jar_path),
+                    "install_method": InstallMethod.DOWNLOAD.value,
+                }
+            )
             self._save_config(self.config)
 
             logger.info("CFR installed successfully")
@@ -129,10 +132,7 @@ Manual CFR Installation:
         """Check if Java is available"""
         try:
             result = subprocess.run(
-                ["java", "-version"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["java", "-version"], capture_output=True, text=True, timeout=10
             )
 
             return result.returncode == 0
@@ -166,7 +166,7 @@ Manual CFR Installation:
                 ["java", "-jar", str(cfr_jar), "--version"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             # CFR should show version information
@@ -188,7 +188,7 @@ Manual CFR Installation:
             str(cfr_jar),
             str(class_file),
             "--outputdir",
-            str(output_dir)
+            str(output_dir),
         ]
 
     def get_decompile_jar_command(self, jar_file: str, output_dir: str) -> list:
@@ -203,5 +203,5 @@ Manual CFR Installation:
             str(cfr_jar),
             str(jar_file),
             "--outputdir",
-            str(output_dir)
+            str(output_dir),
         ]

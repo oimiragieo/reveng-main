@@ -4,22 +4,25 @@ ML-Powered Code Reconstruction for REVENG
 Advanced machine learning models for code reconstruction and analysis.
 """
 
+import json
 import os
 import sys
-import json
-import numpy as np
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, Union
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from ..core.errors import REVENGError, AnalysisFailureError, create_error_context
+import numpy as np
+
+from ..core.errors import AnalysisFailureError, REVENGError, create_error_context
 from ..core.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 class ModelType(Enum):
     """ML model types"""
+
     CODEBERT = "codebert"
     CODET5 = "codet5"
     CODEGEN = "codegen"
@@ -27,8 +30,10 @@ class ModelType(Enum):
     CLAUDE = "claude"
     LOCAL_LLM = "local_llm"
 
+
 class ReconstructionTask(Enum):
     """Reconstruction tasks"""
+
     DECOMPILATION = "decompilation"
     FUNCTION_RECONSTRUCTION = "function_reconstruction"
     VARIABLE_RECOVERY = "variable_recovery"
@@ -37,9 +42,11 @@ class ReconstructionTask(Enum):
     VULNERABILITY_DETECTION = "vulnerability_detection"
     THREAT_INTELLIGENCE = "threat_intelligence"
 
+
 @dataclass
 class CodeFragment:
     """Code fragment for reconstruction"""
+
     address: int
     size: int
     assembly_code: str
@@ -51,9 +58,11 @@ class CodeFragment:
         if self.context is None:
             self.context = {}
 
+
 @dataclass
 class ReconstructionResult:
     """Code reconstruction result"""
+
     task: ReconstructionTask
     input_fragment: CodeFragment
     reconstructed_code: str
@@ -66,9 +75,11 @@ class ReconstructionResult:
         if self.metadata is None:
             self.metadata = {}
 
+
 @dataclass
 class ThreatIntelligence:
     """Threat intelligence result"""
+
     threat_type: str
     severity: str
     confidence: float
@@ -82,6 +93,7 @@ class ThreatIntelligence:
             self.mitigation = []
         if self.references is None:
             self.references = []
+
 
 class MLCodeReconstruction:
     """ML-powered code reconstruction engine"""
@@ -106,40 +118,40 @@ class MLCodeReconstruction:
                     "model_name": "microsoft/codebert-base",
                     "max_length": 512,
                     "task": "code_generation",
-                    "local": True
+                    "local": True,
                 },
                 ModelType.CODET5: {
                     "model_name": "Salesforce/codet5-base",
                     "max_length": 512,
                     "task": "code_generation",
-                    "local": True
+                    "local": True,
                 },
                 ModelType.CODEGEN: {
                     "model_name": "Salesforce/codegen-350M-mono",
                     "max_length": 1024,
                     "task": "code_generation",
-                    "local": True
+                    "local": True,
                 },
                 ModelType.GPT: {
                     "model_name": "gpt-3.5-turbo",
                     "max_length": 4096,
                     "task": "code_generation",
                     "local": False,
-                    "api_key": "OPENAI_API_KEY"
+                    "api_key": "OPENAI_API_KEY",
                 },
                 ModelType.CLAUDE: {
                     "model_name": "claude-3-sonnet",
                     "max_length": 4096,
                     "task": "code_generation",
                     "local": False,
-                    "api_key": "ANTHROPIC_API_KEY"
+                    "api_key": "ANTHROPIC_API_KEY",
                 },
                 ModelType.LOCAL_LLM: {
                     "model_name": "llama2-7b",
                     "max_length": 2048,
                     "task": "code_generation",
-                    "local": True
-                }
+                    "local": True,
+                },
             }
 
             self.logger.info("Model configurations initialized")
@@ -185,7 +197,7 @@ class MLCodeReconstruction:
                 "type": model_type,
                 "config": config,
                 "loaded": True,
-                "local": True
+                "local": True,
             }
 
             self.models[model_type] = model_info
@@ -209,7 +221,7 @@ class MLCodeReconstruction:
                 "type": model_type,
                 "config": config,
                 "loaded": True,
-                "local": False
+                "local": False,
             }
 
             self.models[model_type] = model_info
@@ -219,7 +231,12 @@ class MLCodeReconstruction:
             self.logger.error(f"Failed to load API model {model_type}: {e}")
             raise
 
-    def reconstruct_code(self, fragment: CodeFragment, task: ReconstructionTask, model_type: Optional[ModelType] = None) -> ReconstructionResult:
+    def reconstruct_code(
+        self,
+        fragment: CodeFragment,
+        task: ReconstructionTask,
+        model_type: Optional[ModelType] = None,
+    ) -> ReconstructionResult:
         """Reconstruct code using ML models"""
 
         try:
@@ -257,8 +274,8 @@ class MLCodeReconstruction:
                 metadata={
                     "input_length": len(input_text),
                     "output_length": len(reconstructed_code),
-                    "model_config": self.model_configs[model_type]
-                }
+                    "model_config": self.model_configs[model_type],
+                },
             )
 
             self.logger.info(f"Code reconstruction completed: {confidence:.2f} confidence")
@@ -274,13 +291,37 @@ class MLCodeReconstruction:
         try:
             # Task-specific model preferences
             task_models = {
-                ReconstructionTask.DECOMPILATION: [ModelType.CODEBERT, ModelType.CODET5, ModelType.CODEGEN],
-                ReconstructionTask.FUNCTION_RECONSTRUCTION: [ModelType.CODEBERT, ModelType.CODET5],
-                ReconstructionTask.VARIABLE_RECOVERY: [ModelType.CODEBERT, ModelType.CODET5],
-                ReconstructionTask.CONTROL_FLOW_RECONSTRUCTION: [ModelType.CODEBERT, ModelType.CODET5],
-                ReconstructionTask.DATA_FLOW_ANALYSIS: [ModelType.CODEBERT, ModelType.CODET5],
-                ReconstructionTask.VULNERABILITY_DETECTION: [ModelType.CODEBERT, ModelType.GPT, ModelType.CLAUDE],
-                ReconstructionTask.THREAT_INTELLIGENCE: [ModelType.GPT, ModelType.CLAUDE, ModelType.CODEBERT]
+                ReconstructionTask.DECOMPILATION: [
+                    ModelType.CODEBERT,
+                    ModelType.CODET5,
+                    ModelType.CODEGEN,
+                ],
+                ReconstructionTask.FUNCTION_RECONSTRUCTION: [
+                    ModelType.CODEBERT,
+                    ModelType.CODET5,
+                ],
+                ReconstructionTask.VARIABLE_RECOVERY: [
+                    ModelType.CODEBERT,
+                    ModelType.CODET5,
+                ],
+                ReconstructionTask.CONTROL_FLOW_RECONSTRUCTION: [
+                    ModelType.CODEBERT,
+                    ModelType.CODET5,
+                ],
+                ReconstructionTask.DATA_FLOW_ANALYSIS: [
+                    ModelType.CODEBERT,
+                    ModelType.CODET5,
+                ],
+                ReconstructionTask.VULNERABILITY_DETECTION: [
+                    ModelType.CODEBERT,
+                    ModelType.GPT,
+                    ModelType.CLAUDE,
+                ],
+                ReconstructionTask.THREAT_INTELLIGENCE: [
+                    ModelType.GPT,
+                    ModelType.CLAUDE,
+                    ModelType.CODEBERT,
+                ],
             }
 
             preferred_models = task_models.get(task, [ModelType.CODEBERT, ModelType.CODET5])
@@ -305,7 +346,9 @@ class MLCodeReconstruction:
 
         try:
             if task == ReconstructionTask.DECOMPILATION:
-                return f"Decompile this assembly code:\n{fragment.assembly_code}\n\nDecompiled C code:"
+                return (
+                    f"Decompile this assembly code:\n{fragment.assembly_code}\n\nDecompiled C code:"
+                )
 
             elif task == ReconstructionTask.FUNCTION_RECONSTRUCTION:
                 return f"Reconstruct this function from assembly:\n{fragment.assembly_code}\n\nReconstructed function:"
@@ -332,7 +375,9 @@ class MLCodeReconstruction:
             self.logger.error(f"Failed to prepare input: {e}")
             raise
 
-    def _generate_reconstruction(self, input_text: str, task: ReconstructionTask, model_type: ModelType) -> str:
+    def _generate_reconstruction(
+        self, input_text: str, task: ReconstructionTask, model_type: ModelType
+    ) -> str:
         """Generate code reconstruction using ML model"""
 
         try:
@@ -348,7 +393,13 @@ class MLCodeReconstruction:
             self.logger.error(f"Failed to generate reconstruction: {e}")
             raise
 
-    def _generate_local_reconstruction(self, input_text: str, task: ReconstructionTask, model_type: ModelType, config: Dict[str, Any]) -> str:
+    def _generate_local_reconstruction(
+        self,
+        input_text: str,
+        task: ReconstructionTask,
+        model_type: ModelType,
+        config: Dict[str, Any],
+    ) -> str:
         """Generate reconstruction using local model"""
 
         try:
@@ -377,7 +428,13 @@ class MLCodeReconstruction:
             self.logger.error(f"Failed to generate local reconstruction: {e}")
             raise
 
-    def _generate_api_reconstruction(self, input_text: str, task: ReconstructionTask, model_type: ModelType, config: Dict[str, Any]) -> str:
+    def _generate_api_reconstruction(
+        self,
+        input_text: str,
+        task: ReconstructionTask,
+        model_type: ModelType,
+        config: Dict[str, Any],
+    ) -> str:
         """Generate reconstruction using API model"""
 
         try:
@@ -455,11 +512,15 @@ int reconstructed_function(int param1, int param2) {
 
     def _mock_gpt_reconstruction(self, input_text: str, task: ReconstructionTask) -> str:
         """Mock GPT reconstruction result"""
-        return f"// GPT-3.5 reconstruction for {task.value}:\n{self._mock_decompilation(input_text)}"
+        return (
+            f"// GPT-3.5 reconstruction for {task.value}:\n{self._mock_decompilation(input_text)}"
+        )
 
     def _mock_claude_reconstruction(self, input_text: str, task: ReconstructionTask) -> str:
         """Mock Claude reconstruction result"""
-        return f"// Claude-3 reconstruction for {task.value}:\n{self._mock_decompilation(input_text)}"
+        return (
+            f"// Claude-3 reconstruction for {task.value}:\n{self._mock_decompilation(input_text)}"
+        )
 
     def _mock_api_reconstruction(self, input_text: str, task: ReconstructionTask) -> str:
         """Mock API reconstruction result"""
@@ -500,7 +561,9 @@ int reconstructed_function(int param1, int param2) {
             self.logger.error(f"Failed to calculate confidence: {e}")
             return 0.0
 
-    def generate_threat_intelligence(self, analysis_data: Dict[str, Any]) -> List[ThreatIntelligence]:
+    def generate_threat_intelligence(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[ThreatIntelligence]:
         """Generate threat intelligence using ML models"""
 
         try:
@@ -522,12 +585,12 @@ int reconstructed_function(int param1, int param2) {
                             mitigation=[
                                 "Monitor for process creation events",
                                 "Check for suspicious parent-child process relationships",
-                                "Analyze memory allocation patterns"
+                                "Analyze memory allocation patterns",
                             ],
                             references=[
                                 "https://attack.mitre.org/techniques/T1055/",
-                                "https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createremotethread"
-                            ]
+                                "https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createremotethread",
+                            ],
                         )
                         threat_intelligence.append(threat_intel)
 
@@ -539,13 +602,16 @@ int reconstructed_function(int param1, int param2) {
                         threat_type="Network Communication",
                         severity="MEDIUM",
                         confidence=0.6,
-                        indicators=[f"Network connection to {conn.get('foreign_address', 'unknown')}" for conn in network_connections],
+                        indicators=[
+                            f"Network connection to {conn.get('foreign_address', 'unknown')}"
+                            for conn in network_connections
+                        ],
                         description="Suspicious network communication detected",
                         mitigation=[
                             "Monitor network traffic",
                             "Check for data exfiltration",
-                            "Analyze communication patterns"
-                        ]
+                            "Analyze communication patterns",
+                        ],
                     )
                     threat_intelligence.append(threat_intel)
 
@@ -557,13 +623,16 @@ int reconstructed_function(int param1, int param2) {
                         threat_type="File System Manipulation",
                         severity="LOW",
                         confidence=0.5,
-                        indicators=[f"File operation: {op.get('operation', 'unknown')}" for op in file_operations],
+                        indicators=[
+                            f"File operation: {op.get('operation', 'unknown')}"
+                            for op in file_operations
+                        ],
                         description="Suspicious file system operations detected",
                         mitigation=[
                             "Monitor file system changes",
                             "Check for unauthorized file access",
-                            "Analyze file modification patterns"
-                        ]
+                            "Analyze file modification patterns",
+                        ],
                     )
                     threat_intelligence.append(threat_intel)
 
@@ -574,7 +643,9 @@ int reconstructed_function(int param1, int param2) {
             self.logger.error(f"Failed to generate threat intelligence: {e}")
             return []
 
-    def save_reconstruction_results(self, results: List[ReconstructionResult], output_file: str) -> bool:
+    def save_reconstruction_results(
+        self, results: List[ReconstructionResult], output_file: str
+    ) -> bool:
         """Save reconstruction results to file"""
 
         try:
@@ -592,20 +663,22 @@ int reconstructed_function(int param1, int param2) {
                         "confidence": result.confidence,
                         "model_used": result.model_used.value,
                         "processing_time": result.processing_time,
-                        "metadata": result.metadata
+                        "metadata": result.metadata,
                     }
                     for result in results
                 ],
                 "summary": {
                     "total_results": len(results),
-                    "average_confidence": sum(r.confidence for r in results) / len(results) if results else 0,
+                    "average_confidence": (
+                        sum(r.confidence for r in results) / len(results) if results else 0
+                    ),
                     "total_processing_time": sum(r.processing_time for r in results),
-                    "models_used": list(set(r.model_used.value for r in results))
-                }
+                    "models_used": list(set(r.model_used.value for r in results)),
+                },
             }
 
             # Save to JSON file
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(results_dict, f, indent=2, default=str)
 
             self.logger.info(f"Reconstruction results saved to: {output_file}")
@@ -615,7 +688,9 @@ int reconstructed_function(int param1, int param2) {
             self.logger.error(f"Failed to save reconstruction results: {e}")
             return False
 
-    def save_threat_intelligence(self, threat_intelligence: List[ThreatIntelligence], output_file: str) -> bool:
+    def save_threat_intelligence(
+        self, threat_intelligence: List[ThreatIntelligence], output_file: str
+    ) -> bool:
         """Save threat intelligence to file"""
 
         try:
@@ -632,24 +707,30 @@ int reconstructed_function(int param1, int param2) {
                         "indicators": ti.indicators,
                         "description": ti.description,
                         "mitigation": ti.mitigation,
-                        "references": ti.references
+                        "references": ti.references,
                     }
                     for ti in threat_intelligence
                 ],
                 "summary": {
                     "total_threats": len(threat_intelligence),
                     "severity_distribution": {
-                        "CRITICAL": sum(1 for ti in threat_intelligence if ti.severity == "CRITICAL"),
+                        "CRITICAL": sum(
+                            1 for ti in threat_intelligence if ti.severity == "CRITICAL"
+                        ),
                         "HIGH": sum(1 for ti in threat_intelligence if ti.severity == "HIGH"),
                         "MEDIUM": sum(1 for ti in threat_intelligence if ti.severity == "MEDIUM"),
-                        "LOW": sum(1 for ti in threat_intelligence if ti.severity == "LOW")
+                        "LOW": sum(1 for ti in threat_intelligence if ti.severity == "LOW"),
                     },
-                    "average_confidence": sum(ti.confidence for ti in threat_intelligence) / len(threat_intelligence) if threat_intelligence else 0
-                }
+                    "average_confidence": (
+                        sum(ti.confidence for ti in threat_intelligence) / len(threat_intelligence)
+                        if threat_intelligence
+                        else 0
+                    ),
+                },
             }
 
             # Save to JSON file
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(threat_dict, f, indent=2, default=str)
 
             self.logger.info(f"Threat intelligence saved to: {output_file}")

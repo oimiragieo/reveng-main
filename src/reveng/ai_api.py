@@ -16,15 +16,15 @@ Key features for AI agents:
 
 import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 # Import REVENG components
-from ..tools.tools.ai_enhanced.instant_triage import InstantTriageEngine, ThreatLevel
-from ..tools.tools.ai_enhanced.nl_interface import NaturalLanguageInterface, NLResponse
-from ..tools.tools.translation import generate_translation_hints, generate_translation_guide
+from ..tools.ai.ai_enhanced.instant_triage import InstantTriageEngine, ThreatLevel
+from ..tools.ai.ai_enhanced.nl_interface import NaturalLanguageInterface, NLResponse
+from ..tools.translation import generate_translation_guide, generate_translation_hints
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,10 @@ class REVENG_AI_API:
     """
 
     def __init__(
-        self, use_ollama: bool = True, ollama_model: str = "auto", output_dir: Optional[str] = None
+        self,
+        use_ollama: bool = True,
+        ollama_model: str = "auto",
+        output_dir: Optional[str] = None,
     ):
         """
         Initialize AI-optimized API.
@@ -249,7 +252,9 @@ class REVENG_AI_API:
             NLResponse with answer, confidence score, and metadata
         """
         response = self.nl_interface.query(
-            question=question, binary_path=binary_path, analysis_results=analysis_results
+            question=question,
+            binary_path=binary_path,
+            analysis_results=analysis_results,
         )
 
         return response

@@ -5,31 +5,35 @@ Chaining multiple analysis tools into workflows with pre-built templates
 for malware analysis, .NET analysis, quick triage, and deep analysis.
 """
 
+import json
+import logging
 import os
 import sys
-import json
 import time
-import logging
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, BinaryIO
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, BinaryIO, Dict, List, Optional, Tuple
 
-from ..core.errors import REVENGError, AnalysisFailureError, create_error_context
+from ..core.errors import AnalysisFailureError, REVENGError, create_error_context
 from ..core.logger import get_logger
 
 logger = get_logger()
 
+
 class PipelineStage(Enum):
     """Pipeline stages"""
+
     PREPROCESSING = "preprocessing"
     STATIC_ANALYSIS = "static_analysis"
     DYNAMIC_ANALYSIS = "dynamic_analysis"
     POSTPROCESSING = "postprocessing"
     REPORTING = "reporting"
 
+
 class AnalysisTool(Enum):
     """Analysis tools"""
+
     GHIDRA = "ghidra"
     IDA = "ida"
     ILSPY = "ilspy"
@@ -44,9 +48,11 @@ class AnalysisTool(Enum):
     RESOURCE_HACKER = "resource_hacker"
     LORDPE = "lordpe"
 
+
 @dataclass
 class PipelineStep:
     """Pipeline step definition"""
+
     name: str
     tool: AnalysisTool
     stage: PipelineStage
@@ -60,9 +66,11 @@ class PipelineStep:
         if self.parameters is None:
             self.parameters = []
 
+
 @dataclass
 class PipelineResult:
     """Pipeline execution result"""
+
     pipeline_name: str
     binary_path: str
     execution_time: float
@@ -82,9 +90,11 @@ class PipelineResult:
         if self.stage_results is None:
             self.stage_results = {}
 
+
 @dataclass
 class AnalysisTemplate:
     """Analysis template definition"""
+
     name: str
     description: str
     stages: List[PipelineStage]
@@ -95,6 +105,7 @@ class AnalysisTemplate:
     def __post_init__(self):
         if self.output_formats is None:
             self.output_formats = ["json", "html", "pdf"]
+
 
 class AutomatedAnalysisPipeline:
     """Automated analysis pipeline engine"""
@@ -107,16 +118,22 @@ class AutomatedAnalysisPipeline:
             "malware_analysis": self._create_malware_analysis_template(),
             "dotnet_analysis": self._create_dotnet_analysis_template(),
             "quick_triage": self._create_quick_triage_template(),
-            "deep_analysis": self._create_deep_analysis_template()
+            "deep_analysis": self._create_deep_analysis_template(),
         }
 
-    def run_pipeline(self, template_name: str, binary_path: str, output_dir: str, custom_steps: Optional[List[PipelineStep]] = None) -> PipelineResult:
+    def run_pipeline(
+        self,
+        template_name: str,
+        binary_path: str,
+        output_dir: str,
+        custom_steps: Optional[List[PipelineStep]] = None,
+    ) -> PipelineResult:
         """Run analysis pipeline with specified template"""
 
         context = create_error_context(
             tool_name="automated_analysis_pipeline",
             binary_path=binary_path,
-            analysis_stage="pipeline_execution"
+            analysis_stage="pipeline_execution",
         )
 
         try:
@@ -125,7 +142,7 @@ class AutomatedAnalysisPipeline:
                     "pipeline_execution",
                     binary_path,
                     context=context,
-                    details=f"Unknown template: {template_name}"
+                    details=f"Unknown template: {template_name}",
                 )
 
             if not Path(binary_path).exists():
@@ -133,7 +150,7 @@ class AutomatedAnalysisPipeline:
                     "pipeline_execution",
                     binary_path,
                     context=context,
-                    details="Binary file not found"
+                    details="Binary file not found",
                 )
 
             self.logger.info(f"Running analysis pipeline: {template_name} on {binary_path}")
@@ -153,7 +170,7 @@ class AutomatedAnalysisPipeline:
                 pipeline_name=template_name,
                 binary_path=binary_path,
                 execution_time=0.0,
-                success=False
+                success=False,
             )
 
             start_time = time.time()
@@ -164,8 +181,8 @@ class AutomatedAnalysisPipeline:
                 result.stage_results[stage] = stage_results
 
                 # Check for critical errors
-                if stage_results.get('critical_errors'):
-                    result.errors.extend(stage_results['critical_errors'])
+                if stage_results.get("critical_errors"):
+                    result.errors.extend(stage_results["critical_errors"])
                     if any(step.required for step in steps if step.stage == stage):
                         result.success = False
                         break
@@ -176,39 +193,44 @@ class AutomatedAnalysisPipeline:
             # Determine overall success
             if not result.success:
                 result.success = all(
-                    not stage_results.get('critical_errors', [])
+                    not stage_results.get("critical_errors", [])
                     for stage_results in result.stage_results.values()
                 )
 
             # Generate final report
             self._generate_final_report(result, output_path)
 
-            self.logger.info(f"Pipeline execution completed: {template_name} in {result.execution_time:.2f}s")
+            self.logger.info(
+                f"Pipeline execution completed: {template_name} in {result.execution_time:.2f}s"
+            )
             return result
 
         except Exception as e:
             self.logger.error(f"Failed to run analysis pipeline: {e}")
             raise AnalysisFailureError(
-                "pipeline_execution",
-                binary_path,
-                context=context,
-                original_error=e
+                "pipeline_execution", binary_path, context=context, original_error=e
             )
 
-    def _execute_stage(self, stage: PipelineStage, steps: List[PipelineStep], binary_path: str, output_path: Path) -> Dict[str, Any]:
+    def _execute_stage(
+        self,
+        stage: PipelineStage,
+        steps: List[PipelineStep],
+        binary_path: str,
+        output_path: Path,
+    ) -> Dict[str, Any]:
         """Execute a pipeline stage"""
 
         try:
             self.logger.info(f"Executing pipeline stage: {stage.value}")
 
             stage_results = {
-                'stage': stage.value,
-                'start_time': time.time(),
-                'steps_executed': 0,
-                'steps_failed': 0,
-                'critical_errors': [],
-                'warnings': [],
-                'outputs': {}
+                "stage": stage.value,
+                "start_time": time.time(),
+                "steps_executed": 0,
+                "steps_failed": 0,
+                "critical_errors": [],
+                "warnings": [],
+                "outputs": {},
             }
 
             # Get steps for this stage
@@ -221,40 +243,48 @@ class AutomatedAnalysisPipeline:
                     # Execute step
                     step_result = self._execute_step(step, binary_path, output_path)
 
-                    if step_result['success']:
-                        stage_results['steps_executed'] += 1
-                        stage_results['outputs'][step.name] = step_result
+                    if step_result["success"]:
+                        stage_results["steps_executed"] += 1
+                        stage_results["outputs"][step.name] = step_result
                     else:
-                        stage_results['steps_failed'] += 1
+                        stage_results["steps_failed"] += 1
                         if step.required:
-                            stage_results['critical_errors'].append(f"Required step failed: {step.name}")
+                            stage_results["critical_errors"].append(
+                                f"Required step failed: {step.name}"
+                            )
                         else:
-                            stage_results['warnings'].append(f"Optional step failed: {step.name}")
+                            stage_results["warnings"].append(f"Optional step failed: {step.name}")
 
                 except Exception as e:
                     self.logger.error(f"Step execution failed: {step.name} - {e}")
-                    stage_results['steps_failed'] += 1
+                    stage_results["steps_failed"] += 1
                     if step.required:
-                        stage_results['critical_errors'].append(f"Required step failed: {step.name} - {e}")
+                        stage_results["critical_errors"].append(
+                            f"Required step failed: {step.name} - {e}"
+                        )
                     else:
-                        stage_results['warnings'].append(f"Optional step failed: {step.name} - {e}")
+                        stage_results["warnings"].append(f"Optional step failed: {step.name} - {e}")
 
-            stage_results['end_time'] = time.time()
-            stage_results['duration'] = stage_results['end_time'] - stage_results['start_time']
+            stage_results["end_time"] = time.time()
+            stage_results["duration"] = stage_results["end_time"] - stage_results["start_time"]
 
-            self.logger.info(f"Stage {stage.value} completed: {stage_results['steps_executed']} successful, {stage_results['steps_failed']} failed")
+            self.logger.info(
+                f"Stage {stage.value} completed: {stage_results['steps_executed']} successful, {stage_results['steps_failed']} failed"
+            )
             return stage_results
 
         except Exception as e:
             self.logger.error(f"Failed to execute stage {stage.value}: {e}")
             return {
-                'stage': stage.value,
-                'critical_errors': [f"Stage execution failed: {e}"],
-                'steps_executed': 0,
-                'steps_failed': 0
+                "stage": stage.value,
+                "critical_errors": [f"Stage execution failed: {e}"],
+                "steps_executed": 0,
+                "steps_failed": 0,
             }
 
-    def _execute_step(self, step: PipelineStep, binary_path: str, output_path: Path) -> Dict[str, Any]:
+    def _execute_step(
+        self, step: PipelineStep, binary_path: str, output_path: Path
+    ) -> Dict[str, Any]:
         """Execute a single pipeline step"""
 
         try:
@@ -270,25 +300,25 @@ class AutomatedAnalysisPipeline:
                 capture_output=True,
                 text=True,
                 timeout=step.timeout,
-                cwd=str(output_path)
+                cwd=str(output_path),
             )
 
             # Save output
             if result.stdout:
-                with open(output_file, 'w') as f:
+                with open(output_file, "w") as f:
                     f.write(result.stdout)
 
             # Parse results
             step_result = {
-                'step_name': step.name,
-                'tool': step.tool.value,
-                'command': ' '.join(command),
-                'return_code': result.returncode,
-                'success': result.returncode == 0,
-                'output_file': str(output_file),
-                'stdout': result.stdout,
-                'stderr': result.stderr,
-                'execution_time': 0.0  # Would be calculated in real implementation
+                "step_name": step.name,
+                "tool": step.tool.value,
+                "command": " ".join(command),
+                "return_code": result.returncode,
+                "success": result.returncode == 0,
+                "output_file": str(output_file),
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "execution_time": 0.0,  # Would be calculated in real implementation
             }
 
             return step_result
@@ -296,17 +326,13 @@ class AutomatedAnalysisPipeline:
         except subprocess.TimeoutExpired:
             self.logger.error(f"Step {step.name} timed out after {step.timeout} seconds")
             return {
-                'step_name': step.name,
-                'success': False,
-                'error': f"Timeout after {step.timeout} seconds"
+                "step_name": step.name,
+                "success": False,
+                "error": f"Timeout after {step.timeout} seconds",
             }
         except Exception as e:
             self.logger.error(f"Step {step.name} execution failed: {e}")
-            return {
-                'step_name': step.name,
-                'success': False,
-                'error': str(e)
-            }
+            return {"step_name": step.name, "success": False, "error": str(e)}
 
     def _generate_final_report(self, result: PipelineResult, output_path: Path):
         """Generate final analysis report"""
@@ -314,19 +340,19 @@ class AutomatedAnalysisPipeline:
         try:
             # Create comprehensive report
             report = {
-                'pipeline_name': result.pipeline_name,
-                'binary_path': result.binary_path,
-                'execution_time': result.execution_time,
-                'success': result.success,
-                'errors': result.errors,
-                'warnings': result.warnings,
-                'stage_results': result.stage_results,
-                'summary': self._generate_summary(result)
+                "pipeline_name": result.pipeline_name,
+                "binary_path": result.binary_path,
+                "execution_time": result.execution_time,
+                "success": result.success,
+                "errors": result.errors,
+                "warnings": result.warnings,
+                "stage_results": result.stage_results,
+                "summary": self._generate_summary(result),
             }
 
             # Save JSON report
             json_report_path = output_path / "analysis_report.json"
-            with open(json_report_path, 'w') as f:
+            with open(json_report_path, "w") as f:
                 json.dump(report, f, indent=2, default=str)
 
             # Generate HTML report
@@ -343,18 +369,35 @@ class AutomatedAnalysisPipeline:
 
         try:
             summary = {
-                'total_stages': len(result.stage_results),
-                'successful_stages': sum(1 for stage_result in result.stage_results.values() if not stage_result.get('critical_errors')),
-                'failed_stages': sum(1 for stage_result in result.stage_results.values() if stage_result.get('critical_errors')),
-                'total_steps': sum(stage_result.get('steps_executed', 0) + stage_result.get('steps_failed', 0) for stage_result in result.stage_results.values()),
-                'successful_steps': sum(stage_result.get('steps_executed', 0) for stage_result in result.stage_results.values()),
-                'failed_steps': sum(stage_result.get('steps_failed', 0) for stage_result in result.stage_results.values()),
-                'execution_time': result.execution_time,
-                'success_rate': 0.0
+                "total_stages": len(result.stage_results),
+                "successful_stages": sum(
+                    1
+                    for stage_result in result.stage_results.values()
+                    if not stage_result.get("critical_errors")
+                ),
+                "failed_stages": sum(
+                    1
+                    for stage_result in result.stage_results.values()
+                    if stage_result.get("critical_errors")
+                ),
+                "total_steps": sum(
+                    stage_result.get("steps_executed", 0) + stage_result.get("steps_failed", 0)
+                    for stage_result in result.stage_results.values()
+                ),
+                "successful_steps": sum(
+                    stage_result.get("steps_executed", 0)
+                    for stage_result in result.stage_results.values()
+                ),
+                "failed_steps": sum(
+                    stage_result.get("steps_failed", 0)
+                    for stage_result in result.stage_results.values()
+                ),
+                "execution_time": result.execution_time,
+                "success_rate": 0.0,
             }
 
-            if summary['total_steps'] > 0:
-                summary['success_rate'] = summary['successful_steps'] / summary['total_steps']
+            if summary["total_steps"] > 0:
+                summary["success_rate"] = summary["successful_steps"] / summary["total_steps"]
 
             return summary
 
@@ -422,7 +465,7 @@ class AutomatedAnalysisPipeline:
 </html>
 """
 
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 f.write(html_content)
 
         except Exception as e:
@@ -477,7 +520,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.PREPROCESSING,
                 command="die",
                 parameters=["-c", "-j"],
-                timeout=60
+                timeout=60,
             ),
             PipelineStep(
                 name="entropy_analysis",
@@ -485,15 +528,20 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.PREPROCESSING,
                 command="hxd",
                 parameters=["-e"],
-                timeout=120
+                timeout=120,
             ),
             PipelineStep(
                 name="static_analysis",
                 tool=AnalysisTool.GHIDRA,
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="ghidra",
-                parameters=["-headless", "-import", "-postScript", "malware_analysis.py"],
-                timeout=600
+                parameters=[
+                    "-headless",
+                    "-import",
+                    "-postScript",
+                    "malware_analysis.py",
+                ],
+                timeout=600,
             ),
             PipelineStep(
                 name="import_analysis",
@@ -501,7 +549,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="lordpe",
                 parameters=["-i"],
-                timeout=300
+                timeout=300,
             ),
             PipelineStep(
                 name="resource_extraction",
@@ -509,7 +557,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="resource_hacker",
                 parameters=["-extract"],
-                timeout=300
+                timeout=300,
             ),
             PipelineStep(
                 name="dynamic_analysis",
@@ -517,7 +565,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.DYNAMIC_ANALYSIS,
                 command="x64dbg",
                 parameters=["-a"],
-                timeout=900
+                timeout=900,
             ),
             PipelineStep(
                 name="unpacking",
@@ -525,16 +573,20 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.DYNAMIC_ANALYSIS,
                 command="scylla",
                 parameters=["-u"],
-                timeout=600
-            )
+                timeout=600,
+            ),
         ]
 
         return AnalysisTemplate(
             name="malware_analysis",
             description="Comprehensive malware analysis pipeline",
-            stages=[PipelineStage.PREPROCESSING, PipelineStage.STATIC_ANALYSIS, PipelineStage.DYNAMIC_ANALYSIS],
+            stages=[
+                PipelineStage.PREPROCESSING,
+                PipelineStage.STATIC_ANALYSIS,
+                PipelineStage.DYNAMIC_ANALYSIS,
+            ],
             steps=steps,
-            estimated_time=45
+            estimated_time=45,
         )
 
     def _create_dotnet_analysis_template(self) -> AnalysisTemplate:
@@ -547,7 +599,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.PREPROCESSING,
                 command="die",
                 parameters=["-c", "-j"],
-                timeout=60
+                timeout=60,
             ),
             PipelineStep(
                 name="decompilation",
@@ -555,15 +607,20 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="ilspy",
                 parameters=["-o"],
-                timeout=600
+                timeout=600,
             ),
             PipelineStep(
                 name="ghidra_analysis",
                 tool=AnalysisTool.GHIDRA,
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="ghidra",
-                parameters=["-headless", "-import", "-postScript", "dotnet_analysis.py"],
-                timeout=600
+                parameters=[
+                    "-headless",
+                    "-import",
+                    "-postScript",
+                    "dotnet_analysis.py",
+                ],
+                timeout=600,
             ),
             PipelineStep(
                 name="resource_extraction",
@@ -571,8 +628,8 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="resource_hacker",
                 parameters=["-extract"],
-                timeout=300
-            )
+                timeout=300,
+            ),
         ]
 
         return AnalysisTemplate(
@@ -580,7 +637,7 @@ class AutomatedAnalysisPipeline:
             description=".NET-specific analysis pipeline",
             stages=[PipelineStage.PREPROCESSING, PipelineStage.STATIC_ANALYSIS],
             steps=steps,
-            estimated_time=25
+            estimated_time=25,
         )
 
     def _create_quick_triage_template(self) -> AnalysisTemplate:
@@ -593,7 +650,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.PREPROCESSING,
                 command="die",
                 parameters=["-c", "-j"],
-                timeout=30
+                timeout=30,
             ),
             PipelineStep(
                 name="quick_analysis",
@@ -601,7 +658,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="ghidra",
                 parameters=["-headless", "-import", "-postScript", "quick_triage.py"],
-                timeout=300
+                timeout=300,
             ),
             PipelineStep(
                 name="import_analysis",
@@ -609,8 +666,8 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="lordpe",
                 parameters=["-i"],
-                timeout=120
-            )
+                timeout=120,
+            ),
         ]
 
         return AnalysisTemplate(
@@ -618,7 +675,7 @@ class AutomatedAnalysisPipeline:
             description="Quick triage analysis pipeline",
             stages=[PipelineStage.PREPROCESSING, PipelineStage.STATIC_ANALYSIS],
             steps=steps,
-            estimated_time=10
+            estimated_time=10,
         )
 
     def _create_deep_analysis_template(self) -> AnalysisTemplate:
@@ -631,7 +688,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.PREPROCESSING,
                 command="die",
                 parameters=["-c", "-j"],
-                timeout=60
+                timeout=60,
             ),
             PipelineStep(
                 name="entropy_analysis",
@@ -639,7 +696,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.PREPROCESSING,
                 command="hxd",
                 parameters=["-e"],
-                timeout=120
+                timeout=120,
             ),
             PipelineStep(
                 name="deep_static_analysis",
@@ -647,7 +704,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="ghidra",
                 parameters=["-headless", "-import", "-postScript", "deep_analysis.py"],
-                timeout=1200
+                timeout=1200,
             ),
             PipelineStep(
                 name="import_analysis",
@@ -655,7 +712,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="lordpe",
                 parameters=["-i"],
-                timeout=300
+                timeout=300,
             ),
             PipelineStep(
                 name="resource_extraction",
@@ -663,7 +720,7 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="resource_hacker",
                 parameters=["-extract"],
-                timeout=300
+                timeout=300,
             ),
             PipelineStep(
                 name="hex_analysis",
@@ -671,8 +728,8 @@ class AutomatedAnalysisPipeline:
                 stage=PipelineStage.STATIC_ANALYSIS,
                 command="imhex",
                 parameters=["-a"],
-                timeout=600
-            )
+                timeout=600,
+            ),
         ]
 
         return AnalysisTemplate(
@@ -680,5 +737,5 @@ class AutomatedAnalysisPipeline:
             description="Comprehensive deep analysis pipeline",
             stages=[PipelineStage.PREPROCESSING, PipelineStage.STATIC_ANALYSIS],
             steps=steps,
-            estimated_time=60
+            estimated_time=60,
         )

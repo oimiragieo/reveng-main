@@ -1,103 +1,108 @@
 # REVENG Documentation
 
-Welcome to the comprehensive documentation for REVENG Universal Reverse Engineering Platform.
+Welcome to the REVENG documentation. This comprehensive guide covers everything you need to know about the REVENG Universal Reverse Engineering Platform.
 
-## 📚 Quick Navigation
+## 📚 Documentation Structure
 
 ### Getting Started
-- **[Quick Start Guide](QUICK_START.md)** - 5-minute setup and first analysis
-- **[Installation Guide](../INSTALLATION.md)** - Detailed installation instructions
-- **[User Guide](USER_GUIDE.md)** - Complete end-user documentation
+- [Installation Guide](getting-started/installation.md) - Complete installation instructions
+- [Quick Start Guide](getting-started/quick-start.md) - Get up and running in minutes
+- [Troubleshooting](getting-started/troubleshooting.md) - Common issues and solutions
+
+### User Guide
+- [CLI Usage](user-guide/cli-usage.md) - Command-line interface reference
+- [Web Interface](user-guide/web-interface.md) - Web-based analysis interface
+- [Binary Analysis](user-guide/binary-analysis.md) - How to analyze different binary types
+- [Multi-Language Support](user-guide/multi-language.md) - Supported languages and formats
+- [AI Features](user-guide/ai-features.md) - AI-powered analysis capabilities
+- [Advanced Features](user-guide/advanced-features.md) - Enterprise and advanced features
+- [Configuration](user-guide/configuration.md) - System configuration options
+
+### Developer Guide
+- [Architecture](developer-guide/architecture.md) - System architecture overview
+- [Contributing](developer-guide/contributing.md) - How to contribute to REVENG
+- [Plugin Development](developer-guide/plugin-development.md) - Creating custom plugins
+- [Tool Development](developer-guide/tool-development.md) - Adding new analysis tools
+- [Testing](developer-guide/testing.md) - Testing guidelines and procedures
+- [Project Structure](development/PROJECT_STRUCTURE.md) - Current project structure
+
+### API Reference
+- [Python API](api/python-api.md) - Python programming interface
+- [REST API](api/rest-api.md) - Web API endpoints
+- [AI API](api/ai-api.md) - AI service integration
+- [Schemas](api/schemas/) - API data schemas
+
+### Deployment
+- [Docker](deployment/docker.md) - Containerized deployment
+- [Kubernetes](deployment/kubernetes.md) - Kubernetes deployment
+- [Cloud Providers](deployment/cloud-providers.md) - Cloud deployment options
+
+### AI Assistant Guide
+- [Overview](ai-assistant-guide/README.md) - AI assistant integration
+- [Claude Integration](ai-assistant-guide/claude-integration.md) - Claude AI integration
+- [Tool Selection](ai-assistant-guide/tool-selection.md) - Tool selection matrix
+- [Automation](ai-assistant-guide/automation.md) - Automated workflows
+
+### Guides
+- [Complete Setup Guide](guides/complete-setup-guide.md) - Comprehensive setup
+- [Advanced Analysis](guides/advanced-analysis.md) - Advanced analysis techniques
+- [Ghidra Integration](guides/ghidra-integration.md) - Ghidra integration guide
+- [Migration Guide](guides/migration.md) - Upgrading from older versions
+- [Best Practices](guides/best-practices.md) - Recommended practices
+
+### Development
+- [Project Structure](development/PROJECT_STRUCTURE.md) - Codebase organization
+- [Release Checklist](development/release-checklist.md) - Release procedures
+- [Roadmap](development/roadmap.md) - Development roadmap
+- [Overhaul Plan](development/reveng-overhaul-plan.md) - Transformation plan
+
+### Reports
+- [Implementation Complete](reports/implementation-complete.md) - Implementation status
+- [Security Audit](reports/security-audit.md) - Security assessment
+- [Cross-Platform Testing](reports/cross-platform-testing.md) - Testing results
+- [Validation Report](reports/validation-report.md) - Validation results
+
+## 🚀 Quick Navigation
+
+### For Users
+- **New to REVENG?** Start with [Quick Start](getting-started/quick-start.md)
+- **Need help?** Check [Troubleshooting](getting-started/troubleshooting.md)
+- **Advanced features?** See [Advanced Features](user-guide/advanced-features.md)
 
 ### For Developers
-- **[Developer Guide](DEVELOPER_GUIDE.md)** - Development workflows and architecture
-- **[Project Structure](development/PROJECT_STRUCTURE.md)** - Code organization
-- **[API Reference](api/API_REFERENCE.md)** - Complete API documentation
-- **[Architecture](architecture/ARCHITECTURE.md)** - System architecture overview
+- **Contributing?** Read [Contributing Guide](developer-guide/contributing.md)
+- **Architecture?** See [Architecture](developer-guide/architecture.md)
+- **Testing?** Check [Testing Guide](developer-guide/testing.md)
 
 ### For AI Assistants
-- **[AI Assistant Guide](guides/AI_ASSISTANT_GUIDE.md)** - Comprehensive guide for AI agents
-- **[Claude Integration](guides/CLAUDE_INTEGRATION.md)** - Claude-specific guidance
-- **[Tool Development](guides/AI_ASSISTANT_GUIDE.md#tool-development)** - Creating new tools
+- **Integration?** See [AI Assistant Guide](ai-assistant-guide/README.md)
+- **Tool Selection?** Check [Tool Selection Matrix](ai-assistant-guide/tool-selection-matrix.md)
+- **Automation?** Read [Automation Guide](ai-assistant-guide/automation.md)
 
-### Specialized Guides
-- **[Enterprise Deployment](guides/ENTERPRISE_DEPLOYMENT.md)** - Enterprise setup
-- **[Security Analysis](tutorials/security-analysis.md)** - Security research workflows
-- **[Binary Reconstruction](tutorials/binary-reconstruction.md)** - Complete reconstruction pipeline
+## 📖 Key Features
 
-### Project Information
-- **[Release Notes](RELEASE_NOTES.md)** - Version history and changes
-- **[Roadmap](development/ROADMAP.md)** - Future development plans
-- **[TODO List](development/TODO.md)** - Current development tasks
-- **[Privacy Policy](legal/PRIVACY.md)** - Privacy and data handling
-
-## 🚀 Quick Start
-
-1. **Install REVENG**: See [Installation Guide](../INSTALLATION.md)
-2. **Run First Analysis**: See [Quick Start Guide](QUICK_START.md)
-3. **Explore Tools**: See [Tool Categories](../tools/README.md)
-
-## 🤖 For AI Coding Assistants
-
-If you're an AI assistant working on REVENG:
-
-1. **Start Here**: [AI Assistant Guide](guides/AI_ASSISTANT_GUIDE.md)
-2. **Claude Users**: [Claude Integration Guide](guides/CLAUDE_INTEGRATION.md)
-3. **Tool Development**: See tool development patterns in the guides
-
-## 📖 Documentation Structure
-
-```
-docs/
-├── README.md                    # This file - documentation hub
-├── QUICK_START.md              # 5-minute setup guide
-├── USER_GUIDE.md               # End-user documentation
-├── DEVELOPER_GUIDE.md           # Developer documentation
-├── RELEASE_NOTES.md            # Version history
-├── guides/                     # Specialized guides
-│   ├── AI_ASSISTANT_GUIDE.md   # For AI agents
-│   ├── CLAUDE_INTEGRATION.md   # For Claude specifically
-│   └── ENTERPRISE_DEPLOYMENT.md # For enterprise
-├── api/                        # API documentation
-│   └── API_REFERENCE.md        # Complete API reference
-├── architecture/               # Architecture docs
-│   └── ARCHITECTURE.md         # System architecture
-├── development/                # Development docs
-│   ├── PROJECT_STRUCTURE.md   # Code organization
-│   ├── ROADMAP.md             # Future plans
-│   └── TODO.md                # Task tracking
-├── legal/                     # Legal documents
-│   └── PRIVACY.md             # Privacy policy
-└── tutorials/                 # Step-by-step tutorials
-    ├── basic-analysis.md
-    ├── java-decompilation.md
-    └── binary-reconstruction.md
-```
+- **Universal Binary Analysis** - Analyze any binary format
+- **AI-Powered Insights** - Intelligent analysis with AI integration
+- **Multi-Language Support** - Java, C#, Python, Native binaries
+- **Web Interface** - Modern web-based analysis interface
+- **Enterprise Ready** - Audit trails, plugins, GPU acceleration
+- **Extensible** - Plugin system for custom tools
 
 ## 🔗 External Resources
 
-- **GitHub Repository**: [REVENG on GitHub](https://github.com/oimiragieo/reveng-main)
-- **Issue Tracker**: [Report Issues](https://github.com/oimiragieo/reveng-main/issues)
-- **Discussions**: [Community Discussions](https://github.com/oimiragieo/reveng-main/discussions)
-- **Security**: [Security Policy](../SECURITY.md)
+- [GitHub Repository](https://github.com/oimiragieo/reveng-main)
+- [PyPI Package](https://pypi.org/project/reveng/)
+- [Issue Tracker](https://github.com/oimiragieo/reveng-main/issues)
+- [Discussions](https://github.com/oimiragieo/reveng-main/discussions)
 
-## 📝 Contributing to Documentation
+## 📝 Contributing
 
-We welcome contributions to improve REVENG documentation:
+We welcome contributions! Please see our [Contributing Guide](developer-guide/contributing.md) for details on how to contribute to REVENG.
 
-1. **Report Issues**: Found a documentation bug? [Create an issue](https://github.com/oimiragieo/reveng-main/issues)
-2. **Suggest Improvements**: Have ideas for better docs? [Start a discussion](https://github.com/oimiragieo/reveng-main/discussions)
-3. **Submit Changes**: See [Contributing Guide](../CONTRIBUTING.md) for how to contribute
+## 📄 License
 
-## 🆘 Getting Help
-
-- **Documentation Issues**: Check if your question is answered in the relevant guide
-- **Technical Problems**: See [Troubleshooting](guides/AI_ASSISTANT_GUIDE.md#troubleshooting)
-- **Feature Requests**: [Create a feature request](https://github.com/oimiragieo/reveng-main/issues/new?template=feature_request.md)
-- **Bug Reports**: [Report a bug](https://github.com/oimiragieo/reveng-main/issues/new?template=bug_report.md)
+REVENG is licensed under the MIT License. See [LICENSE](../LICENSE) for details.
 
 ---
 
-**Last Updated**: January 2025  
-**REVENG Version**: 2.1.0  
-**Documentation Maintainer**: REVENG Development Team
+*Last updated: October 2024*

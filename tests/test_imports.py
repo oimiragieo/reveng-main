@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 import json
-import re
 import logging
-import sys
 import os
-from typing import Dict, List, Any, Optional, Tuple, Set
+import re
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Import our data models
-sys.path.append('tools')
-from ai_enhanced_data_models import (
-    MITREMapping, Evidence, ConfidenceLevel, EvidenceTracker
-)
+sys.path.append("tools")
+from ai_enhanced_data_models import ConfidenceLevel, Evidence, EvidenceTracker, MITREMapping
 
 print("All imports successful")

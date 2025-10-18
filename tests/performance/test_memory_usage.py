@@ -8,15 +8,16 @@ Author: REVENG Development Team
 Version: 2.1.0
 """
 
-import pytest
-import psutil
-import os
 import gc
+import os
+import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
-import tempfile
 
-from src.reveng.analyzer import REVENGAnalyzer, EnhancedAnalysisFeatures
+import psutil
+import pytest
+
+from src.reveng.analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
 
 
 class TestMemoryUsage:
@@ -25,24 +26,23 @@ class TestMemoryUsage:
     @pytest.mark.performance
     def test_basic_memory_usage(self, mock_binary_file):
         """Test basic memory usage during analysis."""
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock analysis steps
-        with patch.object(analyzer, '_step1_ai_analysis'), \
-             patch.object(analyzer, '_step2_disassembly'), \
-             patch.object(analyzer, '_step3_ai_inspection'), \
-             patch.object(analyzer, '_step4_specifications'), \
-             patch.object(analyzer, '_step5_human_readable'), \
-             patch.object(analyzer, '_step6_deobfuscation'), \
-             patch.object(analyzer, '_step7_implementation'), \
-             patch.object(analyzer, '_step8_validation'):
+        with (
+            patch.object(analyzer, "_step1_ai_analysis"),
+            patch.object(analyzer, "_step2_disassembly"),
+            patch.object(analyzer, "_step3_ai_inspection"),
+            patch.object(analyzer, "_step4_specifications"),
+            patch.object(analyzer, "_step5_human_readable"),
+            patch.object(analyzer, "_step6_deobfuscation"),
+            patch.object(analyzer, "_step7_implementation"),
+            patch.object(analyzer, "_step8_validation"),
+        ):
 
             result = analyzer.analyze_binary()
 
@@ -59,7 +59,7 @@ class TestMemoryUsage:
         analyzer = REVENGAnalyzer(
             binary_path=str(mock_binary_file),
             check_ollama=False,
-            enhanced_features=mock_enhanced_features
+            enhanced_features=mock_enhanced_features,
         )
 
         # Get initial memory usage
@@ -67,19 +67,21 @@ class TestMemoryUsage:
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock all analysis steps including enhanced
-        with patch.object(analyzer, '_step1_ai_analysis'), \
-             patch.object(analyzer, '_step2_disassembly'), \
-             patch.object(analyzer, '_step3_ai_inspection'), \
-             patch.object(analyzer, '_step4_specifications'), \
-             patch.object(analyzer, '_step5_human_readable'), \
-             patch.object(analyzer, '_step6_deobfuscation'), \
-             patch.object(analyzer, '_step7_implementation'), \
-             patch.object(analyzer, '_step8_validation'), \
-             patch.object(analyzer, '_step9_corporate_exposure'), \
-             patch.object(analyzer, '_step10_vulnerability_discovery'), \
-             patch.object(analyzer, '_step11_threat_intelligence'), \
-             patch.object(analyzer, '_step12_enhanced_reconstruction'), \
-             patch.object(analyzer, '_step13_demonstration_generation'):
+        with (
+            patch.object(analyzer, "_step1_ai_analysis"),
+            patch.object(analyzer, "_step2_disassembly"),
+            patch.object(analyzer, "_step3_ai_inspection"),
+            patch.object(analyzer, "_step4_specifications"),
+            patch.object(analyzer, "_step5_human_readable"),
+            patch.object(analyzer, "_step6_deobfuscation"),
+            patch.object(analyzer, "_step7_implementation"),
+            patch.object(analyzer, "_step8_validation"),
+            patch.object(analyzer, "_step9_corporate_exposure"),
+            patch.object(analyzer, "_step10_vulnerability_discovery"),
+            patch.object(analyzer, "_step11_threat_intelligence"),
+            patch.object(analyzer, "_step12_enhanced_reconstruction"),
+            patch.object(analyzer, "_step13_demonstration_generation"),
+        ):
 
             result = analyzer.analyze_binary()
 
@@ -88,7 +90,9 @@ class TestMemoryUsage:
             memory_increase = final_memory - initial_memory
 
             assert result is True
-            assert memory_increase < 100.0  # Enhanced analysis should not use more than 100MB additional memory
+            assert (
+                memory_increase < 100.0
+            )  # Enhanced analysis should not use more than 100MB additional memory
 
     @pytest.mark.performance
     def test_large_binary_memory_usage(self, temp_analysis_dir):
@@ -97,24 +101,23 @@ class TestMemoryUsage:
         large_binary = temp_analysis_dir / "large_memory_test.exe"
         large_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 10000000)  # ~10MB
 
-        analyzer = REVENGAnalyzer(
-            binary_path=str(large_binary),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(large_binary), check_ollama=False)
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock analysis steps
-        with patch.object(analyzer, '_step1_ai_analysis'), \
-             patch.object(analyzer, '_step2_disassembly'), \
-             patch.object(analyzer, '_step3_ai_inspection'), \
-             patch.object(analyzer, '_step4_specifications'), \
-             patch.object(analyzer, '_step5_human_readable'), \
-             patch.object(analyzer, '_step6_deobfuscation'), \
-             patch.object(analyzer, '_step7_implementation'), \
-             patch.object(analyzer, '_step8_validation'):
+        with (
+            patch.object(analyzer, "_step1_ai_analysis"),
+            patch.object(analyzer, "_step2_disassembly"),
+            patch.object(analyzer, "_step3_ai_inspection"),
+            patch.object(analyzer, "_step4_specifications"),
+            patch.object(analyzer, "_step5_human_readable"),
+            patch.object(analyzer, "_step6_deobfuscation"),
+            patch.object(analyzer, "_step7_implementation"),
+            patch.object(analyzer, "_step8_validation"),
+        ):
 
             result = analyzer.analyze_binary()
 
@@ -123,7 +126,9 @@ class TestMemoryUsage:
             memory_increase = final_memory - initial_memory
 
             assert result is True
-            assert memory_increase < 200.0  # Large binary should not use more than 200MB additional memory
+            assert (
+                memory_increase < 200.0
+            )  # Large binary should not use more than 200MB additional memory
 
     @pytest.mark.performance
     def test_concurrent_analysis_memory_usage(self, temp_analysis_dir):
@@ -137,10 +142,7 @@ class TestMemoryUsage:
 
         analyzers = []
         for binary in binaries:
-            analyzer = REVENGAnalyzer(
-                binary_path=str(binary),
-                check_ollama=False
-            )
+            analyzer = REVENGAnalyzer(binary_path=str(binary), check_ollama=False)
             analyzers.append(analyzer)
 
         # Get initial memory usage
@@ -148,30 +150,32 @@ class TestMemoryUsage:
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock analysis steps for all analyzers
-        with patch.object(analyzers[0], '_step1_ai_analysis'), \
-             patch.object(analyzers[0], '_step2_disassembly'), \
-             patch.object(analyzers[0], '_step3_ai_inspection'), \
-             patch.object(analyzers[0], '_step4_specifications'), \
-             patch.object(analyzers[0], '_step5_human_readable'), \
-             patch.object(analyzers[0], '_step6_deobfuscation'), \
-             patch.object(analyzers[0], '_step7_implementation'), \
-             patch.object(analyzers[0], '_step8_validation'), \
-             patch.object(analyzers[1], '_step1_ai_analysis'), \
-             patch.object(analyzers[1], '_step2_disassembly'), \
-             patch.object(analyzers[1], '_step3_ai_inspection'), \
-             patch.object(analyzers[1], '_step4_specifications'), \
-             patch.object(analyzers[1], '_step5_human_readable'), \
-             patch.object(analyzers[1], '_step6_deobfuscation'), \
-             patch.object(analyzers[1], '_step7_implementation'), \
-             patch.object(analyzers[1], '_step8_validation'), \
-             patch.object(analyzers[2], '_step1_ai_analysis'), \
-             patch.object(analyzers[2], '_step2_disassembly'), \
-             patch.object(analyzers[2], '_step3_ai_inspection'), \
-             patch.object(analyzers[2], '_step4_specifications'), \
-             patch.object(analyzers[2], '_step5_human_readable'), \
-             patch.object(analyzers[2], '_step6_deobfuscation'), \
-             patch.object(analyzers[2], '_step7_implementation'), \
-             patch.object(analyzers[2], '_step8_validation'):
+        with (
+            patch.object(analyzers[0], "_step1_ai_analysis"),
+            patch.object(analyzers[0], "_step2_disassembly"),
+            patch.object(analyzers[0], "_step3_ai_inspection"),
+            patch.object(analyzers[0], "_step4_specifications"),
+            patch.object(analyzers[0], "_step5_human_readable"),
+            patch.object(analyzers[0], "_step6_deobfuscation"),
+            patch.object(analyzers[0], "_step7_implementation"),
+            patch.object(analyzers[0], "_step8_validation"),
+            patch.object(analyzers[1], "_step1_ai_analysis"),
+            patch.object(analyzers[1], "_step2_disassembly"),
+            patch.object(analyzers[1], "_step3_ai_inspection"),
+            patch.object(analyzers[1], "_step4_specifications"),
+            patch.object(analyzers[1], "_step5_human_readable"),
+            patch.object(analyzers[1], "_step6_deobfuscation"),
+            patch.object(analyzers[1], "_step7_implementation"),
+            patch.object(analyzers[1], "_step8_validation"),
+            patch.object(analyzers[2], "_step1_ai_analysis"),
+            patch.object(analyzers[2], "_step2_disassembly"),
+            patch.object(analyzers[2], "_step3_ai_inspection"),
+            patch.object(analyzers[2], "_step4_specifications"),
+            patch.object(analyzers[2], "_step5_human_readable"),
+            patch.object(analyzers[2], "_step6_deobfuscation"),
+            patch.object(analyzers[2], "_step7_implementation"),
+            patch.object(analyzers[2], "_step8_validation"),
+        ):
 
             # Run all analyses
             results = []
@@ -185,29 +189,30 @@ class TestMemoryUsage:
 
             # All analyses should succeed
             assert all(results)
-            assert memory_increase < 150.0  # Concurrent analysis should not use more than 150MB additional memory
+            assert (
+                memory_increase < 150.0
+            )  # Concurrent analysis should not use more than 150MB additional memory
 
     @pytest.mark.performance
     def test_memory_cleanup_after_analysis(self, mock_binary_file):
         """Test memory cleanup after analysis."""
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock analysis steps
-        with patch.object(analyzer, '_step1_ai_analysis'), \
-             patch.object(analyzer, '_step2_disassembly'), \
-             patch.object(analyzer, '_step3_ai_inspection'), \
-             patch.object(analyzer, '_step4_specifications'), \
-             patch.object(analyzer, '_step5_human_readable'), \
-             patch.object(analyzer, '_step6_deobfuscation'), \
-             patch.object(analyzer, '_step7_implementation'), \
-             patch.object(analyzer, '_step8_validation'):
+        with (
+            patch.object(analyzer, "_step1_ai_analysis"),
+            patch.object(analyzer, "_step2_disassembly"),
+            patch.object(analyzer, "_step3_ai_inspection"),
+            patch.object(analyzer, "_step4_specifications"),
+            patch.object(analyzer, "_step5_human_readable"),
+            patch.object(analyzer, "_step6_deobfuscation"),
+            patch.object(analyzer, "_step7_implementation"),
+            patch.object(analyzer, "_step8_validation"),
+        ):
 
             result = analyzer.analyze_binary()
 
@@ -229,10 +234,7 @@ class TestMemoryUsage:
     @pytest.mark.performance
     def test_memory_usage_with_audit_logging(self, mock_binary_file):
         """Test memory usage with audit logging enabled."""
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         # Mock audit logger
         mock_audit_logger = Mock()
@@ -244,14 +246,16 @@ class TestMemoryUsage:
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock analysis steps
-        with patch.object(analyzer, '_step1_ai_analysis'), \
-             patch.object(analyzer, '_step2_disassembly'), \
-             patch.object(analyzer, '_step3_ai_inspection'), \
-             patch.object(analyzer, '_step4_specifications'), \
-             patch.object(analyzer, '_step5_human_readable'), \
-             patch.object(analyzer, '_step6_deobfuscation'), \
-             patch.object(analyzer, '_step7_implementation'), \
-             patch.object(analyzer, '_step8_validation'):
+        with (
+            patch.object(analyzer, "_step1_ai_analysis"),
+            patch.object(analyzer, "_step2_disassembly"),
+            patch.object(analyzer, "_step3_ai_inspection"),
+            patch.object(analyzer, "_step4_specifications"),
+            patch.object(analyzer, "_step5_human_readable"),
+            patch.object(analyzer, "_step6_deobfuscation"),
+            patch.object(analyzer, "_step7_implementation"),
+            patch.object(analyzer, "_step8_validation"),
+        ):
 
             result = analyzer.analyze_binary()
 
@@ -260,29 +264,30 @@ class TestMemoryUsage:
             memory_increase = final_memory - initial_memory
 
             assert result is True
-            assert memory_increase < 60.0  # Audit logging should not significantly increase memory usage
+            assert (
+                memory_increase < 60.0
+            )  # Audit logging should not significantly increase memory usage
 
     @pytest.mark.performance
     def test_memory_usage_with_file_operations(self, mock_binary_file, temp_analysis_dir):
         """Test memory usage with file operations."""
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock analysis steps with file operations
-        with patch.object(analyzer, '_step1_ai_analysis'), \
-             patch.object(analyzer, '_step2_disassembly'), \
-             patch.object(analyzer, '_step3_ai_inspection'), \
-             patch.object(analyzer, '_step4_specifications'), \
-             patch.object(analyzer, '_step5_human_readable'), \
-             patch.object(analyzer, '_step6_deobfuscation'), \
-             patch.object(analyzer, '_step7_implementation'), \
-             patch.object(analyzer, '_step8_validation'):
+        with (
+            patch.object(analyzer, "_step1_ai_analysis"),
+            patch.object(analyzer, "_step2_disassembly"),
+            patch.object(analyzer, "_step3_ai_inspection"),
+            patch.object(analyzer, "_step4_specifications"),
+            patch.object(analyzer, "_step5_human_readable"),
+            patch.object(analyzer, "_step6_deobfuscation"),
+            patch.object(analyzer, "_step7_implementation"),
+            patch.object(analyzer, "_step8_validation"),
+        ):
 
             result = analyzer.analyze_binary()
 
@@ -291,29 +296,30 @@ class TestMemoryUsage:
             memory_increase = final_memory - initial_memory
 
             assert result is True
-            assert memory_increase < 50.0  # File operations should not significantly increase memory usage
+            assert (
+                memory_increase < 50.0
+            )  # File operations should not significantly increase memory usage
 
     @pytest.mark.performance
     def test_memory_usage_with_ai_analysis(self, mock_binary_file):
         """Test memory usage with AI analysis."""
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock AI analysis steps
-        with patch.object(analyzer, '_step1_ai_analysis') as mock_ai, \
-             patch.object(analyzer, '_step2_disassembly'), \
-             patch.object(analyzer, '_step3_ai_inspection') as mock_ai_inspection, \
-             patch.object(analyzer, '_step4_specifications'), \
-             patch.object(analyzer, '_step5_human_readable'), \
-             patch.object(analyzer, '_step6_deobfuscation'), \
-             patch.object(analyzer, '_step7_implementation'), \
-             patch.object(analyzer, '_step8_validation'):
+        with (
+            patch.object(analyzer, "_step1_ai_analysis") as mock_ai,
+            patch.object(analyzer, "_step2_disassembly"),
+            patch.object(analyzer, "_step3_ai_inspection") as mock_ai_inspection,
+            patch.object(analyzer, "_step4_specifications"),
+            patch.object(analyzer, "_step5_human_readable"),
+            patch.object(analyzer, "_step6_deobfuscation"),
+            patch.object(analyzer, "_step7_implementation"),
+            patch.object(analyzer, "_step8_validation"),
+        ):
 
             # Configure AI mocks to simulate memory usage
             mock_ai.return_value = None
@@ -326,29 +332,30 @@ class TestMemoryUsage:
             memory_increase = final_memory - initial_memory
 
             assert result is True
-            assert memory_increase < 70.0  # AI analysis should not use more than 70MB additional memory
+            assert (
+                memory_increase < 70.0
+            )  # AI analysis should not use more than 70MB additional memory
 
     @pytest.mark.performance
     def test_memory_usage_with_ml_models(self, mock_binary_file):
         """Test memory usage with ML models."""
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock ML model operations
-        with patch.object(analyzer, '_step1_ai_analysis'), \
-             patch.object(analyzer, '_step2_disassembly'), \
-             patch.object(analyzer, '_step3_ai_inspection'), \
-             patch.object(analyzer, '_step4_specifications'), \
-             patch.object(analyzer, '_step5_human_readable'), \
-             patch.object(analyzer, '_step6_deobfuscation'), \
-             patch.object(analyzer, '_step7_implementation'), \
-             patch.object(analyzer, '_step8_validation'):
+        with (
+            patch.object(analyzer, "_step1_ai_analysis"),
+            patch.object(analyzer, "_step2_disassembly"),
+            patch.object(analyzer, "_step3_ai_inspection"),
+            patch.object(analyzer, "_step4_specifications"),
+            patch.object(analyzer, "_step5_human_readable"),
+            patch.object(analyzer, "_step6_deobfuscation"),
+            patch.object(analyzer, "_step7_implementation"),
+            patch.object(analyzer, "_step8_validation"),
+        ):
 
             result = analyzer.analyze_binary()
 
@@ -357,29 +364,30 @@ class TestMemoryUsage:
             memory_increase = final_memory - initial_memory
 
             assert result is True
-            assert memory_increase < 80.0  # ML models should not use more than 80MB additional memory
+            assert (
+                memory_increase < 80.0
+            )  # ML models should not use more than 80MB additional memory
 
     @pytest.mark.performance
     def test_memory_usage_regression(self, mock_binary_file):
         """Test for memory usage regression."""
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock analysis steps
-        with patch.object(analyzer, '_step1_ai_analysis'), \
-             patch.object(analyzer, '_step2_disassembly'), \
-             patch.object(analyzer, '_step3_ai_inspection'), \
-             patch.object(analyzer, '_step4_specifications'), \
-             patch.object(analyzer, '_step5_human_readable'), \
-             patch.object(analyzer, '_step6_deobfuscation'), \
-             patch.object(analyzer, '_step7_implementation'), \
-             patch.object(analyzer, '_step8_validation'):
+        with (
+            patch.object(analyzer, "_step1_ai_analysis"),
+            patch.object(analyzer, "_step2_disassembly"),
+            patch.object(analyzer, "_step3_ai_inspection"),
+            patch.object(analyzer, "_step4_specifications"),
+            patch.object(analyzer, "_step5_human_readable"),
+            patch.object(analyzer, "_step6_deobfuscation"),
+            patch.object(analyzer, "_step7_implementation"),
+            patch.object(analyzer, "_step8_validation"),
+        ):
 
             result = analyzer.analyze_binary()
 
@@ -396,17 +404,14 @@ class TestMemoryUsage:
     @pytest.mark.performance
     def test_memory_usage_with_error_handling(self, mock_binary_file):
         """Test memory usage with error handling."""
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock step1 to raise an exception
-        with patch.object(analyzer, '_step1_ai_analysis') as mock_step1:
+        with patch.object(analyzer, "_step1_ai_analysis") as mock_step1:
             mock_step1.side_effect = Exception("Analysis failed")
 
             result = analyzer.analyze_binary()
@@ -421,17 +426,14 @@ class TestMemoryUsage:
     @pytest.mark.performance
     def test_memory_usage_with_timeout(self, mock_binary_file):
         """Test memory usage with timeout handling."""
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         # Get initial memory usage
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
         # Mock step1 to timeout
-        with patch.object(analyzer, '_step1_ai_analysis') as mock_step1:
+        with patch.object(analyzer, "_step1_ai_analysis") as mock_step1:
             mock_step1.side_effect = Exception("Timeout")
 
             result = analyzer.analyze_binary()

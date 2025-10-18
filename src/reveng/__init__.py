@@ -18,14 +18,14 @@ __url__ = "https://github.com/oimiragieo/reveng-main"
 
 # Core imports
 from .analyzer import REVENGAnalyzer
-from .cli import main
-from .version import get_version, get_version_info
-
-# ML integration
-from .ml import MLIntegration, MLIntegrationConfig
 
 # Unified API
 from .api import REVENGAPI, analyze_binary, detect_malware, reconstruct_binary
+from .cli import main
+
+# ML integration
+from .ml import MLIntegration, MLIntegrationConfig
+from .version import get_version, get_version_info
 
 # Public API
 __all__ = [

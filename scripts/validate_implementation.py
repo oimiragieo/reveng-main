@@ -3,13 +3,14 @@
 Comprehensive validation script for REVENG implementation
 """
 
-import sys
+import json
 import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-import json
+from typing import Any, Dict, List, Optional
+
 import yaml
 
 
@@ -27,7 +28,7 @@ class REVENGValidator:
             "components": {},
             "tests": {},
             "documentation": {},
-            "overall_status": "unknown"
+            "overall_status": "unknown",
         }
 
     def validate_core_components(self) -> Dict[str, Any]:
@@ -37,7 +38,7 @@ class REVENGValidator:
         core_components = {
             "dependency_manager": "src/reveng/core/dependency_manager.py",
             "errors": "src/reveng/core/errors.py",
-            "logger": "src/reveng/core/logger.py"
+            "logger": "src/reveng/core/logger.py",
         }
 
         results = {}
@@ -47,13 +48,10 @@ class REVENGValidator:
                 results[component] = {
                     "status": "✅ Found",
                     "path": str(file_path),
-                    "size": file_path.stat().st_size
+                    "size": file_path.stat().st_size,
                 }
             else:
-                results[component] = {
-                    "status": "❌ Missing",
-                    "path": str(file_path)
-                }
+                results[component] = {"status": "❌ Missing", "path": str(file_path)}
 
         return results
 
@@ -63,7 +61,7 @@ class REVENGValidator:
 
         analyzers = {
             "dotnet_analyzer": "src/reveng/analyzers/dotnet_analyzer.py",
-            "business_logic_extractor": "src/reveng/analyzers/business_logic_extractor.py"
+            "business_logic_extractor": "src/reveng/analyzers/business_logic_extractor.py",
         }
 
         results = {}
@@ -73,13 +71,10 @@ class REVENGValidator:
                 results[analyzer] = {
                     "status": "✅ Found",
                     "path": str(file_path),
-                    "size": file_path.stat().st_size
+                    "size": file_path.stat().st_size,
                 }
             else:
-                results[analyzer] = {
-                    "status": "❌ Missing",
-                    "path": str(file_path)
-                }
+                results[analyzer] = {"status": "❌ Missing", "path": str(file_path)}
 
         return results
 
@@ -89,7 +84,7 @@ class REVENGValidator:
 
         pe_components = {
             "resource_extractor": "src/reveng/pe/resource_extractor.py",
-            "import_analyzer": "src/reveng/pe/import_analyzer.py"
+            "import_analyzer": "src/reveng/pe/import_analyzer.py",
         }
 
         results = {}
@@ -99,13 +94,10 @@ class REVENGValidator:
                 results[component] = {
                     "status": "✅ Found",
                     "path": str(file_path),
-                    "size": file_path.stat().st_size
+                    "size": file_path.stat().st_size,
                 }
             else:
-                results[component] = {
-                    "status": "❌ Missing",
-                    "path": str(file_path)
-                }
+                results[component] = {"status": "❌ Missing", "path": str(file_path)}
 
         return results
 
@@ -113,9 +105,7 @@ class REVENGValidator:
         """Validate tool components"""
         print("🔍 Validating tools...")
 
-        tools = {
-            "hex_editor": "src/reveng/tools/hex_editor.py"
-        }
+        tools = {"hex_editor": "src/reveng/tools/hex_editor.py"}
 
         results = {}
         for tool, path in tools.items():
@@ -124,13 +114,10 @@ class REVENGValidator:
                 results[tool] = {
                     "status": "✅ Found",
                     "path": str(file_path),
-                    "size": file_path.stat().st_size
+                    "size": file_path.stat().st_size,
                 }
             else:
-                results[tool] = {
-                    "status": "❌ Missing",
-                    "path": str(file_path)
-                }
+                results[tool] = {"status": "❌ Missing", "path": str(file_path)}
 
         return results
 
@@ -138,9 +125,7 @@ class REVENGValidator:
         """Validate Ghidra components"""
         print("🔍 Validating Ghidra components...")
 
-        ghidra_components = {
-            "scripting_engine": "src/reveng/ghidra/scripting_engine.py"
-        }
+        ghidra_components = {"scripting_engine": "src/reveng/ghidra/scripting_engine.py"}
 
         results = {}
         for component, path in ghidra_components.items():
@@ -149,13 +134,10 @@ class REVENGValidator:
                 results[component] = {
                     "status": "✅ Found",
                     "path": str(file_path),
-                    "size": file_path.stat().st_size
+                    "size": file_path.stat().st_size,
                 }
             else:
-                results[component] = {
-                    "status": "❌ Missing",
-                    "path": str(file_path)
-                }
+                results[component] = {"status": "❌ Missing", "path": str(file_path)}
 
         return results
 
@@ -163,9 +145,7 @@ class REVENGValidator:
         """Validate pipeline components"""
         print("🔍 Validating pipeline components...")
 
-        pipeline_components = {
-            "pipeline_engine": "src/reveng/pipeline/pipeline_engine.py"
-        }
+        pipeline_components = {"pipeline_engine": "src/reveng/pipeline/pipeline_engine.py"}
 
         results = {}
         for component, path in pipeline_components.items():
@@ -174,13 +154,10 @@ class REVENGValidator:
                 results[component] = {
                     "status": "✅ Found",
                     "path": str(file_path),
-                    "size": file_path.stat().st_size
+                    "size": file_path.stat().st_size,
                 }
             else:
-                results[component] = {
-                    "status": "❌ Missing",
-                    "path": str(file_path)
-                }
+                results[component] = {"status": "❌ Missing", "path": str(file_path)}
 
         return results
 
@@ -192,7 +169,7 @@ class REVENGValidator:
             "code_reconstruction": "src/reveng/ml/code_reconstruction.py",
             "anomaly_detection": "src/reveng/ml/anomaly_detection.py",
             "integration": "src/reveng/ml/integration.py",
-            "ml_init": "src/reveng/ml/__init__.py"
+            "ml_init": "src/reveng/ml/__init__.py",
         }
 
         results = {}
@@ -202,13 +179,10 @@ class REVENGValidator:
                 results[component] = {
                     "status": "✅ Found",
                     "path": str(file_path),
-                    "size": file_path.stat().st_size
+                    "size": file_path.stat().st_size,
                 }
             else:
-                results[component] = {
-                    "status": "❌ Missing",
-                    "path": str(file_path)
-                }
+                results[component] = {"status": "❌ Missing", "path": str(file_path)}
 
         return results
 
@@ -216,10 +190,7 @@ class REVENGValidator:
         """Validate CLI components"""
         print("🔍 Validating CLI components...")
 
-        cli_components = {
-            "reveng_py": "reveng.py",
-            "cli_module": "src/reveng/cli.py"
-        }
+        cli_components = {"reveng_py": "reveng.py", "cli_module": "src/reveng/cli.py"}
 
         results = {}
         for component, path in cli_components.items():
@@ -228,13 +199,10 @@ class REVENGValidator:
                 results[component] = {
                     "status": "✅ Found",
                     "path": str(file_path),
-                    "size": file_path.stat().st_size
+                    "size": file_path.stat().st_size,
                 }
             else:
-                results[component] = {
-                    "status": "❌ Missing",
-                    "path": str(file_path)
-                }
+                results[component] = {"status": "❌ Missing", "path": str(file_path)}
 
         return results
 
@@ -246,7 +214,7 @@ class REVENGValidator:
             "unit_tests": "tests/unit/",
             "integration_tests": "tests/integration/",
             "e2e_tests": "tests/e2e/",
-            "test_runner": "tests/run_all_tests.py"
+            "test_runner": "tests/run_all_tests.py",
         }
 
         results = {}
@@ -259,19 +227,16 @@ class REVENGValidator:
                         "status": "✅ Found",
                         "path": str(test_path),
                         "test_files": len(test_files),
-                        "files": [f.name for f in test_files]
+                        "files": [f.name for f in test_files],
                     }
                 else:
                     results[category] = {
                         "status": "✅ Found",
                         "path": str(test_path),
-                        "size": test_path.stat().st_size
+                        "size": test_path.stat().st_size,
                     }
             else:
-                results[category] = {
-                    "status": "❌ Missing",
-                    "path": str(test_path)
-                }
+                results[category] = {"status": "❌ Missing", "path": str(test_path)}
 
         return results
 
@@ -291,7 +256,7 @@ class REVENGValidator:
             "windows_analysis": "docs/guides/windows-analysis.md",
             "pipeline_development": "docs/guides/pipeline-development.md",
             "plugin_development": "docs/guides/plugin-development.md",
-            "doc_generator": "docs/generate_documentation.py"
+            "doc_generator": "docs/generate_documentation.py",
         }
 
         results = {}
@@ -301,13 +266,10 @@ class REVENGValidator:
                 results[doc_name] = {
                     "status": "✅ Found",
                     "path": str(doc_path),
-                    "size": doc_path.stat().st_size
+                    "size": doc_path.stat().st_size,
                 }
             else:
-                results[doc_name] = {
-                    "status": "❌ Missing",
-                    "path": str(doc_path)
-                }
+                results[doc_name] = {"status": "❌ Missing", "path": str(doc_path)}
 
         return results
 
@@ -321,70 +283,58 @@ class REVENGValidator:
         try:
             result = subprocess.run(
                 ["python", "-m", "pytest", "tests/unit/", "-v", "--tb=short"],
-                capture_output=True, text=True, timeout=300
+                capture_output=True,
+                text=True,
+                timeout=300,
             )
             test_results["unit_tests"] = {
                 "status": "✅ Passed" if result.returncode == 0 else "❌ Failed",
                 "returncode": result.returncode,
                 "stdout": result.stdout,
-                "stderr": result.stderr
+                "stderr": result.stderr,
             }
         except subprocess.TimeoutExpired:
-            test_results["unit_tests"] = {
-                "status": "⏰ Timeout",
-                "returncode": -1
-            }
+            test_results["unit_tests"] = {"status": "⏰ Timeout", "returncode": -1}
         except Exception as e:
-            test_results["unit_tests"] = {
-                "status": "❌ Error",
-                "error": str(e)
-            }
+            test_results["unit_tests"] = {"status": "❌ Error", "error": str(e)}
 
         # Run integration tests
         try:
             result = subprocess.run(
                 ["python", "-m", "pytest", "tests/integration/", "-v", "--tb=short"],
-                capture_output=True, text=True, timeout=300
+                capture_output=True,
+                text=True,
+                timeout=300,
             )
             test_results["integration_tests"] = {
                 "status": "✅ Passed" if result.returncode == 0 else "❌ Failed",
                 "returncode": result.returncode,
                 "stdout": result.stdout,
-                "stderr": result.stderr
+                "stderr": result.stderr,
             }
         except subprocess.TimeoutExpired:
-            test_results["integration_tests"] = {
-                "status": "⏰ Timeout",
-                "returncode": -1
-            }
+            test_results["integration_tests"] = {"status": "⏰ Timeout", "returncode": -1}
         except Exception as e:
-            test_results["integration_tests"] = {
-                "status": "❌ Error",
-                "error": str(e)
-            }
+            test_results["integration_tests"] = {"status": "❌ Error", "error": str(e)}
 
         # Run E2E tests
         try:
             result = subprocess.run(
                 ["python", "-m", "pytest", "tests/e2e/", "-v", "--tb=short"],
-                capture_output=True, text=True, timeout=300
+                capture_output=True,
+                text=True,
+                timeout=300,
             )
             test_results["e2e_tests"] = {
                 "status": "✅ Passed" if result.returncode == 0 else "❌ Failed",
                 "returncode": result.returncode,
                 "stdout": result.stdout,
-                "stderr": result.stderr
+                "stderr": result.stderr,
             }
         except subprocess.TimeoutExpired:
-            test_results["e2e_tests"] = {
-                "status": "⏰ Timeout",
-                "returncode": -1
-            }
+            test_results["e2e_tests"] = {"status": "⏰ Timeout", "returncode": -1}
         except Exception as e:
-            test_results["e2e_tests"] = {
-                "status": "❌ Error",
-                "error": str(e)
-            }
+            test_results["e2e_tests"] = {"status": "❌ Error", "error": str(e)}
 
         return test_results
 
@@ -397,6 +347,7 @@ class REVENGValidator:
         # Test core imports
         try:
             import sys
+
             sys.path.insert(0, str(self.src_path))
 
             from reveng.core.dependency_manager import DependencyManager
@@ -409,8 +360,8 @@ class REVENGValidator:
 
         # Test analyzer imports
         try:
-            from reveng.analyzers.dotnet_analyzer import DotNetAnalyzer
             from reveng.analyzers.business_logic_extractor import BusinessLogicExtractor
+            from reveng.analyzers.dotnet_analyzer import DotNetAnalyzer
 
             import_results["analyzer_imports"] = "✅ Success"
         except Exception as e:
@@ -418,8 +369,8 @@ class REVENGValidator:
 
         # Test PE imports
         try:
-            from reveng.pe.resource_extractor import PEResourceExtractor
             from reveng.pe.import_analyzer import ImportAnalyzer
+            from reveng.pe.resource_extractor import PEResourceExtractor
 
             import_results["pe_imports"] = "✅ Success"
         except Exception as e:
@@ -451,9 +402,9 @@ class REVENGValidator:
 
         # Test ML imports
         try:
-            from reveng.ml.integration import MLIntegration
-            from reveng.ml.code_reconstruction import MLCodeReconstruction
             from reveng.ml.anomaly_detection import MLAnomalyDetection
+            from reveng.ml.code_reconstruction import MLCodeReconstruction
+            from reveng.ml.integration import MLIntegration
 
             import_results["ml_imports"] = "✅ Success"
         except Exception as e:
@@ -474,47 +425,47 @@ class REVENGValidator:
 ### Core Components
 """
 
-        for component, result in self.results['components'].get('core', {}).items():
+        for component, result in self.results["components"].get("core", {}).items():
             report += f"- **{component}**: {result['status']}\n"
 
         report += "\n### Analyzers\n"
-        for analyzer, result in self.results['components'].get('analyzers', {}).items():
+        for analyzer, result in self.results["components"].get("analyzers", {}).items():
             report += f"- **{analyzer}**: {result['status']}\n"
 
         report += "\n### PE Components\n"
-        for component, result in self.results['components'].get('pe', {}).items():
+        for component, result in self.results["components"].get("pe", {}).items():
             report += f"- **{component}**: {result['status']}\n"
 
         report += "\n### Tools\n"
-        for tool, result in self.results['components'].get('tools', {}).items():
+        for tool, result in self.results["components"].get("tools", {}).items():
             report += f"- **{tool}**: {result['status']}\n"
 
         report += "\n### Ghidra Components\n"
-        for component, result in self.results['components'].get('ghidra', {}).items():
+        for component, result in self.results["components"].get("ghidra", {}).items():
             report += f"- **{component}**: {result['status']}\n"
 
         report += "\n### Pipeline Components\n"
-        for component, result in self.results['components'].get('pipeline', {}).items():
+        for component, result in self.results["components"].get("pipeline", {}).items():
             report += f"- **{component}**: {result['status']}\n"
 
         report += "\n### ML Components\n"
-        for component, result in self.results['components'].get('ml', {}).items():
+        for component, result in self.results["components"].get("ml", {}).items():
             report += f"- **{component}**: {result['status']}\n"
 
         report += "\n### CLI Components\n"
-        for component, result in self.results['components'].get('cli', {}).items():
+        for component, result in self.results["components"].get("cli", {}).items():
             report += f"- **{component}**: {result['status']}\n"
 
         report += "\n## 🧪 Test Results\n"
-        for test_type, result in self.results['tests'].items():
+        for test_type, result in self.results["tests"].items():
             report += f"- **{test_type}**: {result['status']}\n"
 
         report += "\n## 📚 Documentation\n"
-        for doc, result in self.results['documentation'].items():
+        for doc, result in self.results["documentation"].items():
             report += f"- **{doc}**: {result['status']}\n"
 
         report += "\n## 🔍 Import Validation\n"
-        for import_type, result in self.results.get('imports', {}).items():
+        for import_type, result in self.results.get("imports", {}).items():
             report += f"- **{import_type}**: {result}\n"
 
         return report
@@ -524,46 +475,45 @@ class REVENGValidator:
         print("🚀 Starting REVENG validation...")
 
         # Validate components
-        self.results['components'] = {
-            'core': self.validate_core_components(),
-            'analyzers': self.validate_analyzers(),
-            'pe': self.validate_pe_components(),
-            'tools': self.validate_tools(),
-            'ghidra': self.validate_ghidra_components(),
-            'pipeline': self.validate_pipeline_components(),
-            'ml': self.validate_ml_components(),
-            'cli': self.validate_cli_components()
+        self.results["components"] = {
+            "core": self.validate_core_components(),
+            "analyzers": self.validate_analyzers(),
+            "pe": self.validate_pe_components(),
+            "tools": self.validate_tools(),
+            "ghidra": self.validate_ghidra_components(),
+            "pipeline": self.validate_pipeline_components(),
+            "ml": self.validate_ml_components(),
+            "cli": self.validate_cli_components(),
         }
 
         # Validate tests
-        self.results['tests'] = self.validate_tests()
+        self.results["tests"] = self.validate_tests()
 
         # Validate documentation
-        self.results['documentation'] = self.validate_documentation()
+        self.results["documentation"] = self.validate_documentation()
 
         # Validate imports
-        self.results['imports'] = self.validate_imports()
+        self.results["imports"] = self.validate_imports()
 
         # Run tests
-        self.results['test_results'] = self.run_tests()
+        self.results["test_results"] = self.run_tests()
 
         # Determine overall status
         all_components = []
-        for category in self.results['components'].values():
+        for category in self.results["components"].values():
             all_components.extend(category.values())
 
-        all_found = all(comp.get('status') == '✅ Found' for comp in all_components)
+        all_found = all(comp.get("status") == "✅ Found" for comp in all_components)
         all_tests_passed = all(
-            test.get('status') == '✅ Passed'
-            for test in self.results['test_results'].values()
+            test.get("status") == "✅ Passed" for test in self.results["test_results"].values()
         )
 
         if all_found and all_tests_passed:
-            self.results['overall_status'] = '✅ Complete'
+            self.results["overall_status"] = "✅ Complete"
         elif all_found:
-            self.results['overall_status'] = '⚠️ Components Found, Tests Failed'
+            self.results["overall_status"] = "⚠️ Components Found, Tests Failed"
         else:
-            self.results['overall_status'] = '❌ Incomplete'
+            self.results["overall_status"] = "❌ Incomplete"
 
         return self.results
 
@@ -571,12 +521,12 @@ class REVENGValidator:
         """Save validation results"""
         # Save JSON results
         json_path = output_path / "validation_results.json"
-        with open(json_path, 'w') as f:
+        with open(json_path, "w") as f:
             json.dump(self.results, f, indent=2, default=str)
 
         # Save markdown report
         report_path = output_path / "validation_report.md"
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             f.write(self.generate_report())
 
         print(f"📁 Results saved to: {output_path}")
@@ -604,7 +554,7 @@ def main():
     print(f"Overall Status: {results['overall_status']}")
     print(f"{'='*60}")
 
-    if results['overall_status'] == '✅ Complete':
+    if results["overall_status"] == "✅ Complete":
         print("🎉 All components validated successfully!")
         sys.exit(0)
     else:

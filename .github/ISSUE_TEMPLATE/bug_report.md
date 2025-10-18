@@ -1,48 +1,61 @@
 ---
 name: Bug Report
-about: Report a bug or unexpected behavior
+about: Create a report to help us improve REVENG
 title: '[BUG] '
-labels: bug
+labels: ['bug', 'needs-triage']
 assignees: ''
 ---
 
-## Describe the Bug
+## 🐛 Bug Description
+
 A clear and concise description of what the bug is.
 
-## To Reproduce
-Steps to reproduce the behavior:
-1. Run command '...'
-2. Analyze file '...'
+## 🔄 Steps to Reproduce
+
+1. Go to '...'
+2. Run command '...'
 3. See error
 
-## Expected Behavior
+## ✅ Expected Behavior
+
 A clear and concise description of what you expected to happen.
 
-## Actual Behavior
+## ❌ Actual Behavior
+
 A clear and concise description of what actually happened.
 
-## Environment
-- **OS**: [e.g., Windows 11, Ubuntu 22.04, macOS 13.0]
-- **Python version**: [e.g., 3.11.5]
-- **REVENG version**: [e.g., 2.1.0]
-- **Installation method**: [e.g., pip, Docker, from source]
+## 📸 Screenshots
 
-## Logs and Screenshots
-```
-[Paste relevant logs or attach screenshots]
-```
+If applicable, add screenshots to help explain your problem.
 
-## Additional Context
+## 🖥️ Environment
+
+- **OS**: [e.g. Windows 10, Ubuntu 20.04, macOS 12.0]
+- **Python Version**: [e.g. 3.11.0]
+- **REVENG Version**: [e.g. 2.1.0]
+- **Installation Method**: [e.g. pip, conda, from source]
+
+## 📋 Additional Context
+
 Add any other context about the problem here.
 
-## Binary Information (if applicable)
-- **File type**: [e.g., .exe, .jar, .dll, .so]
-- **File size**: [e.g., 5MB]
-- **Architecture**: [e.g., x64, ARM64]
-- **Language**: [e.g., Java, C#, Python, Native]
+## 🔍 Error Logs
 
-## Checklist
+```
+Paste any relevant error logs here
+```
+
+## 🧪 Test Case
+
+If possible, provide a minimal test case that reproduces the issue:
+
+```python
+# Minimal code to reproduce the issue
+```
+
+## 📝 Checklist
+
 - [ ] I have searched existing issues to avoid duplicates
-- [ ] I have provided all requested information
+- [ ] I have provided all the requested information
 - [ ] I have tested with the latest version
-- [ ] I have included relevant logs/screenshots
+- [ ] I have included error logs if applicable

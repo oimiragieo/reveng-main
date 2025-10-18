@@ -2,21 +2,22 @@
 ILSpy installer for REVENG
 """
 
-import os
-import sys
-import subprocess
-import platform
-import shutil
-import zipfile
 import json
 import logging
+import os
+import platform
+import shutil
+import subprocess
+import sys
+import zipfile
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from .base_installer import BaseInstaller, InstallMethod
 from ..core.dependency_manager import ToolStatus
+from .base_installer import BaseInstaller, InstallMethod
 
 logger = logging.getLogger(__name__)
+
 
 class ILSpyInstaller(BaseInstaller):
     """Installer for ILSpy .NET decompiler"""
@@ -32,8 +33,8 @@ class ILSpyInstaller(BaseInstaller):
 
     def get_version(self) -> str:
         """Get installed ILSpy version"""
-        if self.config.get('version'):
-            return self.config['version']
+        if self.config.get("version"):
+            return self.config["version"]
 
         # Try to get version from ILSpy executable
         ilspy_exe = self._find_ilspy_executable()
@@ -43,11 +44,11 @@ class ILSpyInstaller(BaseInstaller):
                     [str(ilspy_exe), "--version"],
                     capture_output=True,
                     text=True,
-                    timeout=30
+                    timeout=30,
                 )
                 if result.returncode == 0:
                     version = result.stdout.strip()
-                    self.config['version'] = version
+                    self.config["version"] = version
                     self._save_config(self.config)
                     return version
             except Exception as e:
@@ -84,7 +85,9 @@ class ILSpyInstaller(BaseInstaller):
 
             # Check .NET runtime requirement
             if not self._check_dotnet_runtime():
-                logger.error(".NET 6.0+ runtime is required for ILSpy. Please install .NET runtime first.")
+                logger.error(
+                    ".NET 6.0+ runtime is required for ILSpy. Please install .NET runtime first."
+                )
                 return False
 
             # Download ILSpy
@@ -97,11 +100,13 @@ class ILSpyInstaller(BaseInstaller):
             archive_path.unlink()
 
             # Update config
-            self.config.update({
-                'version': self.ilspy_version,
-                'install_path': str(self.install_path),
-                'install_method': InstallMethod.DOWNLOAD.value
-            })
+            self.config.update(
+                {
+                    "version": self.ilspy_version,
+                    "install_path": str(self.install_path),
+                    "install_method": InstallMethod.DOWNLOAD.value,
+                }
+            )
             self._save_config(self.config)
 
             logger.info("ILSpy installed successfully")
@@ -137,16 +142,13 @@ Manual ILSpy Installation:
         """Check if .NET runtime is available"""
         try:
             result = subprocess.run(
-                ["dotnet", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["dotnet", "--version"], capture_output=True, text=True, timeout=10
             )
 
             if result.returncode == 0:
                 version = result.stdout.strip()
                 # Parse .NET version (e.g., "6.0.100")
-                major_version = int(version.split('.')[0])
+                major_version = int(version.split(".")[0])
                 return major_version >= 6
 
             return False
@@ -181,7 +183,7 @@ Manual ILSpy Installation:
                 ["dotnet", str(ilspy_exe), "--help"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             # ILSpy help should show usage information
@@ -202,7 +204,7 @@ Manual ILSpy Installation:
             str(ilspy_exe),
             str(assembly_path),
             "--outputdir",
-            str(output_dir)
+            str(output_dir),
         ]
 
     def get_export_command(self, assembly_path: str, output_file: str) -> list:
@@ -218,5 +220,5 @@ Manual ILSpy Installation:
             "--outputdir",
             str(Path(output_file).parent),
             "--outputfile",
-            str(Path(output_file).name)
+            str(Path(output_file).name),
         ]

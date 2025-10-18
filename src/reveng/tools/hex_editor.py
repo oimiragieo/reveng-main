@@ -5,57 +5,67 @@ Low-level binary inspection with pattern matching, entropy analysis,
 and embedded file detection.
 """
 
-import os
-import sys
-import struct
+import json
+import logging
 import math
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple, Union
+import os
+import struct
+import sys
+import tempfile
 from dataclasses import dataclass
 from enum import Enum
-import logging
-import json
-import tempfile
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ..core.errors import AnalysisFailureError, create_error_context
 from ..core.logger import get_logger
 
+
 class EntropyLevel(Enum):
     """Entropy levels"""
+
     VERY_LOW = "very_low"
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     VERY_HIGH = "very_high"
 
+
 class PatternType(Enum):
     """Pattern types"""
+
     MAGIC_BYTES = "magic_bytes"
     CRYPTO_CONSTANTS = "crypto_constants"
     NETWORK_INDICATORS = "network_indicators"
     STRING_PATTERNS = "string_patterns"
     CODE_PATTERNS = "code_patterns"
 
+
 @dataclass
 class HexView:
     """Hex view representation"""
+
     data: bytes
     offset: int
     length: int
     encoding: str = "utf-8"
 
+
 @dataclass
 class EntropyRegion:
     """Entropy region information"""
+
     start_offset: int
     end_offset: int
     entropy: float
     level: EntropyLevel
     description: str
 
+
 @dataclass
 class PatternMatch:
     """Pattern match information"""
+
     pattern_type: PatternType
     pattern_name: str
     offset: int
@@ -63,9 +73,11 @@ class PatternMatch:
     description: str
     confidence: float
 
+
 @dataclass
 class EmbeddedBinary:
     """Embedded binary information"""
+
     offset: int
     size: int
     file_type: str
@@ -73,14 +85,17 @@ class EmbeddedBinary:
     description: str
     confidence: float
 
+
 @dataclass
 class HexAnalysis:
     """Hex analysis result"""
+
     entropy_regions: List[EntropyRegion]
     pattern_matches: List[PatternMatch]
     embedded_binaries: List[EmbeddedBinary]
     strings: List[str]
     analysis_confidence: float
+
 
 class HexEditor:
     """Integrated hex editor functionality"""
@@ -96,27 +111,15 @@ class HexEditor:
     def open_binary(self, binary_path: str) -> HexView:
         """Open binary in hex view"""
         try:
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
-            return HexView(
-                data=data,
-                offset=0,
-                length=len(data),
-                encoding="utf-8"
-            )
+            return HexView(data=data, offset=0, length=len(data), encoding="utf-8")
 
         except Exception as e:
-            context = create_error_context(
-                "hex_editor",
-                "open_binary",
-                binary_path=binary_path
-            )
+            context = create_error_context("hex_editor", "open_binary", binary_path=binary_path)
             raise AnalysisFailureError(
-                "hex_editor_open",
-                binary_path,
-                context=context,
-                original_exception=e
+                "hex_editor_open", binary_path, context=context, original_exception=e
             )
 
     def search_pattern(self, pattern: bytes, hex_view: HexView) -> List[int]:
@@ -127,7 +130,7 @@ class HexEditor:
             pattern_len = len(pattern)
 
             for i in range(len(data) - pattern_len + 1):
-                if data[i:i+pattern_len] == pattern:
+                if data[i : i + pattern_len] == pattern:
                     matches.append(i)
 
             return matches
@@ -153,10 +156,10 @@ class HexEditor:
             entropy_regions = []
             data = hex_view.data
             window_size = 1024  # 1KB windows
-            step_size = 512     # 512 byte steps
+            step_size = 512  # 512 byte steps
 
             for i in range(0, len(data) - window_size, step_size):
-                window_data = data[i:i + window_size]
+                window_data = data[i : i + window_size]
                 entropy = self._calculate_shannon_entropy(window_data)
                 level = self._classify_entropy_level(entropy)
 
@@ -166,7 +169,7 @@ class HexEditor:
                         end_offset=i + window_size,
                         entropy=entropy,
                         level=level,
-                        description=self._describe_entropy_region(entropy, level)
+                        description=self._describe_entropy_region(entropy, level),
                     )
                     entropy_regions.append(region)
 
@@ -183,7 +186,7 @@ class HexEditor:
             data = hex_view.data
 
             # Search for PE files
-            pe_magic = b'MZ'
+            pe_magic = b"MZ"
             pe_matches = self.search_pattern(pe_magic, hex_view)
 
             for offset in pe_matches:
@@ -195,12 +198,12 @@ class HexEditor:
                         file_type="PE",
                         magic_bytes=pe_magic,
                         description="Embedded PE executable",
-                        confidence=0.9
+                        confidence=0.9,
                     )
                     embedded_binaries.append(embedded_binary)
 
             # Search for ELF files
-            elf_magic = b'\x7fELF'
+            elf_magic = b"\x7fELF"
             elf_matches = self.search_pattern(elf_magic, hex_view)
 
             for offset in elf_matches:
@@ -211,7 +214,7 @@ class HexEditor:
                         file_type="ELF",
                         magic_bytes=elf_magic,
                         description="Embedded ELF executable",
-                        confidence=0.9
+                        confidence=0.9,
                     )
                     embedded_binaries.append(embedded_binary)
 
@@ -260,7 +263,7 @@ class HexEditor:
                         offset=offset,
                         data=magic_bytes,
                         description=f"Found {magic_name} signature",
-                        confidence=0.9
+                        confidence=0.9,
                     )
                     pattern_matches.append(pattern_match)
 
@@ -285,7 +288,7 @@ class HexEditor:
                         offset=offset,
                         data=const_bytes,
                         description=f"Found {const_name} cryptographic constant",
-                        confidence=0.8
+                        confidence=0.8,
                     )
                     pattern_matches.append(pattern_match)
 
@@ -303,6 +306,7 @@ class HexEditor:
 
             for pattern_name, pattern_regex in self.network_patterns.items():
                 import re
+
                 matches = re.finditer(pattern_regex, data)
                 for match in matches:
                     pattern_match = PatternMatch(
@@ -311,7 +315,7 @@ class HexEditor:
                         offset=match.start(),
                         data=match.group(),
                         description=f"Found {pattern_name} network indicator",
-                        confidence=0.7
+                        confidence=0.7,
                     )
                     pattern_matches.append(pattern_match)
 
@@ -355,23 +359,16 @@ class HexEditor:
                 pattern_matches=all_patterns,
                 embedded_binaries=embedded_binaries,
                 strings=strings,
-                analysis_confidence=confidence
+                analysis_confidence=confidence,
             )
 
             self.logger.info(f"Completed hex analysis with {confidence:.2f} confidence")
             return result
 
         except Exception as e:
-            context = create_error_context(
-                "hex_editor",
-                "analyze_binary",
-                binary_path=binary_path
-            )
+            context = create_error_context("hex_editor", "analyze_binary", binary_path=binary_path)
             raise AnalysisFailureError(
-                "hex_analysis",
-                binary_path,
-                context=context,
-                original_exception=e
+                "hex_analysis", binary_path, context=context, original_exception=e
             )
 
     def _calculate_shannon_entropy(self, data: bytes) -> float:
@@ -419,7 +416,7 @@ class HexEditor:
             EntropyLevel.LOW: "Low entropy - structured data or text",
             EntropyLevel.MEDIUM: "Medium entropy - mixed data",
             EntropyLevel.HIGH: "High entropy - compressed or random data",
-            EntropyLevel.VERY_HIGH: "Very high entropy - encrypted or compressed data"
+            EntropyLevel.VERY_HIGH: "Very high entropy - encrypted or compressed data",
         }
         return descriptions.get(level, "Unknown entropy level")
 
@@ -427,16 +424,16 @@ class HexEditor:
         """Check if data at offset is a valid PE file"""
         try:
             # Check DOS header
-            if data[offset:offset+2] != b'MZ':
+            if data[offset : offset + 2] != b"MZ":
                 return False
 
             # Get PE header offset
-            pe_offset = struct.unpack('<L', data[offset+60:offset+64])[0]
+            pe_offset = struct.unpack("<L", data[offset + 60 : offset + 64])[0]
             if offset + pe_offset >= len(data):
                 return False
 
             # Check PE signature
-            if data[offset+pe_offset:offset+pe_offset+4] != b'PE\x00\x00':
+            if data[offset + pe_offset : offset + pe_offset + 4] != b"PE\x00\x00":
                 return False
 
             return True
@@ -458,11 +455,11 @@ class HexEditor:
         """Check if data at offset is a valid ELF file"""
         try:
             # Check ELF magic
-            if data[offset:offset+4] != b'\x7fELF':
+            if data[offset : offset + 4] != b"\x7fELF":
                 return False
 
             # Check ELF class (32-bit or 64-bit)
-            if data[offset+4] not in [1, 2]:  # 1 = 32-bit, 2 = 64-bit
+            if data[offset + 4] not in [1, 2]:  # 1 = 32-bit, 2 = 64-bit
                 return False
 
             return True
@@ -534,7 +531,7 @@ class HexEditor:
         entropy_regions: List[EntropyRegion],
         pattern_matches: List[PatternMatch],
         embedded_binaries: List[EmbeddedBinary],
-        strings: List[str]
+        strings: List[str],
     ) -> float:
         """Calculate analysis confidence"""
         try:
@@ -567,16 +564,16 @@ class HexEditor:
         """Load magic bytes database"""
         try:
             return {
-                'PE': b'MZ',
-                'ELF': b'\x7fELF',
-                'PDF': b'%PDF',
-                'ZIP': b'PK\x03\x04',
-                'JPEG': b'\xff\xd8\xff',
-                'PNG': b'\x89PNG\r\n\x1a\n',
-                'GIF': b'GIF87a',
-                'BMP': b'BM',
-                'TIFF': b'II*\x00',
-                'ICO': b'\x00\x00\x01\x00'
+                "PE": b"MZ",
+                "ELF": b"\x7fELF",
+                "PDF": b"%PDF",
+                "ZIP": b"PK\x03\x04",
+                "JPEG": b"\xff\xd8\xff",
+                "PNG": b"\x89PNG\r\n\x1a\n",
+                "GIF": b"GIF87a",
+                "BMP": b"BM",
+                "TIFF": b"II*\x00",
+                "ICO": b"\x00\x00\x01\x00",
             }
 
         except Exception as e:
@@ -587,11 +584,11 @@ class HexEditor:
         """Load cryptographic constants database"""
         try:
             return {
-                'AES_SBOX': b'\x63\x7c\x77\x7b',  # First 4 bytes of AES S-box
-                'DES_SBOX1': b'\x04\x00\x0f\x0a',  # First 4 bytes of DES S-box 1
-                'MD5_INIT': b'\x01\x23\x45\x67',   # MD5 initial values
-                'SHA1_INIT': b'\x67\x45\x23\x01',  # SHA-1 initial values
-                'RC4_SBOX': b'\x01\x02\x03\x04'    # RC4 S-box pattern
+                "AES_SBOX": b"\x63\x7c\x77\x7b",  # First 4 bytes of AES S-box
+                "DES_SBOX1": b"\x04\x00\x0f\x0a",  # First 4 bytes of DES S-box 1
+                "MD5_INIT": b"\x01\x23\x45\x67",  # MD5 initial values
+                "SHA1_INIT": b"\x67\x45\x23\x01",  # SHA-1 initial values
+                "RC4_SBOX": b"\x01\x02\x03\x04",  # RC4 S-box pattern
             }
 
         except Exception as e:
@@ -602,11 +599,11 @@ class HexEditor:
         """Load network patterns"""
         try:
             return {
-                'HTTP_URL': rb'https?://[^\s]+',
-                'FTP_URL': rb'ftp://[^\s]+',
-                'IP_ADDRESS': rb'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b',
-                'DOMAIN': rb'\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b',
-                'EMAIL': rb'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+                "HTTP_URL": rb"https?://[^\s]+",
+                "FTP_URL": rb"ftp://[^\s]+",
+                "IP_ADDRESS": rb"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
+                "DOMAIN": rb"\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b",
+                "EMAIL": rb"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
             }
 
         except Exception as e:

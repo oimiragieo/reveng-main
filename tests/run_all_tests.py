@@ -3,9 +3,9 @@
 Comprehensive test runner for REVENG platform
 """
 
-import sys
-import subprocess
 import argparse
+import subprocess
+import sys
 from pathlib import Path
 from typing import List, Optional
 
@@ -84,7 +84,15 @@ def run_all_tests() -> bool:
 
 def run_linting() -> bool:
     """Run linting checks"""
-    cmd = ["python", "-m", "flake8", "src/", "tests/", "--max-line-length=120", "--ignore=E203,W503"]
+    cmd = [
+        "python",
+        "-m",
+        "flake8",
+        "src/",
+        "tests/",
+        "--max-line-length=120",
+        "--ignore=E203,W503",
+    ]
     description = "Code linting"
     return run_command(cmd, description)
 
@@ -105,7 +113,15 @@ def run_security_checks() -> bool:
 
 def run_coverage() -> bool:
     """Run tests with coverage"""
-    cmd = ["python", "-m", "pytest", "tests/", "--cov=src", "--cov-report=html", "--cov-report=term"]
+    cmd = [
+        "python",
+        "-m",
+        "pytest",
+        "tests/",
+        "--cov=src",
+        "--cov-report=html",
+        "--cov-report=term",
+    ]
     description = "Test coverage"
     return run_command(cmd, description)
 
@@ -128,7 +144,9 @@ def main():
     """Main test runner"""
     parser = argparse.ArgumentParser(description="REVENG Test Runner")
     parser.add_argument("--unit", help="Run unit tests (optionally specify test file)")
-    parser.add_argument("--integration", help="Run integration tests (optionally specify test file)")
+    parser.add_argument(
+        "--integration", help="Run integration tests (optionally specify test file)"
+    )
     parser.add_argument("--e2e", help="Run E2E tests (optionally specify test file)")
     parser.add_argument("--all", action="store_true", help="Run all tests")
     parser.add_argument("--lint", action="store_true", help="Run linting")
@@ -144,6 +162,7 @@ def main():
     # Change to project root directory
     project_root = Path(__file__).parent.parent
     import os
+
     os.chdir(project_root)
 
     print("🚀 REVENG Test Runner")

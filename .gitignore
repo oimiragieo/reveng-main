@@ -27,6 +27,8 @@ logs/
 reveng_analyzer.log
 bandit-report.json
 safety-report.json
+semgrep-results.json
+semgrep-final-results.json
 
 # Analysis outputs (runtime generated)
 analysis_*/

@@ -3,17 +3,22 @@ Security tests for input validation.
 Tests the security validation module for proper input sanitization.
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 from pathlib import Path
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
+import pytest
+
+from reveng.core.exceptions import SecurityError, ValidationError
 from reveng.core.validation import (
-    validate_file_path, secure_hash_file, secure_temp_file,
-    validate_binary_content, sanitize_filename, validate_analysis_config
+    sanitize_filename,
+    secure_hash_file,
+    secure_temp_file,
+    validate_analysis_config,
+    validate_binary_content,
+    validate_file_path,
 )
-from reveng.core.exceptions import ValidationError, SecurityError
 
 
 class TestFilePathValidation:
@@ -61,7 +66,7 @@ class TestFilePathValidation:
             "/etc/passwd",
             "/sys/kernel",
             "/proc/self",
-            "C:\\Windows\\System32\\config"
+            "C:\\Windows\\System32\\config",
         ]
 
         for path in suspicious_paths:
@@ -76,12 +81,12 @@ class TestFilePathValidation:
 
         try:
             # Should pass with .exe extension
-            result = validate_file_path(tmp_path, allowed_extensions=['.exe'])
-            assert result.suffix == '.exe'
+            result = validate_file_path(tmp_path, allowed_extensions=[".exe"])
+            assert result.suffix == ".exe"
 
             # Should fail with wrong extension
             with pytest.raises(ValidationError, match="File extension not allowed"):
-                validate_file_path(tmp_path, allowed_extensions=['.jar'])
+                validate_file_path(tmp_path, allowed_extensions=[".jar"])
         finally:
             os.unlink(tmp_path)
 
@@ -97,12 +102,12 @@ class TestSecureHashing:
 
         try:
             # Test SHA256 (secure)
-            sha256_hash = secure_hash_file(tmp_path, 'sha256')
+            sha256_hash = secure_hash_file(tmp_path, "sha256")
             assert len(sha256_hash) == 64  # SHA256 hex length
-            assert all(c in '0123456789abcdef' for c in sha256_hash)
+            assert all(c in "0123456789abcdef" for c in sha256_hash)
 
             # Test SHA512 (secure)
-            sha512_hash = secure_hash_file(tmp_path, 'sha512')
+            sha512_hash = secure_hash_file(tmp_path, "sha512")
             assert len(sha512_hash) == 128  # SHA512 hex length
         finally:
             os.unlink(tmp_path)
@@ -115,14 +120,14 @@ class TestSecureHashing:
 
         try:
             with pytest.raises(SecurityError, match="Unsafe hash algorithm"):
-                secure_hash_file(tmp_path, 'md5')
+                secure_hash_file(tmp_path, "md5")
         finally:
             os.unlink(tmp_path)
 
     def test_nonexistent_file_hash(self):
         """Test hashing nonexistent file raises error."""
         with pytest.raises(ValidationError):
-            secure_hash_file("/nonexistent/file", 'sha256')
+            secure_hash_file("/nonexistent/file", "sha256")
 
 
 class TestSecureTempFile:
@@ -143,11 +148,7 @@ class TestSecureTempFile:
     def test_secure_temp_file_in_allowed_directory(self):
         """Test temp file creation in allowed directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = secure_temp_file(
-                prefix="test_",
-                suffix=".tmp",
-                directory=temp_dir
-            )
+            temp_path = secure_temp_file(prefix="test_", suffix=".tmp", directory=temp_dir)
 
             assert temp_path.parent == Path(temp_dir)
 
@@ -174,21 +175,21 @@ class TestBinaryContentValidation:
 
         try:
             result = validate_binary_content(tmp_path)
-            assert result['is_binary'] is True
-            assert result['magic_bytes'].startswith('4d5a')  # MZ in hex
+            assert result["is_binary"] is True
+            assert result["magic_bytes"].startswith("4d5a")  # MZ in hex
         finally:
             os.unlink(tmp_path)
 
     def test_text_file_validation(self):
         """Test text file validation."""
-        with tempfile.NamedTemporaryFile(delete=False, mode='w') as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, mode="w") as tmp:
             tmp.write("This is plain text content")
             tmp_path = tmp.name
 
         try:
             result = validate_binary_content(tmp_path)
-            assert result['is_binary'] is False
-            assert result['entropy'] < 5.0  # Low entropy for text
+            assert result["is_binary"] is False
+            assert result["entropy"] < 5.0  # Low entropy for text
         finally:
             os.unlink(tmp_path)
 
@@ -197,14 +198,15 @@ class TestBinaryContentValidation:
         with tempfile.NamedTemporaryFile(delete=False) as tmp:
             # Create high entropy content (random bytes)
             import random
+
             random_bytes = bytes([random.randint(0, 255) for _ in range(1000)])
             tmp.write(random_bytes)
             tmp_path = tmp.name
 
         try:
             result = validate_binary_content(tmp_path)
-            assert result['high_entropy'] is True
-            assert result['entropy'] > 7.0
+            assert result["high_entropy"] is True
+            assert result["entropy"] > 7.0
         finally:
             os.unlink(tmp_path)
 
@@ -220,7 +222,7 @@ class TestFilenameSanitization:
             "file:name",
             "file|name",
             "file?name",
-            "file*name"
+            "file*name",
         ]
 
         for name in dangerous_names:
@@ -248,7 +250,7 @@ class TestFilenameSanitization:
         sanitized = sanitize_filename(long_name)
 
         assert len(sanitized) <= 255
-        assert sanitized.endswith('.exe')
+        assert sanitized.endswith(".exe")
 
     def test_sanitize_empty_name(self):
         """Test sanitization of empty filename."""
@@ -262,41 +264,41 @@ class TestAnalysisConfigValidation:
     def test_valid_configuration(self):
         """Test valid configuration passes validation."""
         config = {
-            'timeout': 3600,
-            'max_file_size_mb': 500,
-            'output_directory': './test_output',
-            'ai_provider': 'ollama'
+            "timeout": 3600,
+            "max_file_size_mb": 500,
+            "output_directory": "./test_output",
+            "ai_provider": "ollama",
         }
 
         result = validate_analysis_config(config)
-        assert result['timeout'] == 3600
-        assert result['max_file_size_mb'] == 500
-        assert result['ai_provider'] == 'ollama'
+        assert result["timeout"] == 3600
+        assert result["max_file_size_mb"] == 500
+        assert result["ai_provider"] == "ollama"
 
     def test_invalid_timeout(self):
         """Test invalid timeout validation."""
-        config = {'timeout': -1}
+        config = {"timeout": -1}
 
         with pytest.raises(ValidationError, match="Invalid timeout"):
             validate_analysis_config(config)
 
     def test_invalid_file_size(self):
         """Test invalid file size validation."""
-        config = {'max_file_size_mb': 0}
+        config = {"max_file_size_mb": 0}
 
         with pytest.raises(ValidationError, match="Invalid max_file_size_mb"):
             validate_analysis_config(config)
 
     def test_invalid_ai_provider(self):
         """Test invalid AI provider validation."""
-        config = {'ai_provider': 'invalid_provider'}
+        config = {"ai_provider": "invalid_provider"}
 
         with pytest.raises(ValidationError, match="Invalid AI provider"):
             validate_analysis_config(config)
 
     def test_system_directory_output(self):
         """Test that system directories are rejected for output."""
-        config = {'output_directory': '/etc'}
+        config = {"output_directory": "/etc"}
 
         with pytest.raises(SecurityError, match="Output directory in system directory"):
             validate_analysis_config(config)
@@ -305,9 +307,9 @@ class TestAnalysisConfigValidation:
         """Test default configuration values."""
         result = validate_analysis_config({})
 
-        assert result['timeout'] == 3600
-        assert result['max_file_size_mb'] == 500
-        assert result['ai_provider'] == 'ollama'
+        assert result["timeout"] == 3600
+        assert result["max_file_size_mb"] == 500
+        assert result["ai_provider"] == "ollama"
 
 
 class TestSecurityIntegration:
@@ -327,11 +329,11 @@ class TestSecurityIntegration:
             content_result = validate_binary_content(validated_path)
 
             # Secure hash
-            file_hash = secure_hash_file(validated_path, 'sha256')
+            file_hash = secure_hash_file(validated_path, "sha256")
 
             # All should succeed without security errors
             assert validated_path.exists()
-            assert content_result['is_binary'] is True
+            assert content_result["is_binary"] is True
             assert len(file_hash) == 64
 
         finally:
@@ -343,7 +345,7 @@ class TestSecurityIntegration:
             validate_file_path("../../../etc/passwd")
 
         with pytest.raises(SecurityError):
-            secure_hash_file("/etc/passwd", 'md5')
+            secure_hash_file("/etc/passwd", "md5")
 
         with pytest.raises(SecurityError):
             secure_temp_file(directory="/etc")

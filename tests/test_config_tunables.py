@@ -3,10 +3,12 @@
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent / "tools"))
 
 from config_manager import get_config
 from ollama_analyzer import OllamaAnalyzer
+
 
 def test_config_tunables():
     """Verify config tunables are passed to OllamaAnalyzer"""
@@ -27,11 +29,11 @@ def test_config_tunables():
 
     # Create analyzer with config values
     analyzer = OllamaAnalyzer(
-        model_name=ai_config.ollama_model if ai_config.ollama_model != 'auto' else None,
+        model_name=ai_config.ollama_model if ai_config.ollama_model != "auto" else None,
         ollama_host=ai_config.ollama_host,
         timeout=ai_config.ollama_timeout,
         temperature=ai_config.ollama_temperature,
-        max_tokens=ai_config.ollama_max_tokens
+        max_tokens=ai_config.ollama_max_tokens,
     )
 
     print(f"\nOllamaAnalyzer instance values:")
@@ -45,21 +47,28 @@ def test_config_tunables():
     if analyzer.timeout == ai_config.ollama_timeout:
         print(f"  [OK] Timeout matches config: {analyzer.timeout}s")
     else:
-        print(f"  [FAIL] Timeout mismatch: config={ai_config.ollama_timeout}, analyzer={analyzer.timeout}")
+        print(
+            f"  [FAIL] Timeout mismatch: config={ai_config.ollama_timeout}, analyzer={analyzer.timeout}"
+        )
 
     if analyzer.temperature == ai_config.ollama_temperature:
         print(f"  [OK] Temperature matches config: {analyzer.temperature}")
     else:
-        print(f"  [FAIL] Temperature mismatch: config={ai_config.ollama_temperature}, analyzer={analyzer.temperature}")
+        print(
+            f"  [FAIL] Temperature mismatch: config={ai_config.ollama_temperature}, analyzer={analyzer.temperature}"
+        )
 
     if analyzer.max_tokens == ai_config.ollama_max_tokens:
         print(f"  [OK] Max tokens matches config: {analyzer.max_tokens}")
     else:
-        print(f"  [FAIL] Max tokens mismatch: config={ai_config.ollama_max_tokens}, analyzer={analyzer.max_tokens}")
+        print(
+            f"  [FAIL] Max tokens mismatch: config={ai_config.ollama_max_tokens}, analyzer={analyzer.max_tokens}"
+        )
 
     print(f"\n" + "=" * 70)
     print("Config Tunables Test Complete")
     print("=" * 70)
+
 
 if __name__ == "__main__":
     test_config_tunables()

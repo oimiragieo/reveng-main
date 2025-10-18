@@ -34,6 +34,7 @@ __minimum_python_version__ = "3.11"
 __platforms__ = ["Windows", "Linux", "macOS"]
 __architectures__ = ["x86_64", "arm64", "amd64"]
 
+
 def get_version() -> str:
     """
     Get the current version string.
@@ -42,6 +43,7 @@ def get_version() -> str:
         str: Version string (e.g., "2.1.0")
     """
     return __version__
+
 
 def get_version_info() -> Tuple[int, int, int]:
     """
@@ -52,6 +54,7 @@ def get_version_info() -> Tuple[int, int, int]:
     """
     return __version_info__
 
+
 def get_version_string() -> str:
     """
     Get a formatted version string with additional information.
@@ -60,6 +63,7 @@ def get_version_string() -> str:
         str: Formatted version string
     """
     return f"REVENG v{__version__} ({__status__})"
+
 
 def get_build_info() -> Dict[str, str]:
     """
@@ -77,6 +81,7 @@ def get_build_info() -> Dict[str, str]:
         "release_type": __release_type__,
     }
 
+
 def get_system_info() -> Dict[str, List[str]]:
     """
     Get system compatibility information.
@@ -90,6 +95,7 @@ def get_system_info() -> Dict[str, List[str]]:
         "architectures": __architectures__,
     }
 
+
 def is_compatible_python(version: str) -> bool:
     """
     Check if the given Python version is compatible.
@@ -101,10 +107,11 @@ def is_compatible_python(version: str) -> bool:
         bool: True if compatible, False otherwise
     """
     try:
-        major, minor = map(int, version.split('.')[:2])
+        major, minor = map(int, version.split(".")[:2])
         return (major, minor) >= (3, 11)
     except (ValueError, IndexError):
         return False
+
 
 def get_minimum_requirements() -> Dict[str, str]:
     """
@@ -120,6 +127,7 @@ def get_minimum_requirements() -> Dict[str, str]:
         "storage": "2GB free space",
         "cpu": "2 cores",
     }
+
 
 def read_version_from_file() -> str:
     """
@@ -140,6 +148,7 @@ def read_version_from_file() -> str:
         pass
 
     return __version__
+
 
 # Export version information
 VERSION = __version__

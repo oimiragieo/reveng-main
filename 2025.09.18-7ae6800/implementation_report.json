@@ -1,0 +1,78 @@
+{
+  "timestamp": "c:\\dev\\projects\\reveng-main",
+  "specifications_analyzed": 7,
+  "missing_features": {
+    "spec_features": 23,
+    "functions": 2,
+    "requirements": 0
+  },
+  "implemented_features": 25,
+  "implementation_details": {
+    "specifications": [
+      "api",
+      "architecture",
+      "data_flow",
+      "features",
+      "overview",
+      "performance",
+      "security"
+    ],
+    "missing_spec_features": [
+      "Total Functions",
+      "Analysis Summary\n",
+      "Feature Categories",
+      "Security Analysis Summary\n",
+      "Performance Considerations",
+      "Complexity Distribution\n",
+      "Performance Analysis Summary\n",
+      "Complexity Distribution",
+      "Dependency Graph\n",
+      "Function APIs\n\n",
+      "Overview\nThis document describes the architecture of the analyzed application",
+      "0\n- Feature Categories: 0\n\n## Complexity Distributio",
+      "Security Concerns",
+      "Key Features\n\n",
+      "Function Distribution\n",
+      "Next Steps\n",
+      "Code Patterns",
+      "Performance Considerations\n\n",
+      "Data Flow Analysis\n\n",
+      "Security Concerns\n\n",
+      "Security Issues",
+      "2\n- Performa",
+      "Architecture Overview\n"
+    ],
+    "missing_functions": [
+      "2\n- Performa",
+      "0\n- Feature Categories: 0\n\n## Complexity Distributio"
+    ],
+    "missing_requirements": [],
+    "implemented_features": [
+      "2\n- Performa",
+      "0\n- Feature Categories: 0\n\n## Complexity Distributio",
+      "Total Functions",
+      "Analysis Summary\n",
+      "Feature Categories",
+      "Security Analysis Summary\n",
+      "Performance Considerations",
+      "Complexity Distribution\n",
+      "Performance Analysis Summary\n",
+      "Complexity Distribution",
+      "Dependency Graph\n",
+      "Function APIs\n\n",
+      "Overview\nThis document describes the architecture of the analyzed application",
+      "0\n- Feature Categories: 0\n\n## Complexity Distributio",
+      "Security Concerns",
+      "Key Features\n\n",
+      "Function Distribution\n",
+      "Next Steps\n",
+      "Code Patterns",
+      "Performance Considerations\n\n",
+      "Data Flow Analysis\n\n",
+      "Security Concerns\n\n",
+      "Security Issues",
+      "2\n- Performa",
+      "Architecture Overview\n"
+    ]
+  }
+}

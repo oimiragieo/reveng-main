@@ -11,24 +11,24 @@ Usage:
     python scripts/lint_codebase.py --fast    # Quick check (core files only)
 """
 
+import json
+import platform
 import subprocess
 import sys
-import platform
 from pathlib import Path
 from typing import List, Tuple
-import json
 
 # Color codes for terminal output
-GREEN = '\033[92m'
-YELLOW = '\033[93m'
-RED = '\033[91m'
-BLUE = '\033[94m'
-RESET = '\033[0m'
+GREEN = "\033[92m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+BLUE = "\033[94m"
+RESET = "\033[0m"
 
 # Check marks (ASCII fallback for Windows)
-CHECK_MARK = '[OK]' if platform.system() == 'Windows' else '✓'
-X_MARK = '[X]' if platform.system() == 'Windows' else '✗'
-WARNING_MARK = '[!]' if platform.system() == 'Windows' else '⚠'
+CHECK_MARK = "[OK]" if platform.system() == "Windows" else "✓"
+X_MARK = "[X]" if platform.system() == "Windows" else "✗"
+WARNING_MARK = "[!]" if platform.system() == "Windows" else "⚠"
 
 
 class CodeQualityChecker:
@@ -38,33 +38,27 @@ class CodeQualityChecker:
         self.fix_mode = fix_mode
         self.fast_mode = fast_mode
         self.root = Path(__file__).parent.parent
-        self.results = {
-            'pylint': {},
-            'security': {},
-            'type_hints': {},
-            'documentation': {}
-        }
+        self.results = {"pylint": {}, "security": {}, "type_hints": {}, "documentation": {}}
 
     def get_python_files(self) -> List[Path]:
         """Get all Python files to check"""
         if self.fast_mode:
             # Core files only for quick check
             return [
-                self.root / 'reveng_analyzer.py',
-                self.root / 'tools' / 'binary_reassembler_v2.py',
-                self.root / 'tools' / 'human_readable_converter_fixed.py',
-                self.root / 'tools' / 'ai_recompiler_converter.py',
+                self.root / "reveng_analyzer.py",
+                self.root / "tools" / "binary_reassembler_v2.py",
+                self.root / "tools" / "human_readable_converter_fixed.py",
+                self.root / "tools" / "ai_recompiler_converter.py",
             ]
 
         # All Python files except deprecated
         python_files = []
-        for pattern in ['*.py', 'tools/*.py', 'scripts/*.py', 'tests/*.py']:
+        for pattern in ["*.py", "tools/*.py", "scripts/*.py", "tests/*.py"]:
             python_files.extend(self.root.glob(pattern))
 
         # Exclude deprecated and test files
         python_files = [
-            f for f in python_files
-            if 'deprecated' not in str(f) and 'test_' not in f.name
+            f for f in python_files if "deprecated" not in str(f) and "test_" not in f.name
         ]
 
         return python_files
@@ -80,10 +74,7 @@ class CodeQualityChecker:
         for file in files:
             try:
                 result = subprocess.run(
-                    ['pylint', str(file)],
-                    capture_output=True,
-                    text=True,
-                    check=False
+                    ["pylint", str(file)], capture_output=True, text=True, check=False
                 )
 
                 # Extract score from output
@@ -91,12 +82,12 @@ class CodeQualityChecker:
                 errors = 0
                 warnings = 0
 
-                for line in result.stdout.split('\n'):
-                    if 'rated at' in line:
-                        score = float(line.split('rated at')[1].split('/')[0].strip())
-                    elif line.strip().startswith('E'):
+                for line in result.stdout.split("\n"):
+                    if "rated at" in line:
+                        score = float(line.split("rated at")[1].split("/")[0].strip())
+                    elif line.strip().startswith("E"):
                         errors += 1
-                    elif line.strip().startswith('W'):
+                    elif line.strip().startswith("W"):
                         warnings += 1
 
                 if score > 0:
@@ -106,14 +97,16 @@ class CodeQualityChecker:
                     if errors > 0:
                         print(f"{RED}{X_MARK}{RESET} {file.name}: {score:.2f}/10 ({errors} errors)")
                     elif warnings > 0:
-                        print(f"{YELLOW}{WARNING_MARK}{RESET} {file.name}: {score:.2f}/10 ({warnings} warnings)")
+                        print(
+                            f"{YELLOW}{WARNING_MARK}{RESET} {file.name}: {score:.2f}/10 ({warnings} warnings)"
+                        )
                     else:
                         print(f"{GREEN}{CHECK_MARK}{RESET} {file.name}: {score:.2f}/10")
 
-                    self.results['pylint'][str(file)] = {
-                        'score': score,
-                        'errors': errors,
-                        'warnings': warnings
+                    self.results["pylint"][str(file)] = {
+                        "score": score,
+                        "errors": errors,
+                        "warnings": warnings,
                     }
 
             except Exception as e:
@@ -134,20 +127,20 @@ class CodeQualityChecker:
         files = self.get_python_files()
 
         for file in files:
-            content = file.read_text(encoding='utf-8')
+            content = file.read_text(encoding="utf-8")
 
             # Check for common security anti-patterns
-            if 'eval(' in content and 'eval' not in content.split('# noqa')[0]:
+            if "eval(" in content and "eval" not in content.split("# noqa")[0]:
                 issues.append(f"{file.name}: Use of eval() detected")
 
-            if 'exec(' in content:
+            if "exec(" in content:
                 issues.append(f"{file.name}: Use of exec() detected")
 
-            if 'shell=True' in content and 'nosec' not in content:
+            if "shell=True" in content and "nosec" not in content:
                 issues.append(f"{file.name}: shell=True detected (potential injection)")
 
-            if 'password' in content.lower() and '=' in content:
-                if 'hardcoded' not in content.lower():
+            if "password" in content.lower() and "=" in content:
+                if "hardcoded" not in content.lower():
                     issues.append(f"{file.name}: Possible hardcoded password")
 
         if issues:
@@ -167,23 +160,25 @@ class CodeQualityChecker:
         missing_hints = []
 
         for file in files:
-            content = file.read_text(encoding='utf-8')
-            lines = content.split('\n')
+            content = file.read_text(encoding="utf-8")
+            lines = content.split("\n")
 
             for i, line in enumerate(lines):
                 # Check function definitions
-                if line.strip().startswith('def ') and '(' in line:
+                if line.strip().startswith("def ") and "(" in line:
                     # Skip __init__, __str__, etc.
-                    if '__' in line:
+                    if "__" in line:
                         continue
 
                     # Check if return type hint exists
-                    if '->' not in line and not line.rstrip().endswith(':'):
-                        func_name = line.split('def ')[1].split('(')[0]
+                    if "->" not in line and not line.rstrip().endswith(":"):
+                        func_name = line.split("def ")[1].split("(")[0]
                         missing_hints.append(f"{file.name}:{i+1} - {func_name}()")
 
         if missing_hints and len(missing_hints) > 10:
-            print(f"{YELLOW}{WARNING_MARK} {len(missing_hints)} functions missing type hints{RESET}")
+            print(
+                f"{YELLOW}{WARNING_MARK} {len(missing_hints)} functions missing type hints{RESET}"
+            )
             print(f"  (This is acceptable for this project)")
 
         print(f"{GREEN}{CHECK_MARK} Type hint check complete{RESET}")
@@ -197,13 +192,14 @@ class CodeQualityChecker:
         missing_docs = []
 
         for file in files:
-            content = file.read_text(encoding='utf-8')
-            lines = content.split('\n')
+            content = file.read_text(encoding="utf-8")
+            lines = content.split("\n")
 
             for i, line in enumerate(lines):
                 # Check class/function definitions
-                if (line.strip().startswith('class ') or
-                    (line.strip().startswith('def ') and not line.strip().startswith('def _'))):
+                if line.strip().startswith("class ") or (
+                    line.strip().startswith("def ") and not line.strip().startswith("def _")
+                ):
 
                     # Check if next non-empty line is a docstring
                     next_line_idx = i + 1
@@ -213,13 +209,18 @@ class CodeQualityChecker:
                     if next_line_idx < len(lines):
                         next_line = lines[next_line_idx].strip()
                         if not (next_line.startswith('"""') or next_line.startswith("'''")):
-                            name = line.split('class ')[1].split(':')[0] if 'class ' in line else \
-                                   line.split('def ')[1].split('(')[0]
-                            if not name.startswith('_'):  # Skip private methods
+                            name = (
+                                line.split("class ")[1].split(":")[0]
+                                if "class " in line
+                                else line.split("def ")[1].split("(")[0]
+                            )
+                            if not name.startswith("_"):  # Skip private methods
                                 missing_docs.append(f"{file.name}:{i+1} - {name}")
 
         if missing_docs and len(missing_docs) > 5:
-            print(f"{YELLOW}{WARNING_MARK} {len(missing_docs)} classes/functions missing docstrings{RESET}")
+            print(
+                f"{YELLOW}{WARNING_MARK} {len(missing_docs)} classes/functions missing docstrings{RESET}"
+            )
             print(f"  (First 5: {', '.join(missing_docs[:5])})")
 
         print(f"{GREEN}{CHECK_MARK} Documentation check complete{RESET}")
@@ -236,8 +237,10 @@ class CodeQualityChecker:
         print(f"  Files Checked: {len(self.get_python_files())}")
 
         # Scores
-        if self.results['pylint']:
-            avg_score = sum(r['score'] for r in self.results['pylint'].values()) / len(self.results['pylint'])
+        if self.results["pylint"]:
+            avg_score = sum(r["score"] for r in self.results["pylint"].values()) / len(
+                self.results["pylint"]
+            )
             print(f"  Average Pylint Score: {avg_score:.2f}/10")
 
         print(f"\n{GREEN}{CHECK_MARK} Code is ready for enterprise release!{RESET}")
@@ -253,10 +256,10 @@ class CodeQualityChecker:
         print(f"{BLUE}{'=' * 70}{RESET}")
 
         checks = [
-            ('Pylint', self.run_pylint),
-            ('Security', self.check_security_issues),
-            ('Type Hints', self.check_type_hints),
-            ('Documentation', self.check_documentation),
+            ("Pylint", self.run_pylint),
+            ("Security", self.check_security_issues),
+            ("Type Hints", self.check_type_hints),
+            ("Documentation", self.check_documentation),
         ]
 
         all_passed = True
@@ -278,9 +281,9 @@ def main():
     """Main entry point"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='REVENG Code Quality Check')
-    parser.add_argument('--fix', action='store_true', help='Fix auto-fixable issues')
-    parser.add_argument('--fast', action='store_true', help='Quick check (core files only)')
+    parser = argparse.ArgumentParser(description="REVENG Code Quality Check")
+    parser.add_argument("--fix", action="store_true", help="Fix auto-fixable issues")
+    parser.add_argument("--fast", action="store_true", help="Quick check (core files only)")
     args = parser.parse_args()
 
     checker = CodeQualityChecker(fix_mode=args.fix, fast_mode=args.fast)
@@ -289,5 +292,5 @@ def main():
     sys.exit(0 if success else 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -14,20 +14,22 @@ Steps:
 """
 
 import os
-import sys
-import subprocess
 import shutil
+import subprocess
+import sys
 from pathlib import Path
-from typing import Tuple, List
+from typing import List, Tuple
+
 
 # ANSI colors for terminal output
 class Colors:
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    BLUE = '\033[94m'
-    BOLD = '\033[1m'
-    END = '\033[0m'
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    BLUE = "\033[94m"
+    BOLD = "\033[1m"
+    END = "\033[0m"
+
 
 def print_section(title: str):
     """Print section header"""
@@ -36,38 +38,38 @@ def print_section(title: str):
     print(f" {title}")
     print("=" * 70)
 
+
 def print_success(message: str):
     """Print success message"""
     print(f"{Colors.GREEN}✓{Colors.END} {message}")
+
 
 def print_warning(message: str):
     """Print warning message"""
     print(f"{Colors.YELLOW}⚠{Colors.END} {message}")
 
+
 def print_error(message: str):
     """Print error message"""
     print(f"{Colors.RED}✗{Colors.END} {message}")
+
 
 def print_info(message: str):
     """Print info message"""
     print(f"{Colors.BLUE}ℹ{Colors.END} {message}")
 
+
 def check_java() -> Tuple[bool, str]:
     """Check if Java is installed and get version"""
     try:
-        result = subprocess.run(
-            ['java', '-version'],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+        result = subprocess.run(["java", "-version"], capture_output=True, text=True, timeout=5)
 
         # Java version is in stderr
         version_output = result.stderr if result.stderr else result.stdout
-        version_line = version_output.split('\n')[0]
+        version_line = version_output.split("\n")[0]
 
         # Extract version number
-        if 'version' in version_line:
+        if "version" in version_line:
             return True, version_line
         else:
             return False, "Could not parse version"
@@ -77,47 +79,40 @@ def check_java() -> Tuple[bool, str]:
     except Exception as e:
         return False, str(e)
 
+
 def check_javac() -> bool:
     """Check if javac (Java compiler) is installed"""
     try:
-        result = subprocess.run(
-            ['javac', '-version'],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+        result = subprocess.run(["javac", "-version"], capture_output=True, text=True, timeout=5)
         return result.returncode == 0
     except:
         return False
 
+
 def check_javap() -> bool:
     """Check if javap (Java disassembler) is installed"""
     try:
-        result = subprocess.run(
-            ['javap', '-version'],
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+        result = subprocess.run(["javap", "-version"], capture_output=True, text=True, timeout=5)
         return result.returncode == 0
     except:
         return False
+
 
 def install_python_dependencies() -> bool:
     """Install Python dependencies from requirements-java.txt"""
     print_info("Installing Python dependencies...")
 
-    req_file = Path('requirements-java.txt')
+    req_file = Path("requirements-java.txt")
     if not req_file.exists():
         print_error(f"requirements-java.txt not found")
         return False
 
     try:
         result = subprocess.run(
-            [sys.executable, '-m', 'pip', 'install', '-r', str(req_file)],
+            [sys.executable, "-m", "pip", "install", "-r", str(req_file)],
             capture_output=True,
             text=True,
-            timeout=300
+            timeout=300,
         )
 
         if result.returncode == 0:
@@ -131,34 +126,32 @@ def install_python_dependencies() -> bool:
         print_error(f"Installation error: {e}")
         return False
 
+
 def download_decompilers() -> Tuple[int, int]:
     """Download Java decompilers"""
     print_info("Downloading decompilers...")
 
-    decompiler_script = Path('tools/decompilers/download_decompilers.py')
+    decompiler_script = Path("tools/decompilers/download_decompilers.py")
     if not decompiler_script.exists():
         print_error("Download script not found")
         return 0, 1
 
     try:
         result = subprocess.run(
-            [sys.executable, str(decompiler_script)],
-            capture_output=True,
-            text=True,
-            timeout=300
+            [sys.executable, str(decompiler_script)], capture_output=True, text=True, timeout=300
         )
 
         # Parse output to get success count
         output = result.stdout
-        if 'successful' in output.lower():
+        if "successful" in output.lower():
             # Try to extract success count from "X/Y successful"
-            for line in output.split('\n'):
-                if 'successful' in line.lower() and '/' in line:
+            for line in output.split("\n"):
+                if "successful" in line.lower() and "/" in line:
                     parts = line.split()
                     for part in parts:
-                        if '/' in part:
+                        if "/" in part:
                             try:
-                                success, total = part.split('/')
+                                success, total = part.split("/")
                                 return int(success), int(total)
                             except:
                                 pass
@@ -173,29 +166,27 @@ def download_decompilers() -> Tuple[int, int]:
         print_error(f"Download error: {e}")
         return 0, 1
 
+
 def compile_test_files() -> List[Path]:
     """Compile test Java files to .class"""
     print_info("Compiling test files...")
 
-    test_dir = Path('test_samples')
+    test_dir = Path("test_samples")
     if not test_dir.exists():
         print_warning("test_samples directory not found")
         return []
 
-    java_files = list(test_dir.glob('*.java'))
+    java_files = list(test_dir.glob("*.java"))
     compiled = []
 
     for java_file in java_files:
         try:
             result = subprocess.run(
-                ['javac', str(java_file)],
-                capture_output=True,
-                text=True,
-                timeout=30
+                ["javac", str(java_file)], capture_output=True, text=True, timeout=30
             )
 
             if result.returncode == 0:
-                class_file = java_file.with_suffix('.class')
+                class_file = java_file.with_suffix(".class")
                 if class_file.exists():
                     print_success(f"Compiled {java_file.name}")
                     compiled.append(class_file)
@@ -211,20 +202,21 @@ def compile_test_files() -> List[Path]:
 
     return compiled
 
+
 def test_language_detector(class_file: Path) -> bool:
     """Test language detector on .class file"""
     try:
         result = subprocess.run(
-            [sys.executable, 'tools/language_detector.py', str(class_file)],
+            [sys.executable, "tools/language_detector.py", str(class_file)],
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
         )
 
         output = result.stdout + result.stderr
 
         # Check if detected as Java
-        if 'java' in output.lower() and 'class' in output.lower():
+        if "java" in output.lower() and "class" in output.lower():
             return True
         else:
             return False
@@ -233,21 +225,28 @@ def test_language_detector(class_file: Path) -> bool:
         print_error(f"Language detector test failed: {e}")
         return False
 
+
 def test_java_analyzer(class_file: Path) -> bool:
     """Test Java analyzer on .class file"""
     try:
         result = subprocess.run(
-            [sys.executable, 'tools/java_bytecode_analyzer.py', str(class_file), '-o', 'test_output'],
+            [
+                sys.executable,
+                "tools/java_bytecode_analyzer.py",
+                str(class_file),
+                "-o",
+                "test_output",
+            ],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=60,
         )
 
         # Check if output directory was created
-        output_dir = Path('test_output')
+        output_dir = Path("test_output")
         if output_dir.exists():
             # Check for analysis JSON
-            json_files = list(output_dir.glob('*_analysis.json'))
+            json_files = list(output_dir.glob("*_analysis.json"))
             if json_files:
                 return True
 
@@ -257,11 +256,13 @@ def test_java_analyzer(class_file: Path) -> bool:
         print_error(f"Java analyzer test failed: {e}")
         return False
 
+
 def cleanup_test_output():
     """Clean up test output directory"""
-    test_output = Path('test_output')
+    test_output = Path("test_output")
     if test_output.exists():
         shutil.rmtree(test_output, ignore_errors=True)
+
 
 def main():
     """Main setup function"""
@@ -399,11 +400,14 @@ def main():
         if not java_ok:
             print("  - Install Java 11+: https://adoptium.net/")
         if success == 0:
-            print("  - Download decompilers: cd tools/decompilers && python download_decompilers.py")
+            print(
+                "  - Download decompilers: cd tools/decompilers && python download_decompilers.py"
+            )
         print()
         print("See CLAUDE.md for manual setup instructions")
         print()
         return 1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())

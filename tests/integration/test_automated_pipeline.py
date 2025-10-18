@@ -4,19 +4,25 @@ Integration tests for REVENG Automated Analysis Pipeline
 Tests the automated analysis pipeline with tool chaining and workflow automation.
 """
 
-import pytest
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
-from reveng.pipelines.automated_analysis import AutomatedAnalysisPipeline, PipelineStep, PipelineResult
-from reveng.analyzers.dotnet_analyzer import DotNetAnalyzer
-from reveng.pe.resource_extractor import PEResourceExtractor
-from reveng.pe.import_analyzer import ImportAnalyzer
+import pytest
+
 from reveng.analyzers.business_logic_extractor import BusinessLogicExtractor
-from reveng.ghidra.scripting_engine import GhidraScriptingEngine
-from reveng.tools.hex_editor import HexEditor
+from reveng.analyzers.dotnet_analyzer import DotNetAnalyzer
 from reveng.core.errors import AnalysisFailureError, ConfigurationError
+from reveng.ghidra.scripting_engine import GhidraScriptingEngine
+from reveng.pe.import_analyzer import ImportAnalyzer
+from reveng.pe.resource_extractor import PEResourceExtractor
+from reveng.pipelines.automated_analysis import (
+    AutomatedAnalysisPipeline,
+    PipelineResult,
+    PipelineStep,
+)
+from reveng.tools.hex_editor import HexEditor
+
 
 class TestAutomatedAnalysisPipeline:
     """Test cases for AutomatedAnalysisPipeline"""
@@ -25,8 +31,8 @@ class TestAutomatedAnalysisPipeline:
         """Test AutomatedAnalysisPipeline initialization"""
         pipeline = AutomatedAnalysisPipeline()
         assert pipeline is not None
-        assert hasattr(pipeline, 'analyzers')
-        assert hasattr(pipeline, 'results')
+        assert hasattr(pipeline, "analyzers")
+        assert hasattr(pipeline, "results")
 
     def test_run_pipeline_success(self, mock_automated_pipeline, sample_binaries_dir):
         """Test successful pipeline execution"""
@@ -38,31 +44,48 @@ class TestAutomatedAnalysisPipeline:
             PipelineStep(
                 name="dotnet_analysis",
                 function=pipeline.analyzers["dotnet"].analyze_assembly,
-                args={"binary_path": str(binary_path)}
+                args={"binary_path": str(binary_path)},
             ),
             PipelineStep(
                 name="pe_resource_extraction",
                 function=pipeline.analyzers["pe_resource"].extract_all_resources,
-                args={"binary_path": str(binary_path), "output_dir": str(sample_binaries_dir / "output")}
+                args={
+                    "binary_path": str(binary_path),
+                    "output_dir": str(sample_binaries_dir / "output"),
+                },
             ),
             PipelineStep(
                 name="pe_import_analysis",
                 function=pipeline.analyzers["pe_import"].analyze_imports,
-                args={"binary_path": str(binary_path)}
+                args={"binary_path": str(binary_path)},
             ),
             PipelineStep(
                 name="business_logic_extraction",
                 function=pipeline.analyzers["business_logic"].extract_logic,
                 args={"binary_path": str(binary_path)},
-                depends_on=["dotnet_analysis", "pe_import_analysis"]
-            )
+                depends_on=["dotnet_analysis", "pe_import_analysis"],
+            ),
         ]
 
         # Mock analyzer results
-        with patch.object(pipeline.analyzers["dotnet"], 'analyze_assembly', return_value={'framework': '4.8'}):
-            with patch.object(pipeline.analyzers["pe_resource"], 'extract_all_resources', return_value={'icons': ['app.ico']}):
-                with patch.object(pipeline.analyzers["pe_import"], 'analyze_imports', return_value={'dlls': ['kernel32.dll']}):
-                    with patch.object(pipeline.analyzers["business_logic"], 'extract_logic', return_value={'domain': 'Security Reporting'}):
+        with patch.object(
+            pipeline.analyzers["dotnet"], "analyze_assembly", return_value={"framework": "4.8"}
+        ):
+            with patch.object(
+                pipeline.analyzers["pe_resource"],
+                "extract_all_resources",
+                return_value={"icons": ["app.ico"]},
+            ):
+                with patch.object(
+                    pipeline.analyzers["pe_import"],
+                    "analyze_imports",
+                    return_value={"dlls": ["kernel32.dll"]},
+                ):
+                    with patch.object(
+                        pipeline.analyzers["business_logic"],
+                        "extract_logic",
+                        return_value={"domain": "Security Reporting"},
+                    ):
                         result = pipeline.run_pipeline(str(binary_path), steps)
 
                         assert isinstance(result, PipelineResult)
@@ -80,7 +103,7 @@ class TestAutomatedAnalysisPipeline:
             PipelineStep(
                 name="dotnet_analysis",
                 function=pipeline.analyzers["dotnet"].analyze_assembly,
-                args={"binary_path": "nonexistent.exe"}
+                args={"binary_path": "nonexistent.exe"},
             )
         ]
 
@@ -97,25 +120,35 @@ class TestAutomatedAnalysisPipeline:
             PipelineStep(
                 name="dotnet_analysis",
                 function=pipeline.analyzers["dotnet"].analyze_assembly,
-                args={"binary_path": str(binary_path)}
+                args={"binary_path": str(binary_path)},
             ),
             PipelineStep(
                 name="pe_import_analysis",
                 function=pipeline.analyzers["pe_import"].analyze_imports,
-                args={"binary_path": str(binary_path)}
+                args={"binary_path": str(binary_path)},
             ),
             PipelineStep(
                 name="business_logic_extraction",
                 function=pipeline.analyzers["business_logic"].extract_logic,
                 args={"binary_path": str(binary_path)},
-                depends_on=["dotnet_analysis", "pe_import_analysis"]
-            )
+                depends_on=["dotnet_analysis", "pe_import_analysis"],
+            ),
         ]
 
         # Mock analyzer results
-        with patch.object(pipeline.analyzers["dotnet"], 'analyze_assembly', return_value={'framework': '4.8'}):
-            with patch.object(pipeline.analyzers["pe_import"], 'analyze_imports', return_value={'dlls': ['kernel32.dll']}):
-                with patch.object(pipeline.analyzers["business_logic"], 'extract_logic', return_value={'domain': 'Security Reporting'}):
+        with patch.object(
+            pipeline.analyzers["dotnet"], "analyze_assembly", return_value={"framework": "4.8"}
+        ):
+            with patch.object(
+                pipeline.analyzers["pe_import"],
+                "analyze_imports",
+                return_value={"dlls": ["kernel32.dll"]},
+            ):
+                with patch.object(
+                    pipeline.analyzers["business_logic"],
+                    "extract_logic",
+                    return_value={"domain": "Security Reporting"},
+                ):
                     result = pipeline.run_pipeline(str(binary_path), steps)
 
                     assert isinstance(result, PipelineResult)
@@ -132,18 +165,20 @@ class TestAutomatedAnalysisPipeline:
                 name="dotnet_analysis",
                 function=pipeline.analyzers["dotnet"].analyze_assembly,
                 args={"binary_path": str(binary_path)},
-                enabled=True
+                enabled=True,
             ),
             PipelineStep(
                 name="pe_resource_extraction",
                 function=pipeline.analyzers["pe_resource"].extract_all_resources,
                 args={"binary_path": str(binary_path)},
-                enabled=False  # Disabled step
-            )
+                enabled=False,  # Disabled step
+            ),
         ]
 
         # Mock analyzer results
-        with patch.object(pipeline.analyzers["dotnet"], 'analyze_assembly', return_value={'framework': '4.8'}):
+        with patch.object(
+            pipeline.analyzers["dotnet"], "analyze_assembly", return_value={"framework": "4.8"}
+        ):
             result = pipeline.run_pipeline(str(binary_path), steps)
 
             assert isinstance(result, PipelineResult)
@@ -160,18 +195,24 @@ class TestAutomatedAnalysisPipeline:
             PipelineStep(
                 name="dotnet_analysis",
                 function=pipeline.analyzers["dotnet"].analyze_assembly,
-                args={"binary_path": str(binary_path)}
+                args={"binary_path": str(binary_path)},
             ),
             PipelineStep(
                 name="pe_resource_extraction",
                 function=pipeline.analyzers["pe_resource"].extract_all_resources,
-                args={"binary_path": str(binary_path)}
-            )
+                args={"binary_path": str(binary_path)},
+            ),
         ]
 
         # Mock analyzer results with one failure
-        with patch.object(pipeline.analyzers["dotnet"], 'analyze_assembly', return_value={'framework': '4.8'}):
-            with patch.object(pipeline.analyzers["pe_resource"], 'extract_all_resources', side_effect=Exception("Resource extraction failed")):
+        with patch.object(
+            pipeline.analyzers["dotnet"], "analyze_assembly", return_value={"framework": "4.8"}
+        ):
+            with patch.object(
+                pipeline.analyzers["pe_resource"],
+                "extract_all_resources",
+                side_effect=Exception("Resource extraction failed"),
+            ):
                 with pytest.raises(AnalysisFailureError):
                     pipeline.run_pipeline(str(binary_path), steps)
 
@@ -186,14 +227,14 @@ class TestAutomatedAnalysisPipeline:
                 name="step1",
                 function=pipeline.analyzers["dotnet"].analyze_assembly,
                 args={"binary_path": str(binary_path)},
-                depends_on=["step2"]
+                depends_on=["step2"],
             ),
             PipelineStep(
                 name="step2",
                 function=pipeline.analyzers["pe_resource"].extract_all_resources,
                 args={"binary_path": str(binary_path)},
-                depends_on=["step1"]
-            )
+                depends_on=["step1"],
+            ),
         ]
 
         with pytest.raises(ConfigurationError):
@@ -205,7 +246,9 @@ class TestAutomatedAnalysisPipeline:
         binary_path = sample_binaries_dir / "malware_sample.exe"
         output_dir = sample_binaries_dir / "output"
 
-        steps = pipeline.create_template_pipeline("malware_triage", str(binary_path), str(output_dir))
+        steps = pipeline.create_template_pipeline(
+            "malware_triage", str(binary_path), str(output_dir)
+        )
 
         assert isinstance(steps, list)
         assert len(steps) > 0
@@ -222,7 +265,9 @@ class TestAutomatedAnalysisPipeline:
         binary_path = sample_binaries_dir / "dotnet_app.exe"
         output_dir = sample_binaries_dir / "output"
 
-        steps = pipeline.create_template_pipeline(".net_deep_analysis", str(binary_path), str(output_dir))
+        steps = pipeline.create_template_pipeline(
+            ".net_deep_analysis", str(binary_path), str(output_dir)
+        )
 
         assert isinstance(steps, list)
         assert len(steps) > 0
@@ -265,15 +310,17 @@ class TestAutomatedAnalysisPipeline:
         step = PipelineStep(
             name="dotnet_analysis",
             function=pipeline.analyzers["dotnet"].analyze_assembly,
-            args={"binary_path": str(binary_path)}
+            args={"binary_path": str(binary_path)},
         )
 
         # Mock analyzer result
-        with patch.object(pipeline.analyzers["dotnet"], 'analyze_assembly', return_value={'framework': '4.8'}):
+        with patch.object(
+            pipeline.analyzers["dotnet"], "analyze_assembly", return_value={"framework": "4.8"}
+        ):
             result = pipeline._execute_step(step, str(binary_path))
 
             assert result is not None
-            assert result['framework'] == '4.8'
+            assert result["framework"] == "4.8"
 
     def test_execute_step_disabled(self, sample_binaries_dir):
         """Test disabled step execution"""
@@ -284,7 +331,7 @@ class TestAutomatedAnalysisPipeline:
             name="dotnet_analysis",
             function=pipeline.analyzers["dotnet"].analyze_assembly,
             args={"binary_path": str(binary_path)},
-            enabled=False
+            enabled=False,
         )
 
         result = pipeline._execute_step(step, str(binary_path))
@@ -297,21 +344,25 @@ class TestAutomatedAnalysisPipeline:
         binary_path = sample_binaries_dir / "dotnet_app.exe"
 
         # Set up dependency result
-        pipeline.results["dotnet_analysis"] = {'framework': '4.8'}
+        pipeline.results["dotnet_analysis"] = {"framework": "4.8"}
 
         step = PipelineStep(
             name="business_logic_extraction",
             function=pipeline.analyzers["business_logic"].extract_logic,
             args={"decompiled_code": "$$dotnet_analysis"},
-            depends_on=["dotnet_analysis"]
+            depends_on=["dotnet_analysis"],
         )
 
         # Mock analyzer result
-        with patch.object(pipeline.analyzers["business_logic"], 'extract_logic', return_value={'domain': 'Security Reporting'}):
+        with patch.object(
+            pipeline.analyzers["business_logic"],
+            "extract_logic",
+            return_value={"domain": "Security Reporting"},
+        ):
             result = pipeline._execute_step(step, str(binary_path))
 
             assert result is not None
-            assert result['domain'] == 'Security Reporting'
+            assert result["domain"] == "Security Reporting"
 
     def test_execute_step_with_missing_dependency(self, sample_binaries_dir):
         """Test step execution with missing dependency"""
@@ -322,15 +373,19 @@ class TestAutomatedAnalysisPipeline:
             name="business_logic_extraction",
             function=pipeline.analyzers["business_logic"].extract_logic,
             args={"decompiled_code": "$$missing_dependency"},
-            depends_on=["missing_dependency"]
+            depends_on=["missing_dependency"],
         )
 
         # Mock analyzer result
-        with patch.object(pipeline.analyzers["business_logic"], 'extract_logic', return_value={'domain': 'Security Reporting'}):
+        with patch.object(
+            pipeline.analyzers["business_logic"],
+            "extract_logic",
+            return_value={"domain": "Security Reporting"},
+        ):
             result = pipeline._execute_step(step, str(binary_path))
 
             assert result is not None
-            assert result['domain'] == 'Security Reporting'
+            assert result["domain"] == "Security Reporting"
 
     def test_execute_step_with_exception(self, sample_binaries_dir):
         """Test step execution with exception"""
@@ -340,11 +395,15 @@ class TestAutomatedAnalysisPipeline:
         step = PipelineStep(
             name="dotnet_analysis",
             function=pipeline.analyzers["dotnet"].analyze_assembly,
-            args={"binary_path": str(binary_path)}
+            args={"binary_path": str(binary_path)},
         )
 
         # Mock analyzer exception
-        with patch.object(pipeline.analyzers["dotnet"], 'analyze_assembly', side_effect=Exception("Analysis failed")):
+        with patch.object(
+            pipeline.analyzers["dotnet"],
+            "analyze_assembly",
+            side_effect=Exception("Analysis failed"),
+        ):
             with pytest.raises(AnalysisFailureError):
                 pipeline._execute_step(step, str(binary_path))
 
@@ -358,30 +417,36 @@ class TestAutomatedAnalysisPipeline:
             PipelineStep(
                 name="dotnet_analysis",
                 function=pipeline.analyzers["dotnet"].analyze_assembly,
-                args={"binary_path": str(binary_path)}
+                args={"binary_path": str(binary_path)},
             ),
             PipelineStep(
                 name="pe_resource_extraction",
                 function=pipeline.analyzers["pe_resource"].extract_all_resources,
-                args={"binary_path": str(binary_path)}
-            )
+                args={"binary_path": str(binary_path)},
+            ),
         ]
 
         # Mock analyzer results
-        with patch.object(pipeline.analyzers["dotnet"], 'analyze_assembly', return_value={'framework': '4.8'}):
-            with patch.object(pipeline.analyzers["pe_resource"], 'extract_all_resources', return_value={'icons': ['app.ico']}):
+        with patch.object(
+            pipeline.analyzers["dotnet"], "analyze_assembly", return_value={"framework": "4.8"}
+        ):
+            with patch.object(
+                pipeline.analyzers["pe_resource"],
+                "extract_all_resources",
+                return_value={"icons": ["app.ico"]},
+            ):
                 result = pipeline.run_pipeline(str(binary_path), steps)
 
                 summary = pipeline.get_pipeline_summary(result)
 
                 assert isinstance(summary, dict)
-                assert 'total_steps' in summary
-                assert 'successful_steps' in summary
-                assert 'failed_steps' in summary
-                assert 'execution_time' in summary
-                assert summary['total_steps'] == 2
-                assert summary['successful_steps'] == 2
-                assert summary['failed_steps'] == 0
+                assert "total_steps" in summary
+                assert "successful_steps" in summary
+                assert "failed_steps" in summary
+                assert "execution_time" in summary
+                assert summary["total_steps"] == 2
+                assert summary["successful_steps"] == 2
+                assert summary["failed_steps"] == 0
 
     def test_validate_pipeline_steps(self):
         """Test pipeline step validation"""
@@ -392,13 +457,13 @@ class TestAutomatedAnalysisPipeline:
             PipelineStep(
                 name="step1",
                 function=pipeline.analyzers["dotnet"].analyze_assembly,
-                args={"binary_path": "test.exe"}
+                args={"binary_path": "test.exe"},
             ),
             PipelineStep(
                 name="step2",
                 function=pipeline.analyzers["pe_resource"].extract_all_resources,
-                args={"binary_path": "test.exe"}
-            )
+                args={"binary_path": "test.exe"},
+            ),
         ]
 
         assert pipeline.validate_pipeline_steps(valid_steps) is True
@@ -408,13 +473,13 @@ class TestAutomatedAnalysisPipeline:
             PipelineStep(
                 name="step1",
                 function=pipeline.analyzers["dotnet"].analyze_assembly,
-                args={"binary_path": "test.exe"}
+                args={"binary_path": "test.exe"},
             ),
             PipelineStep(
                 name="step1",  # Duplicate name
                 function=pipeline.analyzers["pe_resource"].extract_all_resources,
-                args={"binary_path": "test.exe"}
-            )
+                args={"binary_path": "test.exe"},
+            ),
         ]
 
         assert pipeline.validate_pipeline_steps(invalid_steps) is False
@@ -428,7 +493,7 @@ class TestAutomatedAnalysisPipeline:
             PipelineStep(
                 name="dotnet_analysis",
                 function=pipeline.analyzers["dotnet"].analyze_assembly,
-                args={"binary_path": "test.exe"}
+                args={"binary_path": "test.exe"},
             )
         ]
 
@@ -445,14 +510,16 @@ class TestAutomatedAnalysisPipeline:
 
         # Create pipeline file
         pipeline_file = Path(temp_dir) / "test_pipeline.yaml"
-        with open(pipeline_file, 'w') as f:
-            f.write("""
+        with open(pipeline_file, "w") as f:
+            f.write(
+                """
 steps:
   - name: dotnet_analysis
     function: analyze_assembly
     args:
       binary_path: test.exe
-""")
+"""
+            )
 
         steps = pipeline.load_pipeline_definition(str(pipeline_file))
 

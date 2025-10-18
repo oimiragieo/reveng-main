@@ -10,25 +10,26 @@ Author: REVENG Project - AI Enhancement Module
 Version: 1.0
 """
 
-import sys
 import os
+import sys
 import tempfile
 from pathlib import Path
 
 # Add tools directory to path
 sys.path.insert(0, str(Path(__file__).parent / "tools"))
 
+
 def test_vulnerability_predictor():
     """Test ML vulnerability predictor"""
     print("=" * 60)
     print("Testing ML Vulnerability Predictor")
     print("=" * 60)
-    
+
     try:
         from tools.ml_vulnerability_predictor import MLVulnerabilityPredictor
-        
+
         predictor = MLVulnerabilityPredictor()
-        
+
         # Test code with vulnerabilities
         test_code = """
         #include <stdio.h>
@@ -54,10 +55,10 @@ def test_vulnerability_predictor():
             execute_query(query);  // SQL injection
         }
         """
-        
+
         print("Analyzing test code for vulnerabilities...")
         predictions = predictor.predict_vulnerabilities(test_code, "c")
-        
+
         print(f"Found {len(predictions)} vulnerability predictions:")
         for i, pred in enumerate(predictions, 1):
             print(f"  {i}. {pred.vulnerability_type}")
@@ -66,15 +67,15 @@ def test_vulnerability_predictor():
             print(f"     Vulnerable: {pred.is_vulnerable}")
             print(f"     Features: {pred.features_used[:3]}")  # Show first 3 features
             print()
-        
+
         # Test training
         print("Testing model training...")
         training_data = predictor.generate_synthetic_training_data()
         success = predictor.train_model(training_data, "general")
         print(f"Training successful: {success}")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"Error testing vulnerability predictor: {e}")
         return False
@@ -85,17 +86,17 @@ def test_malware_classifier():
     print("=" * 60)
     print("Testing ML Malware Classifier")
     print("=" * 60)
-    
+
     try:
         from tools.ml_malware_classifier import MLMalwareClassifier
-        
+
         classifier = MLMalwareClassifier()
-        
+
         # Create a temporary test file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.exe', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".exe", delete=False) as f:
             f.write("This is a test binary file for malware classification")
             test_file = f.name
-        
+
         try:
             # Test data
             test_strings = [
@@ -105,30 +106,30 @@ def test_malware_classifier():
                 "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
                 "cmd.exe /c del",
                 "bitcoin",
-                "encrypt"
+                "encrypt",
             ]
-            
+
             test_apis = [
                 "CreateProcess",
-                "RegSetValue", 
+                "RegSetValue",
                 "InternetConnect",
                 "WriteProcessMemory",
-                "VirtualAlloc"
+                "VirtualAlloc",
             ]
-            
+
             test_code_analysis = {
                 "function_count": 25,
                 "import_count": 15,
                 "section_count": 4,
                 "entropy": 7.8,
-                "is_packed": True
+                "is_packed": True,
             }
-            
+
             print("Classifying test sample...")
             classification = classifier.classify_malware(
                 test_file, test_strings, test_apis, test_code_analysis
             )
-            
+
             print(f"Classification Results:")
             print(f"  Family: {classification.family}")
             print(f"  Confidence: {classification.confidence:.2f}")
@@ -136,20 +137,20 @@ def test_malware_classifier():
             print(f"  Anomaly Score: {classification.anomaly_score:.2f}")
             print(f"  Behavioral Cluster: {classification.behavioral_cluster}")
             print(f"  Behavioral Patterns: {len(classification.behavioral_patterns)}")
-            
+
             for pattern in classification.behavioral_patterns[:3]:  # Show first 3
                 print(f"    - {pattern.type}: {pattern.description}")
-            
+
             print(f"  Similarity Scores:")
             for family, score in list(classification.similarity_scores.items())[:5]:
                 print(f"    - {family}: {score:.3f}")
-            
+
             return True
-            
+
         finally:
             # Clean up temp file
             os.unlink(test_file)
-        
+
     except Exception as e:
         print(f"Error testing malware classifier: {e}")
         return False
@@ -160,12 +161,12 @@ def test_nlp_analyzer():
     print("=" * 60)
     print("Testing NLP Code Analyzer")
     print("=" * 60)
-    
+
     try:
         from tools.nlp_code_analyzer import DocumentationGenerator
-        
+
         analyzer = DocumentationGenerator()
-        
+
         # Test code for NLP analysis
         test_code = """
         #include <stdio.h>
@@ -243,34 +244,34 @@ def test_nlp_analyzer():
             return 0;
         }
         """
-        
+
         print("Analyzing code with NLP...")
         summary = analyzer.generate_code_summary(test_code, "c")
-        
+
         print(f"Code Summary:")
         print(f"  Overview: {summary.overview}")
         print(f"  Key Functions: {summary.key_functions}")
         print(f"  Algorithms Detected: {summary.algorithms_used}")
         print(f"  Design Patterns: {summary.design_patterns}")
         print(f"  Data Structures: {summary.data_structures}")
-        
+
         if summary.complexity_analysis:
             print(f"  Complexity Analysis:")
             for metric, value in summary.complexity_analysis.items():
                 print(f"    - {metric}: {value}")
-        
+
         print(f"  Documentation Suggestions: {len(summary.documentation_suggestions)}")
         for suggestion in summary.documentation_suggestions[:3]:  # Show first 3
             print(f"    - {suggestion.type}: {suggestion.description}")
-        
+
         if summary.semantic_analysis:
             print(f"  Semantic Analysis:")
             print(f"    - Comment Coverage: {summary.semantic_analysis.comment_coverage:.1f}%")
             print(f"    - Naming Quality: {summary.semantic_analysis.naming_quality:.1f}/10")
             print(f"    - Readability Score: {summary.semantic_analysis.readability_score:.1f}/10")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"Error testing NLP analyzer: {e}")
         return False
@@ -281,15 +282,15 @@ def test_ml_pipeline():
     print("=" * 60)
     print("Testing Complete ML Pipeline")
     print("=" * 60)
-    
+
     try:
         from tools.ml_pipeline_orchestrator import MLPipelineOrchestrator
-        
+
         orchestrator = MLPipelineOrchestrator()
-        
+
         # Test data
         test_reveng_results = {
-            'decompiled_code': '''
+            "decompiled_code": """
             #include <stdio.h>
             #include <string.h>
             
@@ -311,41 +312,41 @@ def test_ml_pipeline():
                     data[i] ^= 0x42;  // Simple XOR
                 }
             }
-            ''',
-            'strings': [
-                'http://suspicious-domain.tk',
-                'CreateProcess',
-                'RegSetValue',
-                'bitcoin',
-                'encrypt',
-                'payload'
+            """,
+            "strings": [
+                "http://suspicious-domain.tk",
+                "CreateProcess",
+                "RegSetValue",
+                "bitcoin",
+                "encrypt",
+                "payload",
             ],
-            'api_calls': [
-                'CreateProcess',
-                'RegSetValue',
-                'InternetConnect',
-                'WriteProcessMemory',
-                'VirtualAlloc',
-                'CryptAcquireContext'
+            "api_calls": [
+                "CreateProcess",
+                "RegSetValue",
+                "InternetConnect",
+                "WriteProcessMemory",
+                "VirtualAlloc",
+                "CryptAcquireContext",
             ],
-            'code_analysis': {
-                'function_count': 15,
-                'import_count': 25,
-                'section_count': 5,
-                'entropy': 8.2,
-                'is_packed': True
-            }
+            "code_analysis": {
+                "function_count": 15,
+                "import_count": 25,
+                "section_count": 5,
+                "entropy": 8.2,
+                "is_packed": True,
+            },
         }
-        
+
         # Create temporary test file
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.exe', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".exe", delete=False) as f:
             f.write("Test binary content for ML pipeline")
             test_file = f.name
-        
+
         try:
             print("Running complete ML pipeline...")
             result = orchestrator.run_ml_pipeline(test_file, test_reveng_results)
-            
+
             print(f"Pipeline Results:")
             print(f"  Success: {result.success}")
             print(f"  Execution Time: {result.execution_time:.2f}s")
@@ -353,41 +354,41 @@ def test_ml_pipeline():
             print(f"  Vulnerability Predictions: {len(result.vulnerability_predictions)}")
             print(f"  Malware Classifications: {len(result.malware_classifications)}")
             print(f"  Code Summaries: {len(result.code_summaries)}")
-            
+
             if result.error_messages:
                 print(f"  Errors: {result.error_messages}")
-            
+
             # Show some detailed results
             if result.vulnerability_predictions:
                 print(f"  Top Vulnerabilities:")
                 for vuln in result.vulnerability_predictions[:3]:
                     print(f"    - {vuln.vulnerability_type} (confidence: {vuln.confidence:.2f})")
-            
+
             if result.malware_classifications:
                 classification = result.malware_classifications[0]
                 print(f"  Malware Classification:")
                 print(f"    - Family: {classification.family}")
                 print(f"    - Confidence: {classification.confidence:.2f}")
                 print(f"    - Is Malware: {classification.is_malware}")
-            
+
             if result.code_summaries:
                 summary = result.code_summaries[0]
                 print(f"  Code Summary:")
                 print(f"    - Algorithms: {summary.algorithms_used}")
                 print(f"    - Key Functions: {summary.key_functions[:3]}")
-            
+
             # Test performance report
             performance = orchestrator.get_performance_report()
             print(f"  Performance Report:")
             print(f"    - Execution Times: {performance['execution_times']}")
             print(f"    - Components Initialized: {performance['components_initialized']}")
-            
+
             return True
-            
+
         finally:
             # Clean up temp file
             os.unlink(test_file)
-        
+
     except Exception as e:
         print(f"Error testing ML pipeline: {e}")
         return False
@@ -397,16 +398,16 @@ def main():
     """Main test function"""
     print("AI-Enhanced Universal Binary Analysis - ML Enhancements Test")
     print("=" * 80)
-    
+
     tests = [
         ("Vulnerability Predictor", test_vulnerability_predictor),
         ("Malware Classifier", test_malware_classifier),
         ("NLP Code Analyzer", test_nlp_analyzer),
-        ("Complete ML Pipeline", test_ml_pipeline)
+        ("Complete ML Pipeline", test_ml_pipeline),
     ]
-    
+
     results = {}
-    
+
     for test_name, test_func in tests:
         print(f"\nRunning {test_name} test...")
         try:
@@ -416,22 +417,22 @@ def main():
         except Exception as e:
             results[test_name] = False
             print(f"✗ {test_name}: FAILED - {e}")
-        
+
         print("-" * 60)
-    
+
     # Summary
     print("\nTest Summary:")
     print("=" * 40)
     passed = sum(1 for success in results.values() if success)
     total = len(results)
-    
+
     for test_name, success in results.items():
         status = "PASSED" if success else "FAILED"
         symbol = "✓" if success else "✗"
         print(f"{symbol} {test_name}: {status}")
-    
+
     print(f"\nOverall: {passed}/{total} tests passed")
-    
+
     if passed == total:
         print("🎉 All ML enhancement tests passed!")
         return 0

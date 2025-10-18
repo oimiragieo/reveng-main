@@ -2,28 +2,31 @@
 Base installer class for REVENG tools
 """
 
-import os
-import sys
-import subprocess
-import platform
-import shutil
-import zipfile
-import tarfile
 import json
 import logging
+import os
+import platform
+import shutil
+import subprocess
+import sys
+import tarfile
+import zipfile
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Optional, Dict, Any, List
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class InstallMethod(Enum):
     """Installation method for tools"""
+
     DOWNLOAD = "download"
     PACKAGE_MANAGER = "package_manager"
     PYTHON_PIP = "python_pip"
     MANUAL = "manual"
+
 
 class BaseInstaller(ABC):
     """Abstract base class for tool installers"""
@@ -48,7 +51,7 @@ class BaseInstaller(ABC):
         pass
 
     @abstractmethod
-    def check_installation(self) -> 'ToolStatus':
+    def check_installation(self) -> "ToolStatus":
         """Check if tool is properly installed"""
         pass
 
@@ -93,7 +96,7 @@ class BaseInstaller(ABC):
         """Load installation configuration"""
         if self.config_file.exists():
             try:
-                with open(self.config_file, 'r') as f:
+                with open(self.config_file, "r") as f:
                     return json.load(f)
             except Exception as e:
                 logger.warning(f"Failed to load config for {self.tool_name}: {e}")
@@ -103,7 +106,7 @@ class BaseInstaller(ABC):
         """Save installation configuration"""
         try:
             self.install_path.mkdir(parents=True, exist_ok=True)
-            with open(self.config_file, 'w') as f:
+            with open(self.config_file, "w") as f:
                 json.dump(config, f, indent=2)
         except Exception as e:
             logger.warning(f"Failed to save config for {self.tool_name}: {e}")
@@ -116,7 +119,16 @@ class BaseInstaller(ABC):
 
         try:
             logger.info(f"Downloading {filename} from {url}...")
-            urllib.request.urlretrieve(url, file_path)
+            # SECURITY: Use requests instead of urllib for better security
+            import requests
+
+            response = requests.get(url, timeout=30, stream=True)
+            response.raise_for_status()
+
+            with open(file_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
             logger.info(f"Downloaded {filename}")
             return file_path
         except Exception as e:
@@ -128,12 +140,52 @@ class BaseInstaller(ABC):
         extract_to = extract_to or self.install_path
 
         try:
-            if archive_path.suffix.lower() == '.zip':
-                with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+            if archive_path.suffix.lower() == ".zip":
+                with zipfile.ZipFile(archive_path, "r") as zip_ref:
+                    # Security: Validate all members before extraction to prevent path traversal
+                    for member in zip_ref.infolist():
+                        # Check for path traversal attempts
+                        if member.filename.startswith("/") or ".." in member.filename:
+                            raise ValueError(f"Unsafe archive member: {member.filename}")
+                        # Ensure member path is within extract directory
+                        member_path = Path(extract_to) / member.filename
+                        if not str(member_path.resolve()).startswith(
+                            str(Path(extract_to).resolve())
+                        ):
+                            raise ValueError(
+                                f"Archive member outside extract directory: {member.filename}"
+                            )
                     zip_ref.extractall(extract_to)
-            elif archive_path.suffix.lower() in ['.tar', '.tar.gz', '.tgz']:
-                with tarfile.open(archive_path, 'r:*') as tar_ref:
-                    tar_ref.extractall(extract_to)
+            elif archive_path.suffix.lower() in [".tar", ".tar.gz", ".tgz"]:
+                with tarfile.open(archive_path, "r:*") as tar_ref:
+                    # Security: Validate all members before extraction to prevent path traversal
+                    safe_members = []
+                    for member in tar_ref.getmembers():
+                        # Check for path traversal attempts
+                        if member.name.startswith("/") or ".." in member.name:
+                            raise ValueError(f"Unsafe archive member: {member.name}")
+                        # Ensure member path is within extract directory
+                        member_path = Path(extract_to) / member.name
+                        if not str(member_path.resolve()).startswith(
+                            str(Path(extract_to).resolve())
+                        ):
+                            raise ValueError(
+                                f"Archive member outside extract directory: {member.name}"
+                            )
+                        # Create safe member with sanitized name
+                        safe_member = tarfile.TarInfo(name=member.name)
+                        safe_member.size = member.size
+                        safe_member.mode = member.mode
+                        safe_member.type = member.type
+                        safe_members.append(safe_member)
+
+                    # Extract only safe members
+                    for member in safe_members:
+                        try:
+                            tar_ref.extract(member, extract_to)
+                        except Exception as e:
+                            logger.warning(f"Failed to extract {member.name}: {e}")
+                            continue
             else:
                 raise ValueError(f"Unsupported archive format: {archive_path.suffix}")
 
@@ -151,7 +203,7 @@ class BaseInstaller(ABC):
                 cwd=cwd or self.install_path,
                 capture_output=True,
                 text=True,
-                timeout=300  # 5 minute timeout
+                timeout=300,  # 5 minute timeout
             )
 
             if result.returncode == 0:
@@ -173,18 +225,14 @@ class BaseInstaller(ABC):
         try:
             # Try to run the executable with --version or --help
             result = subprocess.run(
-                [str(executable_path), "--version"],
-                capture_output=True,
-                timeout=10
+                [str(executable_path), "--version"], capture_output=True, timeout=10
             )
             return result.returncode == 0
         except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError):
             # If --version fails, try --help
             try:
                 result = subprocess.run(
-                    [str(executable_path), "--help"],
-                    capture_output=True,
-                    timeout=10
+                    [str(executable_path), "--help"], capture_output=True, timeout=10
                 )
                 return result.returncode == 0
             except:
@@ -197,8 +245,10 @@ class BaseInstaller(ABC):
         if system == "windows":
             # Look for .exe files
             for exe_file in base_path.rglob("*.exe"):
-                if exe_file.name.lower() == self.tool_name.lower() or \
-                   self.tool_name.lower() in exe_file.name.lower():
+                if (
+                    exe_file.name.lower() == self.tool_name.lower()
+                    or self.tool_name.lower() in exe_file.name.lower()
+                ):
                     return exe_file
         else:
             # Look for executable files without extension
@@ -218,7 +268,7 @@ class BaseInstaller(ABC):
             self.tool_name,
             f"{self.tool_name}.exe",
             f"{self.tool_name}.bat",
-            f"{self.tool_name}.cmd"
+            f"{self.tool_name}.cmd",
         ]
 
         # Search in the installation directory
@@ -234,6 +284,7 @@ class BaseInstaller(ABC):
                     return exe_path
 
         return None
+
 
 # Import ToolStatus from dependency_manager to avoid circular imports
 from ..core.dependency_manager import ToolStatus

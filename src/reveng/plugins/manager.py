@@ -4,25 +4,34 @@ Plugin Manager for REVENG
 Manages plugin loading, dependency resolution, and execution.
 """
 
-import os
-import sys
 import importlib
 import inspect
 import logging
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, Type, Union, Set
+import os
+import sys
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union
 
-from .base import PluginBase, PluginMetadata, PluginContext, PluginCategory, PluginStatus, PluginPriority
-from ..core.errors import REVENGError, PluginError, create_error_context
+from ..core.errors import PluginError, REVENGError, create_error_context
 from ..core.logger import get_logger
+from .base import (
+    PluginBase,
+    PluginCategory,
+    PluginContext,
+    PluginMetadata,
+    PluginPriority,
+    PluginStatus,
+)
 
 logger = get_logger()
+
 
 @dataclass
 class PluginInfo:
     """Plugin information"""
+
     name: str
     plugin_class: Type[PluginBase]
     metadata: PluginMetadata
@@ -30,6 +39,7 @@ class PluginInfo:
     instance: Optional[PluginBase] = None
     load_time: float = 0.0
     error_message: Optional[str] = None
+
 
 class PluginManager:
     """Manages REVENG plugins"""
@@ -55,7 +65,7 @@ class PluginManager:
             str(Path(__file__).parent / "export"),
             str(Path(__file__).parent / "ai"),
             str(Path(__file__).parent / "security"),
-            str(Path(__file__).parent / "utilities")
+            str(Path(__file__).parent / "utilities"),
         ]
 
     def _load_plugins(self):
@@ -94,9 +104,11 @@ class PluginManager:
 
             # Find plugin classes
             for name, obj in inspect.getmembers(module, inspect.isclass):
-                if (issubclass(obj, PluginBase) and
-                    obj != PluginBase and
-                    not inspect.isabstract(obj)):
+                if (
+                    issubclass(obj, PluginBase)
+                    and obj != PluginBase
+                    and not inspect.isabstract(obj)
+                ):
 
                     # Create plugin instance
                     plugin_instance = obj()
@@ -113,7 +125,7 @@ class PluginManager:
                         plugin_class=obj,
                         metadata=metadata,
                         status=PluginStatus.UNINSTALLED,
-                        instance=plugin_instance
+                        instance=plugin_instance,
                     )
 
                     self.plugins[metadata.name] = plugin_info
@@ -137,7 +149,9 @@ class PluginManager:
         for plugin_name, dependencies in self.dependency_graph.items():
             for dependency in dependencies:
                 if dependency not in self.plugins:
-                    self.logger.error(f"Plugin {plugin_name} depends on unknown plugin: {dependency}")
+                    self.logger.error(
+                        f"Plugin {plugin_name} depends on unknown plugin: {dependency}"
+                    )
                     self.plugins[plugin_name].status = PluginStatus.ERROR
                     self.plugins[plugin_name].error_message = f"Missing dependency: {dependency}"
 
@@ -215,21 +229,24 @@ class PluginManager:
     def get_plugins_by_category(self, category: PluginCategory) -> List[PluginInfo]:
         """Get plugins by category"""
         return [
-            plugin_info for plugin_info in self.plugins.values()
+            plugin_info
+            for plugin_info in self.plugins.values()
             if plugin_info.metadata.category == category
         ]
 
     def get_enabled_plugins(self) -> List[PluginInfo]:
         """Get enabled plugins"""
         return [
-            plugin_info for plugin_info in self.plugins.values()
+            plugin_info
+            for plugin_info in self.plugins.values()
             if plugin_info.status == PluginStatus.ENABLED
         ]
 
     def get_plugins_by_priority(self, priority: PluginPriority) -> List[PluginInfo]:
         """Get plugins by priority"""
         return [
-            plugin_info for plugin_info in self.plugins.values()
+            plugin_info
+            for plugin_info in self.plugins.values()
             if plugin_info.metadata.priority == priority
         ]
 
@@ -271,9 +288,15 @@ class PluginManager:
         plugin_info = self.plugins[name]
 
         # Check if other plugins depend on this one
-        dependents = [p for p in self.plugins.values() if name in p.metadata.dependencies and p.status == PluginStatus.ENABLED]
+        dependents = [
+            p
+            for p in self.plugins.values()
+            if name in p.metadata.dependencies and p.status == PluginStatus.ENABLED
+        ]
         if dependents:
-            self.logger.error(f"Cannot disable plugin {name}: {len(dependents)} plugins depend on it")
+            self.logger.error(
+                f"Cannot disable plugin {name}: {len(dependents)} plugins depend on it"
+            )
             return False
 
         plugin_info.status = PluginStatus.DISABLED
@@ -301,7 +324,9 @@ class PluginManager:
             self.logger.error(f"Plugin {name} execution failed: {e}")
             raise PluginError(f"Plugin {name} execution failed", plugin_name=name) from e
 
-    def execute_plugin_chain(self, context: PluginContext, plugin_names: Optional[List[str]] = None) -> Dict[str, Any]:
+    def execute_plugin_chain(
+        self, context: PluginContext, plugin_names: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """Execute a chain of plugins"""
 
         if plugin_names is None:
@@ -354,7 +379,7 @@ class PluginManager:
                 "priority": plugin_info.metadata.priority.value,
                 "status": plugin_info.status.value,
                 "dependencies": plugin_info.metadata.dependencies,
-                "error_message": plugin_info.error_message
+                "error_message": plugin_info.error_message,
             }
             for plugin_info in self.plugins.values()
         ]
@@ -369,12 +394,7 @@ class PluginManager:
         if not plugin_info.instance:
             return [f"Plugin instance not available: {name}"]
 
-        context = PluginContext(
-            plugin_name=name,
-            binary_path="",
-            output_dir="",
-            config={}
-        )
+        context = PluginContext(plugin_name=name, binary_path="", output_dir="", config={})
 
         return plugin_info.instance.validate_requirements(context)
 
@@ -398,7 +418,7 @@ class PluginManager:
                 "name": plugin_name,
                 "version": plugin_info.metadata.version,
                 "status": plugin_info.status.value,
-                "dependencies": []
+                "dependencies": [],
             }
 
             for dependency in plugin_info.metadata.dependencies:

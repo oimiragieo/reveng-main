@@ -10,6 +10,7 @@ Version: 2.1.0
 License: MIT
 """
 
+
 class REVENGException(Exception):
     """Base exception for all REVENG errors."""
 
@@ -24,12 +25,14 @@ class REVENGException(Exception):
             return f"[{self.error_code}] {self.message}"
         return self.message
 
+
 class AnalysisError(REVENGException):
     """Raised when analysis operations fail."""
 
     def __init__(self, message: str, analysis_step: str = None, **kwargs):
         super().__init__(message, error_code="ANALYSIS_ERROR", **kwargs)
         self.analysis_step = analysis_step
+
 
 class DependencyError(REVENGException):
     """Raised when required dependencies are missing or incompatible."""
@@ -38,12 +41,14 @@ class DependencyError(REVENGException):
         super().__init__(message, error_code="DEPENDENCY_ERROR", **kwargs)
         self.missing_dependency = missing_dependency
 
+
 class ValidationError(REVENGException):
     """Raised when input validation fails."""
 
     def __init__(self, message: str, field: str = None, **kwargs):
         super().__init__(message, error_code="VALIDATION_ERROR", **kwargs)
         self.field = field
+
 
 class SecurityError(REVENGException):
     """Raised when security constraints are violated."""
@@ -52,12 +57,14 @@ class SecurityError(REVENGException):
         super().__init__(message, error_code="SECURITY_ERROR", **kwargs)
         self.security_issue = security_issue
 
+
 class ConfigurationError(REVENGException):
     """Raised when configuration is invalid."""
 
     def __init__(self, message: str, config_key: str = None, **kwargs):
         super().__init__(message, error_code="CONFIG_ERROR", **kwargs)
         self.config_key = config_key
+
 
 class ToolError(REVENGException):
     """Raised when external tools fail."""
@@ -67,12 +74,14 @@ class ToolError(REVENGException):
         self.tool_name = tool_name
         self.exit_code = exit_code
 
+
 class MLModelError(REVENGException):
     """Raised when ML model operations fail."""
 
     def __init__(self, message: str, model_name: str = None, **kwargs):
         super().__init__(message, error_code="ML_MODEL_ERROR", **kwargs)
         self.model_name = model_name
+
 
 class BinaryFormatError(REVENGException):
     """Raised when binary format is unsupported or corrupted."""
@@ -81,12 +90,14 @@ class BinaryFormatError(REVENGException):
         super().__init__(message, error_code="BINARY_FORMAT_ERROR", **kwargs)
         self.format_type = format_type
 
+
 class TimeoutError(REVENGException):
     """Raised when operations exceed timeout."""
 
     def __init__(self, message: str, timeout_seconds: int = None, **kwargs):
         super().__init__(message, error_code="TIMEOUT_ERROR", **kwargs)
         self.timeout_seconds = timeout_seconds
+
 
 class InsufficientPermissionsError(REVENGException):
     """Raised when insufficient permissions for operation."""
@@ -95,6 +106,7 @@ class InsufficientPermissionsError(REVENGException):
         super().__init__(message, error_code="PERMISSIONS_ERROR", **kwargs)
         self.required_permission = required_permission
 
+
 class ResourceError(REVENGException):
     """Raised when system resources are insufficient."""
 
@@ -102,22 +114,27 @@ class ResourceError(REVENGException):
         super().__init__(message, error_code="RESOURCE_ERROR", **kwargs)
         self.resource_type = resource_type
 
+
 # Convenience functions for common error patterns
 def raise_analysis_error(message: str, step: str = None, **kwargs):
     """Raise an AnalysisError with optional step information."""
     raise AnalysisError(message, analysis_step=step, **kwargs)
 
+
 def raise_dependency_error(message: str, dependency: str = None, **kwargs):
     """Raise a DependencyError with optional dependency information."""
     raise DependencyError(message, missing_dependency=dependency, **kwargs)
+
 
 def raise_validation_error(message: str, field: str = None, **kwargs):
     """Raise a ValidationError with optional field information."""
     raise ValidationError(message, field=field, **kwargs)
 
+
 def raise_security_error(message: str, issue: str = None, **kwargs):
     """Raise a SecurityError with optional issue information."""
     raise SecurityError(message, security_issue=issue, **kwargs)
+
 
 def raise_tool_error(message: str, tool: str = None, exit_code: int = None, **kwargs):
     """Raise a ToolError with optional tool and exit code information."""

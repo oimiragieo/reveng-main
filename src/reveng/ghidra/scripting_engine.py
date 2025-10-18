@@ -5,45 +5,53 @@ Python/Java scripting engine for Ghidra automation with batch processing,
 project management, and result export.
 """
 
-import os
-import sys
-import subprocess
-import tempfile
 import json
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+import logging
+import os
+import subprocess
+import sys
+import tempfile
+import time
 from dataclasses import dataclass
 from enum import Enum
-import logging
-import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..core.errors import AnalysisFailureError, ScriptExecutionError, create_error_context
 from ..core.logger import get_logger
 
+
 class ScriptLanguage(Enum):
     """Script languages"""
+
     PYTHON = "python"
     JAVA = "java"
 
+
 class ScriptResult(Enum):
     """Script execution results"""
+
     SUCCESS = "success"
     FAILURE = "failure"
     TIMEOUT = "timeout"
     ERROR = "error"
 
+
 @dataclass
 class GhidraProject:
     """Ghidra project information"""
+
     name: str
     path: str
     created: str
     binaries: List[str]
     analysis_status: Dict[str, str]
 
+
 @dataclass
 class ScriptExecutionResult:
     """Script execution result"""
+
     script_path: str
     binary_path: str
     result: ScriptResult
@@ -52,9 +60,11 @@ class ScriptExecutionResult:
     execution_time: float
     return_code: int
 
+
 @dataclass
 class GhidraAnalysis:
     """Ghidra analysis result"""
+
     binary_path: str
     functions: List[Dict[str, Any]]
     strings: List[str]
@@ -63,6 +73,7 @@ class GhidraAnalysis:
     call_graph: Dict[str, List[str]]
     analysis_time: float
     confidence: float
+
 
 class GhidraScriptingEngine:
     """Python/Java scripting engine for Ghidra automation"""
@@ -87,18 +98,18 @@ class GhidraScriptingEngine:
                 str(self.ghidra_path / "support" / "analyzeHeadless.bat"),
                 str(self.temp_dir),
                 "temp_project",
-                "-import", binary_path,
-                "-scriptPath", str(self.scripts_dir),
-                "-postScript", script_path,
-                "-deleteProject"
+                "-import",
+                binary_path,
+                "-scriptPath",
+                str(self.scripts_dir),
+                "-postScript",
+                script_path,
+                "-deleteProject",
             ]
 
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
-            )
+                cmd, capture_output=True, text=True, timeout=300
+            )  # 5 minute timeout
 
             execution_time = time.time() - start_time
 
@@ -110,7 +121,7 @@ class GhidraScriptingEngine:
                     output=result.stdout,
                     error=None,
                     execution_time=execution_time,
-                    return_code=result.returncode
+                    return_code=result.returncode,
                 )
             else:
                 return ScriptExecutionResult(
@@ -120,7 +131,7 @@ class GhidraScriptingEngine:
                     output=result.stdout,
                     error=result.stderr,
                     execution_time=execution_time,
-                    return_code=result.returncode
+                    return_code=result.returncode,
                 )
 
         except subprocess.TimeoutExpired:
@@ -131,21 +142,16 @@ class GhidraScriptingEngine:
                 output="",
                 error="Script execution timed out",
                 execution_time=300.0,
-                return_code=-1
+                return_code=-1,
             )
         except Exception as e:
             context = create_error_context(
                 "ghidra_scripting",
                 "execute_python_script",
                 binary_path=binary_path,
-                tool_name="ghidra"
+                tool_name="ghidra",
             )
-            raise ScriptExecutionError(
-                script_path,
-                "ghidra",
-                context=context,
-                original_exception=e
-            )
+            raise ScriptExecutionError(script_path, "ghidra", context=context, original_exception=e)
 
     def execute_java_script(self, script_path: str, binary_path: str) -> ScriptExecutionResult:
         """Execute Java script in Ghidra"""
@@ -159,18 +165,18 @@ class GhidraScriptingEngine:
                 str(self.ghidra_path / "support" / "analyzeHeadless.bat"),
                 str(self.temp_dir),
                 "temp_project",
-                "-import", binary_path,
-                "-scriptPath", str(self.scripts_dir),
-                "-postScript", script_path,
-                "-deleteProject"
+                "-import",
+                binary_path,
+                "-scriptPath",
+                str(self.scripts_dir),
+                "-postScript",
+                script_path,
+                "-deleteProject",
             ]
 
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
-            )
+                cmd, capture_output=True, text=True, timeout=300
+            )  # 5 minute timeout
 
             execution_time = time.time() - start_time
 
@@ -182,7 +188,7 @@ class GhidraScriptingEngine:
                     output=result.stdout,
                     error=None,
                     execution_time=execution_time,
-                    return_code=result.returncode
+                    return_code=result.returncode,
                 )
             else:
                 return ScriptExecutionResult(
@@ -192,7 +198,7 @@ class GhidraScriptingEngine:
                     output=result.stdout,
                     error=result.stderr,
                     execution_time=execution_time,
-                    return_code=result.returncode
+                    return_code=result.returncode,
                 )
 
         except subprocess.TimeoutExpired:
@@ -203,26 +209,23 @@ class GhidraScriptingEngine:
                 output="",
                 error="Script execution timed out",
                 execution_time=300.0,
-                return_code=-1
+                return_code=-1,
             )
         except Exception as e:
             context = create_error_context(
                 "ghidra_scripting",
                 "execute_java_script",
                 binary_path=binary_path,
-                tool_name="ghidra"
+                tool_name="ghidra",
             )
-            raise ScriptExecutionError(
-                script_path,
-                "ghidra",
-                context=context,
-                original_exception=e
-            )
+            raise ScriptExecutionError(script_path, "ghidra", context=context, original_exception=e)
 
     def batch_analyze(self, binaries: List[str], script: str) -> List[ScriptExecutionResult]:
         """Batch process multiple binaries with same script"""
         try:
-            self.logger.info(f"Starting batch analysis of {len(binaries)} binaries with script {script}")
+            self.logger.info(
+                f"Starting batch analysis of {len(binaries)} binaries with script {script}"
+            )
 
             results = []
             for binary in binaries:
@@ -231,15 +234,17 @@ class GhidraScriptingEngine:
                     results.append(result)
                 except Exception as e:
                     self.logger.warning(f"Failed to analyze {binary}: {e}")
-                    results.append(ScriptExecutionResult(
-                        script_path=script,
-                        binary_path=binary,
-                        result=ScriptResult.ERROR,
-                        output="",
-                        error=str(e),
-                        execution_time=0.0,
-                        return_code=-1
-                    ))
+                    results.append(
+                        ScriptExecutionResult(
+                            script_path=script,
+                            binary_path=binary,
+                            result=ScriptResult.ERROR,
+                            output="",
+                            error=str(e),
+                            execution_time=0.0,
+                            return_code=-1,
+                        )
+                    )
 
             self.logger.info(f"Completed batch analysis: {len(results)} results")
             return results
@@ -259,7 +264,7 @@ class GhidraScriptingEngine:
                 path=str(project_path),
                 created=time.strftime("%Y-%m-%d %H:%M:%S"),
                 binaries=[],
-                analysis_status={}
+                analysis_status={},
             )
 
             self.logger.info(f"Created Ghidra project: {project_name}")
@@ -331,7 +336,7 @@ class GhidraScriptingEngine:
                 exports=exports,
                 call_graph=call_graph,
                 analysis_time=analysis_time,
-                confidence=0.8  # Placeholder confidence
+                confidence=0.8,  # Placeholder confidence
             )
 
             self.logger.info(f"Completed Ghidra analysis in {analysis_time:.2f} seconds")
@@ -342,13 +347,10 @@ class GhidraScriptingEngine:
                 "ghidra_scripting",
                 "analyze_binary",
                 binary_path=binary_path,
-                tool_name="ghidra"
+                tool_name="ghidra",
             )
             raise AnalysisFailureError(
-                "ghidra_analysis",
-                binary_path,
-                context=context,
-                original_exception=e
+                "ghidra_analysis", binary_path, context=context, original_exception=e
             )
 
     def decompile_function(self, binary_path: str, function_address: int) -> str:
@@ -380,7 +382,7 @@ else:
 
             # Write script to temporary file
             script_path = self.temp_dir / "decompile_function.py"
-            with open(script_path, 'w') as f:
+            with open(script_path, "w") as f:
                 f.write(script_content)
 
             # Execute script
@@ -422,7 +424,7 @@ print(json.dumps(call_graph, indent=2))
 
             # Write script to temporary file
             script_path = self.temp_dir / "extract_call_graph.py"
-            with open(script_path, 'w') as f:
+            with open(script_path, "w") as f:
                 f.write(script_content)
 
             # Execute script
@@ -469,7 +471,7 @@ print(json.dumps(applied_signatures, indent=2))
 
             # Write script to temporary file
             script_path = self.temp_dir / "apply_flirt_signatures.py"
-            with open(script_path, 'w') as f:
+            with open(script_path, "w") as f:
                 f.write(script_content)
 
             # Execute script
@@ -490,6 +492,7 @@ print(json.dumps(applied_signatures, indent=2))
     def _get_ghidra_path(self) -> Optional[Path]:
         """Get Ghidra executable path"""
         from ..core.dependency_manager import DependencyManager
+
         dm = DependencyManager()
         ghidra_path = dm.get_tool_path("ghidra")
         if ghidra_path:
@@ -540,7 +543,7 @@ print(json.dumps(functions, indent=2))
 
             # Write script to temporary file
             script_path = self.temp_dir / "extract_functions.py"
-            with open(script_path, 'w') as f:
+            with open(script_path, "w") as f:
                 f.write(script_content)
 
             # Execute script
@@ -579,14 +582,14 @@ for string in strings:
 
             # Write script to temporary file
             script_path = self.temp_dir / "extract_strings.py"
-            with open(script_path, 'w') as f:
+            with open(script_path, "w") as f:
                 f.write(script_content)
 
             # Execute script
             result = self.execute_python_script(str(script_path), binary_path)
 
             if result.result == ScriptResult.SUCCESS:
-                return result.output.strip().split('\n')
+                return result.output.strip().split("\n")
             else:
                 return []
 
@@ -617,7 +620,7 @@ print(json.dumps(imports, indent=2))
 
             # Write script to temporary file
             script_path = self.temp_dir / "extract_imports.py"
-            with open(script_path, 'w') as f:
+            with open(script_path, "w") as f:
                 f.write(script_content)
 
             # Execute script
@@ -657,7 +660,7 @@ print(json.dumps(exports, indent=2))
 
             # Write script to temporary file
             script_path = self.temp_dir / "extract_exports.py"
-            with open(script_path, 'w') as f:
+            with open(script_path, "w") as f:
                 f.write(script_content)
 
             # Execute script
@@ -679,7 +682,7 @@ print(json.dumps(exports, indent=2))
         """Export functions in specified format"""
         try:
             functions = self._extract_functions(binary_path)
-            return {'functions': functions, 'format': format}
+            return {"functions": functions, "format": format}
 
         except Exception as e:
             self.logger.warning(f"Failed to export functions: {e}")
@@ -689,7 +692,7 @@ print(json.dumps(exports, indent=2))
         """Export strings in specified format"""
         try:
             strings = self._extract_strings(binary_path)
-            return {'strings': strings, 'format': format}
+            return {"strings": strings, "format": format}
 
         except Exception as e:
             self.logger.warning(f"Failed to export strings: {e}")
@@ -699,7 +702,7 @@ print(json.dumps(exports, indent=2))
         """Export imports in specified format"""
         try:
             imports = self._extract_imports(binary_path)
-            return {'imports': imports, 'format': format}
+            return {"imports": imports, "format": format}
 
         except Exception as e:
             self.logger.warning(f"Failed to export imports: {e}")
@@ -709,7 +712,7 @@ print(json.dumps(exports, indent=2))
         """Export exports in specified format"""
         try:
             exports = self._extract_exports(binary_path)
-            return {'exports': exports, 'format': format}
+            return {"exports": exports, "format": format}
 
         except Exception as e:
             self.logger.warning(f"Failed to export exports: {e}")

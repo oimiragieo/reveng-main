@@ -8,13 +8,14 @@ Author: REVENG Development Team
 Version: 2.1.0
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from pathlib import Path
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
-from src.reveng.analyzer import REVENGAnalyzer, EnhancedAnalysisFeatures
+import pytest
+
+from src.reveng.analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
 
 
 class TestREVENGAnalyzer:
@@ -22,10 +23,7 @@ class TestREVENGAnalyzer:
 
     def test_analyzer_initialization(self, mock_binary_file, temp_analysis_dir):
         """Test analyzer initialization."""
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         assert analyzer.binary_path == str(mock_binary_file)
         assert analyzer.binary_name == "test_binary"
@@ -39,7 +37,7 @@ class TestREVENGAnalyzer:
         analyzer = REVENGAnalyzer(
             binary_path=str(mock_binary_file),
             check_ollama=False,
-            enhanced_features=mock_enhanced_features
+            enhanced_features=mock_enhanced_features,
         )
 
         assert analyzer.enhanced_features.enable_enhanced_analysis is True
@@ -70,43 +68,35 @@ class TestREVENGAnalyzer:
         finally:
             os.chdir(original_cwd)
 
-    @patch('src.reveng.analyzer.LanguageDetector')
+    @patch("src.reveng.analyzer.LanguageDetector")
     def test_detect_file_type(self, mock_detector_class, mock_binary_file):
         """Test file type detection."""
         # Mock the detector
         mock_detector = Mock()
-        mock_detector.detect.return_value = Mock(
-            language="java",
-            format="jar",
-            confidence=0.95
-        )
+        mock_detector.detect.return_value = Mock(language="java", format="jar", confidence=0.95)
         mock_detector.get_language_category.return_value = "bytecode"
         mock_detector_class.return_value = mock_detector
 
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         assert analyzer.file_type.language == "java"
         assert analyzer.file_type.format == "jar"
         assert analyzer.file_type.confidence == 0.95
 
-    @patch('src.reveng.analyzer.LanguageDetector')
+    @patch("src.reveng.analyzer.LanguageDetector")
     def test_detect_file_type_import_error(self, mock_detector_class, mock_binary_file):
         """Test file type detection with import error."""
         mock_detector_class.side_effect = ImportError("Language detector not available")
 
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=False
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=False)
 
         assert analyzer.file_type is None
 
-    @patch('src.reveng.analyzer.OllamaPreflightChecker')
-    @patch('src.reveng.analyzer.get_config')
-    def test_check_ollama_availability_success(self, mock_get_config, mock_checker_class, mock_binary_file):
+    @patch("src.reveng.analyzer.OllamaPreflightChecker")
+    @patch("src.reveng.analyzer.get_config")
+    def test_check_ollama_availability_success(
+        self, mock_get_config, mock_checker_class, mock_binary_file
+    ):
         """Test successful Ollama availability check."""
         # Mock config
         mock_config = Mock()
@@ -120,22 +110,21 @@ class TestREVENGAnalyzer:
 
         # Mock checker
         mock_checker = Mock()
-        mock_checker.check_all.return_value = (True, {
-            'models_available': ['llama2', 'codellama'],
-            'errors': []
-        })
+        mock_checker.check_all.return_value = (
+            True,
+            {"models_available": ["llama2", "codellama"], "errors": []},
+        )
         mock_checker_class.return_value = mock_checker
 
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=True
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=True)
 
         assert analyzer.ollama_available is True
 
-    @patch('src.reveng.analyzer.OllamaPreflightChecker')
-    @patch('src.reveng.analyzer.get_config')
-    def test_check_ollama_availability_failure(self, mock_get_config, mock_checker_class, mock_binary_file):
+    @patch("src.reveng.analyzer.OllamaPreflightChecker")
+    @patch("src.reveng.analyzer.get_config")
+    def test_check_ollama_availability_failure(
+        self, mock_get_config, mock_checker_class, mock_binary_file
+    ):
         """Test failed Ollama availability check."""
         # Mock config
         mock_config = Mock()
@@ -149,25 +138,20 @@ class TestREVENGAnalyzer:
 
         # Mock checker
         mock_checker = Mock()
-        mock_checker.check_all.return_value = (False, {
-            'models_available': [],
-            'errors': ['Ollama not running']
-        })
+        mock_checker.check_all.return_value = (
+            False,
+            {"models_available": [], "errors": ["Ollama not running"]},
+        )
         mock_checker_class.return_value = mock_checker
 
-        analyzer = REVENGAnalyzer(
-            binary_path=str(mock_binary_file),
-            check_ollama=True
-        )
+        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=True)
 
         assert analyzer.ollama_available is False
 
     def test_count_enabled_modules(self, mock_enhanced_features):
         """Test counting enabled enhanced modules."""
         analyzer = REVENGAnalyzer(
-            binary_path="test.exe",
-            check_ollama=False,
-            enhanced_features=mock_enhanced_features
+            binary_path="test.exe", check_ollama=False, enhanced_features=mock_enhanced_features
         )
 
         count = analyzer._count_enabled_modules()
@@ -179,50 +163,42 @@ class TestREVENGAnalyzer:
         features.enable_enhanced_analysis = False
 
         analyzer = REVENGAnalyzer(
-            binary_path="test.exe",
-            check_ollama=False,
-            enhanced_features=features
+            binary_path="test.exe", check_ollama=False, enhanced_features=features
         )
 
         count = analyzer._count_enabled_modules()
         assert count == 0
 
-    @patch('src.reveng.analyzer.subprocess.run')
+    @patch("src.reveng.analyzer.subprocess.run")
     def test_step1_ai_analysis_success(self, mock_subprocess, mock_analyzer):
         """Test successful AI analysis step."""
-        mock_subprocess.return_value = Mock(
-            returncode=0,
-            stdout="AI analysis completed",
-            stderr=""
-        )
+        mock_subprocess.return_value = Mock(returncode=0, stdout="AI analysis completed", stderr="")
 
         mock_analyzer._step1_ai_analysis()
 
-        assert mock_analyzer.results['step1']['status'] == 'success'
-        assert mock_analyzer.results['step1']['output'] == "AI analysis completed"
+        assert mock_analyzer.results["step1"]["status"] == "success"
+        assert mock_analyzer.results["step1"]["output"] == "AI analysis completed"
 
-    @patch('src.reveng.analyzer.subprocess.run')
+    @patch("src.reveng.analyzer.subprocess.run")
     def test_step1_ai_analysis_failure(self, mock_subprocess, mock_analyzer):
         """Test failed AI analysis step."""
         mock_subprocess.return_value = Mock(
-            returncode=1,
-            stdout="Partial output",
-            stderr="Error occurred"
+            returncode=1, stdout="Partial output", stderr="Error occurred"
         )
 
         mock_analyzer._step1_ai_analysis()
 
-        assert mock_analyzer.results['step1']['status'] == 'warning'
-        assert mock_analyzer.results['step1']['error'] == "Error occurred"
+        assert mock_analyzer.results["step1"]["status"] == "warning"
+        assert mock_analyzer.results["step1"]["error"] == "Error occurred"
 
-    @patch('src.reveng.analyzer.subprocess.run')
+    @patch("src.reveng.analyzer.subprocess.run")
     def test_step1_ai_analysis_timeout(self, mock_subprocess, mock_analyzer):
         """Test AI analysis step timeout."""
         mock_subprocess.side_effect = subprocess.TimeoutExpired("python", 300)
 
         mock_analyzer._step1_ai_analysis()
 
-        assert mock_analyzer.results['step1']['status'] == 'timeout'
+        assert mock_analyzer.results["step1"]["status"] == "timeout"
 
     def test_step4_specifications_exists(self, mock_analyzer, temp_analysis_dir):
         """Test specifications step when SPECS folder exists."""
@@ -230,41 +206,38 @@ class TestREVENGAnalyzer:
         specs_folder = temp_analysis_dir / "SPECS"
         specs_folder.mkdir()
 
-        with patch('src.reveng.analyzer.Path') as mock_path:
+        with patch("src.reveng.analyzer.Path") as mock_path:
             mock_path.return_value = specs_folder
             mock_analyzer._step4_specifications()
 
-        assert mock_analyzer.results['step4']['status'] == 'success'
-        assert 'SPECS folder already exists' in mock_analyzer.results['step4']['message']
+        assert mock_analyzer.results["step4"]["status"] == "success"
+        assert "SPECS folder already exists" in mock_analyzer.results["step4"]["message"]
 
     def test_step4_specifications_not_exists(self, mock_analyzer):
         """Test specifications step when SPECS folder doesn't exist."""
-        with patch('src.reveng.analyzer.Path') as mock_path:
+        with patch("src.reveng.analyzer.Path") as mock_path:
             mock_specs = Mock()
             mock_specs.exists.return_value = False
             mock_path.return_value = mock_specs
             mock_analyzer._step4_specifications()
 
-        assert mock_analyzer.results['step4']['status'] == 'warning'
-        assert 'SPECS folder not found' in mock_analyzer.results['step4']['message']
+        assert mock_analyzer.results["step4"]["status"] == "warning"
+        assert "SPECS folder not found" in mock_analyzer.results["step4"]["message"]
 
     def test_generate_final_report(self, mock_analyzer):
         """Test final report generation."""
         # Set up some results
-        mock_analyzer.results = {
-            'step1': {'status': 'success'},
-            'step2': {'status': 'success'}
-        }
-        mock_analyzer.enhanced_results = {
-            'step9': {'status': 'success'}
-        }
+        mock_analyzer.results = {"step1": {"status": "success"}, "step2": {"status": "success"}}
+        mock_analyzer.enhanced_results = {"step9": {"status": "success"}}
 
-        with patch('builtins.open', mock_open()) as mock_file:
+        with patch("builtins.open", mock_open()) as mock_file:
             mock_analyzer._generate_final_report()
 
         # Check that report was written
         mock_file.assert_called_once()
-        assert mock_analyzer.analysis_folder / "universal_analysis_report.json" in str(mock_file.call_args[0])
+        assert mock_analyzer.analysis_folder / "universal_analysis_report.json" in str(
+            mock_file.call_args[0]
+        )
 
 
 class TestEnhancedAnalysisFeatures:
@@ -285,9 +258,9 @@ class TestEnhancedAnalysisFeatures:
         """Test loading features from configuration."""
         features = EnhancedAnalysisFeatures()
         config = {
-            'enable_enhanced_analysis': False,
-            'enable_corporate_exposure': False,
-            'enable_vulnerability_discovery': True
+            "enable_enhanced_analysis": False,
+            "enable_corporate_exposure": False,
+            "enable_vulnerability_discovery": True,
         }
 
         features.from_config(config)

@@ -22,7 +22,6 @@ FILES_TO_REMOVE = [
     "FIXES_VERIFIED.md",
     "INTEGRATION_COMPLETE.md",
     "CLEANUP_COMPLETE.md",
-
     # Superseded by README.md and IMPLEMENTATION_COMPLETE.md
     "BUGFIX_SUMMARY.md",
     "CRITICAL_BUGFIXES.md",
@@ -31,10 +30,8 @@ FILES_TO_REMOVE = [
     "IMPROVEMENT_ROADMAP.md",
     "QUICK_START_IMPROVEMENTS.md",
     "INDEX.md",
-
     # Legacy files
     "AI_AGENT_INSTRUCTIONS.md",
-
     # Old versions (keep only _fixed and _v2 versions)
     "tools/human_readable_converter.py",  # Use _fixed version
     "tools/binary_reassembler.py",  # Use _v2 version
@@ -45,6 +42,7 @@ FOLDERS_TO_CHECK = [
     "ai_recompiler_analysis_droid",
     "deobfuscated_app",
 ]
+
 
 def main():
     root = Path(".")
@@ -91,6 +89,7 @@ def main():
     print("  - IMPLEMENTATION_COMPLETE.md (complete implementation report)")
     print("  - PROJECT_STRUCTURE.md (project layout)")
     print("  - tools/*_fixed.py and *_v2.py (production versions)")
+
 
 if __name__ == "__main__":
     main()

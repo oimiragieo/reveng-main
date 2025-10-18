@@ -4,25 +4,27 @@ REVENG Dependency Management System
 Auto-detect, download, and install required analysis tools with fallback support.
 """
 
-import os
-import sys
 import json
+import logging
+import os
 import shutil
 import subprocess
+import sys
+import tarfile
 import tempfile
 import zipfile
-import tarfile
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
 from abc import ABC, abstractmethod
-import logging
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ToolInfo:
     """Information about an analysis tool"""
+
     name: str
     version: str
     path: str
@@ -32,14 +34,17 @@ class ToolInfo:
     dependencies: List[str]
     fallback_available: bool
 
+
 @dataclass
 class InstallationResult:
     """Result of tool installation"""
+
     success: bool
     tool_name: str
     install_path: str
     error_message: Optional[str] = None
     fallback_used: bool = False
+
 
 class BaseInstaller(ABC):
     """Base class for tool installers"""
@@ -83,6 +88,7 @@ class BaseInstaller(ABC):
             self.logger.error(f"Failed to create install directory: {e}")
             return False
 
+
 class GhidraInstaller(BaseInstaller):
     """Installer for Ghidra reverse engineering tool"""
 
@@ -110,17 +116,18 @@ class GhidraInstaller(BaseInstaller):
 
             # Download Ghidra
             import requests
+
             self.logger.info("Downloading Ghidra...")
             response = requests.get(self.ghidra_url, stream=True)
             response.raise_for_status()
 
             # Extract Ghidra
-            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_file:
                 for chunk in response.iter_content(chunk_size=8192):
                     temp_file.write(chunk)
                 temp_file.flush()
 
-                with zipfile.ZipFile(temp_file.name, 'r') as zip_ref:
+                with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
                     zip_ref.extractall(self.install_dir)
 
             os.unlink(temp_file.name)
@@ -142,10 +149,11 @@ class GhidraInstaller(BaseInstaller):
                 return False
 
             # Test Ghidra headless mode
-            result = subprocess.run([
-                str(ghidra_path / "support" / "analyzeHeadless.bat"),
-                "-help"
-            ], capture_output=True, timeout=30)
+            result = subprocess.run(
+                [str(ghidra_path / "support" / "analyzeHeadless.bat"), "-help"],
+                capture_output=True,
+                timeout=30,
+            )
 
             return result.returncode == 0
         except Exception:
@@ -162,6 +170,7 @@ class GhidraInstaller(BaseInstaller):
                 version_output = result.stderr
                 # Extract version number
                 import re
+
                 version_match = re.search(r'version "(\d+)', version_output)
                 if version_match:
                     java_version = int(version_match.group(1))
@@ -169,6 +178,7 @@ class GhidraInstaller(BaseInstaller):
             return False
         except Exception:
             return False
+
 
 class ILSpyInstaller(BaseInstaller):
     """Installer for ILSpy .NET decompiler"""
@@ -193,17 +203,18 @@ class ILSpyInstaller(BaseInstaller):
 
             # Download ILSpy
             import requests
+
             self.logger.info("Downloading ILSpy...")
             response = requests.get(self.ilspy_url, stream=True)
             response.raise_for_status()
 
             # Extract ILSpy
-            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_file:
                 for chunk in response.iter_content(chunk_size=8192):
                     temp_file.write(chunk)
                 temp_file.flush()
 
-                with zipfile.ZipFile(temp_file.name, 'r') as zip_ref:
+                with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
                     zip_ref.extractall(self.install_dir)
 
             os.unlink(temp_file.name)
@@ -225,10 +236,7 @@ class ILSpyInstaller(BaseInstaller):
                 return False
 
             # Test ILSpy CLI
-            result = subprocess.run([
-                str(ilspy_path),
-                "--help"
-            ], capture_output=True, timeout=30)
+            result = subprocess.run([str(ilspy_path), "--help"], capture_output=True, timeout=30)
 
             return result.returncode == 0
         except Exception:
@@ -236,6 +244,7 @@ class ILSpyInstaller(BaseInstaller):
 
     def get_executable_name(self) -> str:
         return "ILSpy.exe"
+
 
 class CFRInstaller(BaseInstaller):
     """Installer for CFR Java decompiler"""
@@ -260,12 +269,13 @@ class CFRInstaller(BaseInstaller):
 
             # Download CFR JAR
             import requests
+
             self.logger.info("Downloading CFR...")
             response = requests.get(self.cfr_url, stream=True)
             response.raise_for_status()
 
             cfr_path = self.install_dir / "cfr-0.152.jar"
-            with open(cfr_path, 'wb') as f:
+            with open(cfr_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
 
@@ -286,9 +296,11 @@ class CFRInstaller(BaseInstaller):
                 return False
 
             # Test CFR
-            result = subprocess.run([
-                "java", "-jar", str(cfr_path), "--help"
-            ], capture_output=True, timeout=30)
+            result = subprocess.run(
+                ["java", "-jar", str(cfr_path), "--help"],
+                capture_output=True,
+                timeout=30,
+            )
 
             return result.returncode == 0
         except Exception:
@@ -296,6 +308,7 @@ class CFRInstaller(BaseInstaller):
 
     def get_executable_name(self) -> str:
         return "cfr-0.152.jar"
+
 
 class DIEInstaller(BaseInstaller):
     """Installer for Detect It Easy"""
@@ -316,21 +329,24 @@ class DIEInstaller(BaseInstaller):
                 return InstallationResult(True, "detect_it_easy", str(self.install_dir))
 
             if not self.create_install_dir():
-                return InstallationResult(False, "detect_it_easy", "", "Failed to create install directory")
+                return InstallationResult(
+                    False, "detect_it_easy", "", "Failed to create install directory"
+                )
 
             # Download DIE
             import requests
+
             self.logger.info("Downloading Detect It Easy...")
             response = requests.get(self.die_url, stream=True)
             response.raise_for_status()
 
             # Extract DIE
-            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_file:
                 for chunk in response.iter_content(chunk_size=8192):
                     temp_file.write(chunk)
                 temp_file.flush()
 
-                with zipfile.ZipFile(temp_file.name, 'r') as zip_ref:
+                with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
                     zip_ref.extractall(self.install_dir)
 
             os.unlink(temp_file.name)
@@ -338,7 +354,9 @@ class DIEInstaller(BaseInstaller):
             if self.verify_installation():
                 return InstallationResult(True, "detect_it_easy", str(self.install_dir))
             else:
-                return InstallationResult(False, "detect_it_easy", "", "Installation verification failed")
+                return InstallationResult(
+                    False, "detect_it_easy", "", "Installation verification failed"
+                )
 
         except Exception as e:
             self.logger.error(f"DIE installation failed: {e}")
@@ -352,10 +370,7 @@ class DIEInstaller(BaseInstaller):
                 return False
 
             # Test DIE
-            result = subprocess.run([
-                str(die_path),
-                "--help"
-            ], capture_output=True, timeout=30)
+            result = subprocess.run([str(die_path), "--help"], capture_output=True, timeout=30)
 
             return result.returncode == 0
         except Exception:
@@ -364,12 +379,15 @@ class DIEInstaller(BaseInstaller):
     def get_executable_name(self) -> str:
         return "die.exe"
 
+
 class ScyllaInstaller(BaseInstaller):
     """Installer for Scylla unpacker"""
 
     def __init__(self):
         super().__init__("scylla", "0.9.8")
-        self.scylla_url = "https://github.com/NtQuery/Scylla/releases/download/0.9.8/Scylla_x64_0.9.8.zip"
+        self.scylla_url = (
+            "https://github.com/NtQuery/Scylla/releases/download/0.9.8/Scylla_x64_0.9.8.zip"
+        )
 
     def check_installed(self) -> bool:
         """Check if Scylla is installed"""
@@ -387,17 +405,18 @@ class ScyllaInstaller(BaseInstaller):
 
             # Download Scylla
             import requests
+
             self.logger.info("Downloading Scylla...")
             response = requests.get(self.scylla_url, stream=True)
             response.raise_for_status()
 
             # Extract Scylla
-            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_file:
                 for chunk in response.iter_content(chunk_size=8192):
                     temp_file.write(chunk)
                 temp_file.flush()
 
-                with zipfile.ZipFile(temp_file.name, 'r') as zip_ref:
+                with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
                     zip_ref.extractall(self.install_dir)
 
             os.unlink(temp_file.name)
@@ -419,10 +438,7 @@ class ScyllaInstaller(BaseInstaller):
                 return False
 
             # Test Scylla
-            result = subprocess.run([
-                str(scylla_path),
-                "--help"
-            ], capture_output=True, timeout=30)
+            result = subprocess.run([str(scylla_path), "--help"], capture_output=True, timeout=30)
 
             return result.returncode == 0
         except Exception:
@@ -430,6 +446,7 @@ class ScyllaInstaller(BaseInstaller):
 
     def get_executable_name(self) -> str:
         return "Scylla_x64.exe"
+
 
 class HxDInstaller(BaseInstaller):
     """Installer for HxD hex editor"""
@@ -454,17 +471,18 @@ class HxDInstaller(BaseInstaller):
 
             # Download HxD
             import requests
+
             self.logger.info("Downloading HxD...")
             response = requests.get(self.hxd_url, stream=True)
             response.raise_for_status()
 
             # Extract HxD
-            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_file:
                 for chunk in response.iter_content(chunk_size=8192):
                     temp_file.write(chunk)
                 temp_file.flush()
 
-                with zipfile.ZipFile(temp_file.name, 'r') as zip_ref:
+                with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
                     zip_ref.extractall(self.install_dir)
 
             os.unlink(temp_file.name)
@@ -489,6 +507,7 @@ class HxDInstaller(BaseInstaller):
     def get_executable_name(self) -> str:
         return "HxD.exe"
 
+
 class ResourceHackerInstaller(BaseInstaller):
     """Installer for Resource Hacker"""
 
@@ -508,21 +527,24 @@ class ResourceHackerInstaller(BaseInstaller):
                 return InstallationResult(True, "resource_hacker", str(self.install_dir))
 
             if not self.create_install_dir():
-                return InstallationResult(False, "resource_hacker", "", "Failed to create install directory")
+                return InstallationResult(
+                    False, "resource_hacker", "", "Failed to create install directory"
+                )
 
             # Download Resource Hacker
             import requests
+
             self.logger.info("Downloading Resource Hacker...")
             response = requests.get(self.rh_url, stream=True)
             response.raise_for_status()
 
             # Extract Resource Hacker
-            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_file:
                 for chunk in response.iter_content(chunk_size=8192):
                     temp_file.write(chunk)
                 temp_file.flush()
 
-                with zipfile.ZipFile(temp_file.name, 'r') as zip_ref:
+                with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
                     zip_ref.extractall(self.install_dir)
 
             os.unlink(temp_file.name)
@@ -530,7 +552,9 @@ class ResourceHackerInstaller(BaseInstaller):
             if self.verify_installation():
                 return InstallationResult(True, "resource_hacker", str(self.install_dir))
             else:
-                return InstallationResult(False, "resource_hacker", "", "Installation verification failed")
+                return InstallationResult(
+                    False, "resource_hacker", "", "Installation verification failed"
+                )
 
         except Exception as e:
             self.logger.error(f"Resource Hacker installation failed: {e}")
@@ -547,25 +571,26 @@ class ResourceHackerInstaller(BaseInstaller):
     def get_executable_name(self) -> str:
         return "ResourceHacker.exe"
 
+
 class DependencyManager:
     """Comprehensive dependency management system"""
 
     def __init__(self):
         self.logger = logging.getLogger("dependency_manager")
         self.tools = {
-            'ghidra': GhidraInstaller(),
-            'ilspy': ILSpyInstaller(),
-            'cfr': CFRInstaller(),
-            'dnspy': None,  # TODO: Implement DnSpy installer
-            'uncompyle6': None,  # TODO: Implement Python installer
-            'detect_it_easy': DIEInstaller(),
-            'exeinfo_pe': None,  # TODO: Implement Exeinfo PE installer
-            'scylla': ScyllaInstaller(),
-            'x64dbg': None,  # TODO: Implement x64dbg installer
-            'hxd': HxDInstaller(),
-            'imhex': None,  # TODO: Implement ImHex installer
-            'resource_hacker': ResourceHackerInstaller(),
-            'lordpe': None,  # TODO: Implement LordPE installer
+            "ghidra": GhidraInstaller(),
+            "ilspy": ILSpyInstaller(),
+            "cfr": CFRInstaller(),
+            "dnspy": None,  # TODO: Implement DnSpy installer
+            "uncompyle6": None,  # TODO: Implement Python installer
+            "detect_it_easy": DIEInstaller(),
+            "exeinfo_pe": None,  # TODO: Implement Exeinfo PE installer
+            "scylla": ScyllaInstaller(),
+            "x64dbg": None,  # TODO: Implement x64dbg installer
+            "hxd": HxDInstaller(),
+            "imhex": None,  # TODO: Implement ImHex installer
+            "resource_hacker": ResourceHackerInstaller(),
+            "lordpe": None,  # TODO: Implement LordPE installer
         }
         self.fallback_analyzers = {}
         self._setup_fallback_analyzers()
@@ -573,13 +598,13 @@ class DependencyManager:
     def _setup_fallback_analyzers(self):
         """Setup fallback analyzers for when tools are unavailable"""
         self.fallback_analyzers = {
-            'ghidra': 'basic_pe_analyzer',
-            'ilspy': 'basic_dotnet_analyzer',
-            'cfr': 'basic_java_analyzer',
-            'detect_it_easy': 'entropy_analyzer',
-            'scylla': 'manual_unpacker',
-            'hxd': 'python_hex_analyzer',
-            'resource_hacker': 'basic_resource_extractor',
+            "ghidra": "basic_pe_analyzer",
+            "ilspy": "basic_dotnet_analyzer",
+            "cfr": "basic_java_analyzer",
+            "detect_it_easy": "entropy_analyzer",
+            "scylla": "manual_unpacker",
+            "hxd": "python_hex_analyzer",
+            "resource_hacker": "basic_resource_extractor",
         }
 
     def check_all_dependencies(self) -> Dict[str, bool]:
@@ -598,7 +623,9 @@ class DependencyManager:
 
         return results
 
-    def install_missing_tools(self, tools: List[str], auto_install: bool = True) -> Dict[str, InstallationResult]:
+    def install_missing_tools(
+        self, tools: List[str], auto_install: bool = True
+    ) -> Dict[str, InstallationResult]:
         """Install missing tools"""
         results = {}
 
@@ -618,7 +645,9 @@ class DependencyManager:
             try:
                 installer = self.tools[tool_name]
                 if installer.check_installed():
-                    results[tool_name] = InstallationResult(True, tool_name, str(installer.install_dir))
+                    results[tool_name] = InstallationResult(
+                        True, tool_name, str(installer.install_dir)
+                    )
                 else:
                     results[tool_name] = installer.install()
             except Exception as e:
@@ -656,7 +685,7 @@ class DependencyManager:
                     is_installed=False,
                     install_method="not_supported",
                     dependencies=[],
-                    fallback_available=tool_name in self.fallback_analyzers
+                    fallback_available=tool_name in self.fallback_analyzers,
                 )
                 continue
 
@@ -672,7 +701,7 @@ class DependencyManager:
                     is_installed=is_installed,
                     install_method="auto_install",
                     dependencies=[],
-                    fallback_available=tool_name in self.fallback_analyzers
+                    fallback_available=tool_name in self.fallback_analyzers,
                 )
             except Exception as e:
                 self.logger.error(f"Error getting status for {tool_name}: {e}")
@@ -684,7 +713,7 @@ class DependencyManager:
                     is_installed=False,
                     install_method="error",
                     dependencies=[],
-                    fallback_available=tool_name in self.fallback_analyzers
+                    fallback_available=tool_name in self.fallback_analyzers,
                 )
 
         return status
@@ -710,22 +739,22 @@ class DependencyManager:
         """Export dependency configuration"""
         try:
             config = {
-                'tools': {},
-                'fallback_analyzers': self.fallback_analyzers,
-                'timestamp': str(Path().cwd())
+                "tools": {},
+                "fallback_analyzers": self.fallback_analyzers,
+                "timestamp": str(Path().cwd()),
             }
 
             for tool_name, installer in self.tools.items():
                 if installer is None:
                     continue
 
-                config['tools'][tool_name] = {
-                    'version': installer.tool_version,
-                    'install_dir': str(installer.install_dir),
-                    'executable': installer.get_executable_name()
+                config["tools"][tool_name] = {
+                    "version": installer.tool_version,
+                    "install_dir": str(installer.install_dir),
+                    "executable": installer.get_executable_name(),
                 }
 
-            with open(config_path, 'w') as f:
+            with open(config_path, "w") as f:
                 json.dump(config, f, indent=2)
 
             return True
@@ -736,12 +765,12 @@ class DependencyManager:
     def import_configuration(self, config_path: str) -> bool:
         """Import dependency configuration"""
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = json.load(f)
 
             # Update fallback analyzers
-            if 'fallback_analyzers' in config:
-                self.fallback_analyzers.update(config['fallback_analyzers'])
+            if "fallback_analyzers" in config:
+                self.fallback_analyzers.update(config["fallback_analyzers"])
 
             return True
         except Exception as e:
