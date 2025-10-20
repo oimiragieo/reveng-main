@@ -223,3 +223,4 @@ test_samples/*.elf
 config.json
 secrets.json
 .secrets
+\n# Ignore Windows reserved filename and build artifacts\nnul\nbuild/\nanalysis_*/\nai_recompiler_analysis_*/\n*.log\n
