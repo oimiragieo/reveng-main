@@ -19,7 +19,7 @@
     "cors": "^2.8.5",
     "helmet": "^7.0.0",
     "jsonwebtoken": "^9.0.2",
-    "bcryptjs": "^2.4.3",
+    "bcryptjs": "^3.0.2",
     "mongoose": "^7.5.0",
     "dotenv": "^16.3.1",
     "express-rate-limit": "^6.10.0",
