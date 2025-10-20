@@ -50,7 +50,7 @@ pyyaml>=6.0.1,<7.0.0
 pypdf>=3.17.0,<4.0.0
 
 # Replace ecdsa with cryptography (more secure, actively maintained)
-cryptography>=41.0.0,<42.0.0
+cryptography>=41.0.0,<47.0.0
 
 # Replace crawl4ai with requests-html (more secure, lighter)
 requests-html>=0.10.0,<1.0.0
