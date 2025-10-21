@@ -6,11 +6,11 @@ Enterprise-grade, AI-powered reverse engineering platform with complete
 binary reconstruction capabilities.
 
 Author: REVENG Development Team
-Version: 2.1.0
+Version: 3.0.0
 License: MIT
 """
 
-__version__ = "2.1.0"
+__version__ = "3.0.0"
 __author__ = "REVENG Development Team"
 __email__ = "contact@reveng-project.org"
 __license__ = "MIT"

@@ -20,9 +20,15 @@ from typing import List, Optional
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from reveng.core.dependency_manager import DependencyManager
-from reveng.core.errors import REVENGError, create_error_context
-from reveng.core.logger import get_logger, setup_logging
+try:
+    from reveng.core.dependency_manager import DependencyManager
+    from reveng.core.errors import REVENGError, create_error_context
+    from reveng.core.logger import get_logger, setup_logging
+except ImportError as e:
+    print(f"Error: Failed to import REVENG modules: {e}")
+    print("Please ensure you're running from the project root directory.")
+    print("Install dependencies with: pip install -r requirements.txt")
+    sys.exit(1)
 
 
 def main():

@@ -38,6 +38,7 @@ src_optimal_analysis_*/
 human_readable_code/
 enhanced_code*/
 deobfuscated_app/
+decompile/
 SPECS/
 implementations/
 outputs/
@@ -223,4 +224,15 @@ test_samples/*.elf
 config.json
 secrets.json
 .secrets
-\n# Ignore Windows reserved filename and build artifacts\nnul\nbuild/\nanalysis_*/\nai_recompiler_analysis_*/\n*.log\n
+
+# External dependencies (download separately - see docs/getting-started/installation.md)
+external/ghidra/
+
+# Windows reserved filename artifact
+nul
+
+# Build artifacts (already covered above, but explicit for clarity)
+build/analysis_artifacts/
+
+# Temporary download directories
+temp_ghidra_download/

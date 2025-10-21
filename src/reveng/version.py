@@ -5,7 +5,7 @@ REVENG Version Information
 Version management and information for the REVENG platform.
 
 Author: REVENG Development Team
-Version: 2.1.0
+Version: 3.0.0
 """
 
 import os
@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 # Version information
-__version__ = "2.1.0"
-__version_info__ = (2, 1, 0)
-__version_tuple__ = (2, 1, 0)
+__version__ = "3.0.0"
+__version_info__ = (3, 0, 0)
+__version_tuple__ = (3, 0, 0)
 
 # Build information
 __build_date__ = "2025-01-15"

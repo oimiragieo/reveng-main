@@ -33,6 +33,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from reveng.utils.security import safe_extract_zip
+
 logger = logging.getLogger(__name__)
 
 
@@ -188,7 +190,7 @@ class JavaBytecodeAnalyzer:
 
         try:
             with zipfile.ZipFile(archive_path, "r") as zf:
-                zf.extractall(temp_dir)
+                safe_extract_zip(zf, temp_dir)
         except Exception as e:
             logger.error(f"Error extracting archive: {e}")
             raise

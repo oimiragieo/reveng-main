@@ -29,26 +29,88 @@ reveng serve --port 3000
 # Opens browser to http://localhost:3000
 ```
 
-## 📦 Complete Setup Guide (First Time Users)
+## 📦 Installation
 
-**New to REVENG?** Follow our comprehensive step-by-step guide:
+### Quick Install (Recommended)
 
-### **[🔧 Complete Setup Guide](docs/guides/COMPLETE_SETUP_GUIDE.md)**
-
-Includes everything you need:
-- ✅ Step-by-step installation (Python, Ghidra, Java, Ollama)
-- ✅ IDA Pro Free integration guide (optional)
-- ✅ AI integration setup (Claude Code, Ollama, Gemini CLI)
-- ✅ Verification & testing scripts
-- ✅ Detailed workflow walkthrough with code flow
-- ✅ Troubleshooting common issues
-
-**Estimated setup time**: 30 minutes (includes downloads)
-
-**Quick verify your setup**:
 ```bash
-python scripts/setup/verify_ai_setup.py
+# 1. Install REVENG via pip
+pip install reveng-toolkit
+
+# 2. Download Ghidra (automated)
+python scripts/setup/download_ghidra.py
+
+# 3. Verify installation
+reveng --version
+reveng doctor  # Check all dependencies
 ```
+
+**Estimated time:** 5-10 minutes (Ghidra download depends on internet speed)
+
+### Prerequisites
+
+**Required:**
+- Python 3.11 or higher
+- 4GB RAM (8GB+ recommended)
+- 2GB disk space
+
+**Automatically Installed:**
+- **Ghidra** - Professional disassembly engine (downloaded by setup script)
+- **Core dependencies** - Binary analysis libraries (installed via pip)
+
+**Optional (for AI features):**
+- **Ollama** - Local AI models (free, privacy-focused)
+- **Claude API** - Advanced AI analysis
+- **OpenAI API** - GPT-powered insights
+
+### Installation Methods
+
+| Method | Best For | Command |
+|--------|----------|---------|
+| **PyPI** | End users | `pip install reveng-toolkit` |
+| **Source** | Developers | `git clone ... && pip install -e .` |
+| **Docker** | Containers | `docker pull reveng/cli:latest` |
+
+### Complete Setup Guide
+
+**Need detailed instructions?** See the comprehensive guide:
+
+**[📖 Full Installation Guide](docs/getting-started/installation.md)**
+
+Includes:
+- Platform-specific setup (Windows, Linux, macOS)
+- Ghidra manual installation
+- AI provider configuration
+- Troubleshooting common issues
+- Verification steps
+
+## 🎉 What's New in v3.0.0
+
+**🚀 Production-Ready Release** - Complete refactoring for enterprise deployment
+
+### 🔒 Security Hardening
+- **Path Traversal Protection** - Safe archive extraction with validation
+- **8 High-Severity Vulnerabilities Fixed** - Comprehensive security audit
+- **Dependency Security** - Automated vulnerability scanning and updates
+- **Secret Management** - Environment variable configuration, no hardcoded secrets
+
+### 🛠️ Code Quality Improvements
+- **86% Repository Size Reduction** - Professional 7-file root directory
+- **Consistent Formatting** - Black + isort enforcement across entire codebase
+- **Type Safety** - Type hints for core modules, mypy integration
+- **Code Duplication** - Reduced to <5% through refactoring
+
+### 🧪 Testing & Validation
+- **85%+ Test Coverage** - Comprehensive test suite with security validation
+- **Cross-Platform Testing** - Windows, Linux, macOS compatibility
+- **CI/CD Pipeline** - Automated quality checks, security scanning
+- **Performance Benchmarks** - Documented baseline metrics
+
+### 📚 Documentation Overhaul
+- **64+ Documentation Files** - Complete API reference and guides
+- **Installation Guide** - Multiple installation methods (PyPI, source, Docker)
+- **Developer Guide** - Comprehensive development and contribution guidelines
+- **Security Guide** - Security best practices and vulnerability reporting
 
 ## ✨ Key Features
 

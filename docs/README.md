@@ -36,6 +36,15 @@ Welcome to the REVENG documentation. This comprehensive guide covers everything 
 - [Docker](deployment/docker.md) - Containerized deployment
 - [Kubernetes](deployment/kubernetes.md) - Kubernetes deployment
 - [Cloud Providers](deployment/cloud-providers.md) - Cloud deployment options
+- [Deployment Checklist](deployment/DEPLOYMENT_CHECKLIST.md) - Pre-deployment verification
+- [Deployment Ready](deployment/DEPLOYMENT_READY.md) - Deployment readiness guide
+- [Deployment Summary](deployment/DEPLOYMENT_SUMMARY.md) - Deployment overview
+
+### Architecture
+- [System Architecture](developer-guide/ARCHITECTURE.md) - Overall system design
+- [Ghidra Integration](architecture/ghidra-integration.md) - Ghidra-first architecture
+- [AI Integration](guides/AI_ASSISTANT_GUIDE.md) - AI subsystem design
+- [Data Flow](developer-guide/CODE_FLOW_ANALYSIS.md) - Data flow through the system
 
 ### AI Assistant Guide
 - [Overview](ai-assistant-guide/README.md) - AI assistant integration
@@ -54,13 +63,18 @@ Welcome to the REVENG documentation. This comprehensive guide covers everything 
 - [Project Structure](development/PROJECT_STRUCTURE.md) - Codebase organization
 - [Release Checklist](development/release-checklist.md) - Release procedures
 - [Roadmap](development/roadmap.md) - Development roadmap
-- [Overhaul Plan](development/reveng-overhaul-plan.md) - Transformation plan
+- [Next Steps](development/NEXT_STEPS.md) - Current development priorities
+- [Pre-Publication Checklist](development/PRE_PUBLICATION_CHECKLIST.md) - Publication readiness
+- [AI Enhancement History](development/history/ai-enhancements.md) - AI feature development
 
 ### Reports
 - [Implementation Complete](reports/implementation-complete.md) - Implementation status
 - [Security Audit](reports/security-audit.md) - Security assessment
 - [Cross-Platform Testing](reports/cross-platform-testing.md) - Testing results
 - [Validation Report](reports/validation-report.md) - Validation results
+- [Comprehensive Review](reports/comprehensive-review.md) - Complete project review
+- [Codebase Investigation](reports/codebase-investigation.md) - Code analysis report
+- [Ghidra Integration](reports/ghidra-integration-complete.md) - Ghidra implementation
 
 ## 🚀 Quick Navigation
 
@@ -105,4 +119,17 @@ REVENG is licensed under the MIT License. See [LICENSE](../LICENSE) for details.
 
 ---
 
-*Last updated: October 2024*
+## 📂 Newly Organized Documentation
+
+As part of the v3.0 publication preparation, documentation has been reorganized:
+
+- **Deployment docs** moved to `deployment/`
+- **Architecture docs** consolidated in `architecture/`
+- **Development artifacts** in `development/` and `development/history/`
+- **Comprehensive reports** in `reports/`
+
+This provides better organization and easier navigation for all users.
+
+---
+
+*Last updated: October 2025 - v3.0.0 (Publication-Ready)*

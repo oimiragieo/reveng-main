@@ -16,6 +16,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from reveng.utils.security import safe_extract_tar, safe_extract_zip
+
 logger = logging.getLogger(__name__)
 
 
@@ -136,56 +138,21 @@ class BaseInstaller(ABC):
             raise
 
     def _extract_archive(self, archive_path: Path, extract_to: Optional[Path] = None) -> Path:
-        """Extract archive file"""
+        """
+        Extract archive file safely (prevents path traversal attacks)
+
+        Uses centralized security utilities to validate all archive members
+        before extraction.
+        """
         extract_to = extract_to or self.install_path
 
         try:
             if archive_path.suffix.lower() == ".zip":
                 with zipfile.ZipFile(archive_path, "r") as zip_ref:
-                    # Security: Validate all members before extraction to prevent path traversal
-                    for member in zip_ref.infolist():
-                        # Check for path traversal attempts
-                        if member.filename.startswith("/") or ".." in member.filename:
-                            raise ValueError(f"Unsafe archive member: {member.filename}")
-                        # Ensure member path is within extract directory
-                        member_path = Path(extract_to) / member.filename
-                        if not str(member_path.resolve()).startswith(
-                            str(Path(extract_to).resolve())
-                        ):
-                            raise ValueError(
-                                f"Archive member outside extract directory: {member.filename}"
-                            )
-                    zip_ref.extractall(extract_to)
+                    safe_extract_zip(zip_ref, extract_to)
             elif archive_path.suffix.lower() in [".tar", ".tar.gz", ".tgz"]:
                 with tarfile.open(archive_path, "r:*") as tar_ref:
-                    # Security: Validate all members before extraction to prevent path traversal
-                    safe_members = []
-                    for member in tar_ref.getmembers():
-                        # Check for path traversal attempts
-                        if member.name.startswith("/") or ".." in member.name:
-                            raise ValueError(f"Unsafe archive member: {member.name}")
-                        # Ensure member path is within extract directory
-                        member_path = Path(extract_to) / member.name
-                        if not str(member_path.resolve()).startswith(
-                            str(Path(extract_to).resolve())
-                        ):
-                            raise ValueError(
-                                f"Archive member outside extract directory: {member.name}"
-                            )
-                        # Create safe member with sanitized name
-                        safe_member = tarfile.TarInfo(name=member.name)
-                        safe_member.size = member.size
-                        safe_member.mode = member.mode
-                        safe_member.type = member.type
-                        safe_members.append(safe_member)
-
-                    # Extract only safe members
-                    for member in safe_members:
-                        try:
-                            tar_ref.extract(member, extract_to)
-                        except Exception as e:
-                            logger.warning(f"Failed to extract {member.name}: {e}")
-                            continue
+                    safe_extract_tar(tar_ref, extract_to)
             else:
                 raise ValueError(f"Unsupported archive format: {archive_path.suffix}")
 

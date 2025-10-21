@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from reveng.utils.security import safe_extract_zip
+
 logger = logging.getLogger(__name__)
 
 
@@ -128,7 +130,7 @@ class GhidraInstaller(BaseInstaller):
                 temp_file.flush()
 
                 with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
-                    zip_ref.extractall(self.install_dir)
+                    safe_extract_zip(zip_ref, self.install_dir)
 
             os.unlink(temp_file.name)
 
@@ -215,7 +217,7 @@ class ILSpyInstaller(BaseInstaller):
                 temp_file.flush()
 
                 with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
-                    zip_ref.extractall(self.install_dir)
+                    safe_extract_zip(zip_ref, self.install_dir)
 
             os.unlink(temp_file.name)
 
@@ -347,7 +349,7 @@ class DIEInstaller(BaseInstaller):
                 temp_file.flush()
 
                 with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
-                    zip_ref.extractall(self.install_dir)
+                    safe_extract_zip(zip_ref, self.install_dir)
 
             os.unlink(temp_file.name)
 
@@ -417,7 +419,7 @@ class ScyllaInstaller(BaseInstaller):
                 temp_file.flush()
 
                 with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
-                    zip_ref.extractall(self.install_dir)
+                    safe_extract_zip(zip_ref, self.install_dir)
 
             os.unlink(temp_file.name)
 
@@ -483,7 +485,7 @@ class HxDInstaller(BaseInstaller):
                 temp_file.flush()
 
                 with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
-                    zip_ref.extractall(self.install_dir)
+                    safe_extract_zip(zip_ref, self.install_dir)
 
             os.unlink(temp_file.name)
 
@@ -545,7 +547,7 @@ class ResourceHackerInstaller(BaseInstaller):
                 temp_file.flush()
 
                 with zipfile.ZipFile(temp_file.name, "r") as zip_ref:
-                    zip_ref.extractall(self.install_dir)
+                    safe_extract_zip(zip_ref, self.install_dir)
 
             os.unlink(temp_file.name)
 
