@@ -16,9 +16,13 @@ Author: Enhancement
 Version: 2.1
 """
 
-import json
 import logging
 import os
+
+# Add MinGW-w64 to PATH if not already present (Windows-specific)
+_mingw_path = r"C:\Users\oimir\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin"
+if os.path.exists(_mingw_path) and _mingw_path not in os.environ.get("PATH", ""):
+    os.environ["PATH"] = _mingw_path + os.pathsep + os.environ.get("PATH", "")
 import platform
 import shutil
 import subprocess
@@ -261,10 +265,14 @@ class BinaryReassemblerV2:
             )
 
         # Setup validation
-        self.validation_config = validation_config or ValidationConfig()
-        if BinaryValidator:
-            self.validator = BinaryValidator(self.validation_config)
+        if ValidationConfig:
+            self.validation_config = validation_config or ValidationConfig()
+            if BinaryValidator:
+                self.validator = BinaryValidator(self.validation_config)
+            else:
+                self.validator = None
         else:
+            self.validation_config = None
             self.validator = None
 
         # Setup documentation
@@ -280,8 +288,13 @@ class BinaryReassemblerV2:
         logger.info(f"Compiler: {self.compiler_config.compiler}")
         logger.info(f"Target triple: {self.compiler_config.target_triple}")
         logger.info(f"LIEF available: {self.has_lief}")
-        logger.info(f"Documentation enabled: {self.documentation_config.generate_comments}")
-        logger.info(f"Validation mode: {self.validation_config.mode.value}")
+        logger.info(
+            f"Documentation enabled: {self.documentation_config.generate_comments}"
+        )
+        if self.validation_config:
+            logger.info(f"Validation mode: {self.validation_config.mode.value}")
+        else:
+            logger.info("Validation mode: Disabled (validation_config unavailable)")
 
     def _detect_binary_architecture(self) -> Architecture:
         """Detect architecture from binary file"""
@@ -340,7 +353,9 @@ class BinaryReassemblerV2:
         except ImportError:
             return False
 
-    def reassemble_from_c(self, c_source_dir: Path, output_path: Path) -> ReassemblyResult:
+    def reassemble_from_c(
+        self, c_source_dir: Path, output_path: Path
+    ) -> ReassemblyResult:
         """
         Reassemble binary from C source code
 
@@ -361,7 +376,9 @@ class BinaryReassemblerV2:
 
             if not obj_files:
                 errors.append("No object files generated")
-                return self._create_failure_result(errors, warnings, time.time() - start_time)
+                return self._create_failure_result(
+                    errors, warnings, time.time() - start_time
+                )
 
             # Step 2: Link object files
             logger.info("Step 2: Linking object files...")
@@ -369,7 +386,9 @@ class BinaryReassemblerV2:
 
             if not executable or not executable.exists():
                 errors.append("Linking failed")
-                return self._create_failure_result(errors, warnings, time.time() - start_time)
+                return self._create_failure_result(
+                    errors, warnings, time.time() - start_time
+                )
 
             # Step 3: Generate enhanced documentation
             logger.info("Step 3: Generating enhanced documentation...")
@@ -391,7 +410,9 @@ class BinaryReassemblerV2:
                     documentation_files.append(readme_path)
 
             if self.documentation_config.generate_makefile:
-                makefile_path = self._generate_makefile(c_source_dir, output_path, warnings)
+                makefile_path = self._generate_makefile(
+                    c_source_dir, output_path, warnings
+                )
                 if makefile_path:
                     build_scripts.append(makefile_path)
 
@@ -405,7 +426,6 @@ class BinaryReassemblerV2:
                 and ReconstructionComparator
                 and self.original_binary.exists()
             ):
-
                 logger.info("Step 4: Performing reconstruction comparison...")
                 try:
                     comparator = ReconstructionComparator()
@@ -414,8 +434,12 @@ class BinaryReassemblerV2:
                     )
 
                     if self.documentation_config.generate_comparison_report:
-                        report_path = c_source_dir / "reconstruction_comparison_report.md"
-                        comparator.generate_comparison_report(comparison_result, report_path)
+                        report_path = (
+                            c_source_dir / "reconstruction_comparison_report.md"
+                        )
+                        comparator.generate_comparison_report(
+                            comparison_result, report_path
+                        )
                         documentation_files.append(report_path)
 
                     logger.info(
@@ -430,7 +454,9 @@ class BinaryReassemblerV2:
             validation_result = None
 
             if self.validator:
-                validation_result = self.validator.validate(executable, self.original_binary)
+                validation_result = self.validator.validate(
+                    executable, self.original_binary
+                )
                 warnings.extend(validation_result.get("warnings", []))
                 errors.extend(validation_result.get("errors", []))
 
@@ -439,7 +465,9 @@ class BinaryReassemblerV2:
 
             # Calculate sizes
             size_original = (
-                self.original_binary.stat().st_size if self.original_binary.exists() else 0
+                self.original_binary.stat().st_size
+                if self.original_binary.exists()
+                else 0
             )
             size_reassembled = executable.stat().st_size
 
@@ -471,7 +499,9 @@ class BinaryReassemblerV2:
         except Exception as e:
             logger.error(f"Reassembly failed: {e}")
             errors.append(str(e))
-            return self._create_failure_result(errors, warnings, time.time() - start_time)
+            return self._create_failure_result(
+                errors, warnings, time.time() - start_time
+            )
 
     def _compile_c_to_objects(
         self, source_dir: Path, errors: List[str], warnings: List[str]
@@ -506,7 +536,9 @@ class BinaryReassemblerV2:
                     obj_files.append(obj_file)
                     logger.info(f"Compiled: {c_file.name} → {obj_file.name}")
                 else:
-                    error_msg = f"Compilation failed for {c_file.name}: {result.stderr[:200]}"
+                    error_msg = (
+                        f"Compilation failed for {c_file.name}: {result.stderr[:200]}"
+                    )
                     logger.error(error_msg)
                     warnings.append(error_msg)
 
@@ -538,7 +570,9 @@ class BinaryReassemblerV2:
         ]
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60, check=False)
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=60, check=False
+            )
 
             if result.returncode == 0:
                 logger.info(f"Linking successful: {output_path}")
@@ -569,7 +603,9 @@ class BinaryReassemblerV2:
             Path to patched binary, or None if patching failed
         """
         if not self.has_lief:
-            raise NotImplementedError("LIEF library not available. Install with: pip install lief")
+            raise NotImplementedError(
+                "LIEF library not available. Install with: pip install lief"
+            )
 
         try:
             import lief
@@ -593,7 +629,9 @@ class BinaryReassemblerV2:
                         success = self._patch_by_address(binary, address, machine_code)
                     else:
                         # Try to find by symbol name
-                        success = self._patch_by_symbol(binary, identifier, machine_code)
+                        success = self._patch_by_symbol(
+                            binary, identifier, machine_code
+                        )
 
                     if success:
                         patched_count += 1
@@ -608,7 +646,9 @@ class BinaryReassemblerV2:
             output_path = self.temp_dir / f"patched_{self.original_binary.name}"
             binary.write(str(output_path))
 
-            logger.info(f"Patched binary written: {output_path} ({patched_count} patches applied)")
+            logger.info(
+                f"Patched binary written: {output_path} ({patched_count} patches applied)"
+            )
             return output_path
 
         except Exception as e:
@@ -663,7 +703,9 @@ class BinaryReassemblerV2:
             logger.error(f"Symbol patch failed: {e}")
             return False
 
-    def _enhance_source_documentation(self, source_dir: Path, warnings: List[str]) -> None:
+    def _enhance_source_documentation(
+        self, source_dir: Path, warnings: List[str]
+    ) -> None:
         """Enhance C source files with comprehensive documentation"""
         try:
             c_files = list(source_dir.rglob("*.c"))
@@ -696,7 +738,9 @@ class BinaryReassemblerV2:
                 f.write(enhanced_content)
 
         except Exception as e:
-            warnings.append(f"Failed to enhance documentation for {file_path.name}: {e}")
+            warnings.append(
+                f"Failed to enhance documentation for {file_path.name}: {e}"
+            )
 
     def _generate_file_header(self, file_path: Path) -> str:
         """Generate comprehensive file header documentation"""
@@ -704,7 +748,7 @@ class BinaryReassemblerV2:
 
         return f"""/*
  * {file_path.name}
- * {'=' * (len(file_path.name) + 20)}
+ * {"=" * (len(file_path.name) + 20)}
  *
  * Reconstructed from binary analysis of: {self.original_binary.name}
  * Architecture: {self.architecture.name}
@@ -745,7 +789,6 @@ class BinaryReassemblerV2:
                 and not line.startswith("while")
                 and not line.startswith("for")
             ):
-
                 # Add function documentation
                 func_doc = self._generate_function_documentation(line, file_path)
                 enhanced_lines.append(func_doc)
@@ -755,10 +798,12 @@ class BinaryReassemblerV2:
 
         return "\n".join(enhanced_lines)
 
-    def _generate_function_documentation(self, function_line: str, file_path: Path) -> str:
+    def _generate_function_documentation(
+        self, function_line: str, file_path: Path
+    ) -> str:
         """Generate documentation for a specific function"""
         if self.documentation_config.comment_style == "minimal":
-            return f"/* Function reconstructed from binary analysis */"
+            return "/* Function reconstructed from binary analysis */"
         elif self.documentation_config.comment_style == "detailed":
             return f"""/*
  * Function reconstructed through binary analysis
@@ -827,7 +872,9 @@ class BinaryReassemblerV2:
 
         return build_scripts
 
-    def _generate_shell_build_script(self, source_dir: Path, output_path: Path) -> Optional[Path]:
+    def _generate_shell_build_script(
+        self, source_dir: Path, output_path: Path
+    ) -> Optional[Path]:
         """Generate shell build script"""
         try:
             script_path = source_dir / "build.sh"
@@ -851,10 +898,10 @@ cd build
 # Compile all C files
 echo "Compiling source files..."
 {self.compiler_config.compiler} \\
-    {' '.join(self.compiler_config.flags)} \\
+    {" ".join(self.compiler_config.flags)} \\
     ../*.c \\
     -o {output_path.name} \\
-    {' '.join(self.compiler_config.linker_flags)} \\
+    {" ".join(self.compiler_config.linker_flags)} \\
     -lm
 
 echo "Build completed successfully!"
@@ -878,7 +925,9 @@ echo "Use only for security research and educational purposes."
             logger.error(f"Failed to generate shell build script: {e}")
             return None
 
-    def _generate_batch_build_script(self, source_dir: Path, output_path: Path) -> Optional[Path]:
+    def _generate_batch_build_script(
+        self, source_dir: Path, output_path: Path
+    ) -> Optional[Path]:
         """Generate Windows batch build script"""
         try:
             script_path = source_dir / "build.bat"
@@ -900,10 +949,10 @@ cd build
 REM Compile all C files
 echo Compiling source files...
 {self.compiler_config.compiler} ^
-    {' '.join(self.compiler_config.flags)} ^
+    {" ".join(self.compiler_config.flags)} ^
     ..\\*.c ^
     -o {output_path.name} ^
-    {' '.join(self.compiler_config.linker_flags)} ^
+    {" ".join(self.compiler_config.linker_flags)} ^
     -lm
 
 if %ERRORLEVEL% EQU 0 (
@@ -929,7 +978,9 @@ if %ERRORLEVEL% EQU 0 (
             logger.error(f"Failed to generate batch build script: {e}")
             return None
 
-    def _generate_cmake_file(self, source_dir: Path, output_path: Path) -> Optional[Path]:
+    def _generate_cmake_file(
+        self, source_dir: Path, output_path: Path
+    ) -> Optional[Path]:
         """Generate CMakeLists.txt for cross-platform building"""
         try:
             cmake_path = source_dir / "CMakeLists.txt"
@@ -959,11 +1010,11 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
 endif()
 
 # Compiler flags based on original analysis
-set(CMAKE_C_FLAGS "${{CMAKE_C_FLAGS}} {' '.join(f for f in self.compiler_config.flags if not f.startswith('-m'))}")
+set(CMAKE_C_FLAGS "${{CMAKE_C_FLAGS}} {" ".join(f for f in self.compiler_config.flags if not f.startswith("-m"))}")
 
 # Source files
 set(SOURCES
-    {chr(10).join(f'    {f}' for f in c_files)}
+    {chr(10).join(f"    {f}" for f in c_files)}
 )
 
 # Create executable
@@ -999,7 +1050,9 @@ Review all code carefully before execution.
             logger.error(f"Failed to generate CMakeLists.txt: {e}")
             return None
 
-    def _generate_project_readme(self, source_dir: Path, warnings: List[str]) -> Optional[Path]:
+    def _generate_project_readme(
+        self, source_dir: Path, warnings: List[str]
+    ) -> Optional[Path]:
         """Generate comprehensive README.md for the reconstructed project"""
         try:
             readme_path = source_dir / "README.md"
@@ -1029,7 +1082,7 @@ This code may contain:
 - **Architecture**: {self.architecture.name}
 - **Reconstruction Date**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 - **Compiler Used**: {self.compiler_config.compiler}
-- **Binary Size**: {self.original_binary.stat().st_size if self.original_binary.exists() else 'Unknown'} bytes
+- **Binary Size**: {self.original_binary.stat().st_size if self.original_binary.exists() else "Unknown"} bytes
 
 ## Reconstruction Methodology
 
@@ -1045,10 +1098,10 @@ This project was created using advanced AI-powered binary analysis techniques:
 ## Project Structure
 
 ### Source Files ({len(c_files)} files)
-{chr(10).join(f'- `{f.name}` - Reconstructed source file' for f in c_files)}
+{chr(10).join(f"- `{f.name}` - Reconstructed source file" for f in c_files)}
 
 ### Header Files ({len(h_files)} files)
-{chr(10).join(f'- `{f.name}` - Reconstructed header file' for f in h_files)}
+{chr(10).join(f"- `{f.name}` - Reconstructed header file" for f in h_files)}
 
 ### Build Scripts
 - `build.sh` - Unix/Linux build script
@@ -1113,14 +1166,14 @@ This reconstruction demonstrates:
 
 ### Compiler Configuration
 - **Compiler**: {self.compiler_config.compiler}
-- **Flags**: {' '.join(self.compiler_config.flags)}
-- **Linker Flags**: {' '.join(self.compiler_config.linker_flags)}
-- **Target Triple**: {self.compiler_config.target_triple or 'Auto-detected'}
+- **Flags**: {" ".join(self.compiler_config.flags)}
+- **Linker Flags**: {" ".join(self.compiler_config.linker_flags)}
+- **Target Triple**: {self.compiler_config.target_triple or "Auto-detected"}
 
 ### Analysis Metadata
 - **LIEF Available**: {self.has_lief}
 - **Keystone Available**: {self.has_keystone}
-- **Validation Mode**: {self.validation_config.mode.value if hasattr(self.validation_config, 'mode') else 'Unknown'}
+- **Validation Mode**: {self.validation_config.mode.value if hasattr(self.validation_config, "mode") else "Unknown"}
 
 ## Disclaimer
 
@@ -1156,13 +1209,13 @@ The accuracy of the reconstructed code cannot be guaranteed. Use at your own ris
 
 # Compiler and flags from original analysis
 CC = {self.compiler_config.compiler}
-CFLAGS = {' '.join(self.compiler_config.flags)} -Wall -Wextra
-LDFLAGS = {' '.join(self.compiler_config.linker_flags)} -lm
+CFLAGS = {" ".join(self.compiler_config.flags)} -Wall -Wextra
+LDFLAGS = {" ".join(self.compiler_config.linker_flags)} -lm
 TARGET = {output_path.name}
 
 # Source files
-SOURCES = {' '.join(c_files)}
-OBJECTS = {' '.join(obj_files)}
+SOURCES = {" ".join(c_files)}
+OBJECTS = {" ".join(obj_files)}
 
 # Default target
 all: security_warning $(TARGET)
@@ -1308,15 +1361,21 @@ def main():
     parser.add_argument("--original", required=True, help="Original binary file")
     parser.add_argument("--source", required=True, help="C source directory")
     parser.add_argument("--output", required=True, help="Output binary path")
-    parser.add_argument("--arch", choices=["x86", "x86_64", "arm", "arm64", "auto"], default="auto")
+    parser.add_argument(
+        "--arch", choices=["x86", "x86_64", "arm", "arm64", "auto"], default="auto"
+    )
     parser.add_argument(
         "--validation-mode",
         choices=["checksum", "smoke_test", "sandboxed", "none"],
         default="smoke_test",
         help="Validation strategy",
     )
-    parser.add_argument("--validation-config", type=Path, help="Validation config JSON file")
-    parser.add_argument("--no-docs", action="store_true", help="Disable documentation generation")
+    parser.add_argument(
+        "--validation-config", type=Path, help="Validation config JSON file"
+    )
+    parser.add_argument(
+        "--no-docs", action="store_true", help="Disable documentation generation"
+    )
     parser.add_argument(
         "--comment-style",
         choices=["minimal", "detailed", "verbose"],
@@ -1349,7 +1408,9 @@ def main():
             val_config = None
     else:
         if ValidationConfig and ValidationMode:
-            val_config = ValidationConfig(mode=ValidationMode[args.validation_mode.upper()])
+            val_config = ValidationConfig(
+                mode=ValidationMode[args.validation_mode.upper()]
+            )
         else:
             logger.warning("ValidationConfig not available, using None")
             val_config = None
@@ -1367,7 +1428,9 @@ def main():
 
     # Create reassembler
     try:
-        reassembler = BinaryReassemblerV2(Path(args.original), arch, val_config, doc_config)
+        reassembler = BinaryReassemblerV2(
+            Path(args.original), arch, val_config, doc_config
+        )
     except RuntimeError as e:
         print(f"ERROR: {e}")
         sys.exit(1)
@@ -1398,14 +1461,14 @@ def main():
             print(f"  ... and {len(result.errors) - 5} more")
 
     if result.validation_results:
-        print(f"\nValidation:")
+        print("\nValidation:")
         val = result.validation_results
         print(f"  Mode: {val.get('mode')}")
         if val.get("tests_run"):
             print(f"  Tests: {val.get('tests_passed')}/{val.get('tests_run')} passed")
 
     if result.documentation_generated or result.build_scripts_generated:
-        print(f"\nDocumentation & Build Support:")
+        print("\nDocumentation & Build Support:")
         if result.documentation_generated:
             print(f"  Documentation files: {len(result.documentation_generated)}")
             for doc_file in result.documentation_generated:
@@ -1415,10 +1478,12 @@ def main():
             for build_file in result.build_scripts_generated:
                 print(f"    - {build_file.name}")
         if result.dependencies_identified:
-            print(f"  Dependencies identified: {', '.join(sorted(result.dependencies_identified))}")
+            print(
+                f"  Dependencies identified: {', '.join(sorted(result.dependencies_identified))}"
+            )
 
     if result.comparison_result:
-        print(f"\nReconstruction Comparison:")
+        print("\nReconstruction Comparison:")
         comp = result.comparison_result
         print(
             f"  Overall accuracy: {comp.metrics.overall_accuracy:.2%} ({comp.metrics.accuracy_level.value})"

@@ -16,19 +16,14 @@ Author: AI Assistant
 Version: 1.0 - AI RECOMPILER CONVERTER
 """
 
-import hashlib
 import json
 import logging
-import os
-import re
-import subprocess
 import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
-import requests
 
 # Configure logging
 logging.basicConfig(
@@ -124,7 +119,9 @@ class AIRecompilerConverter:
     def __init__(self, binary_path: str = None):
         """Initialize the AI recompiler converter"""
         self.binary_path = binary_path or self._find_binary()
-        self.binary_name = Path(self.binary_path).stem if self.binary_path else "unknown"
+        self.binary_name = (
+            Path(self.binary_path).stem if self.binary_path else "unknown"
+        )
         self.analysis_folder = Path(f"ai_recompiler_analysis_{self.binary_name}")
         self.mcp_server_url = "http://localhost:13337/mcp"
         self.ghidra_connected = False
@@ -226,19 +223,29 @@ class AIRecompilerConverter:
         if "imports" in func_data:
             for import_name in func_data["imports"]:
                 if "CreateFile" in import_name:
-                    patterns.append({"type": "file_operation", "offset": 0, "confidence": 0.9})
+                    patterns.append(
+                        {"type": "file_operation", "offset": 0, "confidence": 0.9}
+                    )
                 elif "socket" in import_name.lower():
-                    patterns.append({"type": "network_operation", "offset": 0, "confidence": 0.9})
+                    patterns.append(
+                        {"type": "network_operation", "offset": 0, "confidence": 0.9}
+                    )
                 elif "malloc" in import_name or "alloc" in import_name:
-                    patterns.append({"type": "memory_operation", "offset": 0, "confidence": 0.8})
+                    patterns.append(
+                        {"type": "memory_operation", "offset": 0, "confidence": 0.8}
+                    )
 
         # String patterns
         if "strings" in func_data:
             for string_val in func_data["strings"]:
                 if "http" in string_val.lower():
-                    patterns.append({"type": "network_protocol", "offset": 0, "confidence": 0.8})
+                    patterns.append(
+                        {"type": "network_protocol", "offset": 0, "confidence": 0.8}
+                    )
                 elif "error" in string_val.lower():
-                    patterns.append({"type": "error_handling", "offset": 0, "confidence": 0.7})
+                    patterns.append(
+                        {"type": "error_handling", "offset": 0, "confidence": 0.7}
+                    )
 
         return patterns
 
@@ -442,7 +449,9 @@ class AIRecompilerConverter:
         # For now, we'll simulate verification
         return evidence.confidence > 0.5
 
-    def generate_rename_suggestions(self, func_data: Dict[str, Any]) -> List[RenameSuggestion]:
+    def generate_rename_suggestions(
+        self, func_data: Dict[str, Any]
+    ) -> List[RenameSuggestion]:
         """Generate smart rename suggestions with confidence scoring"""
         suggestions = []
 
@@ -603,7 +612,9 @@ class AIRecompilerConverter:
 
         return clusters
 
-    def extract_ioc_hints(self, functions: List[FunctionSummary]) -> List[Dict[str, Any]]:
+    def extract_ioc_hints(
+        self, functions: List[FunctionSummary]
+    ) -> List[Dict[str, Any]]:
         """Extract IOC and protocol hints (defanged)"""
         iocs = []
 
@@ -669,7 +680,8 @@ class AIRecompilerConverter:
                 self._serialize_rename_suggestion(rs) for rs in self.rename_suggestions
             ],
             "prototype_suggestions": [
-                self._serialize_prototype_suggestion(ps) for ps in self.prototype_suggestions
+                self._serialize_prototype_suggestion(ps)
+                for ps in self.prototype_suggestions
             ],
             "clusters": {
                 k: [self._serialize_function_summary(fs) for fs in v]
@@ -730,7 +742,9 @@ class AIRecompilerConverter:
             "evidence_count": len(rs.evidence),
         }
 
-    def _serialize_prototype_suggestion(self, ps: PrototypeSuggestion) -> Dict[str, Any]:
+    def _serialize_prototype_suggestion(
+        self, ps: PrototypeSuggestion
+    ) -> Dict[str, Any]:
         """Serialize prototype suggestion for JSON"""
         return {
             "function_name": ps.function_name,
@@ -747,29 +761,29 @@ class AIRecompilerConverter:
         md_content = f"""# AI Recompiler Converter Analysis Report
 
 ## Overview
-- **Binary**: {report['binary_name']}
-- **Analysis Time**: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(report['timestamp']))}
-- **Functions Analyzed**: {report['statistics']['total_functions']}
-- **High Confidence Suggestions**: {report['statistics']['high_confidence_suggestions']}
-- **Average Confidence**: {report['statistics']['average_confidence']:.2f}
+- **Binary**: {report["binary_name"]}
+- **Analysis Time**: {time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(report["timestamp"]))}
+- **Functions Analyzed**: {report["statistics"]["total_functions"]}
+- **High Confidence Suggestions**: {report["statistics"]["high_confidence_suggestions"]}
+- **Average Confidence**: {report["statistics"]["average_confidence"]:.2f}
 
 ## Function Summaries
 
 """
 
         for fs in report["function_summaries"]:
-            md_content += f"""### {fs['name']} (0x{fs['address']})
-- **Purpose**: {fs['purpose']}
-- **Confidence**: {fs['confidence']:.2f}
-- **Inputs**: {', '.join(fs['inputs']) if fs['inputs'] else 'None'}
-- **Outputs**: {', '.join(fs['outputs']) if fs['outputs'] else 'None'}
-- **Side Effects**: {', '.join(fs['side_effects']) if fs['side_effects'] else 'None'}
-- **Risks**: {', '.join(fs['risks']) if fs['risks'] else 'None'}
-- **TODOs**: {', '.join(fs['todos']) if fs['todos'] else 'None'}
+            md_content += f"""### {fs["name"]} (0x{fs["address"]})
+- **Purpose**: {fs["purpose"]}
+- **Confidence**: {fs["confidence"]:.2f}
+- **Inputs**: {", ".join(fs["inputs"]) if fs["inputs"] else "None"}
+- **Outputs**: {", ".join(fs["outputs"]) if fs["outputs"] else "None"}
+- **Side Effects**: {", ".join(fs["side_effects"]) if fs["side_effects"] else "None"}
+- **Risks**: {", ".join(fs["risks"]) if fs["risks"] else "None"}
+- **TODOs**: {", ".join(fs["todos"]) if fs["todos"] else "None"}
 
 """
 
-        md_content += f"""
+        md_content += """
 ## Rename Suggestions
 
 """
@@ -778,29 +792,33 @@ class AIRecompilerConverter:
             if rs["confidence"] > 0.7:
                 md_content += f"- **{rs['symbol']}** -> **{rs['new_name']}** (confidence: {rs['confidence']:.2f}, reason: {rs['reason']})\n"
 
-        md_content += f"""
+        md_content += """
 ## Function Clusters
 
 """
 
         for cluster_name, functions in report["clusters"].items():
             if functions:
-                md_content += f"### {cluster_name.title()} ({len(functions)} functions)\n"
+                md_content += (
+                    f"### {cluster_name.title()} ({len(functions)} functions)\n"
+                )
                 for func in functions:
-                    md_content += f"- {func['name']} (confidence: {func['confidence']:.2f})\n"
+                    md_content += (
+                        f"- {func['name']} (confidence: {func['confidence']:.2f})\n"
+                    )
                 md_content += "\n"
 
-        md_content += f"""
+        md_content += """
 ## IOC Hints (Defanged)
 
 """
 
         for ioc in report["ioc_hints"]:
-            md_content += (
-                f"- **{ioc['type']}**: {ioc['value']} (confidence: {ioc['confidence']:.2f})\n"
-            )
+            md_content += f"- **{ioc['type']}**: {ioc['value']} (confidence: {ioc['confidence']:.2f})\n"
 
-        with open(self.analysis_folder / "analysis_report.md", "w", encoding="utf-8") as f:
+        with open(
+            self.analysis_folder / "analysis_report.md", "w", encoding="utf-8"
+        ) as f:
             f.write(md_content)
 
     def run_ai_analysis(self):
@@ -881,7 +899,9 @@ def main():
 
     print("[AI] AI RECOMPILER CONVERTER")
     print("=" * 60)
-    print("This provides AI-powered binary analysis with verification and confidence scoring!")
+    print(
+        "This provides AI-powered binary analysis with verification and confidence scoring!"
+    )
     print("=" * 60)
 
     # Get binary path from command line or auto-detect
@@ -901,7 +921,9 @@ def main():
         print("Or place a binary file in the current directory")
         return
 
-    print(f"Target: {converter.binary_path} ({Path(converter.binary_path).stat().st_size:,} bytes)")
+    print(
+        f"Target: {converter.binary_path} ({Path(converter.binary_path).stat().st_size:,} bytes)"
+    )
     print()
 
     results = converter.run_ai_analysis()
@@ -914,7 +936,7 @@ def main():
     print("=" * 60)
     print("AI-POWERED BINARY ANALYSIS ACHIEVED!")
     print()
-    print(f"[CHART] Statistics:")
+    print("[CHART] Statistics:")
     print(f"  - Binary: {results['binary_name']}")
     print(f"  - Functions Analyzed: {results['statistics']['total_functions']}")
     print(
@@ -935,7 +957,9 @@ def main():
     print("  - evidence/ (verification evidence)")
     print()
     print("[POWER] The AI recompiler converter analysis is complete!")
-    print("This provides AI-powered binary analysis with verification and confidence scoring!")
+    print(
+        "This provides AI-powered binary analysis with verification and confidence scoring!"
+    )
     print("=" * 60)
 
 

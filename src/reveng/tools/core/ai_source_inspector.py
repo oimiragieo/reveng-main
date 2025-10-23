@@ -14,14 +14,11 @@ Author: AI Assistant
 Version: 1.0 - AI SOURCE INSPECTOR
 """
 
-import json
 import logging
-import os
 import re
-import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 # Configure logging
 logging.basicConfig(
@@ -82,7 +79,28 @@ class AISourceInspector:
 
         logger.info("AI Source Inspector initialized")
         logger.info(f"Source folder: {self.source_folder}")
-        logger.info("This provides deep AI-powered source code analysis with extra thinking!")
+        logger.info(
+            "This provides deep AI-powered source code analysis with extra thinking!"
+        )
+
+    def analyze_binary(self, binary_path: str):
+        """
+        Analyze binary with AI inspection (wrapper for inspect_source_code)
+
+        This method provides compatibility with the analyzer pipeline.
+        It accepts a binary_path parameter and delegates to inspect_source_code().
+
+        Args:
+            binary_path: Path to the binary file to analyze
+
+        Returns:
+            Dictionary containing analysis results
+        """
+        logger.info(f"Analyzing binary: {binary_path}")
+        # Store binary path for potential future use
+        self.binary_path = Path(binary_path)
+        # Delegate to existing inspection logic
+        return self.inspect_source_code()
 
     def inspect_source_code(self):
         """Perform thorough AI inspection of source code"""
@@ -298,7 +316,9 @@ class AISourceInspector:
         if "init" in func_name.lower():
             insights.append("This appears to be an initialization function")
         if "alloc" in func_name.lower():
-            insights.append("Memory management function with potential for optimization")
+            insights.append(
+                "Memory management function with potential for optimization"
+            )
         if "network" in func_name.lower():
             insights.append("Network communication function requiring security review")
 
@@ -308,7 +328,9 @@ class AISourceInspector:
 
         return insights
 
-    def _generate_improvement_suggestions(self, func_name: str, content: str) -> List[str]:
+    def _generate_improvement_suggestions(
+        self, func_name: str, content: str
+    ) -> List[str]:
         """Generate improvement suggestions"""
         suggestions = []
 
@@ -427,7 +449,9 @@ class AISourceInspector:
         security_issues = set()
         for func_name in functions:
             if func_name in self.inspection_results:
-                security = self.inspection_results[func_name].get("security_implications", [])
+                security = self.inspection_results[func_name].get(
+                    "security_implications", []
+                )
                 security_issues.update(security)
         return list(security_issues)
 
@@ -519,7 +543,9 @@ class AISourceInspector:
         for func_name, analysis in self.inspection_results.items():
             complexity = analysis.get("complexity", "Low")
             if complexity in ["High", "Very High"]:
-                performance_issues.append(f"{func_name}: High complexity may impact performance")
+                performance_issues.append(
+                    f"{func_name}: High complexity may impact performance"
+                )
         return performance_issues
 
     def _generate_specifications(self):
@@ -545,15 +571,15 @@ class AISourceInspector:
 This document describes the architecture of the analyzed application.
 
 ## Function Distribution
-- Total Functions: {self.architecture['total_functions']}
-- Feature Categories: {self.architecture['feature_categories']}
+- Total Functions: {self.architecture["total_functions"]}
+- Feature Categories: {self.architecture["feature_categories"]}
 
 ## Complexity Distribution
 """
         for complexity, count in self.architecture["complexity_distribution"].items():
             spec_content += f"- {complexity}: {count} functions\n"
 
-        spec_content += f"""
+        spec_content += """
 ## Dependency Graph
 """
         for func, deps in self.architecture["dependency_graph"].items():
@@ -573,12 +599,12 @@ This document describes the architecture of the analyzed application.
 **Description**: {feature.description}
 **Category**: {feature.category}
 **Complexity**: {feature.complexity}
-**Functions**: {', '.join(feature.functions)}
-**Dependencies**: {', '.join(feature.dependencies)}
-**Inputs**: {', '.join(feature.inputs)}
-**Outputs**: {', '.join(feature.outputs)}
-**Side Effects**: {', '.join(feature.side_effects)}
-**Security Considerations**: {', '.join(feature.security_considerations)}
+**Functions**: {", ".join(feature.functions)}
+**Dependencies**: {", ".join(feature.dependencies)}
+**Inputs**: {", ".join(feature.inputs)}
+**Outputs**: {", ".join(feature.outputs)}
+**Side Effects**: {", ".join(feature.side_effects)}
+**Security Considerations**: {", ".join(feature.security_considerations)}
 
 """
 
@@ -587,7 +613,7 @@ This document describes the architecture of the analyzed application.
 
     def _create_security_spec(self):
         """Create security specification"""
-        spec_content = f"""# Security Specification
+        spec_content = """# Security Specification
 
 ## Security Concerns
 """
@@ -596,9 +622,9 @@ This document describes the architecture of the analyzed application.
 
         spec_content += f"""
 ## Security Analysis Summary
-- Total Security Issues: {len(self.architecture['security_concerns'])}
-- High Priority Issues: {len([c for c in self.architecture['security_concerns'] if 'buffer' in c.lower()])}
-- Network Security Issues: {len([c for c in self.architecture['security_concerns'] if 'network' in c.lower()])}
+- Total Security Issues: {len(self.architecture["security_concerns"])}
+- High Priority Issues: {len([c for c in self.architecture["security_concerns"] if "buffer" in c.lower()])}
+- Network Security Issues: {len([c for c in self.architecture["security_concerns"] if "network" in c.lower()])}
 """
 
         with open(self.specs_folder / "security.md", "w", encoding="utf-8") as f:
@@ -606,7 +632,7 @@ This document describes the architecture of the analyzed application.
 
     def _create_performance_spec(self):
         """Create performance specification"""
-        spec_content = f"""# Performance Specification
+        spec_content = """# Performance Specification
 
 ## Performance Considerations
 """
@@ -615,8 +641,8 @@ This document describes the architecture of the analyzed application.
 
         spec_content += f"""
 ## Performance Analysis Summary
-- High Complexity Functions: {len([c for c in self.architecture['complexity_distribution'].items() if c[0] in ['High', 'Very High']])}
-- Performance Bottlenecks: {len(self.architecture['performance_considerations'])}
+- High Complexity Functions: {len([c for c in self.architecture["complexity_distribution"].items() if c[0] in ["High", "Very High"]])}
+- Performance Bottlenecks: {len(self.architecture["performance_considerations"])}
 """
 
         with open(self.specs_folder / "performance.md", "w", encoding="utf-8") as f:
@@ -630,10 +656,10 @@ This document describes the architecture of the analyzed application.
             signature = analysis.get("signature", {})
             spec_content += f"""### {func_name}
 
-**Signature**: {signature.get('return_type', 'void')} {signature.get('name', func_name)}()
-**Purpose**: {analysis.get('purpose', 'Unknown')}
-**Complexity**: {analysis.get('complexity', 'Low')}
-**Dependencies**: {', '.join(analysis.get('dependencies', []))}
+**Signature**: {signature.get("return_type", "void")} {signature.get("name", func_name)}()
+**Purpose**: {analysis.get("purpose", "Unknown")}
+**Complexity**: {analysis.get("complexity", "Low")}
+**Dependencies**: {", ".join(analysis.get("dependencies", []))}
 
 """
 
@@ -648,11 +674,11 @@ This document describes the architecture of the analyzed application.
             behavior = analysis.get("behavior", {})
             spec_content += f"""### {func_name}
 
-**Memory Operations**: {behavior.get('memory_operations', 0)}
-**File Operations**: {behavior.get('file_operations', 0)}
-**Network Operations**: {behavior.get('network_operations', 0)}
-**Error Handling**: {behavior.get('error_handling', 'None')}
-**Side Effects**: {', '.join(behavior.get('side_effects', []))}
+**Memory Operations**: {behavior.get("memory_operations", 0)}
+**File Operations**: {behavior.get("file_operations", 0)}
+**Network Operations**: {behavior.get("network_operations", 0)}
+**Error Handling**: {behavior.get("error_handling", "None")}
+**Side Effects**: {", ".join(behavior.get("side_effects", []))}
 
 """
 
@@ -667,7 +693,7 @@ This document describes the architecture of the analyzed application.
 - **Total Functions**: {len(self.inspection_results)}
 - **Feature Categories**: {len(self.features)}
 - **Code Patterns**: {len(self.patterns)}
-- **Security Issues**: {len(self.architecture['security_concerns'])}
+- **Security Issues**: {len(self.architecture["security_concerns"])}
 
 ## Key Features
 """
@@ -676,9 +702,9 @@ This document describes the architecture of the analyzed application.
 
         overview_content += f"""
 ## Architecture Overview
-- **Complexity Distribution**: {self.architecture['complexity_distribution']}
-- **Performance Considerations**: {len(self.architecture['performance_considerations'])}
-- **Security Concerns**: {len(self.architecture['security_concerns'])}
+- **Complexity Distribution**: {self.architecture["complexity_distribution"]}
+- **Performance Considerations**: {len(self.architecture["performance_considerations"])}
+- **Security Concerns**: {len(self.architecture["security_concerns"])}
 
 ## Next Steps
 1. Review security specifications
@@ -700,13 +726,13 @@ def main():
 
     # Create and run AI inspection
     inspector = AISourceInspector()
-    results = inspector.inspect_source_code()
+    inspector.inspect_source_code()
 
     print("\\n[SUCCESS] AI SOURCE CODE INSPECTION COMPLETED!")
     print("=" * 60)
     print("DEEP AI ANALYSIS ACHIEVED!")
     print()
-    print(f"[CHART] Statistics:")
+    print("[CHART] Statistics:")
     print(f"  - Functions Analyzed: {len(inspector.inspection_results)}")
     print(f"  - Features Identified: {len(inspector.features)}")
     print(f"  - Patterns Detected: {len(inspector.patterns)}")

@@ -44,6 +44,25 @@ class HumanReadableConverter:
         logger.info("Human Readable Converter initialized (FIXED version)")
         logger.info(f"Source folder: {self.source_folder}")
 
+    def convert_binary(self, binary_path: str):
+        """
+        Convert binary to human-readable code (wrapper for convert_to_human_readable)
+
+        This method provides compatibility with the analyzer pipeline.
+        It accepts a binary_path parameter and delegates to convert_to_human_readable().
+
+        Args:
+            binary_path: Path to the binary file to convert
+
+        Returns:
+            Dictionary containing converted functions
+        """
+        logger.info(f"Converting binary to human-readable: {binary_path}")
+        # Store binary path for potential future use
+        self.binary_path = Path(binary_path)
+        # Delegate to existing conversion logic
+        return self.convert_to_human_readable()
+
     def convert_to_human_readable(self):
         """Convert all source code to human readable format"""
         logger.info("Starting human readable conversion...")
@@ -192,7 +211,8 @@ int {clean_name}() {{
                     continue
                 # Skip Windows-only API calls and headers
                 if any(
-                    x in stripped for x in ["GetLastError", "ERROR_SUCCESS", "#include <windows.h>"]
+                    x in stripped
+                    for x in ["GetLastError", "ERROR_SUCCESS", "#include <windows.h>"]
                 ):
                     continue
                 # Track braces to avoid orphaned closing braces
@@ -514,20 +534,24 @@ def main():
     """Main function"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="Convert to human readable code (FIXED)")
-    parser.add_argument("--source", default="src_optimal_analysis_droid", help="Source folder")
+    parser = argparse.ArgumentParser(
+        description="Convert to human readable code (FIXED)"
+    )
+    parser.add_argument(
+        "--source", default="src_optimal_analysis_droid", help="Source folder"
+    )
     parser.add_argument("--output", default="human_readable_code", help="Output folder")
     args = parser.parse_args()
 
     converter = HumanReadableConverter(args.source)
     converter.convert_to_human_readable()
 
-    print(f"\nConversion complete!")
+    print("\nConversion complete!")
     print(f"Output: {converter.output_folder}")
     print(f"Functions converted: {len(converter.converted_functions)}")
-    print(f"\nTo build:")
+    print("\nTo build:")
     print(f"  cd {converter.output_folder}")
-    print(f"  ./compile.sh")
+    print("  ./compile.sh")
 
 
 if __name__ == "__main__":

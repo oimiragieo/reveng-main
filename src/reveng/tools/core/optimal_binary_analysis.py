@@ -16,13 +16,10 @@ Version: 6.0 - UNIVERSAL BINARY AGNOSTIC
 
 import json
 import logging
-import os
-import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
-import requests
 
 # Configure logging
 logging.basicConfig(
@@ -51,7 +48,9 @@ class UniversalOptimalBinaryAnalysis:
     def __init__(self, binary_path: str = None):
         """Initialize the universal optimal binary analysis system"""
         self.binary_path = binary_path or self._find_binary()
-        self.binary_name = Path(self.binary_path).stem if self.binary_path else "unknown"
+        self.binary_name = (
+            Path(self.binary_path).stem if self.binary_path else "unknown"
+        )
         self.src_folder = Path(f"src_optimal_analysis_{self.binary_name}")
         self.mcp_server_url = "http://localhost:13337/mcp"
         self.ghidra_connected = False
@@ -802,7 +801,11 @@ class UniversalOptimalBinaryAnalysis:
 
         # Combine all functions
         all_functions = (
-            core_functions + js_functions + memory_functions + file_functions + network_functions
+            core_functions
+            + js_functions
+            + memory_functions
+            + file_functions
+            + network_functions
         )
 
         logger.info(f"Extracted {len(all_functions)} functions with optimal quality")
@@ -870,7 +873,7 @@ class UniversalOptimalBinaryAnalysis:
  * Address: {address}
  * Size: {size} bytes
  * Generated using Optimal Binary Analysis System
- * 
+ *
  * This function has been analyzed with ALL 16 MCP features:
  * 1. Function and Class Listing - Complete function inventory
  * 2. Decompilation - Professional pseudocode generation
@@ -888,7 +891,7 @@ class UniversalOptimalBinaryAnalysis:
  * 14. User Input Sources Identification - Input validation analysis
  * 15. Cryptographic Pattern Detection - Security analysis
  * 16. Obfuscated String Detection - Hidden data discovery
- * 
+ *
  * Additional Analysis:
  * - Cross-reference analysis for function dependencies
  * - Data flow analysis for variable tracking
@@ -911,10 +914,10 @@ void {func_name}() {{
     printf("Complexity level: {complexity}\\n");
     printf("Memory address: {address}\\n");
     printf("Function size: {size} bytes\\n");
-    
+
     // Professional implementation with all MCP features
     // This function demonstrates the power of optimal binary analysis
-    
+
     // Memory management
     void* local_buffer = malloc(1024);
     if (local_buffer) {{
@@ -922,12 +925,12 @@ void {func_name}() {{
         // Process data with optimal memory usage
         free(local_buffer);
     }}
-    
+
     // Error handling
     if (GetLastError() != ERROR_SUCCESS) {{
         printf("Error in {func_name}: %lu\\n", GetLastError());
     }}
-    
+
     // Function completion
     printf("{func_name} function completed successfully\\n");
 }}
@@ -985,7 +988,9 @@ def main():
 
     print("[ROCKET] UNIVERSAL OPTIMAL BINARY ANALYSIS SYSTEM")
     print("=" * 60)
-    print("This provides optimal analysis for ANY binary with maximum quality and coverage!")
+    print(
+        "This provides optimal analysis for ANY binary with maximum quality and coverage!"
+    )
     print("=" * 60)
 
     # Get binary path from command line or auto-detect
@@ -1005,7 +1010,9 @@ def main():
         print("Or place a binary file in the current directory")
         return
 
-    print(f"Target: {analysis.binary_path} ({Path(analysis.binary_path).stat().st_size:,} bytes)")
+    print(
+        f"Target: {analysis.binary_path} ({Path(analysis.binary_path).stat().st_size:,} bytes)"
+    )
     print()
 
     results = analysis.run_optimal_analysis()
@@ -1018,7 +1025,7 @@ def main():
     print("=" * 60)
     print("UNIVERSAL BINARY AGNOSTIC ANALYSIS ACHIEVED!")
     print()
-    print(f"[CHART] Statistics:")
+    print("[CHART] Statistics:")
     print(f"  - Binary: {results['binary_name']}")
     print(f"  - Binary Size: {results['binary_size']:,} bytes")
     print(f"  - Functions: {results['statistics']['total_functions']}")
