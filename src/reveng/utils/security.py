@@ -4,7 +4,6 @@ Security utilities for REVENG
 Provides safe operations for security-sensitive tasks like archive extraction.
 """
 
-import os
 import tarfile
 import zipfile
 from pathlib import Path
@@ -50,7 +49,7 @@ def safe_extract_zip(zip_file: zipfile.ZipFile, extract_path: Union[str, Path]) 
             )
 
     # All paths validated, safe to extract
-    zip_file.extractall(extract_path)
+    zip_file.extractall(extract_path)  # noqa: S202
 
 
 def safe_extract_tar(tar_file: tarfile.TarFile, extract_path: Union[str, Path]) -> None:
@@ -75,6 +74,13 @@ def safe_extract_tar(tar_file: tarfile.TarFile, extract_path: Union[str, Path]) 
     extract_path = Path(extract_path).resolve()
 
     for member in tar_file.getmembers():
+        # Check for absolute paths in member name
+        member_name_path = Path(member.name)
+        if member_name_path.is_absolute():
+            raise PathTraversalError(
+                f"Path traversal detected: '{member.name}' is an absolute path"
+            )
+
         # Get the full path where the member would be extracted
         member_path = (extract_path / member.name).resolve()
 
@@ -86,7 +92,7 @@ def safe_extract_tar(tar_file: tarfile.TarFile, extract_path: Union[str, Path]) 
             )
 
     # All paths validated, safe to extract
-    tar_file.extractall(extract_path)
+    tar_file.extractall(extract_path)  # noqa: S202
 
 
 def safe_extract_archive(
