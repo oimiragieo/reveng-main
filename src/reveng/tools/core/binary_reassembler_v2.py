@@ -578,8 +578,10 @@ class BinaryReassemblerV2:
                 logger.info(f"Linking successful: {output_path}")
                 return output_path
             else:
-                error_msg = f"Linking failed: {result.stderr[:200]}"
+                error_msg = f"Linking failed: {result.stderr[:1000]}"
                 logger.error(error_msg)
+                logger.error(f"Linker command: {' '.join(cmd)}")
+                logger.error(f"Object files count: {len(obj_files)}")
                 errors.append(error_msg)
                 return None
 
