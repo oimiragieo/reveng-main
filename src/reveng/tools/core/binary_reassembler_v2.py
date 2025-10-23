@@ -517,12 +517,15 @@ class BinaryReassemblerV2:
             obj_file = self.temp_dir / f"{c_file.stem}.o"
 
             # Build compile command with architecture-specific flags
+            # Include ghidra_types.h directory for type definitions
+            ghidra_types_dir = Path(__file__).parent
             cmd = [
                 self.compiler_config.compiler,
                 "-c",
                 str(c_file),
                 "-o",
                 str(obj_file),
+                f"-I{ghidra_types_dir}",  # Include directory with ghidra_types.h
                 *self.compiler_config.flags,
                 "-Wno-implicit-function-declaration",
             ]

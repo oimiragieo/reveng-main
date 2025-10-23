@@ -1760,6 +1760,8 @@ class REVENGAnalyzer:
 
             try:
                 with open(func_file, "w", encoding="utf-8") as f:
+                    # Add include for Ghidra type definitions
+                    f.write('#include "ghidra_types.h"\n\n')
                     f.write(code)
             except Exception as e:
                 logger.warning(f"Failed to write function at {address}: {e}")

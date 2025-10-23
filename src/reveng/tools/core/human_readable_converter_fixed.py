@@ -130,6 +130,7 @@ class HumanReadableConverter:
  * Purpose: {purpose}
  */
 
+#include "ghidra_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -151,15 +152,24 @@ int {func_name}() {{
 
             func_name = func_file.stem
 
-            # Convert to human readable
-            human_readable = self._make_human_readable_fixed(func_name, content)
+            # If file already has ghidra_types.h, it's decompiled code - just copy it
+            if '#include "ghidra_types.h"' in content:
+                # Save as-is without modification to preserve function signatures and logic
+                output_file = self.output_folder / f"{func_name}.c"
+                with open(output_file, "w", encoding="utf-8") as f:
+                    f.write(content)
+                self.converted_functions[func_name] = content
+                logger.debug(f"Copied Ghidra-decompiled function: {func_name}")
+            else:
+                # Convert to human readable (for non-Ghidra functions)
+                human_readable = self._make_human_readable_fixed(func_name, content)
 
-            # Save converted function
-            output_file = self.output_folder / f"{func_name}.c"
-            with open(output_file, "w", encoding="utf-8") as f:
-                f.write(human_readable)
+                # Save converted function
+                output_file = self.output_folder / f"{func_name}.c"
+                with open(output_file, "w", encoding="utf-8") as f:
+                    f.write(human_readable)
 
-            self.converted_functions[func_name] = human_readable
+                self.converted_functions[func_name] = human_readable
 
         except Exception as e:
             logger.error(f"Error converting {func_file}: {e}")
@@ -182,6 +192,7 @@ int {func_name}() {{
  * Purpose: {purpose}
  */
 
+#include "ghidra_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
