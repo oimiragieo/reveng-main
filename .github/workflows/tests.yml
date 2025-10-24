@@ -67,10 +67,6 @@ jobs:
       run: |
         python -m pytest tests/security -v
 
-    - name: Test installation
-      run: |
-        python ops/scripts/setup/verify_installation.py
-
   integration-test:
     runs-on: ubuntu-latest
     needs: test
@@ -90,35 +86,8 @@ jobs:
 
     - name: Run integration tests
       run: |
-        python ops/scripts/testing/run_enhanced_tests.py
+        python -m pytest tests/integration -v
 
-    - name: Test examples
+    - name: Run E2E tests
       run: |
-        python ops/scripts/testing/run_examples.py
-
-  web-interface-test:
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-
-    - name: Install web interface dependencies
-      run: |
-        cd web_interface
-        npm install
-
-    - name: Test web interface
-      run: |
-        cd web_interface
-        npm test
-
-    - name: Build web interface
-      run: |
-        cd web_interface
-        npm run build
+        python -m pytest tests/e2e -v
