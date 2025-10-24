@@ -6,7 +6,7 @@ REVENG Universal Reverse Engineering Platform - CLI Interface
 Command-line interface for the REVENG platform.
 
 Author: REVENG Development Team
-Version: 2.1.0
+Version: 3.0.0
 License: MIT
 """
 

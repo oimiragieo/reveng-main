@@ -226,8 +226,8 @@ python examples/advanced/full_recompilation_demo.py --binary malware.exe
 
 ### 2. Vulnerability Discovery
 ```bash
-# Find zero-days in closed-source software
-reveng analyze proprietary.dll --enhanced
+# Find vulnerabilities in closed-source software
+reveng analyze proprietary.dll
 
 # Generates:
 # - Comprehensive vulnerability report
@@ -239,19 +239,19 @@ reveng analyze proprietary.dll --enhanced
 ### 3. Reverse Engineering Education
 ```bash
 # Learn how binaries work
-reveng analyze simple.exe --explain
+reveng analyze simple.exe
 
 # Provides:
-# - Annotated decompiled code
-# - Natural language explanations
+# - Decompiled source code
+# - Security vulnerability analysis
 # - Function call graphs
-# - Memory layout diagrams
+# - Behavioral analysis
 ```
 
 ### 4. Incident Response
 ```bash
 # Analyze suspected malware in minutes
-reveng ai triage suspicious.exe
+reveng triage suspicious.exe
 
 # Quick report:
 # - Threat level (critical/high/medium/low)
@@ -361,11 +361,11 @@ This means you can:
 
 - [x] **v1.0** – Initial release with Ghidra integration
 - [x] **v2.0** – Multi-language support (Java, C#, Python)
-- [x] **v2.2** – ML-assisted triage and web interface
+- [x] **v2.2** – ML-assisted triage and enhanced analysis
 - [x] **v3.0** – AI-powered binary reconstruction ✅ **YOU ARE HERE**
-- [ ] **v3.1** – Cloud deployment and Kubernetes operators
-- [ ] **v3.2** – Distributed analysis across multiple nodes
-- [ ] **v4.0** – Advanced ML models and real-time collaboration
+- [ ] **v3.1** – Enhanced AI models (Claude Opus, GPT-4o)
+- [ ] **v3.2** – Advanced exploit generation and validation
+- [ ] **v4.0** – Distributed analysis and cloud deployment
 
 ---
 
