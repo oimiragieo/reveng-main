@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(for dir in src/reveng/*/)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(for:*)",
+      "Bash(head:*)"
     ],
     "deny": [],
     "ask": []
