@@ -31,7 +31,7 @@ This release transforms REVENG into the **world's first open-source binary-to-so
   - Automated bug discovery and feature suggestions
 
 #### Real-World Proof of Concept (NEW)
-- **KARP.exe Analysis** - 15MB binary, 2,431 functions
+- **Large Binary Analysis** - 15MB test binary, 2,431 functions
   - 166 vulnerabilities discovered
   - 12 working exploits generated
   - Complete analysis in 39.9 seconds
@@ -100,7 +100,7 @@ This release transforms REVENG into the **world's first open-source binary-to-so
 
 ### 📈 Performance Metrics
 
-#### KARP.exe Benchmark (15MB Binary, 2,431 Functions)
+#### Large Binary Benchmark (15MB Binary, 2,431 Functions)
 | Phase | Time | Success Rate |
 |-------|------|--------------|
 | Decompilation | 8.2s | 84.6% |

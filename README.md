@@ -141,7 +141,7 @@ await loop.start(max_iterations=10)
 
 ## 📊 Proven Results
 
-### KARP.exe Analysis (15MB Binary)
+### Large Binary Analysis (15MB Test Case)
 - **Functions Analyzed**: 2,431
 - **Vulnerabilities Found**: 166
 - **Exploits Generated**: 12 working PoCs
