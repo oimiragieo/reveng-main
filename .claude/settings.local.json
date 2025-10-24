@@ -14,7 +14,11 @@
       "Bash(dir:*)",
       "Bash(findstr:*)",
       "Bash(if exist decompile rmdir /s /q decompile)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git tag:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []
