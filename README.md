@@ -348,7 +348,7 @@ This means you can:
 
 ### Technical Improvements
 - ✅ **84.6% Decompilation Success** – Up from Ghidra's raw output
-- ✅ **166 Vulnerabilities Found** – In 15MB test binary (KARP.exe)
+- ✅ **166 Vulnerabilities Found** – In 15MB test binary
 - ✅ **12 Working Exploits Generated** – Fully automated
 - ✅ **39.9 Second Analysis** – Complete pipeline for large binaries
 - ✅ **Comprehensive Documentation** – >25,000 words

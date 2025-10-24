@@ -431,18 +431,18 @@ def mock_ml_integration():
 
 
 @pytest.fixture
-def karp_sample_files(temp_dir):
-    """Create KARP sample files for testing"""
-    karp_dir = Path(temp_dir) / "karp_samples"
-    karp_dir.mkdir(exist_ok=True)
+def test_sample_files(temp_dir):
+    """Create test sample files for testing"""
+    sample_dir = Path(temp_dir) / "binary_samples"
+    sample_dir.mkdir(exist_ok=True)
 
-    # Create mock KARP.exe
-    karp_exe = karp_dir / "KARP.exe"
-    with open(karp_exe, "wb") as f:
+    # Create mock test binary
+    test_exe = sample_dir / "test_binary.exe"
+    with open(test_exe, "wb") as f:
         f.write(b"\x4D\x5A\x90\x00" + b"\x00" * 1000)  # Mock PE header
 
     # Create mock .nessus file
-    nessus_file = karp_dir / "21778.nessus"
+    nessus_file = sample_dir / "test_scan.nessus"
     with open(nessus_file, "w") as f:
         f.write(
             """<?xml version="1.0"?>
@@ -460,7 +460,7 @@ def karp_sample_files(temp_dir):
 </report>"""
         )
 
-    return {"karp_exe": karp_exe, "nessus_file": nessus_file, "karp_dir": karp_dir}
+    return {"test_exe": test_exe, "nessus_file": nessus_file, "sample_dir": sample_dir}
 
 
 @pytest.fixture

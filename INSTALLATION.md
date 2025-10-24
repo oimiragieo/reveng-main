@@ -25,7 +25,7 @@ pip install flask
 python ghidra_http_server.py
 
 # Run analysis
-python reveng.py --verbose analyze examples/case-studies/karp-analysis/KARP.exe
+python reveng.py --verbose analyze path/to/binary.exe
 ```
 
 **Expected Result**: 12-13/13 steps passing (92-100%)
@@ -203,7 +203,7 @@ python setup_dependencies.py --verify-only
 ### Test 1: Basic Analysis (without Ghidra/Compiler)
 
 ```bash
-python reveng.py --verbose analyze examples/case-studies/karp-analysis/KARP.exe
+python reveng.py --verbose analyze path/to/binary.exe
 ```
 
 **Expected**: 9/13 steps (69.2%)
@@ -222,7 +222,7 @@ python ghidra_http_server.py
 
 **Terminal 2** (Run analysis):
 ```bash
-python reveng.py --verbose analyze examples/case-studies/karp-analysis/KARP.exe
+python reveng.py --verbose analyze path/to/binary.exe
 ```
 
 **Expected**: 10-11/13 steps (77-85%)
@@ -234,7 +234,7 @@ python reveng.py --verbose analyze examples/case-studies/karp-analysis/KARP.exe
 With both Ghidra server running AND C compiler installed:
 
 ```bash
-python reveng.py --verbose analyze examples/case-studies/karp-analysis/KARP.exe
+python reveng.py --verbose analyze path/to/binary.exe
 ```
 
 **Expected**: 12-13/13 steps (92-100%)
@@ -405,7 +405,7 @@ jobs:
 
       - name: Run tests
         run: |
-          python reveng.py --verbose analyze examples/case-studies/karp-analysis/KARP.exe
+          python reveng.py --verbose analyze path/to/binary.exe
 
       - name: Verify success rate
         run: |

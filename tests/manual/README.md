@@ -7,7 +7,7 @@ These test scripts require manual setup and cannot be run in automated CI/CD pip
 ### For Ghidra Tests
 1. **Ghidra** must be installed (run `python scripts/setup/download_ghidra.py`)
 2. **Ghidra MCP Plugin** must be installed and configured
-3. **Binary loaded** in Ghidra (e.g., KARP.exe or test binary)
+3. **Binary loaded** in Ghidra (use a test binary)
 4. **Ghidra MCP Server** running at http://127.0.0.1:8080
 
 ### For Server Tests

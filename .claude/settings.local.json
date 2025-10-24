@@ -4,7 +4,9 @@
       "Bash(for dir in src/reveng/*/)",
       "Bash(find:*)",
       "Bash(for:*)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(git log:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "ask": []

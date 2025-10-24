@@ -58,6 +58,10 @@ htmlcov/
 coverage.xml
 coverage.json
 
+# Linter and formatter caches
+.ruff_cache/
+.mypy_cache/
+
 # ML Models (download via models/download_models.py)
 models/*.pkl
 models/*.h5
@@ -213,7 +217,6 @@ $RECYCLE.BIN/
 
 # Analysis artifacts and large files
 *.nessus
-examples/case-studies/karp-analysis/21778.nessus
 test_samples/*.exe
 test_samples/*.dll
 test_samples/*.so
