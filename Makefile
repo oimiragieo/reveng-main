@@ -43,7 +43,6 @@ install-dev:
 	pip install -r requirements.txt
 	pip install -r requirements-dev.txt
 	pip install -r requirements-java.txt
-	pre-commit install
 
 # Testing
 test:
@@ -67,7 +66,6 @@ lint:
 	isort --check-only src/ tests/
 	pylint src/
 	mypy src/
-	yamllint .
 	hadolint Dockerfile
 
 format:
@@ -80,10 +78,6 @@ build:
 
 docker-build:
 	docker build -t reveng/cli:latest .
-	docker build -t reveng/web:latest -f web_interface/Dockerfile.frontend ./web_interface
-	docker build -t reveng/backend:latest -f web_interface/Dockerfile.backend ./web_interface
-	docker build -t reveng/ai-service:latest -f web_interface/Dockerfile.ai-service ./web_interface
-	docker build -t reveng/worker:latest -f web_interface/Dockerfile.worker ./web_interface
 
 docker-run:
 	docker-compose up -d

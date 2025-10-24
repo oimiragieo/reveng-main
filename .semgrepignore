@@ -1,8 +1,0 @@
-# Semgrep ignore file for REVENG project
-# These are false positives or acceptable security risks
-
-# PyTorch deserialization issues - these are mitigated with weights_only=True
-src/reveng/tools/security/ml_malware_classifier.py:1099-1104
-src/reveng/tools/security/ml_malware_classifier.py:1627-1630
-src/reveng/tools/security/ml_malware_classifier.py:1661-1673
-src/reveng/tools/security/ml_malware_classifier.py:1743-1749
