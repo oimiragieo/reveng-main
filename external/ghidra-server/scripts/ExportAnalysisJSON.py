@@ -60,8 +60,13 @@ def export_analysis(output_file):
             decompile_results = decompiler.decompileFunction(func, 30, ConsoleTaskMonitor())
             if decompile_results and decompile_results.decompileCompleted():
                 func_data["decompiled"] = str(decompile_results.getDecompiledFunction().getC())
-        except:
-            pass  # Decompilation failed, skip
+            elif decompile_results:
+                # Decompilation started but didn't complete - log error message
+                error_msg = str(decompile_results.getErrorMessage()) if decompile_results.getErrorMessage() else "Unknown decompilation error"
+                func_data["decompile_error"] = error_msg
+        except Exception as e:
+            # Decompilation exception
+            func_data["decompile_error"] = str(e)
 
         result["functions"].append(func_data)
 

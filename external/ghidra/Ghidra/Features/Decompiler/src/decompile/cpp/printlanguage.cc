@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -254,7 +254,7 @@ void PrintLanguage::pushSymbolDetail(const Varnode *vn,const PcodeOp *op,bool is
     }
     if (symboloff + vn->getSize() <= sym->getType()->getSize()) {
       int4 inslot = isRead ? op->getSlot(vn) : -1;
-      pushPartialSymbol(sym,symboloff,vn->getSize(),vn,op,inslot,isRead);
+      pushPartialSymbol(sym,symboloff,vn->getSize(),vn,op,inslot);
     }
     else
       pushMismatchSymbol(sym,symboloff,vn->getSize(),vn,op);
@@ -648,12 +648,12 @@ void PrintLanguage::emitLineComment(int4 indent,const Comment *comm)
   comm->setEmitted(true);
 }
 
-/// Select packed or unpacked (XML) output, if the emitter supports it.
-/// \param val is \b true for packed or \b false for unpacked
-void PrintLanguage::setPackedOutput(bool val)
+/// Tell the emitter whether to emit just the raw tokens or if additional mark-up should be provided.
+/// \param val is \b true for additional mark-up
+void PrintLanguage::setMarkup(bool val)
 
 {
-  emit->setPackedOutput(val);
+  ((EmitPrettyPrint *)emit)->setMarkup(val);
 }
 
 /// Emitting formal code structuring can be turned off, causing all control-flow

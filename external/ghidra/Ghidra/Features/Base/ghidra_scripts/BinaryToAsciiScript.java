@@ -1,12 +1,13 @@
 /* ###
  * IP: GHIDRA
+ * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,12 +15,13 @@
  * limitations under the License.
  */
 //Converts a binary file into an ascii hex file.
-//@category
-
-import java.io.*;
+//@category Conversion
 
 import ghidra.app.script.GhidraScript;
 import ghidra.util.Conv;
+
+import java.io.*;
+
 
 public class BinaryToAsciiScript extends GhidraScript {
 
@@ -35,13 +37,12 @@ public class BinaryToAsciiScript extends GhidraScript {
 		File outAsciiFile = askFile("Select Ascii File", "Ascii File");
 
 		if (inputBinaryFile.equals(outAsciiFile)) {
-			popup("Input file and output file are the same. " + inputBinaryFile.getAbsolutePath());
+			popup("Input file and output file are the same. "+inputBinaryFile.getAbsolutePath());
 			return;
 		}
 
 		if (outAsciiFile.exists()) {
-			if (!askYesNo("Ascii File Already Exists",
-				"The ascii file already exists.\nDo you want to overwrite it?")) {
+			if (!askYesNo("Ascii File Already Exists", "The ascii file already exists.\nDo you want to overwrite it?")) {
 				return;
 			}
 		}
@@ -50,7 +51,7 @@ public class BinaryToAsciiScript extends GhidraScript {
 
 		if (bytesPerLine < 1) {
 			popup("Invalid bytes per line quantity: " + bytesPerLine + ".\n " +
-				"Value must be greater than zero.");
+					"Value must be greater than zero.");
 			return;
 		}
 
@@ -58,7 +59,7 @@ public class BinaryToAsciiScript extends GhidraScript {
 
 		PrintWriter out = new PrintWriter(outAsciiFile);
 
-		byte[] buffer = new byte[4096];
+		byte [] buffer = new byte[4096];
 
 		int bytesWritten = 0;
 		while (true) {
@@ -72,7 +73,7 @@ public class BinaryToAsciiScript extends GhidraScript {
 				break;
 			}
 
-			for (int i = 0; i < nRead; ++i) {
+			for (int i = 0 ; i < nRead ; ++i) {
 				if (monitor.isCancelled()) {
 					break;
 				}
@@ -81,7 +82,7 @@ public class BinaryToAsciiScript extends GhidraScript {
 					out.append('\n');
 				}
 
-				out.write(Conv.toHexString(buffer[i]));
+				out.write( Conv.toHexString(buffer[i]) );
 
 				++bytesWritten;
 			}

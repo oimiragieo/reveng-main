@@ -34,7 +34,7 @@ public:
 
 static FuncProtoTestEnvironment theEnviron;
 
-static Architecture *glb = (Architecture *)0;
+static Architecture *glb;
 
 FuncProtoTestEnvironment::FuncProtoTestEnvironment(void)
 
@@ -46,11 +46,7 @@ FuncProtoTestEnvironment::FuncProtoTestEnvironment(void)
 void FuncProtoTestEnvironment::build(void)
 
 {
-  if (theEnviron.g != (Architecture *)0) {
-    if (glb == (Architecture *)0)
-      throw LowlevelError("Architecture did not load");
-    return;
-  }
+  if (theEnviron.g != (Architecture *)0) return;
   ArchitectureCapability *xmlCapability = ArchitectureCapability::getCapability("xml");
   istringstream s(
       "<binaryimage arch=\"Toy:LE:32:default:default\"></binaryimage>"

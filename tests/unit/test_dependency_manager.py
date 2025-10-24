@@ -5,11 +5,9 @@ Unit tests for DependencyManager
 import shutil
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
-import pytest
-
-from src.reveng.core.dependency_manager import DependencyManager, InstallationResult, ToolInfo
+from src.reveng.core.dependency_manager import DependencyManager, InstallationResult
 
 
 class TestDependencyManager:
@@ -55,15 +53,21 @@ class TestDependencyManager:
             {
                 "ghidra": Mock(
                     check_installed=Mock(return_value=False),
-                    install=Mock(return_value=InstallationResult(True, "ghidra", "/path")),
+                    install=Mock(
+                        return_value=InstallationResult(True, "ghidra", "/path")
+                    ),
                 ),
                 "ilspy": Mock(
                     check_installed=Mock(return_value=True),
-                    install=Mock(return_value=InstallationResult(True, "ilspy", "/path")),
+                    install=Mock(
+                        return_value=InstallationResult(True, "ilspy", "/path")
+                    ),
                 ),
             },
         ):
-            results = self.dm.install_missing_tools(["ghidra", "ilspy"], auto_install=True)
+            results = self.dm.install_missing_tools(
+                ["ghidra", "ilspy"], auto_install=True
+            )
 
             assert "ghidra" in results
             assert "ilspy" in results
@@ -137,12 +141,16 @@ class TestDependencyManager:
 
     def test_cleanup_failed_installations(self):
         """Test cleaning up failed installations"""
+        mock_install_dir = Mock(spec=Path)
+        mock_install_dir.exists.return_value = True
+
         with patch.object(
             self.dm,
             "tools",
             {
                 "ghidra": Mock(
-                    install_dir=Path("/nonexistent"), check_installed=Mock(return_value=False)
+                    install_dir=mock_install_dir,
+                    check_installed=Mock(return_value=False),
                 )
             },
         ):
@@ -183,7 +191,10 @@ class TestDependencyManager:
     def test_import_configuration(self):
         """Test importing configuration"""
         config_data = {
-            "fallback_analyzers": {"ghidra": "basic_pe_analyzer", "ilspy": "basic_dotnet_analyzer"}
+            "fallback_analyzers": {
+                "ghidra": "basic_pe_analyzer",
+                "ilspy": "basic_dotnet_analyzer",
+            }
         }
 
         config_path = self.temp_dir / "config.json"

@@ -5,19 +5,18 @@ Comprehensive .NET assembly analysis with framework detection, GUI recognition,
 and business logic extraction.
 """
 
-import json
-import logging
-import os
 import subprocess
-import sys
 import tempfile
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from ..core.errors import AnalysisFailureError, MissingDependencyError, create_error_context
+from ..core.errors import (
+    AnalysisFailureError,
+    MissingDependencyError,
+    create_error_context,
+)
 from ..core.logger import get_logger
 
 
@@ -150,7 +149,9 @@ class DotNetAnalyzer:
                 analysis_confidence=confidence,
             )
 
-            self.logger.info(f"Completed .NET analysis with {confidence:.2f} confidence")
+            self.logger.info(
+                f"Completed .NET analysis with {confidence:.2f} confidence"
+            )
             return result
 
         except Exception as e:
@@ -618,7 +619,9 @@ class DotNetAnalyzer:
 
         return business_logic
 
-    def _analyze_api_calls_for_business_logic(self, api_calls: List[str]) -> Dict[str, Any]:
+    def _analyze_api_calls_for_business_logic(
+        self, api_calls: List[str]
+    ) -> Dict[str, Any]:
         """Analyze API calls for business logic"""
         business_logic = {}
 
@@ -632,7 +635,9 @@ class DotNetAnalyzer:
         }
 
         for category, apis in api_categories.items():
-            business_logic[f"{category}_apis"] = [api for api in api_calls if api in apis]
+            business_logic[f"{category}_apis"] = [
+                api for api in api_calls if api in apis
+            ]
 
         return business_logic
 
@@ -676,7 +681,9 @@ class DotNetAnalyzer:
 
         # Medium obfuscation indicators
         medium_indicators = ["xor", "base64", "encoded"]
-        if any(indicator in " ".join(strings).lower() for indicator in medium_indicators):
+        if any(
+            indicator in " ".join(strings).lower() for indicator in medium_indicators
+        ):
             indicators["medium"] = True
 
         # Low obfuscation indicators
@@ -753,7 +760,9 @@ class DotNetAnalyzer:
         # Simplified implementation
         return []
 
-    def _extract_resources_with_rh(self, binary_path: str, rh_path: str) -> Dict[str, Any]:
+    def _extract_resources_with_rh(
+        self, binary_path: str, rh_path: str
+    ) -> Dict[str, Any]:
         """Extract resources using Resource Hacker"""
         # Simplified implementation
         return {}

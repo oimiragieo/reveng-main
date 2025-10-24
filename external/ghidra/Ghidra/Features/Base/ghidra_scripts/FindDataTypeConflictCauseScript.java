@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 // Search for the root cause of a datatype conflict based upon a selected datatype.
 //@category Data Types
 import java.util.*;
@@ -50,14 +49,14 @@ public class FindDataTypeConflictCauseScript extends GhidraScript {
 		}
 
 		List<DataType> selectedDatatypes = dtmService.getSelectedDatatypes();
-		if (selectedDatatypes.size() != 1) {
+		if (selectedDatatypes.size() != 1 || !(selectedDatatypes.get(0) instanceof Composite)) {
 			popup("Select a single conflict datatype before running script");
 			return;
 		}
 
 		DataType selectedDt = DataTypeUtilities.getBaseDataType(selectedDatatypes.get(0));
-		if (selectedDt == null) {
-			popup("Selected datatype must not be a default Pointer");
+		if (selectedDt instanceof Pointer || selectedDt instanceof Array) {
+			popup("Selected datatype must not be a Pointer or Array");
 			return;
 		}
 

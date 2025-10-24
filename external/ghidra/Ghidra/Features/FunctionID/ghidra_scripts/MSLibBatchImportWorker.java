@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.*;
+import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
 
@@ -62,19 +63,19 @@ import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.coff.*;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveHeader;
 import ghidra.app.util.bin.format.coff.archive.CoffArchiveMemberHeader;
-import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.ProgramLoader;
+import ghidra.app.util.importer.*;
 import ghidra.app.util.opinion.*;
 import ghidra.framework.model.*;
 import ghidra.framework.store.local.LocalFileSystem;
 import ghidra.program.model.listing.Program;
 import ghidra.util.InvalidNameException;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.VersionException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 public class MSLibBatchImportWorker extends GhidraScript {
+	final static Predicate<Loader> LOADER_FILTER = new SingleLoaderFilter(MSCoffLoader.class);
+	final static LoadSpecChooser LOADSPEC_CHOOSER = new CsHintLoadSpecChooser("windows");
 
 	private static String getProcessId(String fallback) {
 		// something like '<pid>@<hostname>', at least in SUN / Oracle JVMs
@@ -172,7 +173,8 @@ public class MSLibBatchImportWorker extends GhidraScript {
 	}
 
 	private void importLibrary(DomainFolder currentLibraryFolder, File file, MessageLog log)
-			throws CancelledException, InvalidNameException, VersionException, IOException {
+			throws CancelledException, DuplicateNameException, InvalidNameException,
+			VersionException, IOException {
 		try (RandomAccessByteProvider provider = new RandomAccessByteProvider(file)) {
 			if (!CoffArchiveHeader.isMatch(provider)) {
 				return;
@@ -194,34 +196,30 @@ public class MSLibBatchImportWorker extends GhidraScript {
 
 							Pair<DomainFolder, String> pair =
 								getFolderAndUniqueFile(currentLibraryFolder, preferredName);
-							try (LoadResults<? extends DomainObject> loadResults =
-								ProgramLoader.builder()
-										.source(coffProvider)
-										.project(state.getProject())
-										.projectFolderPath(pair.first.getPathname())
-										.loaders(MSCoffLoader.class)
-										.compiler("windows")
-										.name(pair.second)
-										.log(log)
-										.monitor(monitor)
-										.load()) {
+							LoadResults<? extends DomainObject> loadResults = null;
+							try {
+								loadResults = AutoImporter.importFresh(coffProvider,
+									state.getProject(), pair.first.getPathname(), this, log,
+									monitor, LOADER_FILTER, LOADSPEC_CHOOSER, pair.second,
+									OptionChooser.DEFAULT_OPTIONS);
 
 								for (Loaded<? extends DomainObject> loaded : loadResults) {
-									DomainObject obj = loaded.getDomainObject(this);
-									try {
-										if (obj instanceof Program) {
-											loaded.save(monitor);
-											DomainFile progFile = obj.getDomainFile();
-											println("Imported " + progFile.getPathname());
-											if (!progFile.isVersioned()) {
-												progFile.addToVersionControl(initalCheckInComment,
-													false, monitor);
-											}
+									if (loaded.getDomainObject() instanceof Program program) {
+										loaded.save(state.getProject(), log, monitor);
+										println(
+											"Imported " + program.getDomainFile().getPathname());
+										DomainFile progFile = program.getDomainFile();
+
+										if (!progFile.isVersioned()) {
+											progFile.addToVersionControl(initalCheckInComment,
+												false, monitor);
 										}
 									}
-									finally {
-										obj.release(this);
-									}
+								}
+							}
+							finally {
+								if (loadResults != null) {
+									loadResults.release(this);
 								}
 							}
 						}

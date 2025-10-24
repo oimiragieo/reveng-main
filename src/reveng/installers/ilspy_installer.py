@@ -2,16 +2,10 @@
 ILSpy installer for REVENG
 """
 
-import json
 import logging
-import os
-import platform
-import shutil
 import subprocess
-import sys
-import zipfile
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from ..core.dependency_manager import ToolStatus
 from .base_installer import BaseInstaller, InstallMethod

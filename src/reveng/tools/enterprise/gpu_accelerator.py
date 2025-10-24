@@ -27,14 +27,11 @@ Requires:
 
 import hashlib
 import logging
-import os
 import time
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +162,9 @@ class StringMatcher:
         self.backend = backend
         self.use_gpu = backend in [AcceleratorBackend.CUDA, AcceleratorBackend.OPENCL]
 
-    def find_patterns(self, data: bytes, patterns: List[bytes]) -> List[Tuple[int, bytes]]:
+    def find_patterns(
+        self, data: bytes, patterns: List[bytes]
+    ) -> List[Tuple[int, bytes]]:
         """
         Find all occurrences of patterns in data
 
@@ -181,7 +180,9 @@ class StringMatcher:
         else:
             return self._find_patterns_cpu(data, patterns)
 
-    def _find_patterns_cuda(self, data: bytes, patterns: List[bytes]) -> List[Tuple[int, bytes]]:
+    def _find_patterns_cuda(
+        self, data: bytes, patterns: List[bytes]
+    ) -> List[Tuple[int, bytes]]:
         """GPU-accelerated pattern matching using CUDA"""
         try:
             import cupy as cp
@@ -205,7 +206,9 @@ class StringMatcher:
             logger.warning(f"CUDA pattern matching failed: {e}, falling back to CPU")
             return self._find_patterns_cpu(data, patterns)
 
-    def _find_patterns_cpu(self, data: bytes, patterns: List[bytes]) -> List[Tuple[int, bytes]]:
+    def _find_patterns_cpu(
+        self, data: bytes, patterns: List[bytes]
+    ) -> List[Tuple[int, bytes]]:
         """CPU fallback for pattern matching"""
         matches = []
         for pattern in patterns:
@@ -234,7 +237,9 @@ class HashCracker:
         self.backend = backend
         self.use_gpu = backend in [AcceleratorBackend.CUDA, AcceleratorBackend.OPENCL]
 
-    def crack_hash(self, target_hash: str, hash_type: str, wordlist: List[str]) -> Optional[str]:
+    def crack_hash(
+        self, target_hash: str, hash_type: str, wordlist: List[str]
+    ) -> Optional[str]:
         """
         Attempt to crack hash using wordlist
 
@@ -256,7 +261,6 @@ class HashCracker:
     ) -> Optional[str]:
         """GPU-accelerated hash cracking using CUDA"""
         try:
-            import cupy as cp
 
             # For demonstration - real implementation would use optimized CUDA kernels
             # Libraries like hashcat use highly optimized GPU code
@@ -412,7 +416,10 @@ class MLAccelerator:
             if torch.cuda.is_available() and backend == AcceleratorBackend.CUDA:
                 self.device = "cuda"
                 logger.info("PyTorch using CUDA")
-            elif torch.backends.mps.is_available() and backend == AcceleratorBackend.METAL:
+            elif (
+                torch.backends.mps.is_available()
+                and backend == AcceleratorBackend.METAL
+            ):
                 self.device = "mps"
                 logger.info("PyTorch using Metal (Apple Silicon)")
         except ImportError:
@@ -493,7 +500,7 @@ class GPUAccelerator:
         patterns = [b"ABCD", b"1234", b"ZZZZ"]
 
         start = time.time()
-        matches = self.string_matcher.find_patterns(test_data, patterns)
+        self.string_matcher.find_patterns(test_data, patterns)
         results["string_matching_seconds"] = time.time() - start
 
         # Hash cracking benchmark
@@ -501,7 +508,7 @@ class GPUAccelerator:
         wordlist = ["password", "test", "admin"] * 1000
 
         start = time.time()
-        result = self.hash_cracker.crack_hash(test_hash, "sha256", wordlist)
+        self.hash_cracker.crack_hash(test_hash, "sha256", wordlist)
         results["hash_cracking_seconds"] = time.time() - start
 
         # Similarity benchmark
@@ -520,10 +527,10 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # Info
-    info_parser = subparsers.add_parser("info", help="Show GPU info")
+    subparsers.add_parser("info", help="Show GPU info")
 
     # Benchmark
-    bench_parser = subparsers.add_parser("benchmark", help="Run benchmark")
+    subparsers.add_parser("benchmark", help="Run benchmark")
 
     # String matching
     match_parser = subparsers.add_parser("match", help="Pattern matching")

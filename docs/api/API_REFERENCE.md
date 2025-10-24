@@ -46,14 +46,14 @@ class REVENGAnalyzer:
 #### Example
 
 ```python
-from reveng_analyzer import REVENGAnalyzer
+from reveng.analyzer import REVENGAnalyzer
 
 # Basic usage
 analyzer = REVENGAnalyzer("binary.exe")
 success = analyzer.analyze_binary()
 
 # With enhanced features
-from reveng_analyzer import EnhancedAnalysisFeatures
+from reveng.analyzer import EnhancedAnalysisFeatures
 
 features = EnhancedAnalysisFeatures()
 features.enable_corporate_exposure = True
@@ -466,7 +466,7 @@ class VulnerabilityData:
 ### Basic Analysis
 
 ```python
-from reveng_analyzer import REVENGAnalyzer
+from reveng.analyzer import REVENGAnalyzer
 
 # Analyze a binary
 analyzer = REVENGAnalyzer("app.exe")
@@ -546,7 +546,8 @@ config_manager.save_config(config)
 ### Error Handling
 
 ```python
-from reveng_analyzer import REVENGAnalyzer, AnalysisError
+from reveng.analyzer import REVENGAnalyzer
+from reveng.exceptions import AnalysisError
 
 try:
     analyzer = REVENGAnalyzer("invalid.exe")

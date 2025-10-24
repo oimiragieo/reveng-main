@@ -13,9 +13,7 @@ Version: 1.0
 
 import logging
 import time
-from dataclasses import asdict
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 try:
     from .ai_enhanced_data_models import (
@@ -38,7 +36,6 @@ except ImportError:
     from ..ai.ai_enhanced_data_models import (
         CodeSummary,
         EnhancedUniversalAnalysisResult,
-        Evidence,
         EvidenceTracker,
         MalwareClassification,
         MLPipelineResult,
@@ -66,7 +63,9 @@ class MLPipelineOrchestrator:
         self.enable_vulnerability_prediction = self.config.get(
             "enable_vulnerability_prediction", True
         )
-        self.enable_malware_classification = self.config.get("enable_malware_classification", True)
+        self.enable_malware_classification = self.config.get(
+            "enable_malware_classification", True
+        )
         self.enable_nlp_analysis = self.config.get("enable_nlp_analysis", True)
 
         # Performance tracking
@@ -124,11 +123,15 @@ class MLPipelineOrchestrator:
             if self.enable_vulnerability_prediction and self.vulnerability_predictor:
                 vuln_start = time.time()
                 try:
-                    vulnerabilities = self._run_vulnerability_prediction(reveng_results, file_type)
+                    vulnerabilities = self._run_vulnerability_prediction(
+                        reveng_results, file_type
+                    )
                     pipeline_result.vulnerability_predictions = vulnerabilities
                     pipeline_result.stages_completed.append("vulnerability_prediction")
 
-                    self.execution_times["vulnerability_prediction"] = time.time() - vuln_start
+                    self.execution_times["vulnerability_prediction"] = (
+                        time.time() - vuln_start
+                    )
                     self.logger.info(
                         f"Vulnerability prediction completed: {len(vulnerabilities)} predictions"
                     )
@@ -142,12 +145,18 @@ class MLPipelineOrchestrator:
             if self.enable_malware_classification and self.malware_classifier:
                 malware_start = time.time()
                 try:
-                    classification = self._run_malware_classification(file_path, reveng_results)
+                    classification = self._run_malware_classification(
+                        file_path, reveng_results
+                    )
                     pipeline_result.malware_classifications = [classification]
                     pipeline_result.stages_completed.append("malware_classification")
 
-                    self.execution_times["malware_classification"] = time.time() - malware_start
-                    self.logger.info(f"Malware classification completed: {classification.family}")
+                    self.execution_times["malware_classification"] = (
+                        time.time() - malware_start
+                    )
+                    self.logger.info(
+                        f"Malware classification completed: {classification.family}"
+                    )
 
                 except Exception as e:
                     error_msg = f"Malware classification failed: {str(e)}"
@@ -192,7 +201,9 @@ class MLPipelineOrchestrator:
             )
             pipeline_result.evidence = [evidence]
 
-            self.logger.info(f"ML pipeline completed in {pipeline_result.execution_time:.2f}s")
+            self.logger.info(
+                f"ML pipeline completed in {pipeline_result.execution_time:.2f}s"
+            )
             return pipeline_result
 
         except Exception as e:
@@ -220,7 +231,9 @@ class MLPipelineOrchestrator:
 
         if code:
             language = file_type.language if file_type else "c"
-            vulnerabilities = self.vulnerability_predictor.predict_vulnerabilities(code, language)
+            vulnerabilities = self.vulnerability_predictor.predict_vulnerabilities(
+                code, language
+            )
 
             # Filter high-confidence predictions
             high_confidence_vulns = [v for v in vulnerabilities if v.confidence > 0.7]
@@ -296,7 +309,9 @@ class MLPipelineOrchestrator:
             else None
         )
         code_summary = (
-            ml_pipeline_result.code_summaries[0] if ml_pipeline_result.code_summaries else None
+            ml_pipeline_result.code_summaries[0]
+            if ml_pipeline_result.code_summaries
+            else None
         )
 
         # Create enhanced result
@@ -336,7 +351,9 @@ class MLPipelineOrchestrator:
 
         return models
 
-    def _calculate_confidence_scores(self, ml_result: MLPipelineResult) -> Dict[str, float]:
+    def _calculate_confidence_scores(
+        self, ml_result: MLPipelineResult
+    ) -> Dict[str, float]:
         """Calculate overall confidence scores for ML results"""
         scores = {}
 
@@ -349,7 +366,9 @@ class MLPipelineOrchestrator:
 
         # Malware classification confidence
         if ml_result.malware_classifications:
-            scores["malware_classification"] = ml_result.malware_classifications[0].confidence
+            scores["malware_classification"] = ml_result.malware_classifications[
+                0
+            ].confidence
 
         # NLP analysis confidence (based on semantic analysis quality)
         if ml_result.code_summaries:
@@ -392,10 +411,14 @@ class MLPipelineOrchestrator:
             # Train vulnerability predictor
             if self.vulnerability_predictor:
                 self.logger.info("Training vulnerability prediction models...")
-                training_data = self.vulnerability_predictor.generate_synthetic_training_data()
+                training_data = (
+                    self.vulnerability_predictor.generate_synthetic_training_data()
+                )
 
                 for model_type in self.vulnerability_predictor.models.keys():
-                    success = self.vulnerability_predictor.train_model(training_data, model_type)
+                    success = self.vulnerability_predictor.train_model(
+                        training_data, model_type
+                    )
                     training_results[f"vulnerability_{model_type}"] = success
 
             # Train malware classifier

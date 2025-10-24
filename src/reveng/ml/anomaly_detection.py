@@ -5,16 +5,12 @@ Advanced machine learning models for detecting anomalies in binary analysis.
 """
 
 import json
-import os
-import sys
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
-import numpy as np
 
-from ..core.errors import AnalysisFailureError, REVENGError, create_error_context
 from ..core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -249,7 +245,9 @@ class MLAnomalyDetection:
             if anomaly_types is None:
                 anomaly_types = list(AnomalyType)
 
-            self.logger.info(f"Detecting anomalies of types: {[t.value for t in anomaly_types]}")
+            self.logger.info(
+                f"Detecting anomalies of types: {[t.value for t in anomaly_types]}"
+            )
 
             # Extract features
             features = self._extract_all_features(analysis_data)
@@ -272,7 +270,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to detect anomalies: {e}")
             raise
 
-    def _extract_all_features(self, analysis_data: Dict[str, Any]) -> List[AnomalyFeature]:
+    def _extract_all_features(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[AnomalyFeature]:
         """Extract all features from analysis data"""
 
         try:
@@ -283,7 +283,9 @@ class MLAnomalyDetection:
                     extracted_features = extractor_func(analysis_data)
                     features.extend(extracted_features)
                 except Exception as e:
-                    self.logger.warning(f"Failed to extract {extractor_name} features: {e}")
+                    self.logger.warning(
+                        f"Failed to extract {extractor_name} features: {e}"
+                    )
 
             self.logger.info(f"Extracted {len(features)} features")
             return features
@@ -292,7 +294,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to extract features: {e}")
             return []
 
-    def _extract_entropy_features(self, analysis_data: Dict[str, Any]) -> List[AnomalyFeature]:
+    def _extract_entropy_features(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[AnomalyFeature]:
         """Extract entropy-based features"""
 
         try:
@@ -330,7 +334,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to extract entropy features: {e}")
             return []
 
-    def _extract_api_features(self, analysis_data: Dict[str, Any]) -> List[AnomalyFeature]:
+    def _extract_api_features(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[AnomalyFeature]:
         """Extract API call features"""
 
         try:
@@ -342,7 +348,9 @@ class MLAnomalyDetection:
                 # API count
                 api_count = len(api_analysis.get("api_calls", []))
                 features.append(
-                    AnomalyFeature(name="api_count", value=api_count, type="count", importance=0.7)
+                    AnomalyFeature(
+                        name="api_count", value=api_count, type="count", importance=0.7
+                    )
                 )
 
                 # Suspicious API count
@@ -375,7 +383,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to extract API features: {e}")
             return []
 
-    def _extract_string_features(self, analysis_data: Dict[str, Any]) -> List[AnomalyFeature]:
+    def _extract_string_features(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[AnomalyFeature]:
         """Extract string-based features"""
 
         try:
@@ -412,7 +422,8 @@ class MLAnomalyDetection:
                     s
                     for s in strings
                     if any(
-                        keyword in s.lower() for keyword in ["password", "key", "secret", "token"]
+                        keyword in s.lower()
+                        for keyword in ["password", "key", "secret", "token"]
                     )
                 ]
                 features.append(
@@ -430,7 +441,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to extract string features: {e}")
             return []
 
-    def _extract_import_features(self, analysis_data: Dict[str, Any]) -> List[AnomalyFeature]:
+    def _extract_import_features(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[AnomalyFeature]:
         """Extract import table features"""
 
         try:
@@ -467,7 +480,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to extract import features: {e}")
             return []
 
-    def _extract_export_features(self, analysis_data: Dict[str, Any]) -> List[AnomalyFeature]:
+    def _extract_export_features(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[AnomalyFeature]:
         """Extract export table features"""
 
         try:
@@ -493,7 +508,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to extract export features: {e}")
             return []
 
-    def _extract_section_features(self, analysis_data: Dict[str, Any]) -> List[AnomalyFeature]:
+    def _extract_section_features(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[AnomalyFeature]:
         """Extract section features"""
 
         try:
@@ -531,7 +548,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to extract section features: {e}")
             return []
 
-    def _extract_resource_features(self, analysis_data: Dict[str, Any]) -> List[AnomalyFeature]:
+    def _extract_resource_features(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[AnomalyFeature]:
         """Extract resource features"""
 
         try:
@@ -561,7 +580,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to extract resource features: {e}")
             return []
 
-    def _extract_behavioral_features(self, analysis_data: Dict[str, Any]) -> List[AnomalyFeature]:
+    def _extract_behavioral_features(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[AnomalyFeature]:
         """Extract behavioral features"""
 
         try:
@@ -609,7 +630,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to extract behavioral features: {e}")
             return []
 
-    def _extract_network_features(self, analysis_data: Dict[str, Any]) -> List[AnomalyFeature]:
+    def _extract_network_features(
+        self, analysis_data: Dict[str, Any]
+    ) -> List[AnomalyFeature]:
         """Extract network features"""
 
         try:
@@ -669,7 +692,9 @@ class MLAnomalyDetection:
                 )
 
                 # Suspicious file operation count
-                suspicious_ops = len([op for op in file_ops if op.get("suspicious", False)])
+                suspicious_ops = len(
+                    [op for op in file_ops if op.get("suspicious", False)]
+                )
                 features.append(
                     AnomalyFeature(
                         name="suspicious_file_operation_count",
@@ -704,7 +729,9 @@ class MLAnomalyDetection:
                         severity=AnomalySeverity.HIGH,
                         confidence=0.8,
                         score=suspicious_api_count / 10.0,
-                        features=[f for f in features if f.name == "suspicious_api_count"],
+                        features=[
+                            f for f in features if f.name == "suspicious_api_count"
+                        ],
                         description=f"High number of suspicious API calls detected: {suspicious_api_count}",
                         recommendations=[
                             "Review API call patterns",
@@ -715,7 +742,9 @@ class MLAnomalyDetection:
                 )
 
             # Check for process creation anomalies
-            process_count = next((f.value for f in features if f.name == "process_count"), 0)
+            process_count = next(
+                (f.value for f in features if f.name == "process_count"), 0
+            )
             if process_count > 10:
                 anomalies.append(
                     AnomalyResult(
@@ -734,7 +763,9 @@ class MLAnomalyDetection:
                 )
 
             # Check for file operation anomalies
-            file_op_count = next((f.value for f in features if f.name == "file_operation_count"), 0)
+            file_op_count = next(
+                (f.value for f in features if f.name == "file_operation_count"), 0
+            )
             if file_op_count > 50:
                 anomalies.append(
                     AnomalyResult(
@@ -742,7 +773,9 @@ class MLAnomalyDetection:
                         severity=AnomalySeverity.MEDIUM,
                         confidence=0.5,
                         score=file_op_count / 100.0,
-                        features=[f for f in features if f.name == "file_operation_count"],
+                        features=[
+                            f for f in features if f.name == "file_operation_count"
+                        ],
                         description=f"High volume of file operations: {file_op_count}",
                         recommendations=[
                             "Monitor file system access",
@@ -787,7 +820,9 @@ class MLAnomalyDetection:
                     )
 
             # Check for section anomalies
-            section_count = next((f.value for f in features if f.name == "section_count"), 0)
+            section_count = next(
+                (f.value for f in features if f.name == "section_count"), 0
+            )
             if section_count > 20:
                 anomalies.append(
                     AnomalyResult(
@@ -820,7 +855,9 @@ class MLAnomalyDetection:
             anomalies = []
 
             # Check for string anomalies
-            string_count = next((f.value for f in features if f.name == "string_count"), 0)
+            string_count = next(
+                (f.value for f in features if f.name == "string_count"), 0
+            )
             if string_count > 1000:
                 anomalies.append(
                     AnomalyResult(
@@ -839,7 +876,9 @@ class MLAnomalyDetection:
                 )
 
             # Check for resource anomalies
-            resource_count = next((f.value for f in features if f.name == "resource_count"), 0)
+            resource_count = next(
+                (f.value for f in features if f.name == "resource_count"), 0
+            )
             if resource_count > 100:
                 anomalies.append(
                     AnomalyResult(
@@ -882,7 +921,9 @@ class MLAnomalyDetection:
                         severity=AnomalySeverity.HIGH,
                         confidence=0.8,
                         score=suspicious_string_count / 5.0,
-                        features=[f for f in features if f.name == "suspicious_string_count"],
+                        features=[
+                            f for f in features if f.name == "suspicious_string_count"
+                        ],
                         description=f"Suspicious string patterns detected: {suspicious_string_count}",
                         recommendations=[
                             "Review string content",
@@ -893,7 +934,9 @@ class MLAnomalyDetection:
                 )
 
             # Check for API pattern anomalies
-            api_diversity = next((f.value for f in features if f.name == "api_diversity"), 0)
+            api_diversity = next(
+                (f.value for f in features if f.name == "api_diversity"), 0
+            )
             if api_diversity > 50:
                 anomalies.append(
                     AnomalyResult(
@@ -951,7 +994,9 @@ class MLAnomalyDetection:
             self.logger.error(f"Failed to detect temporal anomalies: {e}")
             return []
 
-    def save_anomaly_results(self, anomalies: List[AnomalyResult], output_file: str) -> bool:
+    def save_anomaly_results(
+        self, anomalies: List[AnomalyResult], output_file: str
+    ) -> bool:
         """Save anomaly detection results to file"""
 
         try:
@@ -985,35 +1030,59 @@ class MLAnomalyDetection:
                     "total_anomalies": len(anomalies),
                     "severity_distribution": {
                         "CRITICAL": sum(
-                            1 for a in anomalies if a.severity == AnomalySeverity.CRITICAL
+                            1
+                            for a in anomalies
+                            if a.severity == AnomalySeverity.CRITICAL
                         ),
-                        "HIGH": sum(1 for a in anomalies if a.severity == AnomalySeverity.HIGH),
-                        "MEDIUM": sum(1 for a in anomalies if a.severity == AnomalySeverity.MEDIUM),
-                        "LOW": sum(1 for a in anomalies if a.severity == AnomalySeverity.LOW),
-                        "INFO": sum(1 for a in anomalies if a.severity == AnomalySeverity.INFO),
+                        "HIGH": sum(
+                            1 for a in anomalies if a.severity == AnomalySeverity.HIGH
+                        ),
+                        "MEDIUM": sum(
+                            1 for a in anomalies if a.severity == AnomalySeverity.MEDIUM
+                        ),
+                        "LOW": sum(
+                            1 for a in anomalies if a.severity == AnomalySeverity.LOW
+                        ),
+                        "INFO": sum(
+                            1 for a in anomalies if a.severity == AnomalySeverity.INFO
+                        ),
                     },
                     "type_distribution": {
                         "BEHAVIORAL": sum(
-                            1 for a in anomalies if a.anomaly_type == AnomalyType.BEHAVIORAL
+                            1
+                            for a in anomalies
+                            if a.anomaly_type == AnomalyType.BEHAVIORAL
                         ),
                         "STRUCTURAL": sum(
-                            1 for a in anomalies if a.anomaly_type == AnomalyType.STRUCTURAL
+                            1
+                            for a in anomalies
+                            if a.anomaly_type == AnomalyType.STRUCTURAL
                         ),
                         "STATISTICAL": sum(
-                            1 for a in anomalies if a.anomaly_type == AnomalyType.STATISTICAL
+                            1
+                            for a in anomalies
+                            if a.anomaly_type == AnomalyType.STATISTICAL
                         ),
                         "PATTERN": sum(
-                            1 for a in anomalies if a.anomaly_type == AnomalyType.PATTERN
+                            1
+                            for a in anomalies
+                            if a.anomaly_type == AnomalyType.PATTERN
                         ),
                         "TEMPORAL": sum(
-                            1 for a in anomalies if a.anomaly_type == AnomalyType.TEMPORAL
+                            1
+                            for a in anomalies
+                            if a.anomaly_type == AnomalyType.TEMPORAL
                         ),
                     },
                     "average_confidence": (
-                        sum(a.confidence for a in anomalies) / len(anomalies) if anomalies else 0
+                        sum(a.confidence for a in anomalies) / len(anomalies)
+                        if anomalies
+                        else 0
                     ),
                     "average_score": (
-                        sum(a.score for a in anomalies) / len(anomalies) if anomalies else 0
+                        sum(a.score for a in anomalies) / len(anomalies)
+                        if anomalies
+                        else 0
                     ),
                 },
             }

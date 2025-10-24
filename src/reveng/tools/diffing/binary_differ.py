@@ -13,7 +13,7 @@ import logging
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -92,11 +92,17 @@ class BinaryDiffer:
         analysis_v2 = self._analyze_binary(binary_v2_path)
 
         # Match functions by name first
-        matched_by_name = self._match_by_name(analysis_v1["functions"], analysis_v2["functions"])
+        matched_by_name = self._match_by_name(
+            analysis_v1["functions"], analysis_v2["functions"]
+        )
 
         # Match remaining functions by code similarity
-        unmatched_v1 = set(analysis_v1["functions"].keys()) - set(matched_by_name.keys())
-        unmatched_v2 = set(analysis_v2["functions"].keys()) - set(matched_by_name.values())
+        unmatched_v1 = set(analysis_v1["functions"].keys()) - set(
+            matched_by_name.keys()
+        )
+        unmatched_v2 = set(analysis_v2["functions"].keys()) - set(
+            matched_by_name.values()
+        )
 
         matched_by_similarity = self._match_by_similarity(
             {k: analysis_v1["functions"][k] for k in unmatched_v1},
@@ -163,9 +169,13 @@ class BinaryDiffer:
         new = list(set(analysis_v2["functions"].keys()) - matched_v2)
 
         # Calculate overall similarity
-        total_functions = max(len(analysis_v1["functions"]), len(analysis_v2["functions"]))
+        total_functions = max(
+            len(analysis_v1["functions"]), len(analysis_v2["functions"])
+        )
         if total_functions > 0:
-            similarity_score = (len(unchanged) + len(matched_by_similarity)) / total_functions
+            similarity_score = (
+                len(unchanged) + len(matched_by_similarity)
+            ) / total_functions
         else:
             similarity_score = 0.0
 
@@ -248,7 +258,7 @@ class BinaryDiffer:
         if data[:2] == b"MZ":  # PE file
             # Simple heuristic: look for function prologues
             # Real implementation would use proper disassembly
-            prologue_pattern = b"\x55\x8B\xEC"  # push ebp; mov ebp, esp
+            prologue_pattern = b"\x55\x8b\xec"  # push ebp; mov ebp, esp
 
             offset = 0
             func_count = 0
@@ -305,9 +315,14 @@ class BinaryDiffer:
             best_similarity = 0.0
 
             for func_v2_name, func_v2_data in functions_v2.items():
-                similarity = self._calculate_function_similarity(func_v1_data, func_v2_data)
+                similarity = self._calculate_function_similarity(
+                    func_v1_data, func_v2_data
+                )
 
-                if similarity > best_similarity and similarity >= self.similarity_threshold:
+                if (
+                    similarity > best_similarity
+                    and similarity >= self.similarity_threshold
+                ):
                     best_similarity = similarity
                     best_match = func_v2_name
 
@@ -383,7 +398,9 @@ class BinaryDiffer:
                 opcodes = matcher.get_opcodes()
 
                 modifications = sum(
-                    1 for tag, _, _, _, _ in opcodes if tag in ["replace", "insert", "delete"]
+                    1
+                    for tag, _, _, _, _ in opcodes
+                    if tag in ["replace", "insert", "delete"]
                 )
                 changes.append(f"{modifications} code block(s) changed")
 
@@ -392,30 +409,32 @@ class BinaryDiffer:
     def generate_report(self, diff_result: DiffResult, format: str = "text") -> str:
         """Generate diff report"""
         if format == "markdown":
-            report = f"# Binary Diff Report\n\n"
+            report = "# Binary Diff Report\n\n"
             report += f"**Binary v1:** `{Path(diff_result.binary_v1).name}`\n"
             report += f"**Binary v2:** `{Path(diff_result.binary_v2).name}`\n\n"
 
-            report += f"## Summary\n\n"
+            report += "## Summary\n\n"
             report += f"- **Overall Similarity:** {diff_result.similarity_score:.1%}\n"
             report += f"- **Total Functions (v1):** {diff_result.total_functions_v1}\n"
-            report += f"- **Total Functions (v2):** {diff_result.total_functions_v2}\n\n"
+            report += (
+                f"- **Total Functions (v2):** {diff_result.total_functions_v2}\n\n"
+            )
 
-            report += f"## Changes\n\n"
-            report += f"| Category | Count |\n"
-            report += f"|----------|-------|\n"
+            report += "## Changes\n\n"
+            report += "| Category | Count |\n"
+            report += "|----------|-------|\n"
             report += f"| Unchanged | {len(diff_result.unchanged_functions)} |\n"
             report += f"| Modified | {len(diff_result.modified_functions)} |\n"
             report += f"| New | {len(diff_result.new_functions)} |\n"
             report += f"| Deleted | {len(diff_result.deleted_functions)} |\n\n"
 
             if diff_result.modified_functions:
-                report += f"## Modified Functions\n\n"
+                report += "## Modified Functions\n\n"
                 for match in diff_result.modified_functions[:20]:
                     report += f"### {match.func_v1_name} → {match.func_v2_name}\n\n"
                     report += f"- **Similarity:** {match.similarity:.1%}\n"
                     if match.changes:
-                        report += f"- **Changes:**\n"
+                        report += "- **Changes:**\n"
                         for change in match.changes:
                             report += f"  - {change}\n"
                     report += "\n"
@@ -429,21 +448,21 @@ class BinaryDiffer:
                 report += "\n"
 
         else:  # text format
-            report = f"Binary Diff Report\n"
+            report = "Binary Diff Report\n"
             report += f"{'=' * 60}\n\n"
             report += f"Binary v1: {Path(diff_result.binary_v1).name}\n"
             report += f"Binary v2: {Path(diff_result.binary_v2).name}\n\n"
 
             report += f"Overall Similarity: {diff_result.similarity_score:.1%}\n\n"
 
-            report += f"Summary:\n"
+            report += "Summary:\n"
             report += f"  Unchanged: {len(diff_result.unchanged_functions)}\n"
             report += f"  Modified:  {len(diff_result.modified_functions)}\n"
             report += f"  New:       {len(diff_result.new_functions)}\n"
             report += f"  Deleted:   {len(diff_result.deleted_functions)}\n\n"
 
             if diff_result.modified_functions:
-                report += f"Modified Functions:\n"
+                report += "Modified Functions:\n"
                 for match in diff_result.modified_functions[:10]:
                     report += f"  {match.func_v1_name} -> {match.func_v2_name} ({match.similarity:.1%} similar)\n"
                     if match.changes:

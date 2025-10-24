@@ -7,14 +7,13 @@ Dedicated Flask service for AI-enhanced analysis capabilities.
 Provides REST API endpoints for enhanced analysis modules.
 """
 
-import json
 import logging
 import os
 import sys
 import traceback
 
 from flask import Flask, jsonify, request
-from werkzeug.exceptions import BadRequest, InternalServerError
+from werkzeug.exceptions import BadRequest
 
 # Add tools directory to path
 sys.path.append("/app")
@@ -93,7 +92,7 @@ def analyze_enhanced():
             raise BadRequest("Missing file_path in request")
 
         file_path = data["file_path"]
-        options = data.get("options", {})
+        data.get("options", {})
 
         logger.info(f"Starting enhanced analysis for: {file_path}")
 
@@ -202,7 +201,9 @@ def analyze_threat_intelligence():
 
         logger.info(f"Threat intelligence analysis completed: {analysis_type}")
 
-        return jsonify({"status": "success", "analysis_type": analysis_type, "result": result})
+        return jsonify(
+            {"status": "success", "analysis_type": analysis_type, "result": result}
+        )
 
     except Exception as e:
         logger.error(f"Threat intelligence analysis failed: {str(e)}")
@@ -227,7 +228,9 @@ def generate_demonstration():
         elif demo_type == "reconstruction_demo":
             original = data.get("original")
             reconstructed = data.get("reconstructed")
-            result = demo_generator.generate_reconstruction_demo(original, reconstructed)
+            result = demo_generator.generate_reconstruction_demo(
+                original, reconstructed
+            )
         elif demo_type == "vulnerability_showcase":
             vulnerabilities = data.get("vulnerabilities", [])
             result = demo_generator.create_vulnerability_showcase(vulnerabilities)

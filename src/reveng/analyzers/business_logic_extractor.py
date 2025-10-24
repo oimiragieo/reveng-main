@@ -5,15 +5,10 @@ Extract high-level business logic from binaries including application domain,
 data flows, file operations, and behavioral patterns.
 """
 
-import json
-import logging
-import os
 import re
-import sys
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..core.errors import AnalysisFailureError, create_error_context
 from ..core.logger import get_logger

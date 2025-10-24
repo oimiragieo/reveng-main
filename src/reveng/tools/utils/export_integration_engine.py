@@ -9,23 +9,20 @@ builds custom report templates and branding options.
 Requirements: 7.1, 7.3, 7.4
 """
 
-import base64
-import hashlib
 import json
 import logging
 import uuid
 import xml.etree.ElementTree as ET
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from xml.dom import minidom
 
 import pandas as pd
 import requests
-import yaml
-from jinja2 import Environment, FileSystemLoader, Template
+from jinja2 import Environment, FileSystemLoader
 from stix2 import (
     TLP_AMBER,
     TLP_GREEN,
@@ -36,7 +33,6 @@ from stix2 import (
     Identity,
     Indicator,
     Malware,
-    Relationship,
     Report,
     ThreatActor,
     Vulnerability,
@@ -333,7 +329,7 @@ class ExportIntegrationEngine:
     YARA Rule: {rule_name}
     Description: {threat_intel.description}
     Author: Security Research Team
-    Date: {datetime.now().strftime('%Y-%m-%d')}
+    Date: {datetime.now().strftime("%Y-%m-%d")}
     TLP: {threat_intel.tlp_level.value.upper()}
 */
 
@@ -341,9 +337,9 @@ rule {rule_name} {{
     meta:
         description = "{threat_intel.description}"
         author = "Security Research Team"
-        date = "{datetime.now().strftime('%Y-%m-%d')}"
-        threat_actor = "{threat_intel.threat_actor or 'Unknown'}"
-        malware_family = "{threat_intel.malware_family or 'Unknown'}"
+        date = "{datetime.now().strftime("%Y-%m-%d")}"
+        threat_actor = "{threat_intel.threat_actor or "Unknown"}"
+        malware_family = "{threat_intel.malware_family or "Unknown"}"
         confidence = "{threat_intel.confidence}"
         tlp = "{threat_intel.tlp_level.value}"
 
@@ -361,14 +357,14 @@ rule {rule_name} {{
         if additional_patterns:
             for pattern in additional_patterns:
                 string_count += 1
-                yara_rule += f'        $s{string_count} = {pattern["pattern"]}\n'
+                yara_rule += f"        $s{string_count} = {pattern['pattern']}\n"
 
         # Add condition
         if string_count > 0:
-            yara_rule += f"""
+            yara_rule += """
     condition:
         any of ($s*)
-}}
+}
 """
         else:
             yara_rule += """
@@ -426,7 +422,9 @@ rule {rule_name} {{
         logger.info(f"IOC CSV exported: {export_path}")
         return str(export_path)
 
-    def export_siem_format(self, threat_intel: ThreatIntelligence, siem_type: SIEMType) -> str:
+    def export_siem_format(
+        self, threat_intel: ThreatIntelligence, siem_type: SIEMType
+    ) -> str:
         """
         Export threat intelligence in SIEM-specific format
 
@@ -565,7 +563,9 @@ rule {rule_name} {{
                 )
                 return True
             else:
-                logger.error(f"Failed to push STIX data: {response.status_code} - {response.text}")
+                logger.error(
+                    f"Failed to push STIX data: {response.status_code} - {response.text}"
+                )
                 return False
 
         except Exception as e:
@@ -680,7 +680,8 @@ rule {rule_name} {{
     def _export_stix_json(self, bundle: Bundle, threat_id: str) -> str:
         """Export STIX bundle as JSON"""
         export_path = (
-            self.output_dir / f"stix2_{threat_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            self.output_dir
+            / f"stix2_{threat_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         )
 
         with open(export_path, "w", encoding="utf-8") as f:
@@ -711,7 +712,8 @@ rule {rule_name} {{
         xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")
 
         export_path = (
-            self.output_dir / f"stix2_{threat_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
+            self.output_dir
+            / f"stix2_{threat_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
         )
         with open(export_path, "w", encoding="utf-8") as f:
             f.write(xml_str)
@@ -900,7 +902,9 @@ rule {rule_name} {{
         return str(export_path)
 
     # Helper methods for API integration
-    def _format_for_splunk_api(self, threat_intel: ThreatIntelligence) -> Dict[str, Any]:
+    def _format_for_splunk_api(
+        self, threat_intel: ThreatIntelligence
+    ) -> Dict[str, Any]:
         """Format data for Splunk API"""
         events = []
         for ioc in threat_intel.iocs:
@@ -919,7 +923,9 @@ rule {rule_name} {{
             events.append(event)
         return {"events": events}
 
-    def _format_for_elastic_api(self, threat_intel: ThreatIntelligence) -> Dict[str, Any]:
+    def _format_for_elastic_api(
+        self, threat_intel: ThreatIntelligence
+    ) -> Dict[str, Any]:
         """Format data for Elasticsearch API"""
         docs = []
         for ioc in threat_intel.iocs:
@@ -935,7 +941,9 @@ rule {rule_name} {{
             docs.append(doc)
         return {"docs": docs}
 
-    def _format_for_sentinel_api(self, threat_intel: ThreatIntelligence) -> Dict[str, Any]:
+    def _format_for_sentinel_api(
+        self, threat_intel: ThreatIntelligence
+    ) -> Dict[str, Any]:
         """Format data for Microsoft Sentinel API"""
         indicators = []
         for ioc in threat_intel.iocs:
@@ -948,7 +956,9 @@ rule {rule_name} {{
                     "patternType": "stix",
                     "source": ioc.source,
                     "confidence": int(ioc.confidence * 100),
-                    "threatTypes": [threat_intel.malware_family or "malicious-activity"],
+                    "threatTypes": [
+                        threat_intel.malware_family or "malicious-activity"
+                    ],
                 },
             }
             indicators.append(indicator)
@@ -968,7 +978,9 @@ rule {rule_name} {{
             branded_content = branded_content + "\n" + branding.footer_template
 
         if branding.css_overrides:
-            branded_content = branded_content.replace("{{CUSTOM_CSS}}", branding.css_overrides)
+            branded_content = branded_content.replace(
+                "{{CUSTOM_CSS}}", branding.css_overrides
+            )
 
         return branded_content
 
@@ -1127,7 +1139,9 @@ if __name__ == "__main__":
         print(f"Elasticsearch export: {elastic_path}")
 
         # Custom format export
-        custom_path = engine.export_custom_format(sample_threat_intel, "custom_json", "json")
+        custom_path = engine.export_custom_format(
+            sample_threat_intel, "custom_json", "json"
+        )
         print(f"Custom JSON export: {custom_path}")
 
     except Exception as e:

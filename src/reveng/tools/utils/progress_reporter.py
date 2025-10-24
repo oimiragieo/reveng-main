@@ -14,8 +14,7 @@ Features:
 """
 
 import logging
-from pathlib import Path
-from typing import Any, Callable, Iterator, Optional
+from typing import Iterator, Optional
 
 try:
     from tqdm import tqdm
@@ -170,7 +169,9 @@ class PipelineProgress:
         self.current_step = step_num
 
         # Update main progress bar
-        self.main_bar.set_description(f"Step {step_num}/{self.total_steps}: {step_name}")
+        self.main_bar.set_description(
+            f"Step {step_num}/{self.total_steps}: {step_name}"
+        )
 
         # Create substep bar if needed
         if substeps:
@@ -343,7 +344,7 @@ if __name__ == "__main__":
         pipeline.start_step(1, "AI Analysis", substeps=10)
         for i in range(10):
             time.sleep(0.1)
-            pipeline.update_substep(1, f"Analyzing chunk {i+1}")
+            pipeline.update_substep(1, f"Analyzing chunk {i + 1}")
         pipeline.complete_step()
 
         # Step 2

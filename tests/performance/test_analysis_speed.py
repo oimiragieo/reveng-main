@@ -48,7 +48,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 5.0  # Should complete within 5 seconds
 
     @pytest.mark.performance
@@ -76,7 +76,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 30.0  # Should complete within 30 seconds
 
     @pytest.mark.performance
@@ -104,7 +104,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 120.0  # Should complete within 2 minutes
 
     @pytest.mark.performance
@@ -139,7 +139,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 60.0  # Enhanced analysis should complete within 1 minute
 
     @pytest.mark.performance
@@ -163,7 +163,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 20.0  # Java analysis should complete within 20 seconds
 
     @pytest.mark.performance
@@ -187,7 +187,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 25.0  # C# analysis should complete within 25 seconds
 
     @pytest.mark.performance
@@ -211,7 +211,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 15.0  # Python analysis should complete within 15 seconds
 
     @pytest.mark.performance
@@ -235,7 +235,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 30.0  # Native analysis should complete within 30 seconds
 
     @pytest.mark.performance
@@ -316,7 +316,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
 
             # Performance regression check
             # This should be faster than previous versions
@@ -335,7 +335,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is False
+            assert isinstance(result, dict) and result.get("status") != "success"
             assert duration < 5.0  # Should fail quickly due to timeout
 
     @pytest.mark.performance
@@ -367,7 +367,7 @@ class TestAnalysisSpeed:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 10.0  # Should complete within 10 seconds
             assert memory_increase < 100.0  # Should not use more than 100MB additional memory
 
@@ -392,7 +392,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 10.0  # Should complete within 10 seconds
 
             # CPU usage should be reasonable
@@ -420,7 +420,7 @@ class TestAnalysisSpeed:
             result = analyzer.analyze_binary()
             duration = performance_benchmark.stop()
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert duration < 10.0  # Should complete within 10 seconds
 
             # I/O operations should be efficient

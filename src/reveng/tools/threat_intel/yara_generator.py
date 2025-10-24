@@ -67,7 +67,7 @@ class YARARule:
                 rule += f"        ${var_name} = {{ {hex_pattern} }}\n"
 
         # Condition section
-        rule += f"\n    condition:\n"
+        rule += "\n    condition:\n"
         for line in self.condition.split("\n"):
             rule += f"        {line}\n"
 
@@ -127,9 +127,13 @@ class YARAGenerator:
             strings.extend([s.decode("ascii") for s in ascii_strings])
 
             # Extract Unicode strings
-            unicode_pattern = rb"(?:[\x20-\x7E]\x00){" + str(min_length).encode() + rb",}"
+            unicode_pattern = (
+                rb"(?:[\x20-\x7E]\x00){" + str(min_length).encode() + rb",}"
+            )
             unicode_strings = re.findall(unicode_pattern, data)
-            strings.extend([s.decode("utf-16le", errors="ignore") for s in unicode_strings])
+            strings.extend(
+                [s.decode("utf-16le", errors="ignore") for s in unicode_strings]
+            )
 
         except Exception as e:
             logger.error(f"Failed to extract strings: {e}")
@@ -175,11 +179,17 @@ class YARAGenerator:
 
         for string in strings:
             # Skip if matches exclude patterns
-            if any(re.search(pattern, string, re.IGNORECASE) for pattern in exclude_patterns):
+            if any(
+                re.search(pattern, string, re.IGNORECASE)
+                for pattern in exclude_patterns
+            ):
                 continue
 
             # Prioritize interesting patterns
-            if any(re.search(pattern, string, re.IGNORECASE) for pattern in interesting_patterns):
+            if any(
+                re.search(pattern, string, re.IGNORECASE)
+                for pattern in interesting_patterns
+            ):
                 unique.append(string)
                 continue
 
@@ -332,23 +342,25 @@ class YARAGenerator:
 
         # String matches
         if string_count >= 3:
-            conditions.append(f"3 of ($s*)")
+            conditions.append("3 of ($s*)")
         elif string_count >= 1:
-            conditions.append(f"any of ($s*)")
+            conditions.append("any of ($s*)")
 
         # Byte pattern matches
         if pattern_count >= 2:
-            conditions.append(f"2 of ($b*)")
+            conditions.append("2 of ($b*)")
         elif pattern_count >= 1:
-            conditions.append(f"any of ($b*)")
+            conditions.append("any of ($b*)")
 
-        # Combine with OR
-        condition = " and\n".join(
-            [
-                conditions[0],
-                (f"(\n    {' or\n    '.join(conditions[1:])}\n)" if len(conditions) > 1 else ""),
-            ]  # MZ header
-        )
+        # Combine with OR while keeping syntax valid
+        condition_parts = []
+        if conditions:
+            condition_parts.append(conditions[0])
+            if len(conditions) > 1:
+                tail = " or\n    ".join(conditions[1:])
+                condition_parts.append(f"(\n    {tail}\n)")
+
+        condition = " and\n".join(part for part in condition_parts if part)
 
         # Create description
         description = f"Auto-generated YARA rule for {file_name}"
@@ -438,7 +450,9 @@ class YARAGenerator:
 
         rule.strings = optimized_strings
 
-        logger.info(f"Optimized rule {rule.rule_name}: {len(optimized_strings)} unique strings")
+        logger.info(
+            f"Optimized rule {rule.rule_name}: {len(optimized_strings)} unique strings"
+        )
         return rule
 
 

@@ -14,10 +14,9 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
 from .analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
-from .version import get_version, get_version_string
+from .version import get_version_string
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -40,7 +39,9 @@ def create_parser() -> argparse.ArgumentParser:
     )
 
     # Main command
-    subparsers = parser.add_subparsers(dest="command", help="Available commands", metavar="COMMAND")
+    subparsers = parser.add_subparsers(
+        dest="command", help="Available commands", metavar="COMMAND"
+    )
 
     # Analyze command
     analyze_parser = subparsers.add_parser(
@@ -93,7 +94,9 @@ def create_parser() -> argparse.ArgumentParser:
         "--analysis-results", help="Path to previous analysis results JSON file"
     )
     ask_parser.add_argument(
-        "--conversational", action="store_true", help="Enable conversational mode for follow-up questions"
+        "--conversational",
+        action="store_true",
+        help="Enable conversational mode for follow-up questions",
     )
 
     # AI Assistant command (New)
@@ -102,22 +105,22 @@ def create_parser() -> argparse.ArgumentParser:
         help="AI Assistant for interactive binary analysis",
         description="Start an interactive AI assistant session for comprehensive binary analysis",
     )
-    ai_parser.add_argument(
-        "binary_path", help="Path to binary file to analyze"
-    )
+    ai_parser.add_argument("binary_path", help="Path to binary file to analyze")
     ai_parser.add_argument(
         "--analysis-type",
         choices=["comprehensive", "security", "triage", "custom"],
         default="comprehensive",
-        help="Type of analysis to perform (default: comprehensive)"
+        help="Type of analysis to perform (default: comprehensive)",
     )
     ai_parser.add_argument(
         "--goals",
         nargs="+",
-        help="Analysis goals (e.g., understand_functionality find_vulnerabilities assess_threats)"
+        help="Analysis goals (e.g., understand_functionality find_vulnerabilities assess_threats)",
     )
     ai_parser.add_argument(
-        "--interactive", action="store_true", help="Enable interactive mode for follow-up questions"
+        "--interactive",
+        action="store_true",
+        help="Enable interactive mode for follow-up questions",
     )
 
     # Triage command (Instant Triage)
@@ -127,7 +130,9 @@ def create_parser() -> argparse.ArgumentParser:
         description="Perform instant triage analysis for incident response",
     )
     triage_parser.add_argument("binary_path", help="Path to binary file")
-    triage_parser.add_argument("--bulk", nargs="+", help="Triage multiple files in batch")
+    triage_parser.add_argument(
+        "--bulk", nargs="+", help="Triage multiple files in batch"
+    )
     triage_parser.add_argument(
         "--format",
         choices=["text", "json", "markdown"],
@@ -141,7 +146,9 @@ def create_parser() -> argparse.ArgumentParser:
         help="Lookup file hash on VirusTotal",
         description="Enrich analysis with VirusTotal threat intelligence",
     )
-    vt_lookup_parser.add_argument("binary_path", help="Path to binary file or SHA256 hash")
+    vt_lookup_parser.add_argument(
+        "binary_path", help="Path to binary file or SHA256 hash"
+    )
     vt_lookup_parser.add_argument(
         "--api-key", help="VirusTotal API key (or set VT_API_KEY environment variable)"
     )
@@ -182,7 +189,9 @@ def create_parser() -> argparse.ArgumentParser:
     )
     yara_scan_parser.add_argument("binary_path", help="Path to binary file")
     yara_scan_parser.add_argument("--rules-dir", help="Directory containing YARA rules")
-    yara_scan_parser.add_argument("--rule-file", help="Single YARA rule file to scan with")
+    yara_scan_parser.add_argument(
+        "--rule-file", help="Single YARA rule file to scan with"
+    )
 
     # Binary diffing command
     diff_parser = subparsers.add_parser(
@@ -300,7 +309,9 @@ def create_parser() -> argparse.ArgumentParser:
     config_group = parser.add_argument_group(
         "Configuration Options", "Control analysis configuration"
     )
-    config_group.add_argument("--config", help="Path to enhanced analysis configuration file")
+    config_group.add_argument(
+        "--config", help="Path to enhanced analysis configuration file"
+    )
     config_group.add_argument(
         "--no-ollama-check", action="store_true", help="Skip Ollama availability check"
     )
@@ -313,11 +324,15 @@ def create_parser() -> argparse.ArgumentParser:
     logging_group = parser.add_argument_group(
         "Logging Options", "Control logging and output verbosity"
     )
-    logging_group.add_argument("--verbose", "-V", action="store_true", help="Enable verbose output")
+    logging_group.add_argument(
+        "--verbose", "-V", action="store_true", help="Enable verbose output"
+    )
     logging_group.add_argument(
         "--quiet", "-q", action="store_true", help="Suppress non-essential output"
     )
-    logging_group.add_argument("--log-file", help="Path to log file (default: reveng_analyzer.log)")
+    logging_group.add_argument(
+        "--log-file", help="Path to log file (default: reveng_analyzer.log)"
+    )
 
     return parser
 
@@ -363,6 +378,7 @@ def handle_analyze_command(args):
         binary_path=args.binary_path,
         check_ollama=not args.no_ollama_check,
         enhanced_features=enhanced_features,
+        analysis_folder=args.output_dir,
     )
 
     # Check if binary exists
@@ -381,16 +397,25 @@ def handle_analyze_command(args):
         return 1
 
     # Run analysis
-    success = analyzer.analyze_binary()
+    analysis = analyzer.analyze_binary()
 
-    if success:
+    if isinstance(analysis, dict) and analysis.get("status") == "success":
         print("\n[SUCCESS] REVENG analysis completed successfully!")
+        analysis_folder = analysis.get("analysis_folder")
+        if analysis_folder:
+            print(f"Results stored in: {analysis_folder}")
         if enhanced_features.is_any_enhanced_enabled():
             print(f"Enhanced modules executed: {analyzer._count_enabled_modules()}")
         return 0
-    else:
-        print("\n[ERROR] REVENG analysis failed!")
-        return 1
+
+    error_message = None
+    if isinstance(analysis, dict):
+        error_message = analysis.get("error") or analysis.get("message")
+
+    print("\n[ERROR] REVENG analysis failed!")
+    if error_message:
+        print(f"Reason: {error_message}")
+    return 1
 
 
 def handle_serve_command(args):
@@ -435,14 +460,18 @@ def handle_ask_command(args):
 
         # Handle conversational mode
         if args.conversational:
-            print("Conversational mode enabled. Ask follow-up questions (type 'quit' to exit):")
+            print(
+                "Conversational mode enabled. Ask follow-up questions (type 'quit' to exit):"
+            )
             while True:
                 try:
                     follow_up = input("\nFollow-up question: ").strip()
-                    if follow_up.lower() in ['quit', 'exit', 'q']:
+                    if follow_up.lower() in ["quit", "exit", "q"]:
                         break
                     if follow_up:
-                        answer = asyncio.run(ask_about_binary(follow_up, args.binary_path))
+                        answer = asyncio.run(
+                            ask_about_binary(follow_up, args.binary_path)
+                        )
                         print(f"\nAnswer: {answer}")
                 except KeyboardInterrupt:
                     print("\nExiting conversational mode...")
@@ -470,15 +499,21 @@ def handle_ai_command(args):
 
         # Create analysis request
         from ..ai.analysis_models import AnalysisType
-        analysis_type = AnalysisType(args.analysis_type) if hasattr(AnalysisType, args.analysis_type.upper()) else AnalysisType.COMPREHENSIVE
+
+        analysis_type = (
+            AnalysisType(args.analysis_type)
+            if hasattr(AnalysisType, args.analysis_type.upper())
+            else AnalysisType.COMPREHENSIVE
+        )
 
         request = AIAnalysisRequest(
             binary_path=args.binary_path,
             analysis_type=analysis_type,
-            goals=args.goals or ["understand_functionality", "find_vulnerabilities", "assess_threats"]
+            goals=args.goals
+            or ["understand_functionality", "find_vulnerabilities", "assess_threats"],
         )
 
-        print(f"\n🤖 REVENG AI Assistant")
+        print("\n🤖 REVENG AI Assistant")
         print(f"📁 Analyzing: {args.binary_path}")
         print(f"🔍 Analysis Type: {args.analysis_type}")
         print(f"🎯 Goals: {', '.join(request.goals)}")
@@ -523,10 +558,12 @@ def handle_ai_command(args):
             while True:
                 try:
                     question = input("\nAsk a question: ").strip()
-                    if question.lower() in ['quit', 'exit', 'q']:
+                    if question.lower() in ["quit", "exit", "q"]:
                         break
                     if question:
-                        answer = asyncio.run(assistant.ask_question(question, args.binary_path, result))
+                        answer = asyncio.run(
+                            assistant.ask_question(question, args.binary_path, result)
+                        )
                         print(f"\n🤖 {answer}")
                 except KeyboardInterrupt:
                     print("\nExiting interactive mode...")
@@ -642,7 +679,7 @@ def handle_vt_submit_command(args):
         print(f"Submitting {args.binary_path} to VirusTotal...")
         analysis_id = vt.submit_file(args.binary_path, wait_for_analysis=args.wait)
 
-        print(f"Submission successful!")
+        print("Submission successful!")
         print(f"Analysis ID: {analysis_id}")
 
         if not args.wait:
@@ -787,7 +824,9 @@ def handle_patch_analysis_command(args):
             output = [v.__dict__ for v in vulnerabilities]
             print(json.dumps(output, indent=2))
         else:
-            report = analyzer.generate_report(vulnerabilities, format=args.format, cve=args.cve)
+            report = analyzer.generate_report(
+                vulnerabilities, format=args.format, cve=args.cve
+            )
             print(report)
 
         return 0
@@ -808,14 +847,14 @@ def handle_detect_packer_command(args):
         if args.format == "json":
             print(json.dumps(info.__dict__, indent=2))
         elif args.format == "markdown":
-            print(f"# Packer Detection Report\n")
+            print("# Packer Detection Report\n")
             print(f"**Packed:** {info.packed}\n")
             if info.packer_name:
                 print(f"**Packer:** {info.packer_name}\n")
             print(f"**Confidence:** {info.confidence:.1%}\n")
             print(f"**Entropy:** {info.entropy:.2f}\n")
             if info.indicators:
-                print(f"\n## Indicators\n")
+                print("\n## Indicators\n")
                 for indicator in info.indicators:
                     print(f"- {indicator}")
         else:  # text
@@ -870,13 +909,17 @@ def handle_enhance_code_command(args):
             code = f.read()
 
         enhancer = AICodeQualityEnhancer()
-        result = enhancer.enhance_function(function_code=code, function_name=args.function_name)
+        result = enhancer.enhance_function(
+            function_code=code, function_name=args.function_name
+        )
 
         # Determine output path
         output_path = args.output
         if not output_path:
             code_path = Path(args.code_file)
-            output_path = code_path.parent / f"{code_path.stem}_enhanced{code_path.suffix}"
+            output_path = (
+                code_path.parent / f"{code_path.stem}_enhanced{code_path.suffix}"
+            )
 
         # Save enhanced code
         with open(output_path, "w") as f:
@@ -886,7 +929,7 @@ def handle_enhance_code_command(args):
             f.write(result.enhanced_code)
 
         print(f"Enhanced code saved to: {output_path}")
-        print(f"\nImprovements applied:")
+        print("\nImprovements applied:")
         for improvement in result.improvements:
             print(f"  - {improvement}")
 

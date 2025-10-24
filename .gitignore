@@ -231,6 +231,15 @@ external/ghidra/
 # Windows reserved filename artifact
 nul
 
+# Test and temporary analysis output
+TEST_OUTPUT/
+SPECS/
+ai_recompiler_analysis_*/
+analysis_*/
+human_readable_code/
+deobfuscated_app/
+2025.*/
+
 # Build artifacts (already covered above, but explicit for clarity)
 build/analysis_artifacts/
 

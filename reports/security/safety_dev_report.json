@@ -1,0 +1,50 @@
+{
+    "report_meta": {
+        "scan_target": "files",
+        "scanned": [
+            "requirements-dev.txt"
+        ],
+        "policy_file": null,
+        "policy_file_source": "local",
+        "api_key": false,
+        "local_database_path": null,
+        "safety_version": "2.3.4",
+        "timestamp": "2025-10-20 20:57:39",
+        "packages_found": 0,
+        "vulnerabilities_found": 0,
+        "vulnerabilities_ignored": 0,
+        "remediations_recommended": 0,
+        "telemetry": {
+            "os_type": "Windows",
+            "os_release": "11",
+            "os_description": "Windows-11-10.0.26200-SP0",
+            "python_version": "3.13.5",
+            "safety_command": "check",
+            "safety_options": {
+                "files": {
+                    "--file": 1
+                },
+                "json": {
+                    "--json": 1
+                }
+            },
+            "safety_version": "2.3.4",
+            "safety_source": "cli"
+        },
+        "git": {
+            "branch": "release/v3.0.0",
+            "tag": "",
+            "commit": "ae28aaaacd37a7ff548a449d57c07af4f6de1cb3",
+            "dirty": true,
+            "origin": "https://github.com/oimiragieo/reveng-main.git"
+        },
+        "project": null,
+        "json_version": 1
+    },
+    "scanned_packages": {},
+    "affected_packages": {},
+    "announcements": [],
+    "vulnerabilities": [],
+    "ignored_vulnerabilities": [],
+    "remediations": {}
+}

@@ -4,7 +4,6 @@ REVENG Enhanced Error Handling System
 Structured error system with context and recovery suggestions.
 """
 
-import sys
 import traceback
 from dataclasses import dataclass
 from enum import Enum
@@ -95,7 +94,9 @@ class REVENGError(Exception):
     def get_recovery_commands(self) -> List[str]:
         """Get recovery commands"""
         return [
-            suggestion.command for suggestion in self.recovery_suggestions if suggestion.command
+            suggestion.command
+            for suggestion in self.recovery_suggestions
+            if suggestion.command
         ]
 
     def is_auto_fixable(self) -> bool:
@@ -141,6 +142,36 @@ class MissingDependencyError(REVENGError):
         )
 
         self.tool_name = tool_name
+
+
+class PluginError(REVENGError):
+    """Plugin subsystem error."""
+
+    def __init__(
+        self,
+        plugin_name: str,
+        message: str,
+        context: Optional[ErrorContext] = None,
+        original_exception: Optional[Exception] = None,
+    ):
+        recovery = [
+            RecoverySuggestion(
+                action="disable_plugin",
+                description=f"Disable plugin '{plugin_name}'",
+                command=f"reveng plugins disable {plugin_name}",
+                auto_fixable=False,
+            )
+        ]
+
+        super().__init__(
+            message=message,
+            context=context,
+            severity=ErrorSeverity.ERROR,
+            recovery_suggestions=recovery,
+            original_exception=original_exception,
+        )
+
+        self.plugin_name = plugin_name
 
 
 class AnalysisFailureError(REVENGError):

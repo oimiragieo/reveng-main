@@ -104,12 +104,7 @@ public class DemangleSymbolScript extends GhidraScript {
 			println("Successfully demangled\n" + name + '\n' + cmd.getResult());
 		}
 		else {
-			String statusMsg = cmd.getStatusMsg();
-			String msg = "Failed to demangle\n" + name;
-			if (statusMsg != null) {
-				msg += "\n" + statusMsg;
-			}
-			println(msg);
+			println("Failed to demangle\n" + name + '\n' + cmd.getStatusMsg());
 		}
 	}
 }

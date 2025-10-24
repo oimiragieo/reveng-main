@@ -462,50 +462,50 @@ void PatternExpression::release(PatternExpression *p)
     delete p;
 }
 
-PatternExpression *PatternExpression::decodeExpression(Decoder &decoder,Translate *trans)
+PatternExpression *PatternExpression::restoreExpression(const Element *el,Translate *trans)
 
 {
   PatternExpression *res;
-  uint4 el = decoder.peekElement();
+  const string &nm(el->getName());
 
-  if (el == sla::ELEM_TOKENFIELD)
+  if (nm == "tokenfield")
     res = new TokenField();
-  else if (el == sla::ELEM_CONTEXTFIELD)
+  else if (nm == "contextfield")
     res = new ContextField();
-  else if (el == sla::ELEM_INTB)
+  else if (nm == "intb")
     res = new ConstantValue();
-  else if (el == sla::ELEM_OPERAND_EXP)
+  else if (nm == "operand_exp")
     res = new OperandValue();
-  else if (el == sla::ELEM_START_EXP)
+  else if (nm == "start_exp")
     res = new StartInstructionValue();
-  else if (el == sla::ELEM_END_EXP)
+  else if (nm == "end_exp")
     res = new EndInstructionValue();
-  else if (el == sla::ELEM_PLUS_EXP)
+  else if (nm == "plus_exp")
     res = new PlusExpression();
-  else if (el == sla::ELEM_SUB_EXP)
+  else if (nm == "sub_exp")
     res = new SubExpression();
-  else if (el == sla::ELEM_MULT_EXP)
+  else if (nm == "mult_exp")
     res = new MultExpression();
-  else if (el == sla::ELEM_LSHIFT_EXP)
+  else if (nm == "lshift_exp")
     res = new LeftShiftExpression();
-  else if (el == sla::ELEM_RSHIFT_EXP)
+  else if (nm == "rshift_exp")
     res = new RightShiftExpression();
-  else if (el == sla::ELEM_AND_EXP)
+  else if (nm == "and_exp")
     res = new AndExpression();
-  else if (el == sla::ELEM_OR_EXP)
+  else if (nm == "or_exp")
     res = new OrExpression();
-  else if (el == sla::ELEM_XOR_EXP)
+  else if (nm == "xor_exp")
     res = new XorExpression();
-  else if (el == sla::ELEM_DIV_EXP)
+  else if (nm == "div_exp")
     res = new DivExpression();
-  else if (el == sla::ELEM_MINUS_EXP)
+  else if (nm == "minus_exp")
     res = new MinusExpression();
-  else if (el == sla::ELEM_NOT_EXP)
+  else if (nm == "not_exp")
     res = new NotExpression();
   else
     return (PatternExpression *)0;
 
-  res->decode(decoder,trans);
+  res->restoreXml(el,trans);
   return res;
 }
 
@@ -597,33 +597,58 @@ TokenPattern TokenField::genPattern(intb val) const
   return TokenPattern(tok,val,bitstart,bitend);
 }
 
-void TokenField::encode(Encoder &encoder) const
+void TokenField::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_TOKENFIELD);
-  encoder.writeBool(sla::ATTRIB_BIGENDIAN, bigendian);
-  encoder.writeBool(sla::ATTRIB_SIGNBIT, signbit);
-  encoder.writeSignedInteger(sla::ATTRIB_STARTBIT, bitstart);
-  encoder.writeSignedInteger(sla::ATTRIB_ENDBIT, bitend);
-  encoder.writeSignedInteger(sla::ATTRIB_STARTBYTE, bytestart);
-  encoder.writeSignedInteger(sla::ATTRIB_ENDBYTE, byteend);
-  encoder.writeSignedInteger(sla::ATTRIB_SHIFT, shift);
-  encoder.closeElement(sla::ELEM_TOKENFIELD);
+  s << "<tokenfield";
+  s << " bigendian=\"";
+  if (bigendian)
+    s << "true\"";
+  else
+    s << "false\"";
+  s << " signbit=\"";
+  if (signbit)
+    s << "true\"";
+  else
+    s << "false\"";
+  s << " bitstart=\"" << dec << bitstart << "\"";
+  s << " bitend=\"" << bitend << "\"";
+  s << " bytestart=\"" << bytestart << "\"";
+  s << " byteend=\"" << byteend << "\"";
+  s << " shift=\"" << shift << "\"/>\n";
 }
 
-void TokenField::decode(Decoder &decoder,Translate *trans)
+void TokenField::restoreXml(const Element *el,Translate *trans)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_TOKENFIELD);
   tok = (Token *)0;
-  bigendian = decoder.readBool(sla::ATTRIB_BIGENDIAN);
-  signbit = decoder.readBool(sla::ATTRIB_SIGNBIT);
-  bitstart = decoder.readSignedInteger(sla::ATTRIB_STARTBIT);
-  bitend = decoder.readSignedInteger(sla::ATTRIB_ENDBIT);
-  bytestart = decoder.readSignedInteger(sla::ATTRIB_STARTBYTE);
-  byteend = decoder.readSignedInteger(sla::ATTRIB_ENDBYTE);
-  shift = decoder.readSignedInteger(sla::ATTRIB_SHIFT);
-  decoder.closeElement(el);
+  bigendian = xml_readbool(el->getAttributeValue("bigendian"));
+  signbit = xml_readbool(el->getAttributeValue("signbit"));
+  {
+    istringstream s(el->getAttributeValue("bitstart"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> bitstart;
+  }
+  {
+    istringstream s(el->getAttributeValue("bitend"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> bitend;
+  }
+  {
+    istringstream s(el->getAttributeValue("bytestart"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> bytestart;
+  }
+  {
+    istringstream s(el->getAttributeValue("byteend"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> byteend;
+  }
+  {
+    istringstream s(el->getAttributeValue("shift"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> shift;
+  }
 }
 
 ContextField::ContextField(bool s,int4 sbit,int4 ebit)
@@ -655,88 +680,65 @@ TokenPattern ContextField::genPattern(intb val) const
   return TokenPattern(val,startbit,endbit);
 }
 
-void ContextField::encode(Encoder &encoder) const
+void ContextField::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_CONTEXTFIELD);
-  encoder.writeBool(sla::ATTRIB_SIGNBIT, signbit);
-  encoder.writeSignedInteger(sla::ATTRIB_STARTBIT, startbit);
-  encoder.writeSignedInteger(sla::ATTRIB_ENDBIT, endbit);
-  encoder.writeSignedInteger(sla::ATTRIB_STARTBYTE, startbyte);
-  encoder.writeSignedInteger(sla::ATTRIB_ENDBYTE, endbyte);
-  encoder.writeSignedInteger(sla::ATTRIB_SHIFT, shift);
-  encoder.closeElement(sla::ELEM_CONTEXTFIELD);
+  s << "<contextfield";
+  s << " signbit=\"";
+  if (signbit)
+    s << "true\"";
+  else
+    s << "false\"";
+  s << " startbit=\"" << dec << startbit << "\"";
+  s << " endbit=\"" << endbit << "\"";
+  s << " startbyte=\"" << startbyte << "\"";
+  s << " endbyte=\"" << endbyte << "\"";
+  s << " shift=\"" << shift << "\"/>\n";
 }
 
-void ContextField::decode(Decoder &decoder,Translate *trans)
+void ContextField::restoreXml(const Element *el,Translate *trans)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_CONTEXTFIELD);
-  signbit = decoder.readBool(sla::ATTRIB_SIGNBIT);
-  startbit = decoder.readSignedInteger(sla::ATTRIB_STARTBIT);
-  endbit = decoder.readSignedInteger(sla::ATTRIB_ENDBIT);
-  startbyte = decoder.readSignedInteger(sla::ATTRIB_STARTBYTE);
-  endbyte = decoder.readSignedInteger(sla::ATTRIB_ENDBYTE);
-  shift = decoder.readSignedInteger(sla::ATTRIB_SHIFT);
-  decoder.closeElement(el);
+  signbit = xml_readbool(el->getAttributeValue("signbit"));
+  {
+    istringstream s(el->getAttributeValue("startbit"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> startbit;
+  }
+  {
+    istringstream s(el->getAttributeValue("endbit"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> endbit;
+  }
+  {
+    istringstream s(el->getAttributeValue("startbyte"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> startbyte;
+  }
+  {
+    istringstream s(el->getAttributeValue("endbyte"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> endbyte;
+  }
+  {
+    istringstream s(el->getAttributeValue("shift"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> shift;
+  }
 }
 
-void ConstantValue::encode(Encoder &encoder) const
+void ConstantValue::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_INTB);
-  encoder.writeSignedInteger(sla::ATTRIB_VAL, val);
-  encoder.closeElement(sla::ELEM_INTB);
+  s << "<intb val=\"" << dec << val << "\"/>\n";
 }
 
-void ConstantValue::decode(Decoder &decoder,Translate *trans)
+void ConstantValue::restoreXml(const Element *el,Translate *trans)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_INTB);
-  val = decoder.readSignedInteger(sla::ATTRIB_VAL);
-  decoder.closeElement(el);
-}
-
-void StartInstructionValue::encode(Encoder &encoder) const
-
-{
-  encoder.openElement(sla::ELEM_START_EXP);
-  encoder.closeElement(sla::ELEM_START_EXP);
-}
-
-void StartInstructionValue::decode(Decoder &decoder,Translate *trans)
-
-{
-  uint4 el = decoder.openElement(sla::ELEM_START_EXP);
-  decoder.closeElement(el);
-}
-
-void EndInstructionValue::encode(Encoder &encoder) const
-
-{
-  encoder.openElement(sla::ELEM_END_EXP);
-  encoder.closeElement(sla::ELEM_END_EXP);
-}
-
-void EndInstructionValue::decode(Decoder &decoder,Translate *trans)
-
-{
-  uint4 el = decoder.openElement(sla::ELEM_END_EXP);
-  decoder.closeElement(el);
-}
-
-void Next2InstructionValue::encode(Encoder &encoder) const
-
-{
-  encoder.openElement(sla::ELEM_NEXT2_EXP);
-  encoder.closeElement(sla::ELEM_NEXT2_EXP);
-}
-
-void Next2InstructionValue::decode(Decoder &decoder,Translate *trans)
-
-{
-  uint4 el = decoder.openElement(sla::ELEM_NEXT2_EXP);
-  decoder.closeElement(el);
+  istringstream s(el->getAttributeValue("val"));
+  s.unsetf(ios::dec | ios::hex | ios::oct);
+  s >> val;
 }
 
 TokenPattern OperandValue::genPattern(intb val) const
@@ -807,27 +809,37 @@ const string &OperandValue::getName(void) const
   return sym->getName();
 }
 
-void OperandValue::encode(Encoder &encoder) const
+void OperandValue::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_OPERAND_EXP);
-  encoder.writeSignedInteger(sla::ATTRIB_INDEX, index);
-  encoder.writeUnsignedInteger(sla::ATTRIB_TABLE, ct->getParent()->getId());
-  encoder.writeUnsignedInteger(sla::ATTRIB_CT, ct->getId());	// Save id of our constructor
-  encoder.closeElement(sla::ELEM_OPERAND_EXP);
+  s << "<operand_exp";
+  s << " index=\"" << dec << index << "\"";
+  s << " table=\"0x" << hex << ct->getParent()->getId() << "\"";
+  s << " ct=\"0x" << ct->getId() << "\"/>\n"; // Save id of our constructor
 }
 
-void OperandValue::decode(Decoder &decoder,Translate *trans)
+void OperandValue::restoreXml(const Element *el,Translate *trans)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_OPERAND_EXP);
-  index = decoder.readSignedInteger(sla::ATTRIB_INDEX);
-  uintm tabid = decoder.readUnsignedInteger(sla::ATTRIB_TABLE);
-  uintm ctid = decoder.readUnsignedInteger(sla::ATTRIB_CT);
+  uintm ctid,tabid;
+  {
+    istringstream s(el->getAttributeValue("index"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> index;
+  }
+  {
+    istringstream s(el->getAttributeValue("table"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> tabid;
+  }
+  {
+    istringstream s(el->getAttributeValue("ct"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> ctid;
+  }
   SleighBase *sleigh = (SleighBase *)trans;
   SubtableSymbol *tab = dynamic_cast<SubtableSymbol *>(sleigh->findSymbol(tabid));
   ct = tab->getConstructor(ctid);
-  decoder.closeElement(el);
 }
 
 BinaryExpression::BinaryExpression(PatternExpression *l,PatternExpression *r)
@@ -846,22 +858,24 @@ BinaryExpression::~BinaryExpression(void)
     PatternExpression::release(right);
 }
 
-void BinaryExpression::encode(Encoder &encoder) const
+void BinaryExpression::saveXml(ostream &s) const
 
 {				// Outer tag is generated by derived classes
-  left->encode(encoder);
-  right->encode(encoder);
+  left->saveXml(s);
+  right->saveXml(s);
 }
 
-void BinaryExpression::decode(Decoder &decoder,Translate *trans)
+void BinaryExpression::restoreXml(const Element *el,Translate *trans)
 
 {
-  uint4 el = decoder.openElement();
-  left = PatternExpression::decodeExpression(decoder,trans);
-  right = PatternExpression::decodeExpression(decoder,trans);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  left = PatternExpression::restoreExpression(*iter,trans);
+  ++iter;
+  right = PatternExpression::restoreExpression(*iter,trans);
   left->layClaim();
   right->layClaim();
-  decoder.closeElement(el);
 }
 
 UnaryExpression::UnaryExpression(PatternExpression *u)
@@ -877,19 +891,20 @@ UnaryExpression::~UnaryExpression(void)
     PatternExpression::release(unary);
 }
 
-void UnaryExpression::encode(Encoder &encoder) const
+void UnaryExpression::saveXml(ostream &s) const
 
 {				// Outer tag is generated by derived classes
-  unary->encode(encoder);
+  unary->saveXml(s);
 }
 
-void UnaryExpression::decode(Decoder &decoder,Translate *trans)
+void UnaryExpression::restoreXml(const Element *el,Translate *trans)
 
 {
-  uint4 el = decoder.openElement();
-  unary = PatternExpression::decodeExpression(decoder,trans);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  unary = PatternExpression::restoreExpression(*iter,trans);
   unary->layClaim();
-  decoder.closeElement(el);
 }
 
 intb PlusExpression::getValue(ParserWalker &walker) const
@@ -908,12 +923,12 @@ intb PlusExpression::getSubValue(const vector<intb> &replace,int4 &listpos) cons
   return leftval + rightval;
 }
 
-void PlusExpression::encode(Encoder &encoder) const
+void PlusExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_PLUS_EXP);
-  BinaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_PLUS_EXP);
+  s << "<plus_exp>\n";
+  BinaryExpression::saveXml(s);
+  s << "</plus_exp>\n";
 }
 
 intb SubExpression::getValue(ParserWalker &walker) const
@@ -932,12 +947,12 @@ intb SubExpression::getSubValue(const vector<intb> &replace,int4 &listpos) const
   return leftval - rightval;
 }
 
-void SubExpression::encode(Encoder &encoder) const
+void SubExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_SUB_EXP);
-  BinaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_SUB_EXP);
+  s << "<sub_exp>\n";
+  BinaryExpression::saveXml(s);
+  s << "</sub_exp>\n";
 }
 
 intb MultExpression::getValue(ParserWalker &walker) const
@@ -956,12 +971,12 @@ intb MultExpression::getSubValue(const vector<intb> &replace,int4 &listpos) cons
   return leftval * rightval;
 }
 
-void MultExpression::encode(Encoder &encoder) const
+void MultExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_MULT_EXP);
-  BinaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_MULT_EXP);
+  s << "<mult_exp>\n";
+  BinaryExpression::saveXml(s);
+  s << "</mult_exp>\n";
 }
 
 intb LeftShiftExpression::getValue(ParserWalker &walker) const
@@ -980,12 +995,12 @@ intb LeftShiftExpression::getSubValue(const vector<intb> &replace,int4 &listpos)
   return leftval << rightval;
 }
 
-void LeftShiftExpression::encode(Encoder &encoder) const
+void LeftShiftExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_LSHIFT_EXP);
-  BinaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_LSHIFT_EXP);
+  s << "<lshift_exp>\n";
+  BinaryExpression::saveXml(s);
+  s << "</lshift_exp>\n";
 }
 
 intb RightShiftExpression::getValue(ParserWalker &walker) const
@@ -1004,12 +1019,12 @@ intb RightShiftExpression::getSubValue(const vector<intb> &replace,int4 &listpos
   return leftval >> rightval;
 }
 
-void RightShiftExpression::encode(Encoder &encoder) const
+void RightShiftExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_RSHIFT_EXP);
-  BinaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_RSHIFT_EXP);
+  s << "<rshift_exp>\n";
+  BinaryExpression::saveXml(s);
+  s << "</rshift_exp>\n";
 }
 
 intb AndExpression::getValue(ParserWalker &walker) const
@@ -1028,12 +1043,12 @@ intb AndExpression::getSubValue(const vector<intb> &replace,int4 &listpos) const
   return leftval & rightval;
 }
 
-void AndExpression::encode(Encoder &encoder) const
+void AndExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_AND_EXP);
-  BinaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_AND_EXP);
+  s << "<and_exp>\n";
+  BinaryExpression::saveXml(s);
+  s << "</and_exp>\n";
 }
 
 intb OrExpression::getValue(ParserWalker &walker) const
@@ -1052,12 +1067,12 @@ intb OrExpression::getSubValue(const vector<intb> &replace,int4 &listpos) const
   return leftval | rightval;
 }
 
-void OrExpression::encode(Encoder &encoder) const
+void OrExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_OR_EXP);
-  BinaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_OR_EXP);
+  s << "<or_exp>\n";
+  BinaryExpression::saveXml(s);
+  s << "</or_exp>\n";
 }
 
 intb XorExpression::getValue(ParserWalker &walker) const
@@ -1076,12 +1091,12 @@ intb XorExpression::getSubValue(const vector<intb> &replace,int4 &listpos) const
   return leftval ^ rightval;
 }
 
-void XorExpression::encode(Encoder &encoder) const
+void XorExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_XOR_EXP);
-  BinaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_XOR_EXP);
+  s << "<xor_exp>\n";
+  BinaryExpression::saveXml(s);
+  s << "</xor_exp>\n";
 }
 
 intb DivExpression::getValue(ParserWalker &walker) const
@@ -1100,12 +1115,12 @@ intb DivExpression::getSubValue(const vector<intb> &replace,int4 &listpos) const
   return leftval / rightval;
 }
 
-void DivExpression::encode(Encoder &encoder) const
+void DivExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_DIV_EXP);
-  BinaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_DIV_EXP);
+  s << "<div_exp>\n";
+  BinaryExpression::saveXml(s);
+  s << "</div_exp>\n";
 }
 
 intb MinusExpression::getValue(ParserWalker &walker) const
@@ -1122,12 +1137,12 @@ intb MinusExpression::getSubValue(const vector<intb> &replace,int4 &listpos) con
   return -val;
 }
 
-void MinusExpression::encode(Encoder &encoder) const
+void MinusExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_MINUS_EXP);
-  UnaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_MINUS_EXP);
+  s << "<minus_exp>\n";
+  UnaryExpression::saveXml(s);
+  s << "</minus_exp>\n";
 }
 
 intb NotExpression::getValue(ParserWalker &walker) const
@@ -1144,12 +1159,12 @@ intb NotExpression::getSubValue(const vector<intb> &replace,int4 &listpos) const
   return ~val;
 }
 
-void NotExpression::encode(Encoder &encoder) const
+void NotExpression::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_NOT_EXP);
-  UnaryExpression::encode(encoder);
-  encoder.closeElement(sla::ELEM_NOT_EXP);
+  s << "<not_exp>\n";
+  UnaryExpression::saveXml(s);
+  s << "</not_exp>\n";
 }
 
 static bool advance_combo(vector<intb> &val,const vector<intb> &min,vector<intb> &max)

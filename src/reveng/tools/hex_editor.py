@@ -5,17 +5,13 @@ Low-level binary inspection with pattern matching, entropy analysis,
 and embedded file detection.
 """
 
-import json
-import logging
 import math
-import os
 import struct
-import sys
 import tempfile
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List
 
 from ..core.errors import AnalysisFailureError, create_error_context
 from ..core.logger import get_logger
@@ -117,7 +113,9 @@ class HexEditor:
             return HexView(data=data, offset=0, length=len(data), encoding="utf-8")
 
         except Exception as e:
-            context = create_error_context("hex_editor", "open_binary", binary_path=binary_path)
+            context = create_error_context(
+                "hex_editor", "open_binary", binary_path=binary_path
+            )
             raise AnalysisFailureError(
                 "hex_editor_open", binary_path, context=context, original_exception=e
             )
@@ -224,7 +222,9 @@ class HexEditor:
             self.logger.warning(f"Failed to find embedded executables: {e}")
             return []
 
-    def extract_strings_advanced(self, hex_view: HexView, min_length: int = 4) -> List[str]:
+    def extract_strings_advanced(
+        self, hex_view: HexView, min_length: int = 4
+    ) -> List[str]:
         """Advanced string extraction with encoding detection"""
         try:
             strings = []
@@ -252,7 +252,6 @@ class HexEditor:
         """Find known file format signatures"""
         try:
             pattern_matches = []
-            data = hex_view.data
 
             for magic_name, magic_bytes in self.magic_bytes_db.items():
                 matches = self.search_pattern(magic_bytes, hex_view)
@@ -277,7 +276,6 @@ class HexEditor:
         """Identify cryptographic constants (S-boxes, etc.)"""
         try:
             pattern_matches = []
-            data = hex_view.data
 
             for const_name, const_bytes in self.crypto_constants_db.items():
                 matches = self.search_pattern(const_bytes, hex_view)
@@ -366,7 +364,9 @@ class HexEditor:
             return result
 
         except Exception as e:
-            context = create_error_context("hex_editor", "analyze_binary", binary_path=binary_path)
+            context = create_error_context(
+                "hex_editor", "analyze_binary", binary_path=binary_path
+            )
             raise AnalysisFailureError(
                 "hex_analysis", binary_path, context=context, original_exception=e
             )

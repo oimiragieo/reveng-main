@@ -24,16 +24,14 @@ Plugin types:
 
 import importlib
 import importlib.util
-import inspect
 import json
 import logging
-import os
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -278,7 +276,6 @@ class PluginManager:
             metadata_dict = json.load(f)
 
         metadata = PluginMetadata(**metadata_dict)
-        plugin_dir = plugin_json_path.parent
 
         # Create plugin info (not loaded yet)
         plugin_info = PluginInfo(
@@ -594,7 +591,7 @@ class {name}Plugin({base_class}):
         readme = f"""# {name} Plugin
 
 ## Description
-{metadata['description']}
+{metadata["description"]}
 
 ## Type
 {plugin_type.value}
@@ -630,7 +627,9 @@ def main():
     """CLI interface for plugin system"""
     import argparse
 
-    parser = argparse.ArgumentParser(description="REVENG plugin system for extensibility")
+    parser = argparse.ArgumentParser(
+        description="REVENG plugin system for extensibility"
+    )
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # List plugins

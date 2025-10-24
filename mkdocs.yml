@@ -57,6 +57,11 @@ nav:
     - Tool Development: developer-guide/tool-development.md
     - API Reference: developer-guide/api-reference.md
     - Testing: developer-guide/testing.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Package Map: architecture/package-map.md
+    - Pipeline: architecture/pipeline.md
+    - Ghidra Integration: architecture/ghidra-integration.md
   - AI Assistant Guide:
     - Overview: ai-assistant-guide/README.md
     - Claude Integration: ai-assistant-guide/claude-integration.md

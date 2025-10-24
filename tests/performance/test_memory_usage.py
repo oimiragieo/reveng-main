@@ -50,7 +50,7 @@ class TestMemoryUsage:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert memory_increase < 50.0  # Should not use more than 50MB additional memory
 
     @pytest.mark.performance
@@ -89,7 +89,7 @@ class TestMemoryUsage:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert (
                 memory_increase < 100.0
             )  # Enhanced analysis should not use more than 100MB additional memory
@@ -125,7 +125,7 @@ class TestMemoryUsage:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert (
                 memory_increase < 200.0
             )  # Large binary should not use more than 200MB additional memory
@@ -225,7 +225,7 @@ class TestMemoryUsage:
             # Get memory usage after cleanup
             post_cleanup_memory = process.memory_info().rss / 1024 / 1024  # MB
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
 
             # Memory should be cleaned up after analysis
             memory_cleanup = post_analysis_memory - post_cleanup_memory
@@ -263,7 +263,7 @@ class TestMemoryUsage:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert (
                 memory_increase < 60.0
             )  # Audit logging should not significantly increase memory usage
@@ -295,7 +295,7 @@ class TestMemoryUsage:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert (
                 memory_increase < 50.0
             )  # File operations should not significantly increase memory usage
@@ -331,7 +331,7 @@ class TestMemoryUsage:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert (
                 memory_increase < 70.0
             )  # AI analysis should not use more than 70MB additional memory
@@ -363,7 +363,7 @@ class TestMemoryUsage:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
             assert (
                 memory_increase < 80.0
             )  # ML models should not use more than 80MB additional memory
@@ -395,7 +395,7 @@ class TestMemoryUsage:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is True
+            assert isinstance(result, dict) and result.get("status") == "success"
 
             # Memory usage regression check
             # This should use less memory than previous versions
@@ -420,7 +420,7 @@ class TestMemoryUsage:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is False
+            assert isinstance(result, dict) and result.get("status") != "success"
             assert memory_increase < 20.0  # Error handling should not use much additional memory
 
     @pytest.mark.performance
@@ -442,5 +442,5 @@ class TestMemoryUsage:
             final_memory = process.memory_info().rss / 1024 / 1024  # MB
             memory_increase = final_memory - initial_memory
 
-            assert result is False
+            assert isinstance(result, dict) and result.get("status") != "success"
             assert memory_increase < 20.0  # Timeout handling should not use much additional memory

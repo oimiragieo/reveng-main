@@ -47,7 +47,9 @@ class SmokeTest:
 class ValidationConfig:
     """Binary validation configuration"""
 
-    mode: ValidationMode = ValidationMode.CHECKSUM  # Default to checksum (most reliable)
+    mode: ValidationMode = (
+        ValidationMode.CHECKSUM
+    )  # Default to checksum (most reliable)
     smoke_tests: List[SmokeTest] = None  # Optional CLI tests, empty by default
     checksum_algorithm: str = "sha256"
     sandbox_enabled: bool = False
@@ -69,7 +71,9 @@ class ValidationConfig:
                     expected_exit_code=None,
                     description="Try --help flag",
                 ),
-                SmokeTest(args=["-h"], expected_exit_code=None, description="Try -h flag"),
+                SmokeTest(
+                    args=["-h"], expected_exit_code=None, description="Try -h flag"
+                ),
             ]
         elif self.smoke_tests is None:
             # For other modes, no default smoke tests
@@ -160,7 +164,7 @@ class BinaryValidator:
 
         if not result["checksum_match"]:
             result["warnings"] = [
-                f"Checksum mismatch (expected modifications)",
+                "Checksum mismatch (expected modifications)",
                 f"Original: {original_hash[:16]}...",
                 f"Reassembled: {binary_hash[:16]}...",
             ]
@@ -266,10 +270,6 @@ class BinaryValidator:
 
     def _validate_sandboxed(self, binary: Path) -> Dict:
         """Run in sandboxed environment (placeholder)"""
-        result = {
-            "sandboxed": False,
-            "warnings": ["Sandbox validation not yet implemented"],
-        }
 
         # TODO: Implement proper sandboxing
         # Options:
@@ -278,11 +278,15 @@ class BinaryValidator:
         # - Windows Sandbox on Windows
         # - VM-based execution
 
-        logger.warning("Sandboxed validation not implemented, falling back to smoke tests")
+        logger.warning(
+            "Sandboxed validation not implemented, falling back to smoke tests"
+        )
         return self._validate_smoke_tests(binary)
 
     @classmethod
-    def load_config(cls, config_file: Path, binary_name: Optional[str] = None) -> "BinaryValidator":
+    def load_config(
+        cls, config_file: Path, binary_name: Optional[str] = None
+    ) -> "BinaryValidator":
         """
         Load validator configuration from JSON policy file
 
@@ -302,7 +306,7 @@ class BinaryValidator:
             logger.info(f"Loaded custom policy for {binary_name}")
         else:
             config_dict = policy.get("default_policy", {})
-            logger.info(f"Using default validation policy")
+            logger.info("Using default validation policy")
 
         # Parse configuration
         mode = ValidationMode[config_dict.get("mode", "CHECKSUM").upper()]
@@ -395,11 +399,11 @@ if __name__ == "__main__":
         print(f"Tests: {result['tests_passed']}/{result['tests_run']} passed")
 
     if result.get("warnings"):
-        print(f"\nWarnings:")
+        print("\nWarnings:")
         for warning in result["warnings"]:
             print(f"  - {warning}")
 
     if result.get("errors"):
-        print(f"\nErrors:")
+        print("\nErrors:")
         for error in result["errors"]:
             print(f"  - {error}")

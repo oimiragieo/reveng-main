@@ -20,14 +20,12 @@ Requires:
 
 import json
 import logging
-import os
 import re
 import struct
 import subprocess
-import zipfile
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +154,9 @@ class ILDasmRunner:
 
         # Try finding via 'where' command
         try:
-            result = subprocess.run(["where", "ildasm"], capture_output=True, text=True, timeout=5)
+            result = subprocess.run(
+                ["where", "ildasm"], capture_output=True, text=True, timeout=5
+            )
             if result.returncode == 0:
                 return Path(result.stdout.strip().splitlines()[0])
         except Exception:
@@ -256,7 +256,9 @@ class DotNetObfuscationDetector:
     - Agile.NET
     """
 
-    def detect_obfuscation(self, il_content: str, assembly_path: str) -> Tuple[bool, Optional[str]]:
+    def detect_obfuscation(
+        self, il_content: str, assembly_path: str
+    ) -> Tuple[bool, Optional[str]]:
         """Detect if assembly is obfuscated"""
 
         # Check for ConfuserEx
@@ -290,13 +292,17 @@ class DotNetObfuscationDetector:
 
         # 3. Control flow obfuscation (lots of branches)
         branches = (
-            il_content.count("br.") + il_content.count("brtrue") + il_content.count("brfalse")
+            il_content.count("br.")
+            + il_content.count("brtrue")
+            + il_content.count("brfalse")
         )
         if branches > 1000:
             obfuscation_indicators += 1
 
         # 4. String encryption (lots of ldc.i4 + xor)
-        string_encryption = il_content.count("ldc.i4") > 500 and il_content.count("xor") > 100
+        string_encryption = (
+            il_content.count("ldc.i4") > 500 and il_content.count("xor") > 100
+        )
         if string_encryption:
             obfuscation_indicators += 1
 
@@ -385,7 +391,9 @@ class CSharpILAnalyzer:
         metadata = {}
 
         # Extract assembly version
-        version_match = re.search(r"\.assembly\s+\w+.*?\.ver\s+([\d:]+)", il_content, re.DOTALL)
+        version_match = re.search(
+            r"\.assembly\s+\w+.*?\.ver\s+([\d:]+)", il_content, re.DOTALL
+        )
         if version_match:
             metadata["version"] = version_match.group(1).replace(":", ".")
 
@@ -399,12 +407,16 @@ class CSharpILAnalyzer:
         metadata["namespaces"] = sorted(namespaces)
 
         # Extract types (classes, interfaces, structs)
-        types = re.findall(r"\.class\s+(?:public|private|interface)?\s+[\w.]+", il_content)
+        types = re.findall(
+            r"\.class\s+(?:public|private|interface)?\s+[\w.]+", il_content
+        )
         metadata["types"] = types[:100]  # Limit to first 100
         metadata["types_count"] = len(types)
 
         # Extract methods
-        methods = re.findall(r"\.method\s+(?:public|private|static)?\s+[\w\s<>]+", il_content)
+        methods = re.findall(
+            r"\.method\s+(?:public|private|static)?\s+[\w\s<>]+", il_content
+        )
         metadata["methods_count"] = len(methods)
 
         # Find entry point
@@ -412,7 +424,9 @@ class CSharpILAnalyzer:
         if entry_point_match:
             # Find preceding method
             before_entry = il_content[: entry_point_match.start()]
-            method_match = re.findall(r"\.method\s+[\w\s<>]+\s+([\w.]+)\(", before_entry)
+            method_match = re.findall(
+                r"\.method\s+[\w\s<>]+\s+([\w.]+)\(", before_entry
+            )
             if method_match:
                 metadata["entry_point"] = method_match[-1]
 
@@ -443,25 +457,25 @@ class CSharpILAnalyzer:
         md_report = f"""# C# IL Analysis Report
 
 **Assembly**: {Path(assembly_path).name}
-**Architecture**: {report['architecture']}
-**Version**: {report['version']}
-**Runtime**: {report['runtime_version']}
+**Architecture**: {report["architecture"]}
+**Version**: {report["version"]}
+**Runtime**: {report["runtime_version"]}
 
 ## Obfuscation
 
-**Obfuscated**: {report['obfuscated']}
-**Obfuscator**: {report['obfuscator'] or 'None detected'}
+**Obfuscated**: {report["obfuscated"]}
+**Obfuscator**: {report["obfuscator"] or "None detected"}
 
 ## Structure
 
-**Namespaces**: {len(report['namespaces'])}
-**Types**: {report['types_count']}
-**Methods**: {report['methods_count']}
-**Entry Point**: {report['entry_point'] or 'Not found'}
+**Namespaces**: {len(report["namespaces"])}
+**Types**: {report["types_count"]}
+**Methods**: {report["methods_count"]}
+**Entry Point**: {report["entry_point"] or "Not found"}
 
 ## Namespaces
 
-{chr(10).join(f'- {ns}' for ns in report['namespaces'][:20])}
+{chr(10).join(f"- {ns}" for ns in report["namespaces"][:20])}
 """
 
         md_file = output_dir / "ANALYSIS.md"
@@ -500,7 +514,9 @@ def main():
         default="csharp_analysis",
         help="Output directory for analysis results",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose logging"
+    )
 
     args = parser.parse_args()
 

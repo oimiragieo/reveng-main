@@ -89,7 +89,7 @@ Each example generates:
 
 ```python
 # examples/basic/custom_analysis.py
-from reveng_analyzer import REVENGAnalyzer, EnhancedAnalysisFeatures
+from reveng.analyzer import REVENGAnalyzer, EnhancedAnalysisFeatures
 
 # Configure enhanced features
 features = EnhancedAnalysisFeatures()

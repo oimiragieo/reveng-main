@@ -1,14 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cat security_audit_safety.json)",
-      "Bash(python -c \"\nimport json\n\n# Read safety results\ntry:\n    with open(''security_audit_safety.json'', ''r'') as f:\n        safety_data = json.load(f)\n        vuln_count = safety_data[''report_meta''][''vulnerabilities_found'']\n        print(f''Safety: {vuln_count} dependency vulnerabilities found'')\nexcept:\n    print(''Safety: Could not parse results'')\n\")",
-      "Bash(test -f \"c:\\dev\\projects\\reveng-main\\docs\\reports\\security-audit.md\")",
-      "Bash(python -m pytest tests/unit/test_security_utils.py -v --tb=short)",
-      "Bash(python tests/unit/test_security_utils.py)",
-      "Bash(python validate_security_fixes.py)",
-      "Bash(python test_security_simple.py)",
-      "Bash(gemini -p \"Review this reverse engineering platform for open-source publication readiness:\n\nPROJECT OVERVIEW:\n- Name: REVENG Universal Reverse Engineering Platform\n- Tech Stack: Python 3.11+, Ghidra integration, ML models, React web UI\n- Size: ~40MB (after cleanup), 159 Python modules, 64+ documentation files\n- Purpose: AI-powered binary analysis, decompilation, and reconstruction\n\nFILE STRUCTURE SNAPSHOT:\nRoot: README.md, LICENSE, pyproject.toml, requirements.txt, docker-compose.yml\nsrc/reveng/: Main package (analyzer, API, CLI, ML, tools, web)\ntests/: Unit, integration, e2e, security tests\ndocs/: getting-started, user-guide, developer-guide, api, deployment, reports\nexternal/: ghidra-mcp bridge\nweb_interface/: Full-stack web application\nbuild/: Analysis artifacts (needs evaluation)\n\nCURRENT ISSUES:\n1. 10 .log files in root (should delete before publication)\n2. build/ directory with extensive analysis outputs (unsure if needed)\n3. Dependency vulnerabilities (~5 packages need updates)\n4. Version confusion (code says 2.1.0, docs reference 3.0.0)\n\nQUESTIONS:\n1. Code organization: Is src/reveng/ structure intuitive for contributors?\n2. Testing strategy: Test coverage at ~75% - is this sufficient for v3.0.0 release?\n3. Build directory: Contains analysis_artifacts/, deobfuscated_app/, human_readable_code/, SPECS/ - what''s standard practice?\n4. Entry points: Multiple entry points (reveng.py, reveng_analyzer.py, src/reveng/__main__.py) - is this confusing?\n5. Publication checklist: What automated checks (CI/CD) should be in place before tagging v3.0.0?\n\nFocus on practical, implementation-ready suggestions for GitHub publication.\")"
+      "Bash(powershell \"Get-Process | Where-Object {$_rocessName -eq ''''python''''} | ForEach-Object { try { Stop-Process -Id $_d -Force -ErrorAction SilentlyContinue } catch {} }\")",
+      "Bash(for pid in 51100 58664 64464 60520)",
+      "Bash(do taskkill //F //PID $pid)",
+      "Bash(done)",
+      "Bash(taskkill.exe:*)",
+      "Bash(xargs cat:*)",
+      "Bash(python reveng.py:*)",
+      "Bash(python test_world_class_features.py:*)",
+      "Bash(python3:*)",
+      "Bash(where:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(if exist decompile rmdir /s /q decompile)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

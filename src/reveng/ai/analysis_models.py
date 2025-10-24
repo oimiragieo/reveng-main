@@ -13,13 +13,14 @@ License: MIT
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 import json
 import time
 
 
 class AnalysisType(Enum):
     """Types of analysis that can be performed"""
+
     COMPREHENSIVE = "comprehensive"
     SECURITY = "security"
     TRIAGE = "triage"
@@ -29,6 +30,7 @@ class AnalysisType(Enum):
 
 class ThreatLevel(Enum):
     """Threat level classifications"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -38,6 +40,7 @@ class ThreatLevel(Enum):
 
 class ConfidenceLevel(Enum):
     """Confidence levels for analysis results"""
+
     VERY_LOW = "very_low"
     LOW = "low"
     MEDIUM = "medium"
@@ -48,6 +51,7 @@ class ConfidenceLevel(Enum):
 @dataclass
 class BinaryInfo:
     """Information about the binary being analyzed"""
+
     name: str
     path: str
     size: int
@@ -65,6 +69,7 @@ class BinaryInfo:
 @dataclass
 class FunctionAnalysis:
     """Analysis result for a single function"""
+
     name: str
     address: str
     size: int
@@ -83,6 +88,7 @@ class FunctionAnalysis:
 @dataclass
 class Vulnerability:
     """Vulnerability information"""
+
     id: str
     type: str
     severity: str
@@ -99,6 +105,7 @@ class Vulnerability:
 @dataclass
 class ThreatIndicator:
     """Threat intelligence indicator"""
+
     type: str  # IP, domain, hash, etc.
     value: str
     threat_level: ThreatLevel
@@ -114,6 +121,7 @@ class ThreatIndicator:
 @dataclass
 class Recommendation:
     """Analysis recommendation"""
+
     id: str
     type: str  # security, performance, code_quality, etc.
     priority: str  # low, medium, high, critical
@@ -129,6 +137,7 @@ class Recommendation:
 @dataclass
 class AnalysisMetadata:
     """Metadata about the analysis process"""
+
     analysis_id: str
     start_time: float
     end_time: float
@@ -146,6 +155,7 @@ class AnalysisMetadata:
 @dataclass
 class AIAnalysisResult:
     """Comprehensive AI analysis result optimized for AI consumption"""
+
     binary_info: BinaryInfo
     functions: List[FunctionAnalysis]
     vulnerabilities: List[Vulnerability]
@@ -163,17 +173,23 @@ class AIAnalysisResult:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for JSON serialization"""
         return {
-            'binary_info': self._dict_from_dataclass(self.binary_info),
-            'functions': [self._dict_from_dataclass(f) for f in self.functions],
-            'vulnerabilities': [self._dict_from_dataclass(v) for v in self.vulnerabilities],
-            'threat_indicators': [self._dict_from_dataclass(t) for t in self.threat_indicators],
-            'recommendations': [self._dict_from_dataclass(r) for r in self.recommendations],
-            'metadata': self._dict_from_dataclass(self.metadata),
-            'natural_language_summary': self.natural_language_summary,
-            'structured_prompt': self.structured_prompt,
-            'confidence_scores': self.confidence_scores,
-            'key_findings': self.key_findings,
-            'next_steps': self.next_steps
+            "binary_info": self._dict_from_dataclass(self.binary_info),
+            "functions": [self._dict_from_dataclass(f) for f in self.functions],
+            "vulnerabilities": [
+                self._dict_from_dataclass(v) for v in self.vulnerabilities
+            ],
+            "threat_indicators": [
+                self._dict_from_dataclass(t) for t in self.threat_indicators
+            ],
+            "recommendations": [
+                self._dict_from_dataclass(r) for r in self.recommendations
+            ],
+            "metadata": self._dict_from_dataclass(self.metadata),
+            "natural_language_summary": self.natural_language_summary,
+            "structured_prompt": self.structured_prompt,
+            "confidence_scores": self.confidence_scores,
+            "key_findings": self.key_findings,
+            "next_steps": self.next_steps,
         }
 
     def to_json(self, indent: int = 2) -> str:
@@ -191,7 +207,7 @@ class AIAnalysisResult:
             f"Found {len(self.functions)} functions",
             f"Identified {len(self.vulnerabilities)} vulnerabilities",
             f"Detected {len(self.threat_indicators)} threat indicators",
-            f"Generated {len(self.recommendations)} recommendations"
+            f"Generated {len(self.recommendations)} recommendations",
         ]
 
         return ". ".join(summary_parts) + "."
@@ -209,7 +225,7 @@ class AIAnalysisResult:
 - Name: {self.binary_info.name}
 - Size: {self.binary_info.size} bytes
 - Type: {self.binary_info.file_type}
-- Architecture: {self.binary_info.architecture or 'Unknown'}
+- Architecture: {self.binary_info.architecture or "Unknown"}
 
 ## Functions ({len(self.functions)})
 """
@@ -243,16 +259,16 @@ class AIAnalysisResult:
     def get_summary_stats(self) -> Dict[str, Any]:
         """Get summary statistics"""
         return {
-            'binary_name': self.binary_info.name,
-            'binary_size': self.binary_info.size,
-            'total_functions': len(self.functions),
-            'total_vulnerabilities': len(self.vulnerabilities),
-            'total_threat_indicators': len(self.threat_indicators),
-            'total_recommendations': len(self.recommendations),
-            'analysis_duration': self.metadata.duration,
-            'overall_confidence': self.metadata.confidence_overall,
-            'threat_level': self._calculate_overall_threat_level(),
-            'complexity': self.metadata.complexity
+            "binary_name": self.binary_info.name,
+            "binary_size": self.binary_info.size,
+            "total_functions": len(self.functions),
+            "total_vulnerabilities": len(self.vulnerabilities),
+            "total_threat_indicators": len(self.threat_indicators),
+            "total_recommendations": len(self.recommendations),
+            "analysis_duration": self.metadata.duration,
+            "overall_confidence": self.metadata.confidence_overall,
+            "threat_level": self._calculate_overall_threat_level(),
+            "complexity": self.metadata.complexity,
         }
 
     def _calculate_overall_threat_level(self) -> str:
@@ -260,8 +276,14 @@ class AIAnalysisResult:
         if not self.vulnerabilities and not self.threat_indicators:
             return "low"
 
-        high_severity_vulns = sum(1 for v in self.vulnerabilities if v.severity in ['high', 'critical'])
-        high_threat_indicators = sum(1 for t in self.threat_indicators if t.threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL])
+        high_severity_vulns = sum(
+            1 for v in self.vulnerabilities if v.severity in ["high", "critical"]
+        )
+        high_threat_indicators = sum(
+            1
+            for t in self.threat_indicators
+            if t.threat_level in [ThreatLevel.HIGH, ThreatLevel.CRITICAL]
+        )
 
         if high_severity_vulns > 0 or high_threat_indicators > 0:
             return "high"
@@ -272,14 +294,19 @@ class AIAnalysisResult:
 
     def _dict_from_dataclass(self, obj) -> Dict[str, Any]:
         """Convert dataclass to dictionary"""
-        if hasattr(obj, '__dataclass_fields__'):
+        if hasattr(obj, "__dataclass_fields__"):
             result = {}
             for field_name, field_info in obj.__dataclass_fields__.items():
                 value = getattr(obj, field_name)
-                if hasattr(value, '__dataclass_fields__'):
+                if hasattr(value, "__dataclass_fields__"):
                     result[field_name] = self._dict_from_dataclass(value)
                 elif isinstance(value, list):
-                    result[field_name] = [self._dict_from_dataclass(item) if hasattr(item, '__dataclass_fields__') else item for item in value]
+                    result[field_name] = [
+                        self._dict_from_dataclass(item)
+                        if hasattr(item, "__dataclass_fields__")
+                        else item
+                        for item in value
+                    ]
                 elif isinstance(value, Enum):
                     result[field_name] = value.value
                 else:
@@ -291,9 +318,16 @@ class AIAnalysisResult:
 @dataclass
 class AIAnalysisRequest:
     """Request for AI analysis"""
+
     binary_path: str
     analysis_type: AnalysisType = AnalysisType.COMPREHENSIVE
-    goals: List[str] = field(default_factory=lambda: ["understand_functionality", "find_vulnerabilities", "assess_threats"])
+    goals: List[str] = field(
+        default_factory=lambda: [
+            "understand_functionality",
+            "find_vulnerabilities",
+            "assess_threats",
+        ]
+    )
     context: Dict[str, Any] = field(default_factory=dict)
     preferences: Dict[str, Any] = field(default_factory=dict)
     session_id: Optional[str] = None
@@ -306,6 +340,7 @@ class AIAnalysisRequest:
 @dataclass
 class WorkflowSuggestion:
     """Suggested analysis workflow"""
+
     binary_type: str
     complexity: str
     recommended_tools: List[str]
@@ -318,63 +353,59 @@ class WorkflowSuggestion:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'binary_type': self.binary_type,
-            'complexity': self.complexity,
-            'recommended_tools': self.recommended_tools,
-            'estimated_time': self.estimated_time,
-            'resource_requirements': self.resource_requirements,
-            'alternative_workflows': self.alternative_workflows,
-            'confidence': self.confidence,
-            'reasoning': self.reasoning
+            "binary_type": self.binary_type,
+            "complexity": self.complexity,
+            "recommended_tools": self.recommended_tools,
+            "estimated_time": self.estimated_time,
+            "resource_requirements": self.resource_requirements,
+            "alternative_workflows": self.alternative_workflows,
+            "confidence": self.confidence,
+            "reasoning": self.reasoning,
         }
 
 
 # Factory functions for easy creation
-def create_binary_info(name: str, path: str, size: int, file_type: str, **kwargs) -> BinaryInfo:
+def create_binary_info(
+    name: str, path: str, size: int, file_type: str, **kwargs
+) -> BinaryInfo:
     """Create BinaryInfo with default values"""
-    return BinaryInfo(
-        name=name,
-        path=path,
-        size=size,
-        file_type=file_type,
-        **kwargs
-    )
+    return BinaryInfo(name=name, path=path, size=size, file_type=file_type, **kwargs)
 
 
-def create_function_analysis(name: str, address: str, size: int, purpose: str, **kwargs) -> FunctionAnalysis:
+def create_function_analysis(
+    name: str, address: str, size: int, purpose: str, **kwargs
+) -> FunctionAnalysis:
     """Create FunctionAnalysis with default values"""
     return FunctionAnalysis(
-        name=name,
-        address=address,
-        size=size,
-        purpose=purpose,
-        **kwargs
+        name=name, address=address, size=size, purpose=purpose, **kwargs
     )
 
 
-def create_vulnerability(id: str, type: str, severity: str, description: str, **kwargs) -> Vulnerability:
+def create_vulnerability(
+    id: str, type: str, severity: str, description: str, **kwargs
+) -> Vulnerability:
     """Create Vulnerability with default values"""
     return Vulnerability(
-        id=id,
-        type=type,
-        severity=severity,
-        description=description,
-        **kwargs
+        id=id, type=type, severity=severity, description=description, **kwargs
     )
 
 
-def create_threat_indicator(type: str, value: str, threat_level: ThreatLevel, description: str, **kwargs) -> ThreatIndicator:
+def create_threat_indicator(
+    type: str, value: str, threat_level: ThreatLevel, description: str, **kwargs
+) -> ThreatIndicator:
     """Create ThreatIndicator with default values"""
     return ThreatIndicator(
         type=type,
         value=value,
         threat_level=threat_level,
         description=description,
-        **kwargs
+        **kwargs,
     )
 
 
-def create_recommendation(id: str, type: str, priority: str, title: str, description: str, **kwargs) -> Recommendation:
+def create_recommendation(
+    id: str, type: str, priority: str, title: str, description: str, **kwargs
+) -> Recommendation:
     """Create Recommendation with default values"""
     return Recommendation(
         id=id,
@@ -382,16 +413,18 @@ def create_recommendation(id: str, type: str, priority: str, title: str, descrip
         priority=priority,
         title=title,
         description=description,
-        **kwargs
+        **kwargs,
     )
 
 
-def create_analysis_metadata(analysis_id: str, start_time: float, end_time: float, **kwargs) -> AnalysisMetadata:
+def create_analysis_metadata(
+    analysis_id: str, start_time: float, end_time: float, **kwargs
+) -> AnalysisMetadata:
     """Create AnalysisMetadata with calculated values"""
     return AnalysisMetadata(
         analysis_id=analysis_id,
         start_time=start_time,
         end_time=end_time,
         duration=end_time - start_time,
-        **kwargs
+        **kwargs,
     )

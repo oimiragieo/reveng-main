@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -349,19 +349,6 @@ public:
   virtual void clear(void) { parenlevel = 0; indentlevel=0; pendPrint=(PendPrint *)0; }
   virtual void setOutputStream(ostream *t)=0;			///< Set the output stream for the emitter
   virtual ostream *getOutputStream(void) const=0;		///< Get the current output stream
-
-  /// \brief Toggle whether \b this emits mark-up or not
-
-  /// If the emitter supports it, \b true turns on mark-up, \b false turns it off. Otherwise there is no effect.
-  /// \param val is \b true if markup is desired
-  virtual void setMarkup(bool val) {}
-
-  /// \brief Toggle whether \b this emitter produces packed output
-  ///
-  /// If the emitter supports it, \b true selects packed output and \b false selects unpacked XML output.
-  /// Otherwise the method has no effect.
-  /// \param val is \b true for packed or \b false for unpacked
-  virtual void setPackedOutput(bool val) {}
   virtual void spaces(int4 num,int4 bump=0);
 
   /// \brief Start a new indent level
@@ -440,7 +427,7 @@ public:
 
   /// \brief Set a pending print callback
   ///
-  /// The callback will be issued prior to the next call to tagLine() unless
+  /// The callback will be issued prior to the the next call to tagLine() unless
   /// a the method cancelPendingPrint() is called first.
   /// \param pend is the callback to be issued
   void setPendingPrint(PendPrint *pend) { pendPrint = pend; }
@@ -535,7 +522,6 @@ public:
   virtual void closeParen(const string &paren,int4 id);
   virtual void setOutputStream(ostream *t);
   virtual ostream *getOutputStream(void) const { return s; }
-  virtual void setPackedOutput(bool val);
   virtual bool emitsMarkup(void) const { return true; }
 };
 
@@ -1099,7 +1085,6 @@ public:
   virtual void clear(void);
   virtual void setOutputStream(ostream *t) { lowlevel->setOutputStream(t); }
   virtual ostream *getOutputStream(void) const { return lowlevel->getOutputStream(); }
-  virtual void setPackedOutput(bool val) { lowlevel->setPackedOutput(val); }
   virtual void spaces(int4 num,int4 bump=0);
   virtual int4 startIndent(void);
   virtual void stopIndent(int4 id);
@@ -1111,7 +1096,7 @@ public:
   virtual void setCommentFill(const string &fill) { commentfill = fill; }
   virtual bool emitsMarkup(void) const { return lowlevel->emitsMarkup(); }
   virtual void resetDefaults(void);
-  virtual void setMarkup(bool val);
+  void setMarkup(bool val);	///< Toggle whether the low-level emitter emits markup or not
 };
 
 /// \brief Helper class for sending cancelable print commands to an ExitXml

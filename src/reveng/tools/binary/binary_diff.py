@@ -17,7 +17,7 @@ import hashlib
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict
 
 try:
     import lief
@@ -81,7 +81,9 @@ class BinaryDiff:
 
         # Instruction-level comparison (if requested and Capstone available)
         if include_instructions and self.has_capstone:
-            report["instruction_diff"] = self._compare_instructions(original_path, rebuilt_path)
+            report["instruction_diff"] = self._compare_instructions(
+                original_path, rebuilt_path
+            )
 
         # Generate summary
         report["summary"] = self._generate_summary(report)
@@ -141,7 +143,9 @@ class BinaryDiff:
             rebuilt_sections = {s.name: s for s in rebuilt_bin.sections}
 
             # Compare common sections
-            all_section_names = set(original_sections.keys()) | set(rebuilt_sections.keys())
+            all_section_names = set(original_sections.keys()) | set(
+                rebuilt_sections.keys()
+            )
 
             for section_name in sorted(all_section_names):
                 section_diff = {
@@ -150,7 +154,10 @@ class BinaryDiff:
                     "in_rebuilt": section_name in rebuilt_sections,
                 }
 
-                if section_name in original_sections and section_name in rebuilt_sections:
+                if (
+                    section_name in original_sections
+                    and section_name in rebuilt_sections
+                ):
                     orig_section = original_sections[section_name]
                     rebuilt_section = rebuilt_sections[section_name]
 
@@ -165,7 +172,8 @@ class BinaryDiff:
                     section_diff["virtual_address"] = {
                         "original": orig_section.virtual_address,
                         "rebuilt": rebuilt_section.virtual_address,
-                        "match": orig_section.virtual_address == rebuilt_section.virtual_address,
+                        "match": orig_section.virtual_address
+                        == rebuilt_section.virtual_address,
                     }
 
                     # Compare content (first 1KB only to save memory)
@@ -176,9 +184,13 @@ class BinaryDiff:
 
                     if not section_diff["content_match"]:
                         # Count differing bytes
-                        diff_bytes = sum(1 for a, b in zip(orig_content, rebuilt_content) if a != b)
+                        diff_bytes = sum(
+                            1 for a, b in zip(orig_content, rebuilt_content) if a != b
+                        )
                         section_diff["diff_bytes"] = diff_bytes
-                        section_diff["diff_percentage"] = (diff_bytes / len(orig_content)) * 100
+                        section_diff["diff_percentage"] = (
+                            diff_bytes / len(orig_content)
+                        ) * 100
 
                 diff["sections"].append(section_diff)
 
@@ -227,7 +239,9 @@ class BinaryDiff:
             }
 
             # Find first divergence
-            for i, (orig, rebuilt) in enumerate(zip(original_instructions, rebuilt_instructions)):
+            for i, (orig, rebuilt) in enumerate(
+                zip(original_instructions, rebuilt_instructions)
+            ):
                 if orig.mnemonic != rebuilt.mnemonic or orig.op_str != rebuilt.op_str:
                     diff["first_divergence"] = {
                         "offset": i,
@@ -239,10 +253,12 @@ class BinaryDiff:
 
             # Generate text diff
             original_text = [
-                f"{hex(i.address)}: {i.mnemonic} {i.op_str}" for i in original_instructions[:50]
+                f"{hex(i.address)}: {i.mnemonic} {i.op_str}"
+                for i in original_instructions[:50]
             ]
             rebuilt_text = [
-                f"{hex(i.address)}: {i.mnemonic} {i.op_str}" for i in rebuilt_instructions[:50]
+                f"{hex(i.address)}: {i.mnemonic} {i.op_str}"
+                for i in rebuilt_instructions[:50]
             ]
 
             unified_diff = list(
@@ -358,12 +374,18 @@ class BinaryDiff:
         if "instruction_count" in report.get("instruction_diff", {}):
             inst_diff = report["instruction_diff"]
             print("Instruction Comparison:")
-            print(f"  Original instructions: {inst_diff['instruction_count']['original']}")
-            print(f"  Rebuilt instructions:  {inst_diff['instruction_count']['rebuilt']}")
+            print(
+                f"  Original instructions: {inst_diff['instruction_count']['original']}"
+            )
+            print(
+                f"  Rebuilt instructions:  {inst_diff['instruction_count']['rebuilt']}"
+            )
 
             if "first_divergence" in inst_diff:
                 div = inst_diff["first_divergence"]
-                print(f"  First divergence at offset {div['offset']} ({div['address']}):")
+                print(
+                    f"  First divergence at offset {div['offset']} ({div['address']}):"
+                )
                 print(f"    Original: {div['original']}")
                 print(f"    Rebuilt:  {div['rebuilt']}")
 
@@ -403,7 +425,7 @@ if __name__ == "__main__":
             print(f"Error: Rebuilt binary not found: {rebuilt}")
             sys.exit(1)
 
-        print(f"Comparing binaries...")
+        print("Comparing binaries...")
         print(f"  Original: {original}")
         print(f"  Rebuilt:  {rebuilt}")
         print()

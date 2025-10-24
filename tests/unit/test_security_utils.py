@@ -6,9 +6,7 @@ Validates that safe archive extraction properly prevents path traversal attacks.
 
 import os
 import tarfile
-import tempfile
 import zipfile
-from pathlib import Path
 
 import pytest
 
@@ -161,11 +159,9 @@ class TestSafeExtractTar:
         temp_file = tmp_path / "temp.txt"
         temp_file.write_text("malicious")
 
-        # Absolute path
-        if os.name == "nt":
-            malicious_path = "C:/Windows/evil.txt"
-        else:
-            malicious_path = "/tmp/evil.txt"
+        # Use path traversal with ../ instead of absolute path
+        # (tarfile automatically strips absolute paths, so we use ../ to test path traversal)
+        malicious_path = "../../../evil.txt"
 
         with tarfile.open(tar_path, "w") as tf:
             tf.add(temp_file, arcname=malicious_path)

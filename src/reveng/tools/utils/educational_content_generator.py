@@ -11,11 +11,10 @@ Requirements: 8.4, 8.5
 
 import json
 import logging
-import os
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -92,8 +91,8 @@ class EducationalContentGenerator:
 
         # Create text-based visualization
         viz_content = f"""
-# {viz_type.replace('_', ' ').title()} Visualization
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+# {viz_type.replace("_", " ").title()} Visualization
+Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Analysis Results Summary
 """
@@ -101,21 +100,21 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         if "vulnerabilities" in analysis_results:
             viz_content += "\n### Vulnerabilities Found:\n"
             for vuln in analysis_results["vulnerabilities"]:
-                viz_content += (
-                    f"- {vuln.get('type', 'Unknown')}: {vuln.get('severity', 'Unknown')} severity\n"
-                )
+                viz_content += f"- {vuln.get('type', 'Unknown')}: {vuln.get('severity', 'Unknown')} severity\n"
 
         if "corporate_exposure" in analysis_results:
             exposure = analysis_results["corporate_exposure"]
-            viz_content += f"\n### Corporate Data Exposure:\n"
-            viz_content += f"- Credentials found: {exposure.get('credentials_found', 0)}\n"
-            viz_content += f"- API endpoints: {exposure.get('api_endpoints', 0)}\n"
+            viz_content += "\n### Corporate Data Exposure:\n"
             viz_content += (
-                f"- Business logic exposed: {exposure.get('business_logic_exposed', False)}\n"
+                f"- Credentials found: {exposure.get('credentials_found', 0)}\n"
             )
+            viz_content += f"- API endpoints: {exposure.get('api_endpoints', 0)}\n"
+            viz_content += f"- Business logic exposed: {exposure.get('business_logic_exposed', False)}\n"
 
         # Save text visualization
-        filename = f"visualization_{viz_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        filename = (
+            f"visualization_{viz_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        )
         filepath = self.output_dir / "visualizations" / filename
 
         with open(filepath, "w") as f:
@@ -235,7 +234,7 @@ Time to level up your security game! 💪""",
 
         # Save social media content
         for i, post in enumerate(posts):
-            filename = f"social_media_post_{i+1}_{post.platform}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            filename = f"social_media_post_{i + 1}_{post.platform}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             filepath = self.output_dir / "social_media" / filename
 
             with open(filepath, "w") as f:
@@ -304,7 +303,7 @@ Traditional security models relied heavily on the assumption that compiled code 
 
         # Save blog posts
         for i, post in enumerate(blog_posts):
-            filename = f"blog_post_{i+1}_{topic}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            filename = f"blog_post_{i + 1}_{topic}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
             filepath = self.output_dir / "blog_posts" / filename
 
             # Create simple blog post content
@@ -421,7 +420,7 @@ Traditional security models relied heavily on the assumption that compiled code 
 
         # Save presentations
         for i, presentation in enumerate(presentations):
-            filename = f"presentation_{i+1}_{presentation_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            filename = f"presentation_{i + 1}_{presentation_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
             filepath = self.output_dir / "presentations" / filename
 
             # Create presentation content
@@ -429,7 +428,7 @@ Traditional security models relied heavily on the assumption that compiled code 
 
 ## {presentation.subtitle}
 
-**Presenter:** {presentation.presenter_info['name']}
+**Presenter:** {presentation.presenter_info["name"]}
 **Duration:** {presentation.duration_minutes} minutes
 **Audience:** {presentation.target_audience}
 
@@ -438,7 +437,9 @@ Traditional security models relied heavily on the assumption that compiled code 
 """
 
             for i, slide in enumerate(presentation.slides):
-                pres_content += f"## Slide {i+1}: {slide['title']}\n\n{slide['content']}\n\n"
+                pres_content += (
+                    f"## Slide {i + 1}: {slide['title']}\n\n{slide['content']}\n\n"
+                )
                 if "bullet_points" in slide:
                     for point in slide["bullet_points"]:
                         pres_content += f"- {point}\n"
@@ -485,8 +486,12 @@ Traditional security models relied heavily on the assumption that compiled code 
             except Exception as e:
                 logger.warning(f"Failed to create {viz_type} visualization: {e}")
 
-        social_media_posts = self.create_social_media_content(analysis_results, campaign_name)
-        blog_posts = self.create_blog_content(analysis_results, "ai_security_revolution")
+        social_media_posts = self.create_social_media_content(
+            analysis_results, campaign_name
+        )
+        blog_posts = self.create_blog_content(
+            analysis_results, "ai_security_revolution"
+        )
         presentations = self.create_conference_presentations(
             analysis_results, "security_conference"
         )
@@ -504,15 +509,15 @@ Traditional security models relied heavily on the assumption that compiled code 
             "files_created": {
                 "visualizations": visualizations,
                 "social_media": [
-                    f"social_media_post_{i+1}_{post.platform}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                    f"social_media_post_{i + 1}_{post.platform}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
                     for i, post in enumerate(social_media_posts)
                 ],
                 "blog_posts": [
-                    f"blog_post_{i+1}_ai_security_revolution_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+                    f"blog_post_{i + 1}_ai_security_revolution_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
                     for i in range(len(blog_posts))
                 ],
                 "presentations": [
-                    f"presentation_{i+1}_security_conference_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+                    f"presentation_{i + 1}_security_conference_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
                     for i in range(len(presentations))
                 ],
             },

@@ -8,7 +8,6 @@ Author: REVENG Development Team
 Version: 3.0.0
 """
 
-import os
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -27,8 +26,8 @@ __status__ = "Production/Stable"
 __release_type__ = "stable"
 
 # Supported Python versions
-__python_versions__ = ["3.11", "3.12"]
-__minimum_python_version__ = "3.11"
+__python_versions__ = ["3.9", "3.10", "3.11"]
+__minimum_python_version__ = "3.9"
 
 # Platform information
 __platforms__ = ["Windows", "Linux", "macOS"]

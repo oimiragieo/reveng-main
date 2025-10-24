@@ -47,6 +47,37 @@ def temp_dir():
 
 
 @pytest.fixture
+def temp_analysis_dir(temp_dir):
+    """Create temporary analysis directory for tests"""
+    analysis_dir = Path(temp_dir) / "analysis"
+    analysis_dir.mkdir(exist_ok=True)
+    return analysis_dir
+
+
+@pytest.fixture
+def mock_binary_file(temp_dir):
+    """Create a mock binary file for testing"""
+    binary_path = Path(temp_dir) / "test_binary.exe"
+    with open(binary_path, "wb") as f:
+        f.write(b"\x4D\x5A\x90\x00" + b"\x00" * 1000)  # Mock PE header
+    return binary_path
+
+
+@pytest.fixture
+def mock_enhanced_features():
+    """Mock enhanced analysis features"""
+    from reveng.analyzer import EnhancedAnalysisFeatures
+    features = EnhancedAnalysisFeatures()
+    features.enable_enhanced_analysis = True
+    features.enable_corporate_exposure = True
+    features.enable_vulnerability_discovery = True
+    features.enable_threat_intelligence = True
+    features.enable_enhanced_reconstruction = True
+    features.enable_demonstration_generation = True
+    return features
+
+
+@pytest.fixture
 def sample_binaries_dir(temp_dir):
     """Create directory with sample binaries for testing"""
     binaries_dir = Path(temp_dir) / "binaries"
@@ -505,7 +536,10 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "ghidra: mark test as Ghidra integration test")
     config.addinivalue_line("markers", "pipeline: mark test as pipeline test")
     config.addinivalue_line("markers", "ml: mark test as ML integration test")
-    config.addinivalue_line("markers", "slow: mark test as slow running test")
+    config.addinivalue_line("markers", "slow: mark test as slow running test (>5s)")
+    config.addinivalue_line("markers", "fast: mark test as fast running test (<1s)")
+    config.addinivalue_line("markers", "requires_external_tools: mark test as requiring external tools (Ghidra, ILSpy, etc)")
+    config.addinivalue_line("markers", "requires_network: mark test as requiring network connectivity")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -514,21 +548,31 @@ def pytest_collection_modifyitems(config, items):
         # Add markers based on test file location
         if "unit" in str(item.fspath):
             item.add_marker(pytest.mark.unit)
+            item.add_marker(pytest.mark.fast)  # Unit tests are typically fast
         elif "integration" in str(item.fspath):
             item.add_marker(pytest.mark.integration)
+            # Integration tests might require external tools
+            if "ghidra" in item.name or "ilspy" in item.name or "cfr" in item.name:
+                item.add_marker(pytest.mark.requires_external_tools)
         elif "e2e" in str(item.fspath):
             item.add_marker(pytest.mark.e2e)
+            item.add_marker(pytest.mark.slow)  # E2E tests are typically slow
+            item.add_marker(pytest.mark.requires_external_tools)
         elif "performance" in str(item.fspath):
             item.add_marker(pytest.mark.performance)
+            item.add_marker(pytest.mark.slow)
 
         # Add markers based on test name
         if "malware" in item.name:
             item.add_marker(pytest.mark.malware)
         if "ghidra" in item.name:
             item.add_marker(pytest.mark.ghidra)
+            item.add_marker(pytest.mark.requires_external_tools)
         if "pipeline" in item.name:
             item.add_marker(pytest.mark.pipeline)
         if "ml" in item.name:
             item.add_marker(pytest.mark.ml)
         if "slow" in item.name:
             item.add_marker(pytest.mark.slow)
+        if "network" in item.name or "download" in item.name or "fetch" in item.name:
+            item.add_marker(pytest.mark.requires_network)

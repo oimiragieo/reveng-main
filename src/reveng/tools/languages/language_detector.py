@@ -18,13 +18,12 @@ Supports:
 
 import json
 import logging
-import os
 import re
 import struct
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -228,7 +227,9 @@ class LanguageDetector:
 
             # Check ASAR (Electron app archive)
             header_str = header.decode("utf-8", errors="ignore")
-            if header_str.startswith('{"files":') or header_str.startswith('{"files" :'):
+            if header_str.startswith('{"files":') or header_str.startswith(
+                '{"files" :'
+            ):
                 return FileTypeInfo(
                     language="javascript",
                     format="electron_asar",
@@ -391,11 +392,13 @@ class LanguageDetector:
 
                 # Look for minification patterns
                 minified_indicators = [
-                    len(content.split("\n")) < 10 and len(content) > 500,  # Few lines but long
+                    len(content.split("\n")) < 10
+                    and len(content) > 500,  # Few lines but long
                     re.search(
                         r"[a-zA-Z]\s*=\s*function\s*\([a-zA-Z,]*\)\s*{", content
                     ),  # Minified functions
-                    content.count(";") > content.count("\n") * 3,  # Many semicolons per line
+                    content.count(";")
+                    > content.count("\n") * 3,  # Many semicolons per line
                 ]
 
                 is_minified = sum(minified_indicators) >= 2
@@ -540,7 +543,8 @@ class LanguageDetector:
                 # CLR Runtime Header is at index 14
                 if num_dirs > 14:
                     f.seek(
-                        pe_offset + (24 + (108 if magic == 0x20B else 92) + 4 + (14 * 8)),
+                        pe_offset
+                        + (24 + (108 if magic == 0x20B else 92) + 4 + (14 * 8)),
                         0,
                     )
                     clr_header_rva = struct.unpack("<I", f.read(4))[0]

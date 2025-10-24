@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 //Converts an ascii hex file into binary file. Works for files with spaces and without. Assumes hex bytes are zero padded so all values are two bytes long.
-//@category
-
-import java.io.*;
+//@category Conversion
 
 import ghidra.app.script.GhidraScript;
+
+import java.io.*;
 
 public class AsciiToBinaryScript extends GhidraScript {
 
@@ -37,9 +37,8 @@ public class AsciiToBinaryScript extends GhidraScript {
 		File outBinaryFile = askFile("Select Binary File", "Binary File");
 
 		if (outBinaryFile.equals(inAsciiFile)) {
-			popup(
-				"Input file and output file are the same. Please choose a different file for the output." +
-					inAsciiFile.getAbsolutePath());
+			popup("Input file and output file are the same. Please choose a different file for the output." +
+				inAsciiFile.getAbsolutePath());
 			return;
 		}
 

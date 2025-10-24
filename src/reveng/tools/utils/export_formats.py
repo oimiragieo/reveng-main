@@ -17,7 +17,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +143,9 @@ if __name__ == "__main__":
     apply_reveng_analysis()
 '''.format(
             timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            functions_json=json.dumps(self.analysis_data.get("functions", []), indent=4),
+            functions_json=json.dumps(
+                self.analysis_data.get("functions", []), indent=4
+            ),
         )
 
         return script
@@ -255,7 +257,9 @@ if __name__ == "__main__":
     apply_reveng_analysis()
 '''.format(
             timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            functions_json=json.dumps(self.analysis_data.get("functions", []), indent=4),
+            functions_json=json.dumps(
+                self.analysis_data.get("functions", []), indent=4
+            ),
         )
 
         return script
@@ -394,7 +398,9 @@ def apply_reveng_analysis(bv):
 apply_reveng_analysis(bv)
 '''.format(
             timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            functions_json=json.dumps(self.analysis_data.get("functions", []), indent=4),
+            functions_json=json.dumps(
+                self.analysis_data.get("functions", []), indent=4
+            ),
         )
 
         return script
@@ -445,7 +451,9 @@ apply_reveng_analysis(bv)
         results["ida"] = self.export_ida_python(output_dir / "reveng_import_ida.py")
 
         # Ghidra
-        results["ghidra"] = self.export_ghidra_script(output_dir / "reveng_import_ghidra.py")
+        results["ghidra"] = self.export_ghidra_script(
+            output_dir / "reveng_import_ghidra.py"
+        )
 
         # Radare2
         results["radare2"] = self.export_radare2_script(output_dir / "reveng_import.r2")

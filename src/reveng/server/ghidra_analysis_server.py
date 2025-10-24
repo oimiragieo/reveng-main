@@ -14,12 +14,10 @@ Author: REVENG Team
 Version: 3.0.0
 """
 
-import json
 import logging
 import os
 import time
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -90,7 +88,11 @@ class GhidraAnalysisEngine:
 
             # Try ghidra_bridge
             if self.bridge:
-                return {"status": "healthy", "method": "bridge", "timestamp": time.time()}
+                return {
+                    "status": "healthy",
+                    "method": "bridge",
+                    "timestamp": time.time(),
+                }
 
             return {
                 "status": "unhealthy",
@@ -142,7 +144,9 @@ class GhidraAnalysisEngine:
         try:
             # Step 1: Get all functions
             logger.info("Step 1: Extracting functions...")
-            functions = self.http_client.get_json("methods", params={"limit": 10000}, default=[])
+            functions = self.http_client.get_json(
+                "methods", params={"limit": 10000}, default=[]
+            )
             result["functions"] = functions
             logger.info(f"Found {len(functions)} functions")
 
@@ -162,7 +166,9 @@ class GhidraAnalysisEngine:
 
             # Step 3: Get strings
             logger.info("Step 3: Extracting strings...")
-            strings = self.http_client.get_json("strings", params={"limit": 2000}, default=[])
+            strings = self.http_client.get_json(
+                "strings", params={"limit": 2000}, default=[]
+            )
             result["strings"] = strings
             logger.info(f"Found {len(strings)} strings")
 
@@ -184,7 +190,9 @@ class GhidraAnalysisEngine:
             for func in functions[:20]:  # Limit to first 20 for performance
                 func_addr = func.get("address") or func.get("entry", "")
                 if func_addr:
-                    xref_data = self.http_client.get_json(f"xrefs_to/{func_addr}", default=[])
+                    xref_data = self.http_client.get_json(
+                        f"xrefs_to/{func_addr}", default=[]
+                    )
                     if xref_data:
                         xrefs[func_addr] = xref_data
             result["xrefs"] = xrefs
@@ -232,10 +240,14 @@ class GhidraAnalysisEngine:
             result["decompiled_code"] = decomp
 
             # Get xrefs
-            xrefs_to = self.http_client.get_json(f"xrefs_to/{function_address}", default=[])
+            xrefs_to = self.http_client.get_json(
+                f"xrefs_to/{function_address}", default=[]
+            )
             result["xrefs_to"] = xrefs_to
 
-            xrefs_from = self.http_client.get_json(f"xrefs_from/{function_address}", default=[])
+            xrefs_from = self.http_client.get_json(
+                f"xrefs_from/{function_address}", default=[]
+            )
             result["xrefs_from"] = xrefs_from
 
         except Exception as e:
@@ -256,7 +268,9 @@ def health():
 
     if not analysis_engine:
         return (
-            jsonify({"status": "initializing", "message": "Analysis engine not initialized"}),
+            jsonify(
+                {"status": "initializing", "message": "Analysis engine not initialized"}
+            ),
             503,
         )
 
@@ -341,7 +355,9 @@ def index():
 
 
 def start_server(
-    host: str = "127.0.0.1", port: int = 1337, ghidra_mcp_url: str = "http://127.0.0.1:8080"
+    host: str = "127.0.0.1",
+    port: int = 1337,
+    ghidra_mcp_url: str = "http://127.0.0.1:8080",
 ):
     """
     Start the Ghidra Analysis Server.
@@ -369,7 +385,9 @@ def start_server(
     if health_status["status"] == "healthy":
         logger.info(f"✅ Connected to Ghidra via {health_status['method']}")
     else:
-        logger.warning(f"⚠️  Ghidra connection not healthy: {health_status.get('error', 'Unknown')}")
+        logger.warning(
+            f"⚠️  Ghidra connection not healthy: {health_status.get('error', 'Unknown')}"
+        )
         logger.warning("   Server will start but analysis may fail")
 
     logger.info("=" * 60)
@@ -386,8 +404,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="REVENG Ghidra Analysis Server - The database for AI-powered reverse engineering"
     )
-    parser.add_argument("--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)")
-    parser.add_argument("--port", type=int, default=1337, help="Port to listen on (default: 1337)")
+    parser.add_argument(
+        "--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)"
+    )
+    parser.add_argument(
+        "--port", type=int, default=1337, help="Port to listen on (default: 1337)"
+    )
     parser.add_argument(
         "--ghidra-url",
         default="http://127.0.0.1:8080",

@@ -14,7 +14,6 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 try:
@@ -206,10 +205,14 @@ class VirusTotalConnector:
                 similar_files=[],  # Requires additional API call
                 contacted_domains=contacted_domains,
                 contacted_ips=contacted_ips,
-                raw_response=(file_obj.to_dict() if hasattr(file_obj, "to_dict") else None),
+                raw_response=(
+                    file_obj.to_dict() if hasattr(file_obj, "to_dict") else None
+                ),
             )
 
-            logger.info(f"Successfully retrieved VT intel for {sha256}: {detection_score}")
+            logger.info(
+                f"Successfully retrieved VT intel for {sha256}: {detection_score}"
+            )
             return enrichment
 
         except vt.error.APIError as e:
@@ -294,7 +297,7 @@ class VirusTotalConnector:
             query = f'vhash:"{vhash}"'
 
             for file in self.client.iterator(
-                f"/intelligence/search", params={"query": query}, limit=limit
+                "/intelligence/search", params={"query": query}, limit=limit
             ):
                 file_hash = file.sha256
                 if file_hash != sha256:  # Exclude original file
@@ -347,8 +350,12 @@ class VirusTotalConnector:
                 "threat_labels": vt_intel.threat_labels,
                 "tags": vt_intel.tags,
                 "names": vt_intel.names,
-                "first_seen": (vt_intel.first_seen.isoformat() if vt_intel.first_seen else None),
-                "last_seen": (vt_intel.last_seen.isoformat() if vt_intel.last_seen else None),
+                "first_seen": (
+                    vt_intel.first_seen.isoformat() if vt_intel.first_seen else None
+                ),
+                "last_seen": (
+                    vt_intel.last_seen.isoformat() if vt_intel.last_seen else None
+                ),
                 "sandbox_verdicts": vt_intel.sandbox_verdicts,
                 "crowdsourced_yara_rules": vt_intel.crowdsourced_yara_rules,
                 "vhash": vt_intel.vhash,
@@ -366,7 +373,9 @@ class VirusTotalConnector:
             if not enriched.get("family") and vt_intel.suggested_family:
                 enriched["family"] = vt_intel.suggested_family
 
-            logger.info(f"Enhanced analysis with VT intelligence: {vt_intel.detection_score}")
+            logger.info(
+                f"Enhanced analysis with VT intelligence: {vt_intel.detection_score}"
+            )
         else:
             logger.info(f"File {sha256} not found on VirusTotal - consider submitting")
             enriched["threat_intel"]["virustotal"] = {
@@ -388,12 +397,12 @@ class VirusTotalConnector:
             Formatted report string
         """
         if format == "markdown":
-            report = f"# VirusTotal Intelligence Report\n\n"
+            report = "# VirusTotal Intelligence Report\n\n"
             report += f"**SHA256:** `{vt_enrichment.sha256}`\n\n"
-            report += f"## Detection Results\n\n"
+            report += "## Detection Results\n\n"
             report += f"**Detection Score:** {vt_enrichment.detection_score}\n\n"
-            report += f"| Category | Count |\n"
-            report += f"|----------|-------|\n"
+            report += "| Category | Count |\n"
+            report += "|----------|-------|\n"
             for category, count in vt_enrichment.detections.items():
                 if count > 0:
                     report += f"| {category.title()} | {count} |\n"
@@ -402,26 +411,30 @@ class VirusTotalConnector:
                 report += f"\n**Suggested Family:** {vt_enrichment.suggested_family}\n"
 
             if vt_enrichment.threat_labels:
-                report += f"\n**Threat Labels:** {', '.join(vt_enrichment.threat_labels)}\n"
+                report += (
+                    f"\n**Threat Labels:** {', '.join(vt_enrichment.threat_labels)}\n"
+                )
 
             if vt_enrichment.crowdsourced_yara_rules:
-                report += f"\n## YARA Rule Matches\n\n"
+                report += "\n## YARA Rule Matches\n\n"
                 for rule in vt_enrichment.crowdsourced_yara_rules:
                     report += f"- **{rule['rule_name']}** ({rule['ruleset_name']})\n"
                     if rule.get("description"):
                         report += f"  - {rule['description']}\n"
 
             if vt_enrichment.sandbox_verdicts:
-                report += f"\n## Sandbox Verdicts\n\n"
-                for engine, verdict in list(vt_enrichment.sandbox_verdicts.items())[:10]:
+                report += "\n## Sandbox Verdicts\n\n"
+                for engine, verdict in list(vt_enrichment.sandbox_verdicts.items())[
+                    :10
+                ]:
                     report += f"- **{engine}:** {verdict}\n"
 
         else:  # text format
-            report = f"VirusTotal Intelligence Report\n"
+            report = "VirusTotal Intelligence Report\n"
             report += f"{'=' * 60}\n\n"
             report += f"SHA256: {vt_enrichment.sha256}\n\n"
             report += f"Detection Score: {vt_enrichment.detection_score}\n"
-            report += f"Detections:\n"
+            report += "Detections:\n"
             for category, count in vt_enrichment.detections.items():
                 if count > 0:
                     report += f"  - {category.title()}: {count}\n"
@@ -455,7 +468,9 @@ class VirusTotalConnector:
 
 
 # Convenience function for quick lookups
-def quick_lookup(file_path: str, api_key: Optional[str] = None) -> Optional[VTEnrichment]:
+def quick_lookup(
+    file_path: str, api_key: Optional[str] = None
+) -> Optional[VTEnrichment]:
     """
     Quick VirusTotal lookup for a file.
 

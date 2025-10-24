@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.CommentType;
+import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Instruction;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.util.CodeUnitInsertionException;
@@ -85,7 +85,7 @@ import ghidra.util.task.TaskMonitor;
  * <li>Observations of registers behave exactly the same as observations for memory, by leveraging
  * Ghidra's "register space." The only difference is that those observations must be recorded with
  * respect to a given thread. Each thread is effectively allocated its own copy of the register
- * space. Most of the API components require you to obtain a special "register space" for a given
+ * space. Most the the API components require you to obtain a special "register space" for a given
  * thread before recording observations of or applying annotations to that thread.</li>
  * </ul>
  * 
@@ -236,7 +236,8 @@ public class PopulateDemoTrace extends GhidraScript {
 			return;
 		}
 
-		TraceCodeSpace code = thread.getTrace().getCodeManager().getCodeRegisterSpace(thread, true);
+		TraceCodeSpace code =
+			thread.getTrace().getCodeManager().getCodeRegisterSpace(thread, true);
 		code.definedUnits().clear(Lifespan.nowOn(tick), reg, TaskMonitor.DUMMY);
 		code.definedData().create(Lifespan.nowOn(tick), reg, PointerDataType.dataType);
 	}
@@ -287,8 +288,9 @@ public class PopulateDemoTrace extends GhidraScript {
 		int pc2 = 0;
 
 		/**
-		 * For clarity, I will add each tick to the trace in its own transaction. The Transaction
-		 * class eases the syntax and reduces errors in starting and ending transactions.
+		 * For clarity, I will add each tick to the trace in its own transaction. The
+		 * Transaction class eases the syntax and reduces errors in starting and ending
+		 * transactions.
 		 */
 		try (Transaction tx = trace.openTransaction("Populate First Snapshot")) {
 			/**
@@ -343,16 +345,20 @@ public class PopulateDemoTrace extends GhidraScript {
 			 */
 			mainLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, addr(0x00400000), "main", global, SourceType.USER_DEFINED);
+					.create(snap, null, addr(0x00400000),
+						"main", global, SourceType.USER_DEFINED);
 			cloneLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, addr(0x00400060), "clone", global, SourceType.USER_DEFINED);
+					.create(snap, null, addr(0x00400060),
+						"clone", global, SourceType.USER_DEFINED);
 			childLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, addr(0x00400034), "child", global, SourceType.USER_DEFINED);
+					.create(snap, null, addr(0x00400034),
+						"child", global, SourceType.USER_DEFINED);
 			exitLabel = trace.getSymbolManager()
 					.labels()
-					.create(snap, addr(0x00400061), "exit", global, SourceType.USER_DEFINED);
+					.create(snap, null, addr(0x00400061),
+						"exit", global, SourceType.USER_DEFINED);
 
 			/**
 			 * Note the use of getProgramView as a means of using components intended for Program
@@ -404,7 +410,8 @@ public class PopulateDemoTrace extends GhidraScript {
 			trace.getCodeManager()
 					.codeUnits()
 					.getAt(0, cloneLabel.getAddress())
-					.setComment(CommentType.EOL, "Pretend this is a syscall");
+					.setComment(
+						CodeUnit.EOL_COMMENT, "Pretend this is a syscall");
 
 			/**
 			 * Stub out "exit"
@@ -413,7 +420,8 @@ public class PopulateDemoTrace extends GhidraScript {
 			trace.getCodeManager()
 					.codeUnits()
 					.getAt(0, exitLabel.getAddress())
-					.setComment(CommentType.EOL, "Pretend this is a syscall");
+					.setComment(
+						CodeUnit.EOL_COMMENT, "Pretend this is a syscall");
 
 			/**
 			 * "Launch" the program by initializing RIP and RSP of the main thread
@@ -497,10 +505,10 @@ public class PopulateDemoTrace extends GhidraScript {
 			regs2.putBytes(snap, reg("RSP"),
 				buf.clear().putLong(STACK2_BOTTOM + stack2offset).flip());
 			regs2.putBytes(snap, reg("RAX"), buf.clear().putLong(1).flip());
-			memory.putBytes(snap, addr(STACK2_BOTTOM + stack2offset),
-				buf.clear()
-						.putLong(mainInstructions.get(pc2 = pc1).getAddress().getOffset())
-						.flip());
+			memory.putBytes(snap, addr(STACK2_BOTTOM + stack2offset), buf.clear()
+					.putLong(
+						mainInstructions.get(pc2 = pc1).getAddress().getOffset())
+					.flip());
 
 			placeRegUnits(snap, thread1);
 			placeRegUnits(snap, thread2);
@@ -691,7 +699,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 2: CALL exit").getKey();
 
-			thread2.remove(snap);
+			thread2.setDestructionSnap(snap);
 		}
 
 		/**
@@ -701,7 +709,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			long snap =
 				trace.getTimeManager().createSnapshot("Stepped Thread 1: CALL exit").getKey();
 
-			thread1.remove(snap);
+			thread1.setDestructionSnap(snap);
 		}
 
 		/**

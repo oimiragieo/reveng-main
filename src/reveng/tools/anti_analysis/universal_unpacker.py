@@ -11,10 +11,9 @@ import hashlib
 import logging
 import shutil
 import subprocess
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 from .packer_detector import PackerDetector, PackerInfo
 
@@ -109,7 +108,9 @@ class UniversalUnpacker:
                     )
                     return result
 
-        if (method == "auto" or method == "generic") and not (result and result.success):
+        if (method == "auto" or method == "generic") and not (
+            result and result.success
+        ):
             # Try generic unpacking
             result = self._generic_unpack(packed_binary, output_path)
 
@@ -149,7 +150,9 @@ class UniversalUnpacker:
             logger.warning(f"No specialized unpacker available for {packer_name}")
             return None
 
-    def _unpack_upx(self, packed_binary: str, output_path: str, original_hash: str) -> UnpackResult:
+    def _unpack_upx(
+        self, packed_binary: str, output_path: str, original_hash: str
+    ) -> UnpackResult:
         """Unpack UPX-packed binary"""
         try:
             # First, copy to output path
@@ -269,7 +272,9 @@ class UniversalUnpacker:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
-    def batch_unpack(self, packed_binaries: List[str], output_dir: str) -> List[UnpackResult]:
+    def batch_unpack(
+        self, packed_binaries: List[str], output_dir: str
+    ) -> List[UnpackResult]:
         """
         Unpack multiple binaries.
 
@@ -298,18 +303,20 @@ class UniversalUnpacker:
                 logger.error(f"Failed to unpack {packed_binary}: {e}")
 
         success_count = sum(1 for r in results if r.success)
-        logger.info(f"Batch unpacking complete: {success_count}/{len(results)} successful")
+        logger.info(
+            f"Batch unpacking complete: {success_count}/{len(results)} successful"
+        )
 
         return results
 
     def generate_report(self, result: UnpackResult, format: str = "text") -> str:
         """Generate unpacking report"""
         if format == "markdown":
-            report = f"# Unpacking Report\n\n"
+            report = "# Unpacking Report\n\n"
             report += f"**Status:** {'✅ SUCCESS' if result.success else '❌ FAILED'}\n"
             report += f"**Method:** {result.method_used}\n\n"
 
-            report += f"## Packer Detection\n\n"
+            report += "## Packer Detection\n\n"
             report += f"- **Packed:** {result.packer_info.packed}\n"
             if result.packer_info.packer_name:
                 report += f"- **Packer:** {result.packer_info.packer_name}\n"
@@ -317,12 +324,12 @@ class UniversalUnpacker:
             report += f"- **Entropy:** {result.packer_info.entropy:.2f}\n\n"
 
             if result.packer_info.indicators:
-                report += f"**Indicators:**\n"
+                report += "**Indicators:**\n"
                 for indicator in result.packer_info.indicators:
                     report += f"- {indicator}\n"
                 report += "\n"
 
-            report += f"## Hashes\n\n"
+            report += "## Hashes\n\n"
             report += f"- **Original:** `{result.original_hash}`\n"
             if result.unpacked_hash:
                 report += f"- **Unpacked:** `{result.unpacked_hash}`\n"
@@ -335,12 +342,12 @@ class UniversalUnpacker:
                 report += f"**Error:** {result.error_message}\n"
 
         else:  # text format
-            report = f"Unpacking Report\n"
+            report = "Unpacking Report\n"
             report += f"{'=' * 60}\n\n"
             report += f"Status: {'SUCCESS' if result.success else 'FAILED'}\n"
             report += f"Method: {result.method_used}\n\n"
 
-            report += f"Packer Detection:\n"
+            report += "Packer Detection:\n"
             report += f"  Packed: {result.packer_info.packed}\n"
             if result.packer_info.packer_name:
                 report += f"  Packer: {result.packer_info.packer_name}\n"
@@ -348,12 +355,12 @@ class UniversalUnpacker:
             report += f"  Entropy: {result.packer_info.entropy:.2f}\n\n"
 
             if result.packer_info.indicators:
-                report += f"Indicators:\n"
+                report += "Indicators:\n"
                 for indicator in result.packer_info.indicators:
                     report += f"  - {indicator}\n"
                 report += "\n"
 
-            report += f"Hashes:\n"
+            report += "Hashes:\n"
             report += f"  Original: {result.original_hash}\n"
             if result.unpacked_hash:
                 report += f"  Unpacked: {result.unpacked_hash}\n"

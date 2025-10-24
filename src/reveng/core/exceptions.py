@@ -69,7 +69,9 @@ class ConfigurationError(REVENGException):
 class ToolError(REVENGException):
     """Raised when external tools fail."""
 
-    def __init__(self, message: str, tool_name: str = None, exit_code: int = None, **kwargs):
+    def __init__(
+        self, message: str, tool_name: str = None, exit_code: int = None, **kwargs
+    ):
         super().__init__(message, error_code="TOOL_ERROR", **kwargs)
         self.tool_name = tool_name
         self.exit_code = exit_code

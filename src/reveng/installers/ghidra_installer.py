@@ -2,17 +2,12 @@
 Ghidra installer for REVENG
 """
 
-import json
 import logging
-import os
 import platform
 import shutil
 import subprocess
-import sys
-import zipfile
 from pathlib import Path
-from typing import Any, Dict, Optional
-from urllib.parse import urljoin
+from typing import Optional
 
 from ..core.dependency_manager import ToolStatus
 from .base_installer import BaseInstaller, InstallMethod
@@ -89,7 +84,9 @@ class GhidraInstaller(BaseInstaller):
 
             # Check Java requirement
             if not self._check_java():
-                logger.error("Java 21+ is required for Ghidra. Please install Java first.")
+                logger.error(
+                    "Java 21+ is required for Ghidra. Please install Java first."
+                )
                 return False
 
             # Download Ghidra

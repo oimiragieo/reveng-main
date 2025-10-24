@@ -38,6 +38,9 @@ extern int pcodeerror(const char *str );
   SpaceSymbol *spacesym;
   UserOpSymbol *useropsym;
   LabelSymbol *labelsym;
+  StartSymbol *startsym;
+  EndSymbol *endsym;
+  Next2Symbol *next2sym;
   OperandSymbol *operandsym;
   VarnodeSymbol *varsym;
   SpecificSymbol *specsym;
@@ -74,7 +77,9 @@ extern int pcodeerror(const char *str );
 %token <useropsym> USEROPSYM
 %token <varsym> VARSYM
 %token <operandsym> OPERANDSYM
-%token <specsym> JUMPSYM
+%token <startsym> STARTSYM
+%token <endsym> ENDSYM
+%token <next2sym> NEXT2SYM
 %token <labelsym> LABELSYM
 
 %type <param> paramlist
@@ -192,7 +197,9 @@ sizedstar: '*' '[' SPACESYM ']' ':' INTEGER { $$ = new StarQuality; $$->size = *
   | '*' ':' INTEGER		{ $$ = new StarQuality; $$->size = *$3; delete $3; $$->id=ConstTpl(pcode->getDefaultSpace()); }
   | '*'				{ $$ = new StarQuality; $$->size = 0; $$->id=ConstTpl(pcode->getDefaultSpace()); }
   ;
-jumpdest: JUMPSYM		{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
+jumpdest: STARTSYM		{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
+  | ENDSYM			{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
+  | NEXT2SYM		{ VarnodeTpl *sym = $1->getVarnode(); $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),sym->getOffset(),ConstTpl(ConstTpl::j_curspace_size)); delete sym; }
   | INTEGER			{ $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,*$1),ConstTpl(ConstTpl::j_curspace_size)); delete $1; }
   | BADINTEGER                  { $$ = new VarnodeTpl(ConstTpl(ConstTpl::j_curspace),ConstTpl(ConstTpl::real,0),ConstTpl(ConstTpl::j_curspace_size)); yyerror("Parsed integer is too big (overflow)"); }
   | INTEGER '[' SPACESYM ']'	{ AddrSpace *spc = $3->getSpace(); $$ = new VarnodeTpl(ConstTpl(spc),ConstTpl(ConstTpl::real,*$1),ConstTpl(ConstTpl::real,spc->getAddrSize())); delete $1; }
@@ -217,7 +224,9 @@ label: '<' LABELSYM '>'         { $$ = $2; }
   ;
 specificsymbol: VARSYM		{ $$ = $1; }
   | OPERANDSYM			{ $$ = $1; }
-  | JUMPSYM			{ $$ = $1; }
+  | STARTSYM			{ $$ = $1; }
+  | ENDSYM			{ $$ = $1; }
+  | NEXT2SYM			{ $$ = $1; }
   ;
 paramlist: /* EMPTY */		{ $$ = new vector<ExprTree *>; }
   | expr			{ $$ = new vector<ExprTree *>; $$->push_back($1); }
@@ -741,12 +750,14 @@ int4 PcodeSnippet::lex(void)
 	yylval.operandsym = (OperandSymbol *)sym;
 	return OPERANDSYM;
       case SleighSymbol::start_symbol:
+	yylval.startsym = (StartSymbol *)sym;
+	return STARTSYM;
       case SleighSymbol::end_symbol:
-      case SleighSymbol::next2_symbol:
-      case SleighSymbol::flowdest_symbol:
-      case SleighSymbol::flowref_symbol:
-	yylval.specsym = (SpecificSymbol *)sym;
-	return JUMPSYM;
+	yylval.endsym = (EndSymbol *)sym;
+	return ENDSYM;
+	case SleighSymbol::next2_symbol:
+	yylval.next2sym = (Next2Symbol *)sym;
+	return NEXT2SYM;
       case SleighSymbol::label_symbol:
 	yylval.labelsym = (LabelSymbol *)sym;
 	return LABELSYM;

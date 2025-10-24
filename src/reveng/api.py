@@ -10,7 +10,6 @@ Version: 2.1.0
 License: MIT
 """
 
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -19,9 +18,6 @@ from typing import Any, Dict, List, Optional, Union
 from .analyzer import REVENGAnalyzer
 from .core.exceptions import (
     AnalysisError,
-    DependencyError,
-    REVENGException,
-    SecurityError,
     ValidationError,
 )
 from .core.validation import validate_analysis_config, validate_file_path
@@ -104,18 +100,47 @@ class REVENGAPI:
             # Run analysis
             logger.info(f"Starting analysis of {path}")
 
-            # Basic analysis
-            analysis_result = self.analyzer.analyze_binary(str(path))
+            analysis_summary = self.analyzer.analyze_binary(str(path))
+            if (
+                not isinstance(analysis_summary, dict)
+                or analysis_summary.get("status") != "success"
+            ):
+                error_message = "Analysis failed"
+                if isinstance(analysis_summary, dict):
+                    error_message = (
+                        analysis_summary.get("error")
+                        or analysis_summary.get("message")
+                        or error_message
+                    )
+                raise AnalysisError(error_message)
+
+            ghidra_data = analysis_summary.get("ghidra_analysis", {})
+            step_results = analysis_summary.get("results", {})
+            metadata = step_results.get("metadata", {})
 
             # Enhanced ML analysis if requested
             ml_insights = {}
             if enhanced:
                 try:
-                    ml_insights = self.ml.analyze_binary(str(path))
+                    ml_insights = self.ml.analyze_binary(str(path), ghidra_data)
                 except Exception as e:
                     logger.warning(f"ML analysis failed: {e}")
 
-            # Standardize output format
+            file_type = analysis_summary.get("binary", {}).get("file_type") or {}
+            classification_confidence = float(file_type.get("confidence", 0.0) or 0.0)
+
+            warnings = []
+            errors = step_results.get("errors", [])[:]
+            for step_name, info in step_results.items():
+                if not isinstance(info, dict):
+                    continue
+                status = info.get("status")
+                message = info.get("error") or info.get("message") or info.get("output")
+                if status == "warning" and message:
+                    warnings.append(f"{step_name}: {message}")
+                if status == "error" and message:
+                    errors.append(f"{step_name}: {message}")
+
             result = {
                 "version": "2.1.0",
                 "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -127,26 +152,28 @@ class REVENGAPI:
                     "architecture": self._detect_architecture(path),
                 },
                 "classification": {
-                    "language": analysis_result.get("language", "unknown"),
-                    "framework": analysis_result.get("framework", "unknown"),
-                    "gui_type": analysis_result.get("gui_type", "unknown"),
-                    "application_type": analysis_result.get("application_type", "unknown"),
-                    "confidence": analysis_result.get("confidence", 0.0),
+                    "language": file_type.get("language", "unknown"),
+                    "framework": "unknown",
+                    "gui_type": "unknown",
+                    "application_type": "unknown",
+                    "confidence": classification_confidence,
                 },
                 "analysis": {
-                    "imports": analysis_result.get("imports", []),
-                    "exports": analysis_result.get("exports", []),
-                    "resources": analysis_result.get("resources", []),
-                    "strings": analysis_result.get("strings", []),
-                    "functions": analysis_result.get("functions", []),
+                    "imports": ghidra_data.get("imports", []),
+                    "exports": ghidra_data.get("exports", []),
+                    "resources": step_results.get("resources", []),
+                    "strings": ghidra_data.get("strings", []),
+                    "functions": ghidra_data.get("functions", []),
+                    "decompiled_functions": len(ghidra_data.get("decompiled_code", {})),
                 },
                 "ml_insights": ml_insights,
-                "errors": analysis_result.get("errors", []),
-                "warnings": analysis_result.get("warnings", []),
+                "errors": errors,
+                "warnings": warnings,
                 "metadata": {
-                    "analysis_time_seconds": analysis_result.get("analysis_time", 0),
-                    "tools_used": analysis_result.get("tools_used", []),
+                    "analysis_time_seconds": metadata.get("duration_seconds", 0),
+                    "tools_used": ["ghidra"] if ghidra_data else [],
                     "reveng_version": "2.1.0",
+                    "analysis_folder": analysis_summary.get("analysis_folder"),
                 },
             }
 
@@ -156,6 +183,8 @@ class REVENGAPI:
             logger.info(f"Analysis completed for {path}")
             return result
 
+        except AnalysisError:
+            raise
         except Exception as e:
             raise AnalysisError(f"Analysis failed: {e}") from e
 
@@ -179,7 +208,9 @@ class REVENGAPI:
 
         try:
             # Use ML integration for code reconstruction
-            reconstruction_result = self.ml.reconstruct_code(str(path), output_format=output_format)
+            reconstruction_result = self.ml.reconstruct_code(
+                str(path), output_format=output_format
+            )
 
             return {
                 "version": "2.1.0",
@@ -190,7 +221,9 @@ class REVENGAPI:
                     "source_files": reconstruction_result.get("source_files", []),
                     "main_file": reconstruction_result.get("main_file", ""),
                     "dependencies": reconstruction_result.get("dependencies", []),
-                    "build_instructions": reconstruction_result.get("build_instructions", []),
+                    "build_instructions": reconstruction_result.get(
+                        "build_instructions", []
+                    ),
                 },
                 "quality": {
                     "completeness": reconstruction_result.get("completeness", 0.0),
@@ -239,9 +272,13 @@ class REVENGAPI:
                 },
                 "indicators": {
                     "suspicious_apis": detection_result.get("suspicious_apis", []),
-                    "network_indicators": detection_result.get("network_indicators", []),
+                    "network_indicators": detection_result.get(
+                        "network_indicators", []
+                    ),
                     "file_indicators": detection_result.get("file_indicators", []),
-                    "behavioral_indicators": detection_result.get("behavioral_indicators", []),
+                    "behavioral_indicators": detection_result.get(
+                        "behavioral_indicators", []
+                    ),
                 },
                 "mitre_attacks": detection_result.get("mitre_attacks", []),
                 "recommendations": detection_result.get("recommendations", []),
@@ -304,7 +341,9 @@ class REVENGAPI:
         """Calculate overall confidence score."""
         try:
             # Weighted average of different confidence measures
-            classification_conf = result.get("classification", {}).get("confidence", 0.0)
+            classification_conf = result.get("classification", {}).get(
+                "confidence", 0.0
+            )
             ml_conf = result.get("ml_insights", {}).get("confidence", 0.0)
 
             # Simple average for now
@@ -326,7 +365,9 @@ def detect_malware(binary_path: Union[str, Path]) -> Dict[str, Any]:
     return api.detect_malware(binary_path)
 
 
-def reconstruct_binary(binary_path: Union[str, Path], output_format: str = "c") -> Dict[str, Any]:
+def reconstruct_binary(
+    binary_path: Union[str, Path], output_format: str = "c"
+) -> Dict[str, Any]:
     """Convenience function for binary reconstruction."""
     api = REVENGAPI()
     return api.reconstruct_binary(binary_path, output_format)

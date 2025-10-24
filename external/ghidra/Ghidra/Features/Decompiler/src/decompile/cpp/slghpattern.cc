@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "slghpattern.hh"
-#include "slaformat.hh"
 
 namespace ghidra {
 
@@ -138,18 +137,17 @@ bool DisjointPattern::resolvesIntersect(const DisjointPattern *op1,const Disjoin
   return resolveIntersectBlock(op1->getBlock(true),op2->getBlock(true),getBlock(true));
 }
 
-DisjointPattern *DisjointPattern::decodeDisjoint(Decoder &decoder)
+DisjointPattern *DisjointPattern::restoreDisjoint(const Element *el)
 
 {				// DisjointPattern factory
   DisjointPattern *res;
-  uint4 el = decoder.peekElement();
-  if (el == sla::ELEM_INSTRUCT_PAT)
+  if (el->getName() == "instruct_pat")
     res = new InstructionPattern();
-  else if (el == sla::ELEM_CONTEXT_PAT)
+  else if (el->getName() == "context_pat")
     res = new ContextPattern();
   else
     res = new CombinePattern();
-  res->decode(decoder);
+  res->restoreXml(el);
   return res;
 }
 
@@ -487,37 +485,54 @@ bool PatternBlock::isContextMatch(ParserWalker &walker) const
   return true;
 }
 
-void PatternBlock::encode(Encoder &encoder) const
+void PatternBlock::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_PAT_BLOCK);
-  encoder.writeSignedInteger(sla::ATTRIB_OFF, offset);
-  encoder.writeSignedInteger(sla::ATTRIB_NONZERO, nonzerosize);
+  s << "<pat_block ";
+  s << "offset=\"" << dec << offset << "\" ";
+  s << "nonzero=\"" << nonzerosize << "\">\n";
   for(int4 i=0;i<maskvec.size();++i) {
-    encoder.openElement(sla::ELEM_MASK_WORD);
-    encoder.writeUnsignedInteger(sla::ATTRIB_MASK, maskvec[i]);
-    encoder.writeUnsignedInteger(sla::ATTRIB_VAL, valvec[i]);
-    encoder.closeElement(sla::ELEM_MASK_WORD);
+    s << "  <mask_word ";
+    s << "mask=\"0x" << hex << maskvec[i] << "\" ";
+    s << "val=\"0x" << valvec[i] << "\"/>\n";
   }
-  encoder.closeElement(sla::ELEM_PAT_BLOCK);
+  s << "</pat_block>\n";
 }
 
-void PatternBlock::decode(Decoder &decoder)
+void PatternBlock::restoreXml(const Element *el)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_PAT_BLOCK);
-  offset = decoder.readSignedInteger(sla::ATTRIB_OFF);
-  nonzerosize = decoder.readSignedInteger(sla::ATTRIB_NONZERO);
-  while(decoder.peekElement() != 0) {
-    uint4 subel = decoder.openElement(sla::ELEM_MASK_WORD);
-    uintm mask = decoder.readUnsignedInteger(sla::ATTRIB_MASK);
-    uintm val = decoder.readUnsignedInteger(sla::ATTRIB_VAL);
+  {
+    istringstream s(el->getAttributeValue("offset"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> offset;
+  }
+  {
+    istringstream s(el->getAttributeValue("nonzero"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> nonzerosize;
+  }
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  uintm mask,val;
+  while(iter != list.end()) {
+    Element *subel = *iter;
+    {
+      istringstream s(subel->getAttributeValue("mask"));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> mask;
+    }
+    {
+      istringstream s(subel->getAttributeValue("val"));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> val;
+    }
     maskvec.push_back(mask);
     valvec.push_back(val);
-    decoder.closeElement(subel);
+    ++iter;
   }
   normalize();
-  decoder.closeElement(el);
 }
 
 Pattern *InstructionPattern::doAnd(const Pattern *b,int4 sa) const
@@ -608,21 +623,22 @@ Pattern *InstructionPattern::doOr(const Pattern *b,int4 sa) const
   return new OrPattern(res1,res2);
 }
 
-void InstructionPattern::encode(Encoder &encoder) const
+void InstructionPattern::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_INSTRUCT_PAT);
-  maskvalue->encode(encoder);
-  encoder.closeElement(sla::ELEM_INSTRUCT_PAT);
+  s << "<instruct_pat>\n";
+  maskvalue->saveXml(s);
+  s << "</instruct_pat>\n";
 }
 
-void InstructionPattern::decode(Decoder &decoder)
+void InstructionPattern::restoreXml(const Element *el)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_INSTRUCT_PAT);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
   maskvalue = new PatternBlock(true);
-  maskvalue->decode(decoder);
-  decoder.closeElement(el);
+  maskvalue->restoreXml(*iter);
 }
 
 Pattern *ContextPattern::doOr(const Pattern *b,int4 sa) const
@@ -657,21 +673,22 @@ Pattern *ContextPattern::commonSubPattern(const Pattern *b,int4 sa) const
   return new ContextPattern(resblock);
 }
 
-void ContextPattern::encode(Encoder &encoder) const
+void ContextPattern::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_CONTEXT_PAT);
-  maskvalue->encode(encoder);
-  encoder.closeElement(sla::ELEM_CONTEXT_PAT);
+  s << "<context_pat>\n";
+  maskvalue->saveXml(s);
+  s << "</context_pat>\n";
 }
 
-void ContextPattern::decode(Decoder &decoder)
+void ContextPattern::restoreXml(const Element *el)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_CONTEXT_PAT);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
   maskvalue = new PatternBlock(true);
-  maskvalue->decode(decoder);
-  decoder.closeElement(el);
+  maskvalue->restoreXml(*iter);
 }
 
 CombinePattern::~CombinePattern(void)
@@ -787,24 +804,26 @@ Pattern *CombinePattern::simplifyClone(void) const
 			    (InstructionPattern *)instr->simplifyClone());
 }
 
-void CombinePattern::encode(Encoder &encoder) const
+void CombinePattern::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_COMBINE_PAT);
-  context->encode(encoder);
-  instr->encode(encoder);
-  encoder.closeElement(sla::ELEM_COMBINE_PAT);
+  s << "<combine_pat>\n";
+  context->saveXml(s);
+  instr->saveXml(s);
+  s << "</combine_pat>\n";
 }
 
-void CombinePattern::decode(Decoder &decoder)
+void CombinePattern::restoreXml(const Element *el)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_COMBINE_PAT);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
   context = new ContextPattern();
-  context->decode(decoder);
+  context->restoreXml(*iter);
+  ++iter;
   instr = new InstructionPattern();
-  instr->decode(decoder);
-  decoder.closeElement(el);
+  instr->restoreXml(*iter);
 }
 
 OrPattern::OrPattern(DisjointPattern *a,DisjointPattern *b)
@@ -976,24 +995,26 @@ Pattern *OrPattern::simplifyClone(void) const
   return new OrPattern(newlist);
 }
 
-void OrPattern::encode(Encoder &encoder) const
+void OrPattern::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_OR_PAT);
+  s << "<or_pat>\n";
   for(int4 i=0;i<orlist.size();++i)
-    orlist[i]->encode(encoder);
-  encoder.closeElement(sla::ELEM_OR_PAT);
+    orlist[i]->saveXml(s);
+  s << "</or_pat>\n";
 }
 
-void OrPattern::decode(Decoder &decoder)
+void OrPattern::restoreXml(const Element *el)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_OR_PAT);
-  while(decoder.peekElement() != 0) {
-    DisjointPattern *pat = DisjointPattern::decodeDisjoint(decoder);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  while(iter != list.end()) {
+    DisjointPattern *pat = DisjointPattern::restoreDisjoint(*iter);
     orlist.push_back(pat);
+    ++iter;
   }
-  decoder.closeElement(el);
 }
 
 } // End namespace ghidra

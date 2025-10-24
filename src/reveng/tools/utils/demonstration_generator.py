@@ -17,17 +17,15 @@ Author: AI-Enhanced Universal Analysis Engine
 Version: 1.0
 """
 
-import base64
 import json
 import logging
-import os
 import tempfile
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -112,7 +110,7 @@ class DemonstrationGenerator:
         (self.output_dir / "reports").mkdir(exist_ok=True)
         (self.output_dir / "assets").mkdir(exist_ok=True)
 
-        logger.info(f"Demonstration Generator initialized")
+        logger.info("Demonstration Generator initialized")
         logger.info(f"Output directory: {self.output_dir}")
 
     def create_demonstration(
@@ -166,7 +164,9 @@ class DemonstrationGenerator:
 
         return package
 
-    def _extract_evidence(self, analysis_results: Dict[str, Any]) -> List[AnalysisEvidence]:
+    def _extract_evidence(
+        self, analysis_results: Dict[str, Any]
+    ) -> List[AnalysisEvidence]:
         """Extract evidence from analysis results"""
         evidence = []
 
@@ -181,7 +181,9 @@ class DemonstrationGenerator:
                             evidence_type="credential_exposure",
                             description=f"Found {len(corp_data['credentials_found'])} hardcoded credentials",
                             risk_level=RiskLevel.CRITICAL,
-                            technical_details={"credentials": corp_data["credentials_found"]},
+                            technical_details={
+                                "credentials": corp_data["credentials_found"]
+                            },
                             remediation="Remove hardcoded credentials and use secure credential management",
                         )
                     )
@@ -192,7 +194,9 @@ class DemonstrationGenerator:
                             evidence_type="api_exposure",
                             description=f"Discovered {len(corp_data['api_endpoints_discovered'])} API endpoints",
                             risk_level=RiskLevel.HIGH,
-                            technical_details={"endpoints": corp_data["api_endpoints_discovered"]},
+                            technical_details={
+                                "endpoints": corp_data["api_endpoints_discovered"]
+                            },
                             remediation="Review API security and implement proper authentication",
                         )
                     )
@@ -221,7 +225,9 @@ class DemonstrationGenerator:
                             description=f"Found {len(vuln_data['injection_vulnerabilities'])} injection vulnerabilities",
                             risk_level=RiskLevel.HIGH,
                             technical_details={
-                                "vulnerabilities": vuln_data["injection_vulnerabilities"]
+                                "vulnerabilities": vuln_data[
+                                    "injection_vulnerabilities"
+                                ]
                             },
                             remediation="Implement input validation and parameterized queries",
                         )
@@ -237,7 +243,9 @@ class DemonstrationGenerator:
                             evidence_type="apt_attribution",
                             description=f"Potential APT group attribution: {threat_data['apt_attribution']}",
                             risk_level=RiskLevel.CRITICAL,
-                            technical_details={"attribution": threat_data["apt_attribution"]},
+                            technical_details={
+                                "attribution": threat_data["apt_attribution"]
+                            },
                             remediation="Implement advanced threat detection and response measures",
                         )
                     )
@@ -261,7 +269,9 @@ class DemonstrationGenerator:
 
         return evidence
 
-    def _generate_risk_assessment(self, evidence: List[AnalysisEvidence]) -> Dict[str, Any]:
+    def _generate_risk_assessment(
+        self, evidence: List[AnalysisEvidence]
+    ) -> Dict[str, Any]:
         """Generate comprehensive risk assessment"""
         risk_counts = {level: 0 for level in RiskLevel}
 
@@ -289,7 +299,9 @@ class DemonstrationGenerator:
         return {
             "overall_risk": overall_risk.value[0],
             "risk_score": risk_score,
-            "risk_distribution": {level.value[0]: count for level, count in risk_counts.items()},
+            "risk_distribution": {
+                level.value[0]: count for level, count in risk_counts.items()
+            },
             "total_findings": len(evidence),
             "critical_findings": risk_counts[RiskLevel.CRITICAL],
             "high_findings": risk_counts[RiskLevel.HIGH],
@@ -349,14 +361,18 @@ class DemonstrationGenerator:
         logger.info("Creating executive dashboard")
 
         # Generate executive summary
-        summary_path = self.output_dir / "reports" / f"{package.demo_id}_executive_summary.md"
+        summary_path = (
+            self.output_dir / "reports" / f"{package.demo_id}_executive_summary.md"
+        )
         self._generate_executive_summary(package, evidence, summary_path)
         package.executive_summary = summary_path
         package.generated_files.append(summary_path)
 
         # Generate PowerPoint-style presentation
         presentation_path = (
-            self.output_dir / "presentations" / f"{package.demo_id}_executive_presentation.html"
+            self.output_dir
+            / "presentations"
+            / f"{package.demo_id}_executive_presentation.html"
         )
         self._generate_executive_presentation(package, evidence, presentation_path)
         package.presentation_slides = presentation_path
@@ -364,7 +380,9 @@ class DemonstrationGenerator:
 
         # Generate risk matrix visualization
         if config.include_risk_matrix:
-            risk_matrix_path = self.output_dir / "assets" / f"{package.demo_id}_risk_matrix.html"
+            risk_matrix_path = (
+                self.output_dir / "assets" / f"{package.demo_id}_risk_matrix.html"
+            )
             self._generate_risk_matrix(package, evidence, risk_matrix_path)
             package.generated_files.append(risk_matrix_path)
 
@@ -378,7 +396,9 @@ class DemonstrationGenerator:
         logger.info("Creating technical analysis demonstration")
 
         # Generate detailed technical report
-        report_path = self.output_dir / "reports" / f"{package.demo_id}_technical_report.md"
+        report_path = (
+            self.output_dir / "reports" / f"{package.demo_id}_technical_report.md"
+        )
         self._generate_technical_report(package, evidence, report_path)
         package.technical_report = report_path
         package.generated_files.append(report_path)
@@ -401,7 +421,9 @@ class DemonstrationGenerator:
 
         # Generate awareness presentation
         awareness_path = (
-            self.output_dir / "presentations" / f"{package.demo_id}_security_awareness.html"
+            self.output_dir
+            / "presentations"
+            / f"{package.demo_id}_security_awareness.html"
         )
         self._generate_awareness_presentation(package, evidence, awareness_path)
         package.generated_files.append(awareness_path)
@@ -416,12 +438,16 @@ class DemonstrationGenerator:
         logger.info("Creating live presentation materials")
 
         # Generate speaker notes
-        notes_path = self.output_dir / "presentations" / f"{package.demo_id}_speaker_notes.md"
+        notes_path = (
+            self.output_dir / "presentations" / f"{package.demo_id}_speaker_notes.md"
+        )
         self._generate_speaker_notes(package, evidence, notes_path)
         package.generated_files.append(notes_path)
 
         # Generate live demo script
-        script_path = self.output_dir / "presentations" / f"{package.demo_id}_demo_script.md"
+        script_path = (
+            self.output_dir / "presentations" / f"{package.demo_id}_demo_script.md"
+        )
         self._generate_demo_script(package, evidence, script_path)
         package.generated_files.append(script_path)
 
@@ -436,7 +462,9 @@ class DemonstrationGenerator:
 
         # Generate training modules
         training_path = (
-            self.output_dir / "presentations" / f"{package.demo_id}_training_modules.html"
+            self.output_dir
+            / "presentations"
+            / f"{package.demo_id}_training_modules.html"
         )
         self._generate_training_modules(package, evidence, training_path)
         package.generated_files.append(training_path)
@@ -450,7 +478,9 @@ class DemonstrationGenerator:
         """Create interactive web demonstration"""
         logger.info("Creating interactive web demonstration")
 
-        web_demo_path = self.output_dir / "web" / f"{package.demo_id}_interactive_demo.html"
+        web_demo_path = (
+            self.output_dir / "web" / f"{package.demo_id}_interactive_demo.html"
+        )
 
         # Generate interactive web demo
         self._generate_interactive_web_demo(package, evidence, web_demo_path)
@@ -473,7 +503,7 @@ class DemonstrationGenerator:
 
 ## Key Findings
 
-**Overall Risk Level**: {package.risk_assessment.get('overall_risk', 'Unknown').upper()}
+**Overall Risk Level**: {package.risk_assessment.get("overall_risk", "Unknown").upper()}
 
 - **Critical Issues**: {critical_count}
 - **High Risk Issues**: {high_count}
@@ -499,7 +529,7 @@ The identified vulnerabilities and exposures could result in:
 
 ### Immediate Actions Required
 
-{chr(10).join(f'1. {rec}' for rec in package.recommendations[:5])}
+{chr(10).join(f"1. {rec}" for rec in package.recommendations[:5])}
 
 ### Investment Recommendations
 
@@ -562,9 +592,9 @@ The identified vulnerabilities and exposures could result in:
     <div class="slide">
         <h1>📊 Executive Summary</h1>
         <div style="font-size: 1.8em; line-height: 1.6;">
-            <p><strong>Overall Risk Level:</strong> 
-               <span class="risk-{package.risk_assessment.get('overall_risk', 'unknown')}">
-                   {package.risk_assessment.get('overall_risk', 'Unknown').upper()}
+            <p><strong>Overall Risk Level:</strong>
+               <span class="risk-{package.risk_assessment.get("overall_risk", "unknown")}">
+                   {package.risk_assessment.get("overall_risk", "Unknown").upper()}
                </span>
             </p>
             <p><strong>Critical Issues:</strong> {sum(1 for e in evidence if e.risk_level == RiskLevel.CRITICAL)}</p>
@@ -607,7 +637,7 @@ The identified vulnerabilities and exposures could result in:
         <h1>🛡️ Strategic Recommendations</h1>
         <div style="font-size: 1.4em; line-height: 1.6;">
             <ol>
-                {chr(10).join(f'<li>{rec}</li>' for rec in package.recommendations[:6])}
+                {chr(10).join(f"<li>{rec}</li>" for rec in package.recommendations[:6])}
             </ol>
         </div>
     </div>
@@ -639,16 +669,16 @@ The identified vulnerabilities and exposures could result in:
     <script>
         let currentSlide = 0;
         const slides = document.querySelectorAll('.slide');
-        
+
         function showSlide(n) {{
             slides[currentSlide].classList.remove('active');
             currentSlide = (n + slides.length) % slides.length;
             slides[currentSlide].classList.add('active');
         }}
-        
+
         function nextSlide() {{ showSlide(currentSlide + 1); }}
         function previousSlide() {{ showSlide(currentSlide - 1); }}
-        
+
         document.addEventListener('keydown', function(e) {{
             if (e.key === 'ArrowRight') nextSlide();
             if (e.key === 'ArrowLeft') previousSlide();
@@ -668,9 +698,9 @@ The identified vulnerabilities and exposures could result in:
             cards.append(
                 f"""
             <div class="finding-card">
-                <h3 class="{risk_class}">{item.risk_level.value[2]} {item.evidence_type.replace('_', ' ').title()}</h3>
+                <h3 class="{risk_class}">{item.risk_level.value[2]} {item.evidence_type.replace("_", " ").title()}</h3>
                 <p>{item.description}</p>
-                {f'<p><strong>Remediation:</strong> {item.remediation}</p>' if item.remediation else ''}
+                {f"<p><strong>Remediation:</strong> {item.remediation}</p>" if item.remediation else ""}
             </div>
             """
             )
@@ -711,14 +741,14 @@ This analysis was conducted using advanced AI-powered reverse engineering techni
 
 | Risk Level | Count | Percentage |
 |------------|-------|------------|
-| Critical   | {sum(1 for e in evidence if e.risk_level == RiskLevel.CRITICAL)} | {sum(1 for e in evidence if e.risk_level == RiskLevel.CRITICAL)/len(evidence)*100 if evidence else 0:.1f}% |
-| High       | {sum(1 for e in evidence if e.risk_level == RiskLevel.HIGH)} | {sum(1 for e in evidence if e.risk_level == RiskLevel.HIGH)/len(evidence)*100 if evidence else 0:.1f}% |
-| Medium     | {sum(1 for e in evidence if e.risk_level == RiskLevel.MEDIUM)} | {sum(1 for e in evidence if e.risk_level == RiskLevel.MEDIUM)/len(evidence)*100 if evidence else 0:.1f}% |
-| Low        | {sum(1 for e in evidence if e.risk_level == RiskLevel.LOW)} | {sum(1 for e in evidence if e.risk_level == RiskLevel.LOW)/len(evidence)*100 if evidence else 0:.1f}% |
+| Critical   | {sum(1 for e in evidence if e.risk_level == RiskLevel.CRITICAL)} | {sum(1 for e in evidence if e.risk_level == RiskLevel.CRITICAL) / len(evidence) * 100 if evidence else 0:.1f}% |
+| High       | {sum(1 for e in evidence if e.risk_level == RiskLevel.HIGH)} | {sum(1 for e in evidence if e.risk_level == RiskLevel.HIGH) / len(evidence) * 100 if evidence else 0:.1f}% |
+| Medium     | {sum(1 for e in evidence if e.risk_level == RiskLevel.MEDIUM)} | {sum(1 for e in evidence if e.risk_level == RiskLevel.MEDIUM) / len(evidence) * 100 if evidence else 0:.1f}% |
+| Low        | {sum(1 for e in evidence if e.risk_level == RiskLevel.LOW)} | {sum(1 for e in evidence if e.risk_level == RiskLevel.LOW) / len(evidence) * 100 if evidence else 0:.1f}% |
 
 ## Technical Recommendations
 
-{chr(10).join(f'### {i+1}. {rec}' for i, rec in enumerate(package.recommendations))}
+{chr(10).join(f"### {i + 1}. {rec}" for i, rec in enumerate(package.recommendations))}
 
 ## Proof of Concept Examples
 
@@ -816,7 +846,7 @@ The analysis reveals significant security risks that require immediate attention
                 <div class="metric-label">High Risk Issues</div>
             </div>
             <div class="card metric">
-                <div class="metric-value" id="riskScore">{package.risk_assessment.get('risk_score', 0)}</div>
+                <div class="metric-value" id="riskScore">{package.risk_assessment.get("risk_score", 0)}</div>
                 <div class="metric-label">Risk Score</div>
             </div>
         </div>
@@ -825,9 +855,9 @@ The analysis reveals significant security risks that require immediate attention
         <div class="card">
             <h3>Overall Risk Assessment</h3>
             <div class="progress-bar">
-                <div class="progress-fill" style="width: {min(package.risk_assessment.get('risk_score', 0) * 2, 100)}%"></div>
+                <div class="progress-fill" style="width: {min(package.risk_assessment.get("risk_score", 0) * 2, 100)}%"></div>
             </div>
-            <p>Risk Level: <strong>{package.risk_assessment.get('overall_risk', 'Unknown').upper()}</strong></p>
+            <p>Risk Level: <strong>{package.risk_assessment.get("overall_risk", "Unknown").upper()}</strong></p>
         </div>
 
         <!-- Tabbed Content -->
@@ -863,7 +893,7 @@ The analysis reveals significant security risks that require immediate attention
                 <div class="tab-panel" id="recommendations">
                     <h3>Security Recommendations</h3>
                     <ol style="margin: 20px 0; padding-left: 20px; line-height: 1.8;">
-                        {chr(10).join(f'<li>{rec}</li>' for rec in package.recommendations)}
+                        {chr(10).join(f"<li>{rec}</li>" for rec in package.recommendations)}
                     </ol>
                 </div>
 
@@ -890,15 +920,15 @@ The analysis reveals significant security risks that require immediate attention
             document.querySelectorAll('.tab-panel').forEach(panel => {{
                 panel.classList.remove('active');
             }});
-            
+
             // Remove active class from all buttons
             document.querySelectorAll('.tab-button').forEach(button => {{
                 button.classList.remove('active');
             }});
-            
+
             // Show selected tab panel
             document.getElementById(tabName).classList.add('active');
-            
+
             // Add active class to clicked button
             event.target.classList.add('active');
         }}
@@ -906,10 +936,10 @@ The analysis reveals significant security risks that require immediate attention
         function simulateAnalysis() {{
             const output = document.getElementById('analysisOutput');
             const log = document.getElementById('analysisLog');
-            
+
             output.style.display = 'block';
             log.innerHTML = '';
-            
+
             const steps = [
                 'Initializing AI-Enhanced Binary Analysis Engine...',
                 'Loading binary file for analysis...',
@@ -921,7 +951,7 @@ The analysis reveals significant security risks that require immediate attention
                 'Generating security assessment report...',
                 'Analysis complete! Found {len(evidence)} security issues.'
             ];
-            
+
             let i = 0;
             const interval = setInterval(() => {{
                 if (i < steps.length) {{
@@ -960,9 +990,9 @@ The analysis reveals significant security risks that require immediate attention
             findings_html.append(
                 f"""
             <div class="finding-item {risk_class}">
-                <h4>{item.risk_level.value[2]} {item.evidence_type.replace('_', ' ').title()}</h4>
+                <h4>{item.risk_level.value[2]} {item.evidence_type.replace("_", " ").title()}</h4>
                 <p><strong>Description:</strong> {item.description}</p>
-                {f'<p><strong>Remediation:</strong> {item.remediation}</p>' if item.remediation else ''}
+                {f"<p><strong>Remediation:</strong> {item.remediation}</p>" if item.remediation else ""}
             </div>
             """
             )
@@ -986,7 +1016,7 @@ The analysis reveals significant security risks that require immediate attention
             risk_level = item.risk_level.value[0].upper()
             formatted.append(
                 f"""
-### Finding {i}: {item.evidence_type.replace('_', ' ').title()}
+### Finding {i}: {item.evidence_type.replace("_", " ").title()}
 
 **Risk Level**: {risk_level}
 **Description**: {item.description}
@@ -996,9 +1026,9 @@ The analysis reveals significant security risks that require immediate attention
 {json.dumps(item.technical_details, indent=2)}
 ```
 
-{f'**Proof of Concept**: {item.proof_of_concept}' if item.proof_of_concept else ''}
+{f"**Proof of Concept**: {item.proof_of_concept}" if item.proof_of_concept else ""}
 
-{f'**Remediation**: {item.remediation}' if item.remediation else ''}
+{f"**Remediation**: {item.remediation}" if item.remediation else ""}
 
 ---
 """
@@ -1012,7 +1042,7 @@ The analysis reveals significant security risks that require immediate attention
             if item.proof_of_concept:
                 examples.append(
                     f"""
-### {item.evidence_type.replace('_', ' ').title()}
+### {item.evidence_type.replace("_", " ").title()}
 
 ```
 {item.proof_of_concept}
@@ -1020,7 +1050,11 @@ The analysis reveals significant security risks that require immediate attention
 """
                 )
 
-        return "\n".join(examples) if examples else "No proof of concept examples available."
+        return (
+            "\n".join(examples)
+            if examples
+            else "No proof of concept examples available."
+        )
 
     def _generate_risk_matrix(
         self,
@@ -1080,7 +1114,7 @@ This analysis reveals how easily modern AI tools can:
 
 ## Key Takeaways
 
-{chr(10).join(f'- {rec}' for rec in package.recommendations[:5])}
+{chr(10).join(f"- {rec}" for rec in package.recommendations[:5])}
 
 ## Your Role in Security
 
@@ -1130,7 +1164,7 @@ Everyone has a role in maintaining security:
 ### Part 2: Results Review (10 minutes)
 - Walk through the {len(evidence)} findings
 - Focus on the most critical issues:
-  {chr(10).join(f'  - {e.description}' for e in evidence[:3] if e.risk_level in [RiskLevel.CRITICAL, RiskLevel.HIGH])}
+  {chr(10).join(f"  - {e.description}" for e in evidence[:3] if e.risk_level in [RiskLevel.CRITICAL, RiskLevel.HIGH])}
 
 ### Part 3: Business Impact (5 minutes)
 - Translate technical findings to business risks
@@ -1167,7 +1201,7 @@ Everyone has a role in maintaining security:
 - Analysis ID: {package.demo_id}
 - Analysis Date: {package.creation_timestamp}
 - Total Findings: {len(evidence)}
-- Risk Score: {package.risk_assessment.get('risk_score', 0)}
+- Risk Score: {package.risk_assessment.get("risk_score", 0)}
 
 ### Key Statistics:
 - Critical Issues: {sum(1 for e in evidence if e.risk_level == RiskLevel.CRITICAL)}
@@ -1175,7 +1209,7 @@ Everyone has a role in maintaining security:
 - Medium Risk Issues: {sum(1 for e in evidence if e.risk_level == RiskLevel.MEDIUM)}
 
 ### Recommendations Summary:
-{chr(10).join(f'{i+1}. {rec}' for i, rec in enumerate(package.recommendations))}
+{chr(10).join(f"{i + 1}. {rec}" for i, rec in enumerate(package.recommendations))}
 """
 
         with open(output_path, "w", encoding="utf-8") as f:
@@ -1228,7 +1262,7 @@ python tools/ai_enhanced_analyzer.py --target [binary] --full-analysis
 ### Step 4: Review Critical Findings (8 minutes)
 "Let's look at the most critical findings:"
 
-{chr(10).join(f'**Finding {i+1}**: {e.description}' for i, e in enumerate([e for e in evidence if e.risk_level == RiskLevel.CRITICAL][:3], 1))}
+{chr(10).join(f"**Finding {i + 1}**: {e.description}" for i, e in enumerate([e for e in evidence if e.risk_level == RiskLevel.CRITICAL][:3], 1))}
 
 **For each finding**:
 1. Explain what was found
@@ -1293,11 +1327,11 @@ If live demo fails, have these ready:
 </head>
 <body>
     <h1>🎓 Security Awareness Training</h1>
-    
+
     <div class="module">
         <h2>Module 1: Understanding Modern Threats</h2>
         <p>Learn about AI-powered reverse engineering and its implications for software security.</p>
-        
+
         <h3>Key Concepts:</h3>
         <ul>
             <li>Binary analysis and reverse engineering</li>
@@ -1305,36 +1339,36 @@ If live demo fails, have these ready:
             <li>Credential extraction from compiled code</li>
             <li>Business logic reconstruction</li>
         </ul>
-        
+
         <div class="quiz">
             <h4>Quiz Question:</h4>
             <p>What can AI-powered analysis tools extract from compiled binaries?</p>
             <button onclick="showAnswer('q1')">Show Answer</button>
             <div id="q1" class="answer">
-                AI tools can extract: hardcoded credentials, API keys, business logic, 
+                AI tools can extract: hardcoded credentials, API keys, business logic,
                 vulnerabilities, network endpoints, and even reconstruct source code.
             </div>
         </div>
     </div>
-    
+
     <div class="module">
         <h2>Module 2: Real-World Impact</h2>
         <p>Understanding the business and security implications of these capabilities.</p>
-        
+
         <h3>Case Study: Analysis Results</h3>
         <p>Our analysis found {len(evidence)} security issues, including:</p>
         <ul>
-            {chr(10).join(f'<li>{e.description}</li>' for e in evidence[:5])}
+            {chr(10).join(f"<li>{e.description}</li>" for e in evidence[:5])}
         </ul>
     </div>
-    
+
     <div class="module">
         <h2>Module 3: Protection Strategies</h2>
         <p>Learn how to protect your organization and software.</p>
-        
+
         <h3>Recommended Actions:</h3>
         <ol>
-            {chr(10).join(f'<li>{rec}</li>' for rec in package.recommendations[:8])}
+            {chr(10).join(f"<li>{rec}</li>" for rec in package.recommendations[:8])}
         </ol>
     </div>
 
@@ -1355,7 +1389,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Security Demonstration Generator")
-    parser.add_argument("--analysis-results", required=True, help="JSON file with analysis results")
+    parser.add_argument(
+        "--analysis-results", required=True, help="JSON file with analysis results"
+    )
     parser.add_argument(
         "--demo-type",
         choices=[t.value for t in DemoType],
@@ -1384,15 +1420,17 @@ def main():
     generator = DemonstrationGenerator(output_dir)
 
     # Configure demonstration
-    config = DemoConfig(demo_type=DemoType(args.demo_type), target_audience=args.audience)
+    config = DemoConfig(
+        demo_type=DemoType(args.demo_type), target_audience=args.audience
+    )
 
     # Generate demonstration
     package = generator.create_demonstration(analysis_data, config)
 
     # Print results
-    print(f"\n{'='*60}")
-    print(f"DEMONSTRATION PACKAGE CREATED")
-    print(f"{'='*60}")
+    print(f"\n{'=' * 60}")
+    print("DEMONSTRATION PACKAGE CREATED")
+    print(f"{'=' * 60}")
     print(f"Demo ID: {package.demo_id}")
     print(f"Demo Type: {package.demo_type.value}")
     print(f"Target Audience: {package.target_audience}")

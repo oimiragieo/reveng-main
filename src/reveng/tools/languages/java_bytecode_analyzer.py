@@ -24,9 +24,7 @@ Pipeline:
 
 import json
 import logging
-import os
 import subprocess
-import sys
 import tempfile
 import zipfile
 from dataclasses import asdict, dataclass
@@ -269,7 +267,7 @@ class JavaBytecodeAnalyzer:
                     methods.append(method_name)
 
             # Extract fields
-            if ";" in line and not "(" in line and not line.startswith("//"):
+            if ";" in line and "(" not in line and not line.startswith("//"):
                 field_name = self._extract_field_name(line)
                 if field_name:
                     fields.append(field_name)
@@ -388,7 +386,9 @@ class JavaBytecodeAnalyzer:
                 with open(java_files[0], "r", encoding="utf-8", errors="ignore") as f:
                     source_code = f.read()
 
-                logger.info(f"{decompiler} succeeded - generated {len(java_files)} file(s)")
+                logger.info(
+                    f"{decompiler} succeeded - generated {len(java_files)} file(s)"
+                )
 
                 return DecompilationResult(
                     decompiler=decompiler,
@@ -399,7 +399,9 @@ class JavaBytecodeAnalyzer:
                 )
             else:
                 # No output files, check stderr
-                error_msg = result.stderr if result.stderr else "No output files generated"
+                error_msg = (
+                    result.stderr if result.stderr else "No output files generated"
+                )
                 logger.warning(f"{decompiler} failed: {error_msg}")
 
                 return DecompilationResult(
@@ -411,7 +413,7 @@ class JavaBytecodeAnalyzer:
                 )
 
         except subprocess.TimeoutExpired:
-            error_msg = f"Decompilation timed out after 30 seconds"
+            error_msg = "Decompilation timed out after 30 seconds"
             logger.error(f"{decompiler} timeout")
             return DecompilationResult(
                 decompiler=decompiler,
@@ -462,12 +464,16 @@ class JavaBytecodeAnalyzer:
             obfuscation_indicators += 1
 
         # Check method names
-        obfuscated_methods = sum(1 for m in class_info.methods if self._is_obfuscated_name(m))
+        obfuscated_methods = sum(
+            1 for m in class_info.methods if self._is_obfuscated_name(m)
+        )
         if obfuscated_methods > len(class_info.methods) * 0.5:
             obfuscation_indicators += 1
 
         # Check field names
-        obfuscated_fields = sum(1 for f in class_info.fields if self._is_obfuscated_name(f))
+        obfuscated_fields = sum(
+            1 for f in class_info.fields if self._is_obfuscated_name(f)
+        )
         if obfuscated_fields > len(class_info.fields) * 0.5:
             obfuscation_indicators += 1
 
@@ -513,7 +519,9 @@ class JavaBytecodeAnalyzer:
 
     def _get_procyon_config(self) -> Dict[str, Any]:
         """Get Procyon decompiler configuration"""
-        procyon_path = Path(__file__).parent / "decompilers" / "procyon-decompiler-0.6.0.jar"
+        procyon_path = (
+            Path(__file__).parent / "decompilers" / "procyon-decompiler-0.6.0.jar"
+        )
         return {
             "available": procyon_path.exists(),
             "jar_path": str(procyon_path),
@@ -537,7 +545,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="REVENG Java Bytecode Analyzer")
     parser.add_argument("file", help="Path to .class, .jar, .war, or .ear file")
-    parser.add_argument("-o", "--output", default="java_analysis", help="Output directory")
+    parser.add_argument(
+        "-o", "--output", default="java_analysis", help="Output directory"
+    )
     args = parser.parse_args()
 
     # Configure logging

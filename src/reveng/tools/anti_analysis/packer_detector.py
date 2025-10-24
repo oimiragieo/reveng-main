@@ -4,12 +4,10 @@ Packer Detection for REVENG
 Detects if a binary is packed/compressed and identifies the packer type.
 """
 
-import hashlib
 import logging
 import struct
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -216,9 +214,9 @@ class PackerDetector:
 
             # Read number of sections
             num_sections_offset = pe_offset + 6
-            num_sections = struct.unpack("<H", data[num_sections_offset : num_sections_offset + 2])[
-                0
-            ]
+            num_sections = struct.unpack(
+                "<H", data[num_sections_offset : num_sections_offset + 2]
+            )[0]
 
             # Very few sections can indicate packing
             if num_sections <= 2:
@@ -226,7 +224,9 @@ class PackerDetector:
 
             # Read entry point RVA
             entrypoint_offset = pe_offset + 40
-            entry_rva = struct.unpack("<I", data[entrypoint_offset : entrypoint_offset + 4])[0]
+            struct.unpack(
+                "<I", data[entrypoint_offset : entrypoint_offset + 4]
+            )[0]
 
             # Check if entry point is in unusual section
             # (Would need full section parsing for accurate check)
@@ -259,7 +259,9 @@ class PackerDetector:
 
         for section in suspicious_sections:
             if section in data:
-                indicators.append(f"Suspicious section: {section.decode('ascii', errors='ignore')}")
+                indicators.append(
+                    f"Suspicious section: {section.decode('ascii', errors='ignore')}"
+                )
 
         return indicators
 

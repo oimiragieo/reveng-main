@@ -1,0 +1,28 @@
+# REVENG Dependency Checksums
+# SHA256 checksums for validating downloaded dependencies
+# Last updated: 2025-01-21
+
+ghidra:
+  version: "11.0_PUBLIC"
+  url: "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.0_build/ghidra_11.0_PUBLIC_20231222.zip"
+  sha256: "7ff007280f53f0077d5e6a06a2f29ca3f6d8e82f5cfa6e5b5f5b9c8e5b5e5b5e"
+  # Note: Replace with actual SHA256 hash from official Ghidra release
+
+cfr:
+  version: "0.152"
+  url: "https://www.benf.org/other/cfr/cfr-0.152.jar"
+  sha256: "6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e6e"
+  # Note: Replace with actual SHA256 hash from official CFR release
+
+ilspy:
+  version: "8.2.0.7535"
+  url: "https://github.com/icsharpcode/ILSpy/releases/download/v8.2/ILSpy_binaries_8.2.0.7535.zip"
+  sha256: "5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b5b"
+  # Note: Replace with actual SHA256 hash from official ILSpy release
+
+# Additional tools can be added as needed
+# Format:
+# tool_name:
+#   version: "x.y.z"
+#   url: "https://..."
+#   sha256: "actual_sha256_hash"

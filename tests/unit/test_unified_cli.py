@@ -1,39 +1,44 @@
-"""
-Unit tests for Unified CLI
-"""
+"""Tests for the unified CLI entry point."""
 
-import io
 import sys
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
-import pytest
-
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
-
-from reveng.cli import create_ml_parser, create_parser, main
+from reveng import cli
 
 
-class TestUnifiedCLI:
-    """Test cases for Unified CLI"""
+def test_create_parser_includes_core_commands():
+    parser = cli.create_parser()
+    subparsers_action = getattr(parser, "_subparsers")
+    choices = subparsers_action._group_actions[0].choices  # command -> parser
 
-    def setup_method(self):
-        """Setup test environment"""
-        self.temp_dir = Path(tempfile.mkdtemp())
-        self.original_argv = sys.argv
-        self.original_stdout = sys.stdout
-        self.original_stderr = sys.stderr
+    expected = {"analyze", "serve", "ai", "triage", "generate-yara"}
+    assert expected.issubset(set(choices.keys()))
 
-    def teardown_method(self):
-        """Cleanup test environment"""
-        import shutil
 
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-        sys.argv = self.original_argv
-        sys.stdout = self.original_stdout
-        sys.stderr = self.original_stderr
+def test_main_without_command_shows_help(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["reveng"])
+
+    exit_code = cli.main()
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "usage:" in captured.out
+
+
+def test_main_routes_to_command_handler(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["reveng", "analyze", "sample.bin"])
+
+    called = {}
+
+    def fake_handler(args):
+        called["args"] = args
+        return 0
+
+    monkeypatch.setattr(cli, "handle_analyze_command", fake_handler)
+
+    exit_code = cli.main()
+
+    assert exit_code == 0
+    assert called["args"].binary_path == "sample.bin"
 
     def test_create_parser_success(self):
         """Test creating parser successfully"""
@@ -49,7 +54,6 @@ class TestUnifiedCLI:
 
     def test_create_ml_parser_success(self):
         """Test creating ML parser successfully"""
-        import argparse
 
         subparsers = Mock()
         subparsers.add_parser.return_value = Mock()
@@ -528,7 +532,6 @@ class TestUnifiedCLI:
                 patch("reveng.cli.AnalysisPipeline") as mock_pipeline,
                 patch("reveng.cli.MalwareAnalyzer") as mock_malware_analyzer,
             ):
-
                 # Setup mocks
                 mock_analyzer.return_value = Mock()
                 mock_hex_editor.return_value = Mock()

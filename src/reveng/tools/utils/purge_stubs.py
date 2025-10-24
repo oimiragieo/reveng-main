@@ -22,9 +22,11 @@ import argparse
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -111,7 +113,9 @@ class StubPurger:
             self.stats["windows_headers_removed"] += 1
 
         # Check if it has narrative stubs
-        has_narrative = any(re.search(pattern, content) for pattern in self.NARRATIVE_PATTERNS)
+        has_narrative = any(
+            re.search(pattern, content) for pattern in self.NARRATIVE_PATTERNS
+        )
         if has_narrative:
             self.stats["narrative_stubs_removed"] += 1
 
@@ -127,7 +131,9 @@ class StubPurger:
         """Extract function metadata from content"""
         # Extract purpose from comment
         purpose_match = re.search(r"\* Purpose: (.+)", content)
-        purpose = purpose_match.group(1) if purpose_match else self._infer_purpose(func_name)
+        purpose = (
+            purpose_match.group(1) if purpose_match else self._infer_purpose(func_name)
+        )
 
         # Extract complexity if available
         complexity_match = re.search(r"Complexity: (\w+)", content)
@@ -214,10 +220,12 @@ class StubPurger:
         self.stats["functions_cleaned"] += 1
         return content
 
-    def _generate_functional_body(self, func_name: str, purpose: str, return_type: str) -> str:
+    def _generate_functional_body(
+        self, func_name: str, purpose: str, return_type: str
+    ) -> str:
         """Generate functional body based on function purpose"""
         name_lower = func_name.lower()
-        purpose_lower = purpose.lower()
+        purpose.lower()
 
         # Memory management functions
         if "alloc" in name_lower or "memory" in name_lower:
@@ -306,7 +314,9 @@ def main():
     parser.add_argument(
         "--dry-run", action="store_true", help="Preview changes without writing files"
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose logging"
+    )
 
     args = parser.parse_args()
 

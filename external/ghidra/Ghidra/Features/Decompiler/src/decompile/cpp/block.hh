@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -132,7 +132,7 @@ private:
 				// the result of the condition being false
   static void replaceEdgeMap(vector<BlockEdge> &vec);	///< Update block references in edges with copy map
   void addInEdge(FlowBlock *b,uint4 lab);	///< Add an edge coming into \b this
-  void decodeNextInEdge(Decoder &decoder,BlockMap &resolver);	///< Decode the next input edge from stream
+  void decodeNextInEdge(Decoder &decoder,BlockMap &resolver);	///< Restore the next input edge from XML
   void halfDeleteInEdge(int4 slot);		///< Delete the \e in half of an edge, correcting indices
   void halfDeleteOutEdge(int4 slot);		///< Delete the \e out half of an edge, correcting indices
   void removeInEdge(int4 slot);			///< Remove an incoming edge
@@ -209,14 +209,6 @@ public:
   /// emitted to the given stream.
   /// \param s is the given stream to write to
   virtual void printRaw(ostream &s) const {}
-
-  /// \brief If the \e out block of \b this is not the given next block, print an implied \b goto to the out block
-  ///
-  /// In order to see where \b this block is flowing to, if there is no explicit branch op, and if the next block
-  /// being printed is \e not the fallthru branch, print the destination block as an implied \b goto op.
-  /// \param s is the output stream
-  /// \param nextBlock is the given nextBlock being printed
-  virtual void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const {}
 
   virtual void emit(PrintLanguage *lng) const;	///<Emit the instructions in \b this FlowBlock as structured code
 
@@ -346,14 +338,12 @@ public:
   bool isGotoIn(int4 i) const { return ((intothis[i].label & (f_irreducible|f_goto_edge))!=0); }	///< Is the i-th incoming edge unstructured
   bool isGotoOut(int4 i) const { return ((outofthis[i].label & (f_irreducible|f_goto_edge))!=0); }	///< Is the i-th outgoing edge unstructured
   JumpTable *getJumptable(void) const;	///< Get the JumpTable associated \b this block
-  void printShortHeader(ostream &s) const;		///< Print a short identifier for the block
   static block_type nameToType(const string &name);	///< Get the block_type associated with a name string
   static string typeToName(block_type bt);		///< Get the name string associated with a block_type
   static bool compareBlockIndex(const FlowBlock *bl1,const FlowBlock *bl2);	///< Compare FlowBlock by index
   static bool compareFinalOrder(const FlowBlock *bl1,const FlowBlock *bl2);	///< Final FlowBlock comparison
   static FlowBlock *findCommonBlock(FlowBlock *bl1,FlowBlock *bl2);	///< Find the common dominator of two FlowBlocks
   static FlowBlock *findCommonBlock(const vector<FlowBlock *> &blockSet);	///< Find common dominator of multiple FlowBlocks
-  static FlowBlock *findCondition(FlowBlock *bl1,int4 edge1,FlowBlock *bl2,int4 edge2,int4 &slot1);
 };
 
 /// \brief A control-flow block built out of sub-components
@@ -389,7 +379,6 @@ public:
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
   virtual void printTree(ostream &s,int4 level) const;
   virtual void printRaw(ostream &s) const;
-  void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockGraph(this); }
   virtual PcodeOp *firstOp(void) const;
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
@@ -483,7 +472,6 @@ public:
   virtual void decodeBody(Decoder &decoder);
   virtual void printHeader(ostream &s) const;
   virtual void printRaw(ostream &s) const;
-  virtual void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const;
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockBasic(this); }
   virtual const FlowBlock *getExitLeaf(void) const { return this; }
   virtual PcodeOp *firstOp(void) const;
@@ -501,9 +489,8 @@ public:
   list<PcodeOp *>::const_iterator beginOp(void) const { return op.begin(); }	///< Return an iterator to the beginning of the PcodeOps
   list<PcodeOp *>::const_iterator endOp(void) const { return op.end(); }	///< Return an iterator to the end of the PcodeOps
   bool emptyOp(void) const { return op.empty(); }		///< Return \b true if \b block contains no operations
-  bool noInterveningStatement(void) const;
+  static bool noInterveningStatement(PcodeOp *first,int4 path,PcodeOp *last);
   PcodeOp *findMultiequal(const vector<Varnode *> &varArray);		///< Find MULTIEQUAL with given inputs
-  PcodeOp *earliestUse(Varnode *vn);
   static bool liftVerifyUnroll(vector<Varnode *> &varArray,int4 slot);	///< Verify given Varnodes are defined with same PcodeOp
 };
 
@@ -526,7 +513,6 @@ public:
   virtual void printHeader(ostream &s) const;
   virtual void printTree(ostream &s,int4 level) const;
   virtual void printRaw(ostream &s) const { copy->printRaw(s); }
-  virtual void printRawImpliedGoto(ostream &s,const FlowBlock *nextBlock) const { copy->printRawImpliedGoto(s, nextBlock); }
   virtual void emit(PrintLanguage *lng) const { lng->emitBlockCopy(this); }
   virtual const FlowBlock *getExitLeaf(void) const { return this; }
   virtual PcodeOp *firstOp(void) const { return copy->firstOp(); }

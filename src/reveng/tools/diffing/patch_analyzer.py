@@ -7,8 +7,7 @@ Performs "vulnerability archaeology" - working backwards from patch to vuln.
 
 import logging
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 from .binary_differ import BinaryDiffer, DiffResult
 
@@ -73,7 +72,9 @@ class PatchAnalyzer:
         logger.info(f"Analyzing patch: {unpatched_binary} -> {patched_binary}")
 
         # First, perform binary diff
-        diff_result = self.differ.diff(unpatched_binary, patched_binary, deep_analysis=True)
+        diff_result = self.differ.diff(
+            unpatched_binary, patched_binary, deep_analysis=True
+        )
 
         # Analyze modified functions for security fixes
         vulnerabilities = []
@@ -104,17 +105,21 @@ class PatchAnalyzer:
         else:
             return self._heuristic_analyze_changes(mod_func, cve)
 
-    def _ai_analyze_changes(self, mod_func, cve: Optional[str]) -> Optional[Vulnerability]:
+    def _ai_analyze_changes(
+        self, mod_func, cve: Optional[str]
+    ) -> Optional[Vulnerability]:
         """Use AI to analyze function changes"""
         # Prepare context for AI
-        changes_desc = "\n".join(mod_func.changes) if mod_func.changes else "Code modified"
+        changes_desc = (
+            "\n".join(mod_func.changes) if mod_func.changes else "Code modified"
+        )
 
         prompt = f"""Analyze this security patch to identify the vulnerability that was fixed.
 
 Function: {mod_func.func_v1_name} -> {mod_func.func_v2_name}
 Similarity: {mod_func.similarity:.1%}
 Changes: {changes_desc}
-{f'CVE: {cve}' if cve else ''}
+{f"CVE: {cve}" if cve else ""}
 
 Based on these changes, determine:
 1. What type of vulnerability was likely fixed (buffer overflow, integer overflow, use-after-free, etc.)
@@ -164,7 +169,9 @@ Return JSON format:
 
         return None
 
-    def _heuristic_analyze_changes(self, mod_func, cve: Optional[str]) -> Optional[Vulnerability]:
+    def _heuristic_analyze_changes(
+        self, mod_func, cve: Optional[str]
+    ) -> Optional[Vulnerability]:
         """Use heuristics to analyze function changes"""
         changes = mod_func.changes if mod_func.changes else []
         changes_text = " ".join(changes).lower()
@@ -238,10 +245,12 @@ Return JSON format:
         func_lower = func_name.lower()
         return any(keyword in func_lower for keyword in security_keywords)
 
-    def generate_report(self, vulnerabilities: List[Vulnerability], format: str = "text") -> str:
+    def generate_report(
+        self, vulnerabilities: List[Vulnerability], format: str = "text"
+    ) -> str:
         """Generate vulnerability report from patch analysis"""
         if format == "markdown":
-            report = f"# Security Patch Analysis Report\n\n"
+            report = "# Security Patch Analysis Report\n\n"
             report += f"**Vulnerabilities Identified:** {len(vulnerabilities)}\n\n"
 
             # Group by severity
@@ -260,14 +269,16 @@ Return JSON format:
                         report += f"### {vuln.function_name}\n\n"
                         if vuln.cve:
                             report += f"**CVE:** {vuln.cve}\n\n"
-                        report += f"**Type:** {vuln.vuln_type.replace('_', ' ').title()}\n"
+                        report += (
+                            f"**Type:** {vuln.vuln_type.replace('_', ' ').title()}\n"
+                        )
                         report += f"**Exploitability:** {vuln.exploitability}\n\n"
                         report += f"**Description:** {vuln.description}\n\n"
                         report += f"**Changes:** {vuln.changes_description}\n\n"
                         report += "---\n\n"
 
         else:  # text format
-            report = f"Security Patch Analysis Report\n"
+            report = "Security Patch Analysis Report\n"
             report += f"{'=' * 60}\n\n"
             report += f"Vulnerabilities Identified: {len(vulnerabilities)}\n\n"
 
@@ -285,7 +296,9 @@ Return JSON format:
 
 
 # Convenience function
-def analyze_patch(unpatched: str, patched: str, cve: Optional[str] = None) -> List[Vulnerability]:
+def analyze_patch(
+    unpatched: str, patched: str, cve: Optional[str] = None
+) -> List[Vulnerability]:
     """Quick patch analysis"""
     analyzer = PatchAnalyzer()
     return analyzer.analyze_patch(unpatched, patched, cve)

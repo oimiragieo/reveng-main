@@ -28,23 +28,23 @@ public:
   enum symbol_type { space_symbol, token_symbol, userop_symbol, value_symbol, valuemap_symbol,
 		     name_symbol, varnode_symbol, varnodelist_symbol, operand_symbol,
 		     start_symbol, end_symbol, next2_symbol, subtable_symbol, macro_symbol, section_symbol,
-                     bitrange_symbol, context_symbol, epsilon_symbol, label_symbol, flowdest_symbol, flowref_symbol,
+                     bitrange_symbol, context_symbol, epsilon_symbol, label_symbol,
 		     dummy_symbol };
 private:
   string name;
   uintm id;			// Unique id across all symbols
   uintm scopeid;		// Unique id of scope this symbol is in
 public:
-  SleighSymbol(void) {}		// For use with decode
+  SleighSymbol(void) {}		// For use with restoreXml
   SleighSymbol(const string &nm) { name = nm; id = 0; }
   virtual ~SleighSymbol(void) {}
   const string &getName(void) const { return name; }
   uintm getId(void) const { return id; }
   virtual symbol_type getType(void) const { return dummy_symbol; }
-  virtual void encodeHeader(Encoder &encoder) const;
-  void decodeHeader(Decoder &decoder);
-  virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXmlHeader(ostream &s) const;
+  void restoreXmlHeader(const Element *el);
+  virtual void saveXml(ostream &s) const {}
+  virtual void restoreXml(const Element *el,SleighBase *trans) {}
 };
 
 struct SymbolCompare {
@@ -92,9 +92,9 @@ public:
   SleighSymbol *findGlobalSymbol(const string &nm) const { return findSymbolInternal(table[0],nm); }
   SleighSymbol *findSymbol(uintm id) const { return symbollist[id]; }
   void replaceSymbol(SleighSymbol *a,SleighSymbol *b);
-  void encode(Encoder &encoder) const;
-  void decode(Decoder &decoder,SleighBase *trans);
-  void decodeSymbolHeader(Decoder &decoder);
+  void saveXml(ostream &s) const;
+  void restoreXml(const Element *el,SleighBase *trans);
+  void restoreSymbolHeader(const Element *el);
   void purge(void);
 };
 
@@ -127,19 +127,20 @@ public:
   int4 getDefineCount(void) const { return define_count; }
   int4 getRefCount(void) const { return ref_count; }
   virtual symbol_type getType(void) const { return section_symbol; }
+  // Not saved or restored
 };
 
 class UserOpSymbol : public SleighSymbol { // A user-defined pcode-op
   uint4 index;
 public:
-  UserOpSymbol(void) {}		// For use with decode
+  UserOpSymbol(void) {}		// For use with restoreXml
   UserOpSymbol(const string &nm) : SleighSymbol(nm) { index = 0; }
   void setIndex(uint4 ind) { index = ind; }
   uint4 getIndex(void) const { return index; }
   virtual symbol_type getType(void) const { return userop_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class Constructor;		// Forward declaration
@@ -173,31 +174,33 @@ public:
 class PatternlessSymbol : public SpecificSymbol { // Behaves like constant 0 pattern
   ConstantValue *patexp;
 public:
-  PatternlessSymbol(void);	// For use with decode
+  PatternlessSymbol(void);	// For use with restoreXml
   PatternlessSymbol(const string &nm);
   virtual ~PatternlessSymbol(void);
   virtual PatternExpression *getPatternExpression(void) const { return patexp; }
+  virtual void saveXml(ostream &s) const {}
+  virtual void restoreXml(const Element *el,SleighBase *trans) {}
 };
 
 class EpsilonSymbol : public PatternlessSymbol { // Another name for zero pattern/value
   AddrSpace *const_space;
 public:
-  EpsilonSymbol(void) {}	// For use with decode
+  EpsilonSymbol(void) {}	// For use with restoreXml
   EpsilonSymbol(const string &nm,AddrSpace *spc) : PatternlessSymbol(nm) { const_space=spc; }
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual symbol_type getType(void) const { return epsilon_symbol; }
   virtual VarnodeTpl *getVarnode(void) const;
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class ValueSymbol : public FamilySymbol {
 protected:
   PatternValue *patval;
 public:
-  ValueSymbol(void) { patval = (PatternValue *)0; } // For use with decode
+  ValueSymbol(void) { patval = (PatternValue *)0; } // For use with restoreXml
   ValueSymbol(const string &nm,PatternValue *pv);
   virtual ~ValueSymbol(void);
   virtual PatternValue *getPatternValue(void) const { return patval; }
@@ -205,9 +208,9 @@ public:
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual symbol_type getType(void) const { return value_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class ValueMapSymbol : public ValueSymbol {
@@ -215,15 +218,15 @@ class ValueMapSymbol : public ValueSymbol {
   bool tableisfilled;
   void checkTableFill(void);
 public:
-  ValueMapSymbol(void) {}	// For use with decode
+  ValueMapSymbol(void) {}	// For use with restoreXml
   ValueMapSymbol(const string &nm,PatternValue *pv,const vector<intb> &vt) : ValueSymbol(nm,pv) { valuetable=vt; checkTableFill(); }
   virtual Constructor *resolve(ParserWalker &walker);
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual symbol_type getType(void) const { return valuemap_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class NameSymbol : public ValueSymbol {
@@ -231,21 +234,21 @@ class NameSymbol : public ValueSymbol {
   bool tableisfilled;
   void checkTableFill(void);
 public:
-  NameSymbol(void) {}		// For use with decode
+  NameSymbol(void) {}		// For use with restoreXml
   NameSymbol(const string &nm,PatternValue *pv,const vector<string> &nt) : ValueSymbol(nm,pv) { nametable=nt; checkTableFill(); }
   virtual Constructor *resolve(ParserWalker &walker);
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual symbol_type getType(void) const { return name_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class VarnodeSymbol : public PatternlessSymbol { // A global varnode
   VarnodeData fix;
   bool context_bits;
 public:
-  VarnodeSymbol(void) {}	// For use with decode
+  VarnodeSymbol(void) {}	// For use with restoreXml
   VarnodeSymbol(const string &nm,AddrSpace *base,uintb offset,int4 size);
   void markAsContext(void) { context_bits = true; }
   const VarnodeData &getFixedVarnode(void) const { return fix; }
@@ -256,9 +259,9 @@ public:
     s << getName(); }
   virtual void collectLocalValues(vector<uintb> &results) const;
   virtual symbol_type getType(void) const { return varnode_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class BitrangeSymbol : public SleighSymbol { // A smaller bitrange within a varnode
@@ -266,7 +269,7 @@ class BitrangeSymbol : public SleighSymbol { // A smaller bitrange within a varn
   uint4 bitoffset;		// least significant bit of range
   uint4 numbits;		// number of bits in the range
 public:
-  BitrangeSymbol(void) {}	// For use with decode
+  BitrangeSymbol(void) {}	// For use with restoreXml
   BitrangeSymbol(const string &nm,VarnodeSymbol *sym,uint4 bitoff,uint4 num)
     : SleighSymbol(nm) { varsym=sym; bitoffset=bitoff; numbits=num; }
   VarnodeSymbol *getParentSymbol(void) const { return varsym; }
@@ -280,16 +283,16 @@ class ContextSymbol : public ValueSymbol {
   uint4 low,high;		// into a varnode
   bool flow;
 public:
-  ContextSymbol(void) {}	// For use with decode
+  ContextSymbol(void) {}	// For use with restoreXml
   ContextSymbol(const string &nm,ContextField *pate,VarnodeSymbol *v,uint4 l,uint4 h,bool flow);
   VarnodeSymbol *getVarnode(void) const { return vn; }
   uint4 getLow(void) const { return low; }
   uint4 getHigh(void) const { return high; }
   bool getFlow(void) const { return flow; }
   virtual symbol_type getType(void) const { return context_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class VarnodeListSymbol : public ValueSymbol {
@@ -297,16 +300,16 @@ class VarnodeListSymbol : public ValueSymbol {
   bool tableisfilled;
   void checkTableFill(void);
 public:
-  VarnodeListSymbol(void) {}	// For use with decode
+  VarnodeListSymbol(void) {}	// For use with restoreXml
   VarnodeListSymbol(const string &nm,PatternValue *pv,const vector<SleighSymbol *> &vt); 
   virtual Constructor *resolve(ParserWalker &walker);
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual int4 getSize(void) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual symbol_type getType(void) const { return varnodelist_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
   
 class OperandSymbol : public SpecificSymbol {
@@ -326,7 +329,7 @@ private:
   void setVariableLength(void) { flags |= variable_len; }
   bool isVariableLength(void) const { return ((flags&variable_len)!=0); }
 public:
-  OperandSymbol(void) {}	// For use with decode
+  OperandSymbol(void) {}	// For use with restoreXml
   OperandSymbol(const string &nm,int4 index,Constructor *ct);
   uint4 getRelativeOffset(void) const { return reloffset; }
   int4 getOffsetBase(void) const { return offsetbase; }
@@ -351,16 +354,16 @@ public:
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual void collectLocalValues(vector<uintb> &results) const;
   virtual symbol_type getType(void) const { return operand_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class StartSymbol : public SpecificSymbol {
   AddrSpace *const_space;
   PatternExpression *patexp;
 public:
-  StartSymbol(void) { patexp = (PatternExpression *)0; } // For use with decode
+  StartSymbol(void) { patexp = (PatternExpression *)0; } // For use with restoreXml
   StartSymbol(const string &nm,AddrSpace *cspc);
   virtual ~StartSymbol(void);
   virtual VarnodeTpl *getVarnode(void) const;
@@ -368,16 +371,16 @@ public:
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual symbol_type getType(void) const { return start_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class EndSymbol : public SpecificSymbol {
   AddrSpace *const_space;
   PatternExpression *patexp;
 public:
-  EndSymbol(void) { patexp = (PatternExpression *)0; } // For use with decode
+  EndSymbol(void) { patexp = (PatternExpression *)0; } // For use with restoreXml
   EndSymbol(const string &nm,AddrSpace *cspc);
   virtual ~EndSymbol(void);
   virtual VarnodeTpl *getVarnode(void) const;
@@ -385,16 +388,16 @@ public:
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual symbol_type getType(void) const { return end_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class Next2Symbol : public SpecificSymbol {
   AddrSpace *const_space;
   PatternExpression *patexp;
 public:
-  Next2Symbol(void) { patexp = (PatternExpression *)0; } // For use with decode
+  Next2Symbol(void) { patexp = (PatternExpression *)0; } // For use with restoreXml
   Next2Symbol(const string &nm,AddrSpace *cspc);
   virtual ~Next2Symbol(void);
   virtual VarnodeTpl *getVarnode(void) const;
@@ -402,41 +405,47 @@ public:
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
   virtual symbol_type getType(void) const { return next2_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class FlowDestSymbol : public SpecificSymbol {
   AddrSpace *const_space;
 public:
-  FlowDestSymbol(void) {}	// For use with decode
+  FlowDestSymbol(void) {}	// For use with restoreXml
   FlowDestSymbol(const string &nm,AddrSpace *cspc);
   virtual VarnodeTpl *getVarnode(void) const;
   virtual PatternExpression *getPatternExpression(void) const { throw SleighError("Cannot use symbol in pattern"); }
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
-  virtual symbol_type getType(void) const { return flowdest_symbol; }
+  virtual symbol_type getType(void) const { return start_symbol; }
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class FlowRefSymbol : public SpecificSymbol {
   AddrSpace *const_space;
 public:
-  FlowRefSymbol(void) {}	// For use with decode
+  FlowRefSymbol(void) {}	// For use with restoreXml
   FlowRefSymbol(const string &nm,AddrSpace *cspc);
   virtual VarnodeTpl *getVarnode(void) const;
   virtual PatternExpression *getPatternExpression(void) const { throw SleighError("Cannot use symbol in pattern"); }
   virtual void getFixedHandle(FixedHandle &hand,ParserWalker &walker) const;
   virtual void print(ostream &s,ParserWalker &walker) const;
-  virtual symbol_type getType(void) const { return flowref_symbol; }
+  virtual symbol_type getType(void) const { return start_symbol; }
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class ContextChange {		// Change to context command
 public:
   virtual ~ContextChange(void) {}
   virtual void validate(void) const=0;
-  virtual void encode(Encoder &encoder) const=0;
-  virtual void decode(Decoder &decoder,SleighBase *trans)=0;
+  virtual void saveXml(ostream &s) const=0;
+  virtual void restoreXml(const Element *el,SleighBase *trans)=0;
   virtual void apply(ParserWalkerChange &walker) const=0;
   virtual ContextChange *clone(void) const=0;
 };
@@ -448,11 +457,11 @@ class ContextOp : public ContextChange {
   int4 shift;			// Number of bits to shift value into place
 public:
   ContextOp(int4 startbit,int4 endbit,PatternExpression *pe);
-  ContextOp(void) {}		// For use with decode
+  ContextOp(void) {}		// For use with restoreXml
   virtual ~ContextOp(void) { PatternExpression::release(patexp); }
   virtual void validate(void) const;
-  virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
   virtual void apply(ParserWalkerChange &walker) const;
   virtual ContextChange *clone(void) const;
 };
@@ -463,11 +472,11 @@ class ContextCommit : public ContextChange {
   uintm mask;			// mask of bits in word being committed
   bool flow;			// Whether the context "flows" from the point of change
 public:
-  ContextCommit(void) {}	// For use with decode
+  ContextCommit(void) {}	// For use with restoreXml
   ContextCommit(TripleSymbol *s,int4 sbit,int4 ebit,bool fl);
   virtual void validate(void) const {}
-  virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
   virtual void apply(ParserWalkerChange &walker) const;
   virtual ContextChange *clone(void) const;
 };
@@ -491,7 +500,7 @@ class Constructor {		// This is NOT a symbol
   mutable bool inerror;                 // An error is associated with this Constructor
   void orderOperands(void);
 public:
-  Constructor(void);		// For use with decode
+  Constructor(void);		// For use with restoreXml
   Constructor(SubtableSymbol *p);
   ~Constructor(void);
   TokenPattern *buildPattern(ostream &s);
@@ -533,8 +542,8 @@ public:
   void setError(bool val) const { inerror = val; }
   bool isError(void) const { return inerror; }
   bool isRecursive(void) const;
-  void encode(Encoder &encoder) const;
-  void decode(Decoder &decoder,SleighBase *trans);
+  void saveXml(ostream &s) const;
+  void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class DecisionProperties {
@@ -560,15 +569,15 @@ class DecisionNode {
   int4 getMaximumLength(bool context);
   void consistentValues(vector<uint4> &bins,DisjointPattern *pat);
 public:
-  DecisionNode(void) {}		// For use with decode
+  DecisionNode(void) {}		// For use with restoreXml
   DecisionNode(DecisionNode *p);
   ~DecisionNode(void);
   Constructor *resolve(ParserWalker &walker) const;
   void addConstructorPair(const DisjointPattern *pat,Constructor *ct);
   void split(DecisionProperties &props);
   void orderPatterns(DecisionProperties &props);
-  void encode(Encoder &encoder) const;
-  void decode(Decoder &decoder,DecisionNode *par,SubtableSymbol *sub);
+  void saveXml(ostream &s) const;
+  void restoreXml(const Element *el,DecisionNode *par,SubtableSymbol *sub);
 };
 
 class SubtableSymbol : public TripleSymbol {
@@ -577,7 +586,7 @@ class SubtableSymbol : public TripleSymbol {
   vector<Constructor *> construct; // All the Constructors in this table
   DecisionNode *decisiontree;
 public:
-  SubtableSymbol(void) { pattern = (TokenPattern *)0; decisiontree = (DecisionNode *)0; } // For use with decode
+  SubtableSymbol(void) { pattern = (TokenPattern *)0; decisiontree = (DecisionNode *)0; } // For use with restoreXml
   SubtableSymbol(const string &nm);
   virtual ~SubtableSymbol(void);
   bool isBeingBuilt(void) const { return beingbuilt; }
@@ -597,9 +606,9 @@ public:
     throw SleighError("Cannot use subtable in expression"); }
   virtual void collectLocalValues(vector<uintb> &results) const;
   virtual symbol_type getType(void) const { return subtable_symbol; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void encodeHeader(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder,SleighBase *trans);
+  virtual void saveXml(ostream &s) const;
+  virtual void saveXmlHeader(ostream &s) const;
+  virtual void restoreXml(const Element *el,SleighBase *trans);
 };
 
 class MacroSymbol : public SleighSymbol { // A user-defined pcode-macro

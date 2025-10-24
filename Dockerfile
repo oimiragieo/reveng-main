@@ -1,7 +1,7 @@
 # REVENG Universal Reverse Engineering Platform - Production Docker Image
 # ======================================================================
 
-FROM python:3.11-slim as base
+FROM python:3.9-slim as base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -34,7 +34,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY src/ ./src/
-COPY setup.py pyproject.toml VERSION ./
+COPY pyproject.toml VERSION ./
 
 # Install REVENG package
 RUN pip install -e .
@@ -92,7 +92,7 @@ WORKDIR /app/web
 RUN npm run build
 
 # Final web interface image
-FROM python:3.11-slim as web
+FROM python:3.9-slim as web
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \

@@ -4,7 +4,7 @@
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -45,7 +45,9 @@ class EducationalContentGenerator:
         ]
 
         for i, post in enumerate(posts):
-            filename = f"social_post_{i+1}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            filename = (
+                f"social_post_{i + 1}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            )
             filepath = self.output_dir / "social_media" / filename
             with open(filepath, "w") as f:
                 json.dump(asdict(post), f, indent=2)
@@ -76,7 +78,9 @@ Organizations must adapt their security strategies for the AI era.
         logger.info("Created blog post")
         return [str(filepath)]
 
-    def create_conference_presentations(self, analysis_results: Dict[str, Any]) -> List[str]:
+    def create_conference_presentations(
+        self, analysis_results: Dict[str, Any]
+    ) -> List[str]:
         presentation_content = """# The AI Security Revolution
 ## Demonstrating Modern Reverse Engineering Capabilities
 
@@ -104,9 +108,11 @@ Organizations must adapt their security strategies for the AI era.
         logger.info("Created conference presentation")
         return [str(filepath)]
 
-    def create_risk_visualization(self, analysis_results: Dict[str, Any], viz_type: str) -> str:
-        viz_content = f"""# {viz_type.replace('_', ' ').title()} Visualization
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+    def create_risk_visualization(
+        self, analysis_results: Dict[str, Any], viz_type: str
+    ) -> str:
+        viz_content = f"""# {viz_type.replace("_", " ").title()} Visualization
+Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Analysis Results Summary
 """
@@ -114,11 +120,11 @@ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         if "vulnerabilities" in analysis_results:
             viz_content += "\n### Vulnerabilities Found:\n"
             for vuln in analysis_results["vulnerabilities"]:
-                viz_content += (
-                    f"- {vuln.get('type', 'Unknown')}: {vuln.get('severity', 'Unknown')} severity\n"
-                )
+                viz_content += f"- {vuln.get('type', 'Unknown')}: {vuln.get('severity', 'Unknown')} severity\n"
 
-        filename = f"visualization_{viz_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        filename = (
+            f"visualization_{viz_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        )
         filepath = self.output_dir / "visualizations" / filename
         with open(filepath, "w") as f:
             f.write(viz_content)
@@ -174,7 +180,9 @@ def main():
     }
 
     generator = EducationalContentGenerator()
-    campaign = generator.generate_comprehensive_campaign(sample_results, "ai_security_demo")
+    campaign = generator.generate_comprehensive_campaign(
+        sample_results, "ai_security_demo"
+    )
     print("Educational content generation completed!")
     print(f"Campaign summary: {json.dumps(campaign, indent=2)}")
 

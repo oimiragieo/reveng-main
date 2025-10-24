@@ -15,10 +15,9 @@ Integrates with existing Ollama infrastructure and extends it for Java analysis.
 
 import json
 import logging
-import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +96,9 @@ class JavaAIAnalyzer:
             # Create Ollama client
             self.ai_client = OllamaAnalyzer(
                 ollama_host=ai_config.ollama_host,
-                model_name=(ai_config.ollama_model if ai_config.ollama_model != "auto" else None),
+                model_name=(
+                    ai_config.ollama_model if ai_config.ollama_model != "auto" else None
+                ),
             )
 
             self.ai_available = True
@@ -213,7 +214,9 @@ Return ONLY valid JSON, no additional text.
         url = f"{ai_config.ollama_host}/api/generate"
         payload = {
             "model": (
-                ai_config.ollama_model if ai_config.ollama_model != "auto" else "deepseek-coder"
+                ai_config.ollama_model
+                if ai_config.ollama_model != "auto"
+                else "deepseek-coder"
             ),
             "prompt": prompt,
             "stream": False,
@@ -237,7 +240,9 @@ Return ONLY valid JSON, no additional text.
         """Query Anthropic (placeholder)"""
         raise NotImplementedError("Anthropic support not yet implemented")
 
-    def _parse_ai_response(self, class_name: str, response: str) -> JavaAIAnalysisResult:
+    def _parse_ai_response(
+        self, class_name: str, response: str
+    ) -> JavaAIAnalysisResult:
         """Parse AI response into structured result"""
         try:
             # Try to extract JSON from response
@@ -331,7 +336,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="REVENG AI-Enhanced Java Analyzer")
     parser.add_argument("java_file", help="Path to Java source file")
-    parser.add_argument("--provider", default="ollama", choices=["ollama", "openai", "anthropic"])
+    parser.add_argument(
+        "--provider", default="ollama", choices=["ollama", "openai", "anthropic"]
+    )
     parser.add_argument("--model", default="auto", help="Model name or auto")
     parser.add_argument("-o", "--output", help="Output JSON file")
 

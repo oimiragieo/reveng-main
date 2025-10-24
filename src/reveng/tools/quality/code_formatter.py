@@ -16,7 +16,7 @@ import logging
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 logging.basicConfig(
     level=logging.INFO,
@@ -153,7 +153,9 @@ class CodeFormatter:
             logger.error(f"Error formatting {file_path}: {e}")
             return False, str(e)
 
-    def format_directory(self, directory: Path, file_pattern: str = "*.c") -> Dict[str, any]:
+    def format_directory(
+        self, directory: Path, file_pattern: str = "*.c"
+    ) -> Dict[str, any]:
         """Format all files in a directory"""
         logger.info(f"Formatting directory: {directory} (pattern: {file_pattern})")
 
@@ -229,7 +231,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="Format generated code")
     parser.add_argument("directory", help="Directory to format")
-    parser.add_argument("--pattern", default="*.c", help="File pattern to match (default: *.c)")
+    parser.add_argument(
+        "--pattern", default="*.c", help="File pattern to match (default: *.c)"
+    )
     args = parser.parse_args()
 
     # Create formatter
@@ -239,7 +243,7 @@ def main():
     results = formatter.format_directory(Path(args.directory), args.pattern)
 
     # Print summary
-    print(f"\nFormatting Summary:")
+    print("\nFormatting Summary:")
     print(f"  Total files: {results['total']}")
     print(f"  Formatted: {results['formatted']}")
     print(f"  Failed: {results['failed']}")

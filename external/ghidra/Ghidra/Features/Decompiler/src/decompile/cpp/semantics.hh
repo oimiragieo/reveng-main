@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,6 @@
 #define __SEMANTICS_HH__
 
 #include "context.hh"
-#include "slaformat.hh"
 
 namespace ghidra {
 
@@ -46,6 +45,8 @@ private:
   } value;
   uintb value_real;
   v_field select;		// Which part of handle to use as constant
+  static void printHandleSelector(ostream &s,v_field val);
+  static v_field readHandleSelector(const string &name);
 public:
   ConstTpl(void) { type = real; value_real = 0; }
   ConstTpl(const ConstTpl &op2) {
@@ -71,8 +72,8 @@ public:
   void changeHandleIndex(const vector<int4> &handmap);
   void fillinSpace(FixedHandle &hand,const ParserWalker &walker) const;
   void fillinOffset(FixedHandle &hand,const ParserWalker &walker) const;
-  void encode(Encoder &encoder) const;
-  void decode(Decoder &decoder);
+  void saveXml(ostream &s) const;
+  void restoreXml(const Element *el,const AddrSpaceManager *manage);
 };
 
 class VarnodeTpl {
@@ -91,8 +92,6 @@ public:
   bool isDynamic(const ParserWalker &walker) const;
   int4 transfer(const vector<HandleTpl *> &params);
   bool isZeroSize(void) const { return size.isZero(); }
-  bool operator==(const VarnodeTpl &op2) const;
-  bool operator!=(const VarnodeTpl &op2) const;
   bool operator<(const VarnodeTpl &op2) const;
   void setOffset(uintb constVal) { offset = ConstTpl(ConstTpl::real,constVal); }
   void setRelative(uintb constVal) { offset = ConstTpl(ConstTpl::j_relative,constVal); }
@@ -103,8 +102,8 @@ public:
   bool isRelative(void) const { return (offset.getType() == ConstTpl::j_relative); }
   void changeHandleIndex(const vector<int4> &handmap);
   bool adjustTruncation(int4 sz,bool isbigendian);
-  void encode(Encoder &encoder) const;
-  void decode(Decoder &decoder);
+  void saveXml(ostream &s) const;
+  void restoreXml(const Element *el,const AddrSpaceManager *manage);
 };
 
 class HandleTpl {
@@ -133,8 +132,8 @@ public:
   void setTempOffset(uintb val) { temp_offset = ConstTpl(ConstTpl::real,val); }
   void fix(FixedHandle &hand,const ParserWalker &walker) const;
   void changeHandleIndex(const vector<int4> &handmap);
-  void encode(Encoder &encoder) const;
-  void decode(Decoder &decoder);
+  void saveXml(ostream &s) const;
+  void restoreXml(const Element *el,const AddrSpaceManager *manage);
 };
 
 class OpTpl {
@@ -157,8 +156,8 @@ public:
   void setInput(VarnodeTpl *vt,int4 slot) { input[slot] = vt; }
   void removeInput(int4 index);
   void changeHandleIndex(const vector<int4> &handmap);
-  void encode(Encoder &encoder) const;
-  void decode(Decoder &decoder);
+  void saveXml(ostream &s) const;
+  void restoreXml(const Element *el,const AddrSpaceManager *manage);
 };
 
 class ConstructTpl {
@@ -186,8 +185,8 @@ public:
   void setInput(VarnodeTpl *vn,int4 index,int4 slot);
   void setOutput(VarnodeTpl *vn,int4 index);
   void deleteOps(const vector<int4> &indices);
-  void encode(Encoder &encoder,int4 sectionid) const;
-  int4 decode(Decoder &decoder);
+  void saveXml(ostream &s,int4 sectionid) const;
+  int4 restoreXml(const Element *el,const AddrSpaceManager *manage);
 };
 
 class PcodeEmit;   // Forward declaration for emitter

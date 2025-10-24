@@ -17,9 +17,8 @@ Version: 1.0
 
 import json
 import logging
-import re
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -126,7 +125,7 @@ class EnhancedCodeGenerator:
             return f"""/*
  * {func_name}
  * Purpose: {purpose}
- * Generated from AI analysis (confidence: {ai_info.get('confidence', 0.5):.2f})
+ * Generated from AI analysis (confidence: {ai_info.get("confidence", 0.5):.2f})
  */
 
 #include <stdio.h>
@@ -135,7 +134,7 @@ class EnhancedCodeGenerator:
 
 /**
  * Open a file for reading/writing
- * Based on AI analysis: {', '.join(ai_info.get('constants', [])[:2])}
+ * Based on AI analysis: {", ".join(ai_info.get("constants", [])[:2])}
  */
 FILE* {func_name}(const char* filename, const char* mode) {{
     if (!filename || !mode) {{
@@ -226,7 +225,7 @@ int {func_name}(FILE* file) {{
             return f"""/*
  * {func_name}
  * Purpose: {purpose}
- * AI Evidence: {', '.join(constants[:2])}
+ * AI Evidence: {", ".join(constants[:2])}
  */
 
 #ifdef _WIN32
@@ -316,7 +315,7 @@ int {func_name}(socket_t sock, const struct sockaddr* addr, int addr_len) {{
             return f"""/*
  * {func_name}
  * Purpose: {purpose}
- * Security Note: {risks[0] if risks else 'Check bounds'}
+ * Security Note: {risks[0] if risks else "Check bounds"}
  */
 
 #include <stdio.h>
@@ -388,7 +387,7 @@ void* {func_name}(void* dest, const void* src, size_t n) {{
         """Generate crypto function stub (complex, needs real crypto lib)"""
         return f"""/*
  * {func_name}
- * Purpose: {ai_info.get('purpose', 'Cryptographic operation')}
+ * Purpose: {ai_info.get("purpose", "Cryptographic operation")}
  *
  * NOTE: This is a placeholder. Real crypto should use:
  * - OpenSSL
@@ -409,7 +408,7 @@ int {func_name}(const void* input, size_t input_len, void* output, size_t* outpu
         """Generate error handling function"""
         return f"""/*
  * {func_name}
- * Purpose: {ai_info.get('purpose', 'Error handling')}
+ * Purpose: {ai_info.get("purpose", "Error handling")}
  */
 
 #include <stdio.h>
@@ -429,8 +428,8 @@ void {func_name}(const char* message, int error_code) {{
         """Generate utility function"""
         return f"""/*
  * {func_name}
- * Purpose: {ai_info.get('purpose', 'Utility function')}
- * Confidence: {ai_info.get('confidence', 0.5):.2f}
+ * Purpose: {ai_info.get("purpose", "Utility function")}
+ * Confidence: {ai_info.get("confidence", 0.5):.2f}
  */
 
 #include <stdio.h>
@@ -447,10 +446,10 @@ int {func_name}(void) {{
         """Generic template for unknown function types"""
         return f"""/*
  * {func_name}
- * Purpose: {ai_info.get('purpose', 'Unknown')}
- * Inputs: {', '.join(ai_info.get('inputs', []))}
- * Outputs: {', '.join(ai_info.get('outputs', []))}
- * Side Effects: {', '.join(ai_info.get('side_effects', []))}
+ * Purpose: {ai_info.get("purpose", "Unknown")}
+ * Inputs: {", ".join(ai_info.get("inputs", []))}
+ * Outputs: {", ".join(ai_info.get("outputs", []))}
+ * Side Effects: {", ".join(ai_info.get("side_effects", []))}
  */
 
 #include <stdio.h>
@@ -466,7 +465,7 @@ void {func_name}(void) {{
         """Generic file operation"""
         return f"""/*
  * {func_name}
- * Purpose: {ai_info.get('purpose', 'File operation')}
+ * Purpose: {ai_info.get("purpose", "File operation")}
  */
 
 #include <stdio.h>
@@ -485,7 +484,7 @@ int {func_name}(const char* path) {{
         """Generic network operation"""
         return f"""/*
  * {func_name}
- * Purpose: {ai_info.get('purpose', 'Network operation')}
+ * Purpose: {ai_info.get("purpose", "Network operation")}
  */
 
 #ifdef _WIN32
@@ -506,7 +505,7 @@ int {func_name}(socket_t sock) {{
         """Generic memory operation"""
         return f"""/*
  * {func_name}
- * Purpose: {ai_info.get('purpose', 'Memory operation')}
+ * Purpose: {ai_info.get("purpose", "Memory operation")}
  */
 
 #include <stdlib.h>

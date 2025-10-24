@@ -10,7 +10,11 @@ from dataclasses import asdict, dataclass
 from typing import Dict, List, Optional
 
 from .api_mappings import get_api_mapping
-from .pattern_matcher import detect_api_calls, detect_api_patterns, get_translation_complexity
+from .pattern_matcher import (
+    detect_api_calls,
+    detect_api_patterns,
+    get_translation_complexity,
+)
 
 
 @dataclass
@@ -161,7 +165,9 @@ def generate_summary(
             by_category[category].append(hint)
 
     # Generate category summary
-    category_summary = {category: len(hints_list) for category, hints_list in by_category.items()}
+    category_summary = {
+        category: len(hints_list) for category, hints_list in by_category.items()
+    }
 
     # Generate recommendations
     recommendations = []
@@ -172,16 +178,22 @@ def generate_summary(
         )
 
     if "network" in by_category:
-        recommendations.append("Replace WinHTTP/WinINet with requests library for HTTP operations")
+        recommendations.append(
+            "Replace WinHTTP/WinINet with requests library for HTTP operations"
+        )
 
     if "registry" in by_category:
-        recommendations.append("Use winreg module for registry access (Windows-only functionality)")
+        recommendations.append(
+            "Use winreg module for registry access (Windows-only functionality)"
+        )
 
     if "crypto" in by_category:
         recommendations.append("Replace CryptoAPI with hashlib or cryptography library")
 
     if "process" in by_category:
-        recommendations.append("Use subprocess and threading modules for process/thread management")
+        recommendations.append(
+            "Use subprocess and threading modules for process/thread management"
+        )
 
     if "memory" in by_category:
         recommendations.append(

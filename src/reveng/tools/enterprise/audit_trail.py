@@ -238,7 +238,9 @@ class AuditLogger:
         # Log session end event
         self.log_event(
             event_type=(
-                EventType.ANALYSIS_COMPLETED if status == "completed" else EventType.ANALYSIS_FAILED
+                EventType.ANALYSIS_COMPLETED
+                if status == "completed"
+                else EventType.ANALYSIS_FAILED
             ),
             severity=Severity.INFO if status == "completed" else Severity.ERROR,
             action="session_ended",
@@ -282,7 +284,11 @@ class AuditLogger:
             severity=severity.value,
             user=self.user,
             hostname=self.hostname,
-            session_id=(self.current_session.session_id if self.current_session else "no_session"),
+            session_id=(
+                self.current_session.session_id
+                if self.current_session
+                else "no_session"
+            ),
             action=action,
             resource=resource,
             resource_hash=resource_hash,
@@ -307,7 +313,9 @@ class AuditLogger:
         if len(self.events_buffer) >= 100:
             self.flush()
 
-    def log_file_analysis(self, file_path: str, analysis_type: str, success: bool, details: Dict):
+    def log_file_analysis(
+        self, file_path: str, analysis_type: str, success: bool, details: Dict
+    ):
         """Log file analysis event"""
         if self.current_session:
             self.current_session.files_analyzed += 1
@@ -321,7 +329,9 @@ class AuditLogger:
             compliance_relevant=True,
         )
 
-    def log_decompilation(self, source_file: str, output_file: str, decompiler: str, success: bool):
+    def log_decompilation(
+        self, source_file: str, output_file: str, decompiler: str, success: bool
+    ):
         """Log decompilation event"""
         if self.current_session and success:
             self.current_session.files_decompiled += 1
@@ -358,7 +368,9 @@ class AuditLogger:
 
         self.log_event(
             event_type=event_type,
-            severity=(Severity.WARNING if finding_type == "obfuscation" else Severity.CRITICAL),
+            severity=(
+                Severity.WARNING if finding_type == "obfuscation" else Severity.CRITICAL
+            ),
             action=f"security_finding_{finding_type}",
             resource=file_path,
             details=details,
@@ -443,7 +455,9 @@ class AuditLogger:
             "generated_at": datetime.now().isoformat(),
             "compliance_framework": ["SOC 2 Type II", "ISO 27001"],
             "total_compliance_events": len(compliance_events),
-            "file_analyses": self._count_by_field(compliance_events, "action", contains="analyze"),
+            "file_analyses": self._count_by_field(
+                compliance_events, "action", contains="analyze"
+            ),
             "security_findings": len(
                 [e for e in compliance_events if "security" in e.get("action", "")]
             ),
@@ -482,7 +496,11 @@ class AuditLogger:
                 ]
             ),
             "malware_suspected": len(
-                [e for e in security_events if e["event_type"] == EventType.MALWARE_SUSPECTED.value]
+                [
+                    e
+                    for e in security_events
+                    if e["event_type"] == EventType.MALWARE_SUSPECTED.value
+                ]
             ),
             "vulnerabilities_found": len(
                 [
@@ -492,7 +510,11 @@ class AuditLogger:
                 ]
             ),
             "critical_events": len(
-                [e for e in security_events if e.get("severity") == Severity.CRITICAL.value]
+                [
+                    e
+                    for e in security_events
+                    if e.get("severity") == Severity.CRITICAL.value
+                ]
             ),
         }
 
@@ -531,7 +553,9 @@ class AuditLogger:
 
     def _get_session_count(self, events: List[Dict]) -> int:
         """Get unique session count"""
-        sessions = set(e.get("session_id") for e in events if e.get("session_id") != "no_session")
+        sessions = set(
+            e.get("session_id") for e in events if e.get("session_id") != "no_session"
+        )
         return len(sessions)
 
 

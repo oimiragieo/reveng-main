@@ -27,7 +27,9 @@ class APICallMatch:
             self.variables_used = []
 
 
-def detect_api_calls(code: str, api_names: Optional[Set[str]] = None) -> List[APICallMatch]:
+def detect_api_calls(
+    code: str, api_names: Optional[Set[str]] = None
+) -> List[APICallMatch]:
     """
     Detect Windows API calls in C code.
 
@@ -47,7 +49,9 @@ def detect_api_calls(code: str, api_names: Optional[Set[str]] = None) -> List[AP
     lines = code.split("\n")
 
     # Extract function names from code for context
-    function_pattern = re.compile(r"^\s*(?:static\s+)?(?:\w+\s+)+(\w+)\s*\([^)]*\)\s*\{?")
+    function_pattern = re.compile(
+        r"^\s*(?:static\s+)?(?:\w+\s+)+(\w+)\s*\([^)]*\)\s*\{?"
+    )
     current_function = None
 
     for line_num, line in enumerate(lines, start=1):
@@ -221,7 +225,9 @@ def detect_api_patterns(code: str) -> dict:
 
         # HTTP request pattern
         if "WinHttpOpen" in api_names or "InternetOpenW" in api_names:
-            if any(api in api_names for api in ["WinHttpSendRequest", "InternetOpenUrlW"]):
+            if any(
+                api in api_names for api in ["WinHttpSendRequest", "InternetOpenUrlW"]
+            ):
                 patterns["http_requests"].append(
                     {
                         "function": func_name,

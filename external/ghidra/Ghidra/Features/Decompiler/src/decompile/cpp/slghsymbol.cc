@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -140,99 +140,133 @@ void SymbolTable::replaceSymbol(SleighSymbol *a,SleighSymbol *b)
   }
 }
 
-void SymbolTable::encode(Encoder &encoder) const
+void SymbolTable::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_SYMBOL_TABLE);
-  encoder.writeSignedInteger(sla::ATTRIB_SCOPESIZE, table.size());
-  encoder.writeSignedInteger(sla::ATTRIB_SYMBOLSIZE, symbollist.size());
+  s << "<symbol_table";
+  s << " scopesize=\"" << dec << table.size() << "\"";
+  s << " symbolsize=\"" << symbollist.size() << "\">\n";
   for(int4 i=0;i<table.size();++i) {
-    encoder.openElement(sla::ELEM_SCOPE);
-    encoder.writeUnsignedInteger(sla::ATTRIB_ID, table[i]->getId());
+    s << "<scope id=\"0x" << hex << table[i]->getId() << "\"";
+    s << " parent=\"0x";
     if (table[i]->getParent() == (SymbolScope *)0)
-      encoder.writeUnsignedInteger(sla::ATTRIB_PARENT, 0);
+      s << "0";
     else
-      encoder.writeUnsignedInteger(sla::ATTRIB_PARENT, table[i]->getParent()->getId());
-    encoder.closeElement(sla::ELEM_SCOPE);
+      s << hex << table[i]->getParent()->getId();
+    s << "\"/>\n";
   }
 
 				// First save the headers
   for(int4 i=0;i<symbollist.size();++i)
-    symbollist[i]->encodeHeader(encoder);
+    symbollist[i]->saveXmlHeader(s);
 
 				// Now save the content of each symbol
   for(int4 i=0;i<symbollist.size();++i) // Must save IN ORDER
-    symbollist[i]->encode(encoder);
-  encoder.closeElement(sla::ELEM_SYMBOL_TABLE);
+    symbollist[i]->saveXml(s);
+  s << "</symbol_table>\n";
 }
 
-void SymbolTable::decode(Decoder &decoder,SleighBase *trans)
+void SymbolTable::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  int4 el = decoder.openElement(sla::ELEM_SYMBOL_TABLE);
-  table.resize(decoder.readSignedInteger(sla::ATTRIB_SCOPESIZE), (SymbolScope *)0);
-  symbollist.resize(decoder.readSignedInteger(sla::ATTRIB_SYMBOLSIZE), (SleighSymbol *)0);
-  for(int4 i=0;i<table.size();++i) { // Decode the scopes
-    int4 subel = decoder.openElement(sla::ELEM_SCOPE);
-    uintm id = decoder.readUnsignedInteger(sla::ATTRIB_ID);
-    uintm parent = decoder.readUnsignedInteger(sla::ATTRIB_PARENT);
+  {
+    uint4 size;
+    istringstream s(el->getAttributeValue("scopesize"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> size;
+    table.resize(size,(SymbolScope *)0);
+  }
+  {
+    uint4 size;
+    istringstream s(el->getAttributeValue("symbolsize"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> size;
+    symbollist.resize(size,(SleighSymbol *)0);
+  }
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  for(int4 i=0;i<table.size();++i) { // Restore the scopes
+    Element *subel = *iter;
+    if (subel->getName() != "scope")
+      throw SleighError("Misnumbered symbol scopes");
+    uintm id;
+    uintm parent;
+    {
+      istringstream s(subel->getAttributeValue("id"));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> id;
+    }
+    {
+      istringstream s(subel->getAttributeValue("parent"));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> parent;
+    }
     SymbolScope *parscope = (parent==id) ? (SymbolScope *)0 : table[parent];
     table[id] = new SymbolScope( parscope, id );
-    decoder.closeElement(subel);
+    ++iter;
   }
   curscope = table[0];		// Current scope is global
 
-				// Now decode the symbol shells
-  for(int4 i=0;i<symbollist.size();++i)
-    decodeSymbolHeader(decoder);
-				// Now decode the symbol content
-  while(decoder.peekElement() != 0) {
-    decoder.openElement();
-    uintm id = decoder.readUnsignedInteger(sla::ATTRIB_ID);
-    SleighSymbol *sym;
-    sym = findSymbol(id);
-    sym->decode(decoder,trans);
-    // Tag closed by decode method
-    // decoder.closeElement(subel);
+				// Now restore the symbol shells
+  for(int4 i=0;i<symbollist.size();++i) {
+    restoreSymbolHeader(*iter);
+    ++iter;
   }
-  decoder.closeElement(el);
+				// Now restore the symbol content
+  while(iter != list.end()) {
+    Element *subel = *iter;
+    uintm id;
+    SleighSymbol *sym;
+    {
+      istringstream s(subel->getAttributeValue("id"));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> id;
+    }
+    sym = findSymbol(id);
+    sym->restoreXml(subel,trans);
+    ++iter;
+  }
 }
 
-void SymbolTable::decodeSymbolHeader(Decoder &decoder)
+void SymbolTable::restoreSymbolHeader(const Element *el)
 
 {				// Put the shell of a symbol in the symbol table
 				// in order to allow recursion
   SleighSymbol *sym;
-  uint4 el = decoder.peekElement();
-  if (el == sla::ELEM_USEROP_HEAD)
+  if (el->getName() == "userop_head")
     sym = new UserOpSymbol();
-  else if (el == sla::ELEM_EPSILON_SYM_HEAD)
+  else if (el->getName() == "epsilon_sym_head")
     sym = new EpsilonSymbol();
-  else if (el == sla::ELEM_VALUE_SYM_HEAD)
+  else if (el->getName() == "value_sym_head")
     sym = new ValueSymbol();
-  else if (el == sla::ELEM_VALUEMAP_SYM_HEAD)
+  else if (el->getName() == "valuemap_sym_head")
     sym = new ValueMapSymbol();
-  else if (el == sla::ELEM_NAME_SYM_HEAD)
+  else if (el->getName() == "name_sym_head")
     sym = new NameSymbol();
-  else if (el == sla::ELEM_VARNODE_SYM_HEAD)
+  else if (el->getName() == "varnode_sym_head")
     sym = new VarnodeSymbol();
-  else if (el == sla::ELEM_CONTEXT_SYM_HEAD)
+  else if (el->getName() == "context_sym_head")
     sym = new ContextSymbol();
-  else if (el == sla::ELEM_VARLIST_SYM_HEAD)
+  else if (el->getName() == "varlist_sym_head")
     sym = new VarnodeListSymbol();
-  else if (el == sla::ELEM_OPERAND_SYM_HEAD)
+  else if (el->getName() == "operand_sym_head")
     sym = new OperandSymbol();
-  else if (el == sla::ELEM_START_SYM_HEAD)
+  else if (el->getName() == "start_sym_head")
     sym = new StartSymbol();
-  else if (el == sla::ELEM_END_SYM_HEAD)
+  else if (el->getName() == "end_sym_head")
     sym = new EndSymbol();
-  else if (el == sla::ELEM_NEXT2_SYM_HEAD)
+  else if (el->getName() == "next2_sym_head")
     sym = new Next2Symbol();
-  else if (el == sla::ELEM_SUBTABLE_SYM_HEAD)
+  else if (el->getName() == "subtable_sym_head")
     sym = new SubtableSymbol();
+  else if (el->getName() == "flowdest_sym_head")
+    sym = new FlowDestSymbol();
+  else if (el->getName() == "flowref_sym_head")
+    sym = new FlowRefSymbol();
   else
     throw SleighError("Bad symbol xml");
-  sym->decodeHeader(decoder);	// Restore basic elements of symbol
+  sym->restoreXmlHeader(el);	// Restore basic elements of symbol
   symbollist[sym->id] = sym;	// Put the basic symbol in the table
   table[sym->scopeid]->addSymbol(sym); // to allow recursion
 }
@@ -327,63 +361,60 @@ void SymbolTable::renumber(void)
   symbollist = newsymbol;
 }
 
-void SleighSymbol::encodeHeader(Encoder &encoder) const
+void SleighSymbol::saveXmlHeader(ostream &s) const
 
 {				// Save the basic attributes of a symbol
-  encoder.writeString(sla::ATTRIB_NAME, name);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, id);
-  encoder.writeUnsignedInteger(sla::ATTRIB_SCOPE, scopeid);
+  s << " name=\"" << name << "\"";
+  s << " id=\"0x" << hex << id << "\"";
+  s << " scope=\"0x" << scopeid << "\"";
 }
 
-void SleighSymbol::decodeHeader(Decoder &decoder)
+void SleighSymbol::restoreXmlHeader(const Element *el)
 
 {
-  uint4 el = decoder.openElement();
-  name = decoder.readString(sla::ATTRIB_NAME);
-  id = decoder.readUnsignedInteger(sla::ATTRIB_ID);
-  scopeid = decoder.readUnsignedInteger(sla::ATTRIB_SCOPE);
-  decoder.closeElement(el);
+  name = el->getAttributeValue("name");
+  {
+    istringstream s(el->getAttributeValue("id"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> id;
+  }
+  {
+    istringstream s(el->getAttributeValue("scope"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> scopeid;
+  }
 }
 
-void SleighSymbol::encode(Encoder &encoder) const
+void UserOpSymbol::saveXml(ostream &s) const
 
 {
-  throw LowlevelError("Symbol "+name+" cannot be encoded to stream directly");
+  s << "<userop";
+  SleighSymbol::saveXmlHeader(s);
+  s << " index=\"" << dec << index << "\"";
+  s << "/>\n";
 }
 
-void SleighSymbol::decode(Decoder &decoder,SleighBase *trans)
+void UserOpSymbol::saveXmlHeader(ostream &s) const
 
 {
-  throw LowlevelError("Symbol "+name+" cannot be decoded from stream directly");
+  s << "<userop_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void UserOpSymbol::encode(Encoder &encoder) const
+void UserOpSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  encoder.openElement(sla::ELEM_USEROP);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  encoder.writeSignedInteger(sla::ATTRIB_INDEX, index);
-  encoder.closeElement(sla::ELEM_USEROP);
-}
-
-void UserOpSymbol::encodeHeader(Encoder &encoder) const
-
-{
-  encoder.openElement(sla::ELEM_USEROP_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_USEROP_HEAD);
-}
-
-void UserOpSymbol::decode(Decoder &decoder,SleighBase *trans)
-
-{
-  index = decoder.readSignedInteger(sla::ATTRIB_INDEX);
-  decoder.closeElement(sla::ELEM_USEROP.getId());
+  istringstream s(el->getAttributeValue("index"));
+  s.unsetf(ios::dec | ios::hex | ios::oct);
+  s >> index;
 }
 
 PatternlessSymbol::PatternlessSymbol(void)
 
-{	// The void constructor must explicitly build the ConstantValue. It is not decode (or encoded)
+{				// The void constructor must explicitly build
+				// the ConstantValue because it is not stored
+				// or restored via xml
   patexp = new ConstantValue((intb)0);
   patexp->layClaim();
 }
@@ -425,27 +456,26 @@ VarnodeTpl *EpsilonSymbol::getVarnode(void) const
   return res;
 }
 
-void EpsilonSymbol::encode(Encoder &encoder) const
+void EpsilonSymbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_EPSILON_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  encoder.closeElement(sla::ELEM_EPSILON_SYM);
+  s << "<epsilon_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void EpsilonSymbol::encodeHeader(Encoder &encoder) const
+void EpsilonSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_EPSILON_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_EPSILON_SYM_HEAD);
+  s << "<epsilon_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void EpsilonSymbol::decode(Decoder &decoder,SleighBase *trans)
+void EpsilonSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
   const_space = trans->getConstantSpace();
-  decoder.closeElement(sla::ELEM_EPSILON_SYM.getId());
 }
 
 ValueSymbol::ValueSymbol(const string &nm,PatternValue *pv)
@@ -480,29 +510,32 @@ void ValueSymbol::print(ostream &s,ParserWalker &walker) const
     s << "-0x" << hex << -val;
 }
 
-void ValueSymbol::encode(Encoder &encoder) const
+void ValueSymbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_VALUE_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  patval->encode(encoder);
-  encoder.closeElement(sla::ELEM_VALUE_SYM);
+  s << "<value_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << ">\n";
+  patval->saveXml(s);
+  s << "</value_sym>\n";
 }
 
-void ValueSymbol::encodeHeader(Encoder &encoder) const
+void ValueSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_VALUE_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_VALUE_SYM_HEAD);
+  s << "<value_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void ValueSymbol::decode(Decoder &decoder,SleighBase *trans)
+void ValueSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  patval = (PatternValue *) PatternExpression::restoreExpression(*iter,trans);
   patval->layClaim();
-  decoder.closeElement(sla::ELEM_VALUE_SYM.getId());
 }
 
 void ValueMapSymbol::checkTableFill(void)
@@ -556,40 +589,43 @@ void ValueMapSymbol::print(ostream &s,ParserWalker &walker) const
     s << "-0x" << hex << -val;
 }
 
-void ValueMapSymbol::encode(Encoder &encoder) const
+void ValueMapSymbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_VALUEMAP_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  patval->encode(encoder);
-  for(uint4 i=0;i<valuetable.size();++i) {
-    encoder.openElement(sla::ELEM_VALUETAB);
-    encoder.writeSignedInteger(sla::ATTRIB_VAL, valuetable[i]);
-    encoder.closeElement(sla::ELEM_VALUETAB);
-  }
-  encoder.closeElement(sla::ELEM_VALUEMAP_SYM);
+  s << "<valuemap_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << ">\n";
+  patval->saveXml(s);
+  for(uint4 i=0;i<valuetable.size();++i)
+    s << "<valuetab val=\"" << dec << valuetable[i] << "\"/>\n";
+  s << "</valuemap_sym>\n";
 }
 
-void ValueMapSymbol::encodeHeader(Encoder &encoder) const
+void ValueMapSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_VALUEMAP_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_VALUEMAP_SYM_HEAD);
+  s << "<valuemap_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void ValueMapSymbol::decode(Decoder &decoder,SleighBase *trans)
+void ValueMapSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  patval = (PatternValue *) PatternExpression::restoreExpression(*iter,trans);
   patval->layClaim();
-  while(decoder.peekElement() != 0) {
-    uint4 subel = decoder.openElement();
-    intb val = decoder.readSignedInteger(sla::ATTRIB_VAL);
+  ++iter;
+  while(iter != list.end()) {
+    istringstream s((*iter)->getAttributeValue("val"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    intb val;
+    s >> val;
     valuetable.push_back(val);
-    decoder.closeElement(subel);
+    ++iter;
   }
-  decoder.closeElement(sla::ELEM_VALUEMAP_SYM.getId());
   checkTableFill();
 }
 
@@ -631,46 +667,47 @@ void NameSymbol::print(ostream &s,ParserWalker &walker) const
   s << nametable[ind];
 }
 
-void NameSymbol::encode(Encoder &encoder) const
+void NameSymbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_NAME_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  patval->encode(encoder);
+  s << "<name_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << ">\n";
+  patval->saveXml(s);
   for(int4 i=0;i<nametable.size();++i) {
-    encoder.openElement(sla::ELEM_NAMETAB);
-    if (nametable[i] == "\t") {		// TAB indicates an illegal index
-					// Emit tag with no name attribute
-    }
+    if (nametable[i] == "\t")		// TAB indicates an illegal index
+      s << "<nametab/>\n";		// Emit tag with no name attribute
     else
-      encoder.writeString(sla::ATTRIB_NAME, nametable[i]);
-    encoder.closeElement(sla::ELEM_NAMETAB);
+      s << "<nametab name=\"" << nametable[i] << "\"/>\n";
   }
-  encoder.closeElement(sla::ELEM_NAME_SYM);
+  s << "</name_sym>\n";
 }
 
-void NameSymbol::encodeHeader(Encoder &encoder) const
+void NameSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_NAME_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_NAME_SYM_HEAD);
+  s << "<name_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void NameSymbol::decode(Decoder &decoder,SleighBase *trans)
+void NameSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  patval = (PatternValue *) PatternExpression::restoreExpression(*iter,trans);
   patval->layClaim();
-  while(decoder.peekElement() != 0) {
-    uint4 subel = decoder.openElement();
-    if (decoder.getNextAttributeId() == sla::ATTRIB_NAME)
-      nametable.push_back(decoder.readString());
+  ++iter;
+  while(iter != list.end()) {
+    const Element *subel = *iter;
+    if (subel->getNumAttributes() >= 1)
+      nametable.push_back(subel->getAttributeValue("name"));
     else
       nametable.push_back("\t");		// TAB indicates an illegal index
-    decoder.closeElement(subel);
+    ++iter;
   }
-  decoder.closeElement(sla::ELEM_NAME_SYM.getId());
   checkTableFill();
 }
 
@@ -705,33 +742,42 @@ void VarnodeSymbol::collectLocalValues(vector<uintb> &results) const
     results.push_back(fix.offset);
 }
 
-void VarnodeSymbol::encode(Encoder &encoder) const
+void VarnodeSymbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_VARNODE_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  encoder.writeSpace(sla::ATTRIB_SPACE,fix.space);
-  encoder.writeUnsignedInteger(sla::ATTRIB_OFF, fix.offset);
-  encoder.writeSignedInteger(sla::ATTRIB_SIZE, fix.size);
-  encoder.closeElement(sla::ELEM_VARNODE_SYM);
+  s << "<varnode_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << " space=\"" << fix.space->getName() << "\"";
+  s << " offset=\"0x" << hex << fix.offset << "\"";
+  s << " size=\"" << dec << fix.size << "\"";
+  s << ">\n";
+  PatternlessSymbol::saveXml(s);
+  s << "</varnode_sym>\n";
 }
 
-void VarnodeSymbol::encodeHeader(Encoder &encoder) const
+void VarnodeSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_VARNODE_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_VARNODE_SYM_HEAD);
+  s << "<varnode_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void VarnodeSymbol::decode(Decoder &decoder,SleighBase *trans)
+void VarnodeSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  fix.space = decoder.readSpace(sla::ATTRIB_SPACE);
-  fix.offset = decoder.readUnsignedInteger(sla::ATTRIB_OFF);
-  fix.size = decoder.readSignedInteger(sla::ATTRIB_SIZE);
+  fix.space = trans->getSpaceByName(el->getAttributeValue("space"));
+  {
+    istringstream s(el->getAttributeValue("offset"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> fix.offset;
+  }
+  {
+    istringstream s(el->getAttributeValue("size"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> fix.size;
+  }
 				// PatternlessSymbol does not need restoring
-  decoder.closeElement(sla::ELEM_VARNODE_SYM.getId());
 }
 
 ContextSymbol::ContextSymbol(const string &nm,ContextField *pate,VarnodeSymbol *v,
@@ -744,59 +790,56 @@ ContextSymbol::ContextSymbol(const string &nm,ContextField *pate,VarnodeSymbol *
   flow = fl;
 }
 
-void ContextSymbol::encode(Encoder &encoder) const
+void ContextSymbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_CONTEXT_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  encoder.writeUnsignedInteger(sla::ATTRIB_VARNODE, vn->getId());
-  encoder.writeSignedInteger(sla::ATTRIB_LOW, low);
-  encoder.writeSignedInteger(sla::ATTRIB_HIGH, high);
-  encoder.writeBool(sla::ATTRIB_FLOW, flow);
-  patval->encode(encoder);
-  encoder.closeElement(sla::ELEM_CONTEXT_SYM);
+  s << "<context_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << " varnode=\"0x" << hex << vn->getId() << "\"";
+  s << " low=\"" << dec << low << "\"";
+  s << " high=\"" << high << "\"";
+  a_v_b(s,"flow",flow);
+  s << ">\n";
+  patval->saveXml(s);
+  s << "</context_sym>\n";
 }
 
-void ContextSymbol::encodeHeader(Encoder &encoder) const
+void ContextSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_CONTEXT_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_CONTEXT_SYM_HEAD);
+  s << "<context_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void ContextSymbol::decode(Decoder &decoder,SleighBase *trans)
+void ContextSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  // SleighSymbol::decodeHeader(decoder);	// Already filled in by the header tag
-  flow = false;
-  bool highMissing = true;
-  bool lowMissing = true;
-  uint4 attrib = decoder.getNextAttributeId();
-  while(attrib != 0) {
-    if (attrib == sla::ATTRIB_VARNODE) {
-      uintm id = decoder.readUnsignedInteger();
-      vn = (VarnodeSymbol *)trans->findSymbol(id);
-    }
-    else if (attrib == sla::ATTRIB_LOW) {
-      low = decoder.readSignedInteger();
-      lowMissing = false;
-    }
-    else if (attrib == sla::ATTRIB_HIGH) {
-      high = decoder.readSignedInteger();
-      highMissing = false;
-    }
-    else if (attrib == sla::ATTRIB_FLOW) {
-      flow = decoder.readBool();
-    }
-    attrib = decoder.getNextAttributeId();
+  ValueSymbol::restoreXml(el,trans);
+  {
+    uintm id;
+    istringstream s(el->getAttributeValue("varnode"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> id;
+    vn = (VarnodeSymbol *)trans->findSymbol(id);
   }
-  if (lowMissing || highMissing) {
-    throw DecoderError("Missing high/low attributes");
+  {  
+    istringstream s(el->getAttributeValue("low"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> low;
   }
-  patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
-  patval->layClaim();
-  decoder.closeElement(sla::ELEM_CONTEXT_SYM.getId());
+  {  
+    istringstream s(el->getAttributeValue("high"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> high;
+  }
+  flow = true;
+  for(int4 i=el->getNumAttributes()-1;i>=0;--i) {
+    if (el->getAttributeName(i)=="flow") {
+      flow = xml_readbool(el->getAttributeValue(i));
+      break;
+    }
+  }
 }
 
 VarnodeListSymbol::VarnodeListSymbol(const string &nm,PatternValue *pv,const vector<SleighSymbol *> &vt)
@@ -867,50 +910,52 @@ void VarnodeListSymbol::print(ostream &s,ParserWalker &walker) const
   s << varnode_table[ind]->getName();
 }
 
-void VarnodeListSymbol::encode(Encoder &encoder) const
+void VarnodeListSymbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_VARLIST_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  patval->encode(encoder);
+  s << "<varlist_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << ">\n";
+  patval->saveXml(s);
   for(int4 i=0;i<varnode_table.size();++i) {
-    if (varnode_table[i] == (VarnodeSymbol *)0) {
-      encoder.openElement(sla::ELEM_NULL);
-      encoder.closeElement(sla::ELEM_NULL);
-    }
-    else {
-      encoder.openElement(sla::ELEM_VAR);
-      encoder.writeUnsignedInteger(sla::ATTRIB_ID, varnode_table[i]->getId());
-      encoder.closeElement(sla::ELEM_VAR);
-    }
+    if (varnode_table[i] == (VarnodeSymbol *)0)
+      s << "<null/>\n";
+    else
+      s << "<var id=\"0x" << hex << varnode_table[i]->getId() << "\"/>\n";
   }
-  encoder.closeElement(sla::ELEM_VARLIST_SYM);
+  s << "</varlist_sym>\n";
 }
 
-void VarnodeListSymbol::encodeHeader(Encoder &encoder) const
+void VarnodeListSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_VARLIST_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_VARLIST_SYM_HEAD);
+  s << "<varlist_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void VarnodeListSymbol::decode(Decoder &decoder,SleighBase *trans)
+void VarnodeListSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  patval = (PatternValue *) PatternExpression::decodeExpression(decoder,trans);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  patval = (PatternValue *) PatternExpression::restoreExpression(*iter,trans);
   patval->layClaim();
-  while(decoder.peekElement() != 0) {
-    uint4 subel = decoder.openElement();
-    if (subel == sla::ELEM_VAR) {
-      uintm id = decoder.readUnsignedInteger(sla::ATTRIB_ID);
+  ++iter;
+  while(iter!=list.end()) {
+    const Element *subel = *iter;
+    if (subel->getName() == "var") {
+      uintm id;
+      istringstream s(subel->getAttributeValue("id"));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> id;
       varnode_table.push_back( (VarnodeSymbol *)trans->findSymbol(id) );
     }
     else
       varnode_table.push_back( (VarnodeSymbol *)0 );
-    decoder.closeElement(subel);
+    ++iter;
   }
-  decoder.closeElement(sla::ELEM_VARLIST_SYM.getId());
   checkTableFill();
 }
 
@@ -1010,66 +1055,82 @@ void OperandSymbol::collectLocalValues(vector<uintb> &results) const
     triple->collectLocalValues(results);
 }
 
-void OperandSymbol::encode(Encoder &encoder) const
+void OperandSymbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_OPERAND_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
+  s << "<operand_sym";
+  SleighSymbol::saveXmlHeader(s);
   if (triple != (TripleSymbol *)0)
-    encoder.writeUnsignedInteger(sla::ATTRIB_SUBSYM, triple->getId());
-  encoder.writeSignedInteger(sla::ATTRIB_OFF, reloffset);
-  encoder.writeSignedInteger(sla::ATTRIB_BASE, offsetbase);
-  encoder.writeSignedInteger(sla::ATTRIB_MINLEN, minimumlength);
+    s << " subsym=\"0x" << hex << triple->getId() << "\"";
+  s << " off=\"" << dec << reloffset << "\"";
+  s << " base=\"" << offsetbase << "\"";
+  s << " minlen=\"" << minimumlength << "\"";
   if (isCodeAddress())
-    encoder.writeBool(sla::ATTRIB_CODE, true);
-  encoder.writeSignedInteger(sla::ATTRIB_INDEX, hand);
-  localexp->encode(encoder);
+    s << " code=\"true\"";
+  s << " index=\"" << dec << hand << "\">\n";
+  localexp->saveXml(s);
   if (defexp != (PatternExpression *)0)
-    defexp->encode(encoder);
-  encoder.closeElement(sla::ELEM_OPERAND_SYM);
+    defexp->saveXml(s);
+  s << "</operand_sym>\n";
 }
 
-void OperandSymbol::encodeHeader(Encoder &encoder) const
+void OperandSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_OPERAND_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_OPERAND_SYM_HEAD);
+  s << "<operand_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void OperandSymbol::decode(Decoder &decoder,SleighBase *trans)
+void OperandSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
   defexp = (PatternExpression *)0;
   triple = (TripleSymbol *)0;
   flags = 0;
-  uint4 attrib = decoder.getNextAttributeId();
-  while(attrib != 0) {
-    attrib = decoder.getNextAttributeId();
-    if (attrib == sla::ATTRIB_INDEX)
-      hand = decoder.readSignedInteger();
-    else if (attrib == sla::ATTRIB_OFF)
-      reloffset = decoder.readSignedInteger();
-    else if (attrib == sla::ATTRIB_BASE)
-      offsetbase = decoder.readSignedInteger();
-    else if (attrib == sla::ATTRIB_MINLEN)
-      minimumlength = decoder.readSignedInteger();
-    else if (attrib == sla::ATTRIB_SUBSYM) {
-      uintm id = decoder.readUnsignedInteger();
+  {
+    istringstream s(el->getAttributeValue("index"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> hand;
+  }
+  {
+    istringstream s(el->getAttributeValue("off"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> reloffset;
+  }
+  {
+    istringstream s(el->getAttributeValue("base"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> offsetbase;
+  }
+  {
+    istringstream s(el->getAttributeValue("minlen"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> minimumlength;
+  }
+  for(int4 i=0;i<el->getNumAttributes();++i) {
+    if (el->getAttributeName(i) == "subsym") {
+      uintm id;
+      istringstream s(el->getAttributeValue(i));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> id;
       triple = (TripleSymbol *)trans->findSymbol(id);
     }
-    else if (attrib == sla::ATTRIB_CODE) {
-      if (decoder.readBool())
+    else if (el->getAttributeName(i) == "code") {
+      if (xml_readbool(el->getAttributeValue(i)))
 	flags |= code_address;
     }
   }
-  localexp = (OperandValue *)PatternExpression::decodeExpression(decoder,trans);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  localexp = (OperandValue *)PatternExpression::restoreExpression(*iter,trans);
   localexp->layClaim();
-  if (decoder.peekElement() != 0) {
-    defexp = PatternExpression::decodeExpression(decoder,trans);
+  ++iter;
+  if (iter != list.end()) {
+    defexp = PatternExpression::restoreExpression(*iter,trans);
     defexp->layClaim();
   }
-  decoder.closeElement(sla::ELEM_OPERAND_SYM.getId());
 }
 
 StartSymbol::StartSymbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
@@ -1112,29 +1173,28 @@ void StartSymbol::print(ostream &s,ParserWalker &walker) const
   s << "0x" << hex << val;
 }
 
-void StartSymbol::encode(Encoder &encoder) const
+void StartSymbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_START_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  encoder.closeElement(sla::ELEM_START_SYM);
+  s << "<start_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void StartSymbol::encodeHeader(Encoder &encoder) const
+void StartSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_START_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_START_SYM_HEAD);
+  s << "<start_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void StartSymbol::decode(Decoder &decoder,SleighBase *trans)
+void StartSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
   const_space = trans->getConstantSpace();
   patexp = new StartInstructionValue();
   patexp->layClaim();
-  decoder.closeElement(sla::ELEM_START_SYM.getId());
 }
 
 EndSymbol::EndSymbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
@@ -1177,29 +1237,28 @@ void EndSymbol::print(ostream &s,ParserWalker &walker) const
   s << "0x" << hex << val;
 }
 
-void EndSymbol::encode(Encoder &encoder) const
+void EndSymbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_END_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  encoder.closeElement(sla::ELEM_END_SYM);
+  s << "<end_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void EndSymbol::encodeHeader(Encoder &encoder) const
+void EndSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_END_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_END_SYM_HEAD);
+  s << "<end_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void EndSymbol::decode(Decoder &decoder,SleighBase *trans)
+void EndSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
   const_space = trans->getConstantSpace();
   patexp = new EndInstructionValue();
   patexp->layClaim();
-  decoder.closeElement(sla::ELEM_END_SYM.getId());
 }
 
 Next2Symbol::Next2Symbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
@@ -1242,29 +1301,28 @@ void Next2Symbol::print(ostream &s,ParserWalker &walker) const
   s << "0x" << hex << val;
 }
 
-void Next2Symbol::encode(Encoder &encoder) const
+void Next2Symbol::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_NEXT2_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  encoder.closeElement(sla::ELEM_NEXT2_SYM);
+  s << "<next2_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void Next2Symbol::encodeHeader(Encoder &encoder) const
+void Next2Symbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_NEXT2_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_NEXT2_SYM_HEAD);
+  s << "<next2_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void Next2Symbol::decode(Decoder &decoder,SleighBase *trans)
+void Next2Symbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
   const_space = trans->getConstantSpace();
   patexp = new Next2InstructionValue();
   patexp->layClaim();
-  decoder.closeElement(sla::ELEM_NEXT2_SYM.getId());
 }
 
 FlowDestSymbol::FlowDestSymbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
@@ -1299,6 +1357,28 @@ void FlowDestSymbol::print(ostream &s,ParserWalker &walker) const
   s << "0x" << hex << val;
 }
 
+void FlowDestSymbol::saveXml(ostream &s) const
+
+{
+  s << "<flowdest_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
+}
+
+void FlowDestSymbol::saveXmlHeader(ostream &s) const
+
+{
+  s << "<flowdest_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
+}
+
+void FlowDestSymbol::restoreXml(const Element *el,SleighBase *trans)
+
+{
+  const_space = trans->getConstantSpace();
+}
+
 FlowRefSymbol::FlowRefSymbol(const string &nm,AddrSpace *cspc) : SpecificSymbol(nm)
 
 {
@@ -1329,6 +1409,28 @@ void FlowRefSymbol::print(ostream &s,ParserWalker &walker) const
 {
   intb val = (intb) walker.getRefAddr().getOffset();
   s << "0x" << hex << val;
+}
+
+void FlowRefSymbol::saveXml(ostream &s) const
+
+{
+  s << "<flowref_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
+}
+
+void FlowRefSymbol::saveXmlHeader(ostream &s) const
+
+{
+  s << "<flowref_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
+}
+
+void FlowRefSymbol::restoreXml(const Element *el,SleighBase *trans)
+
+{
+  const_space = trans->getConstantSpace();
 }
 
 Constructor::Constructor(void)
@@ -1558,90 +1660,103 @@ bool Constructor::isRecursive(void) const
   return false;
 }
 
-void Constructor::encode(Encoder &encoder) const
+void Constructor::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_CONSTRUCTOR);
-  encoder.writeUnsignedInteger(sla::ATTRIB_PARENT, parent->getId());
-  encoder.writeSignedInteger(sla::ATTRIB_FIRST, firstwhitespace);
-  encoder.writeSignedInteger(sla::ATTRIB_LENGTH, minimumlength);
-  encoder.writeSignedInteger(sla::ATTRIB_SOURCE, src_index);
-  encoder.writeSignedInteger(sla::ATTRIB_LINE, lineno);
-  for(int4 i=0;i<operands.size();++i) {
-    encoder.openElement(sla::ELEM_OPER);
-    encoder.writeUnsignedInteger(sla::ATTRIB_ID, operands[i]->getId());
-    encoder.closeElement(sla::ELEM_OPER);
-  }
+  s << "<constructor";
+  s << " parent=\"0x" << hex << parent->getId() << "\"";
+  s << " first=\"" << dec << firstwhitespace << "\"";
+  s << " length=\"" << minimumlength << "\"";
+  s << " line=\"" << src_index << ":" << lineno << "\">\n";
+  for(int4 i=0;i<operands.size();++i)
+    s << "<oper id=\"0x" << hex << operands[i]->getId() << "\"/>\n";
   for(int4 i=0;i<printpiece.size();++i) {
     if (printpiece[i][0]=='\n') {
       int4 index = printpiece[i][1]-'A';
-      encoder.openElement(sla::ELEM_OPPRINT);
-      encoder.writeSignedInteger(sla::ATTRIB_ID, index);
-      encoder.closeElement(sla::ELEM_OPPRINT);
+      s << "<opprint id=\"" << dec << index << "\"/>\n";
     }
     else {
-      encoder.openElement(sla::ELEM_PRINT);
-      encoder.writeString(sla::ATTRIB_PIECE,printpiece[i]);
-      encoder.closeElement(sla::ELEM_PRINT);
+      s << "<print piece=\"";
+      xml_escape(s, printpiece[i].c_str()); 
+      s << "\"/>\n";
     }
   }
   for(int4 i=0;i<context.size();++i)
-    context[i]->encode(encoder);
+    context[i]->saveXml(s);
   if (templ != (ConstructTpl *)0)
-    templ->encode(encoder,-1);
+    templ->saveXml(s,-1);
   for(int4 i=0;i<namedtempl.size();++i) {
     if (namedtempl[i] == (ConstructTpl *)0) // Some sections may be NULL
       continue;
-    namedtempl[i]->encode(encoder,i);
+    namedtempl[i]->saveXml(s,i);
   }
-  encoder.closeElement(sla::ELEM_CONSTRUCTOR);
+  s << "</constructor>\n";
 }
 
-void Constructor::decode(Decoder &decoder,SleighBase *trans)
+void Constructor::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_CONSTRUCTOR);
-  uintm id = decoder.readUnsignedInteger(sla::ATTRIB_PARENT);
-  parent = (SubtableSymbol *)trans->findSymbol(id);
-  firstwhitespace = decoder.readSignedInteger(sla::ATTRIB_FIRST);
-  minimumlength = decoder.readSignedInteger(sla::ATTRIB_LENGTH);
-  src_index = decoder.readSignedInteger(sla::ATTRIB_SOURCE);
-  lineno = decoder.readSignedInteger(sla::ATTRIB_LINE);
-  uint4 subel = decoder.peekElement();
-  while(subel != 0) {
-    if (subel == sla::ELEM_OPER) {
-      decoder.openElement();
-      uintm id = decoder.readUnsignedInteger(sla::ATTRIB_ID);
+  uintm id;
+  {
+    istringstream s(el->getAttributeValue("parent"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> id;
+    parent = (SubtableSymbol *)trans->findSymbol(id);
+  }
+  {
+    istringstream s(el->getAttributeValue("first"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> firstwhitespace;
+  }
+  {
+    istringstream s(el->getAttributeValue("length"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> minimumlength;
+  }
+  {
+   	string src_and_line = el->getAttributeValue("line");
+    size_t pos = src_and_line.find(":");
+    src_index = stoi(src_and_line.substr(0, pos),NULL,10);
+    lineno = stoi(src_and_line.substr(pos+1,src_and_line.length()),NULL,10);
+  }
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  while(iter != list.end()) {
+    if ((*iter)->getName() == "oper") {
+      uintm id;
+      {
+	istringstream s((*iter)->getAttributeValue("id"));
+	s.unsetf(ios::dec | ios::hex | ios::oct);
+	s >> id;
+      }
       OperandSymbol *sym = (OperandSymbol *)trans->findSymbol(id);
       operands.push_back(sym);
-      decoder.closeElement(subel);
     }
-    else if (subel == sla::ELEM_PRINT) {
-      decoder.openElement();
-      printpiece.push_back( decoder.readString(sla::ATTRIB_PIECE));
-      decoder.closeElement(subel);
-    }
-    else if (subel == sla::ELEM_OPPRINT) {
-      decoder.openElement();
-      int4 index = decoder.readSignedInteger(sla::ATTRIB_ID);
+    else if ((*iter)->getName() == "print")
+      printpiece.push_back( (*iter)->getAttributeValue("piece"));
+    else if ((*iter)->getName() == "opprint") {
+      int4 index;
+      istringstream s((*iter)->getAttributeValue("id"));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> index;
       string operstring = "\n ";
       operstring[1] = ('A' + index);
       printpiece.push_back(operstring);
-      decoder.closeElement(subel);
     }
-    else if (subel == sla::ELEM_CONTEXT_OP) {
+    else if ((*iter)->getName() == "context_op") {
       ContextOp *c_op = new ContextOp();
-      c_op->decode(decoder,trans);
+      c_op->restoreXml(*iter,trans);
       context.push_back(c_op);
     }
-    else if (subel == sla::ELEM_COMMIT) {
+    else if ((*iter)->getName() == "commit") {
       ContextCommit *c_op = new ContextCommit();
-      c_op->decode(decoder,trans);
+      c_op->restoreXml(*iter,trans);
       context.push_back(c_op);
     }
     else {
       ConstructTpl *cur = new ConstructTpl();
-      int4 sectionid = cur->decode(decoder);
+      int4 sectionid = cur->restoreXml(*iter,trans);
       if (sectionid < 0) {
 	if (templ != (ConstructTpl *)0)
 	  throw LowlevelError("Duplicate main section");
@@ -1655,14 +1770,13 @@ void Constructor::decode(Decoder &decoder,SleighBase *trans)
 	namedtempl[sectionid] = cur;
       }
     }
-    subel = decoder.peekElement();
+    ++iter;
   }
   pattern = (TokenPattern *)0;
   if ((printpiece.size()==1)&&(printpiece[0][0]=='\n'))
     flowthruindex = printpiece[0][1] - 'A';
   else
     flowthruindex = -1;
-  decoder.closeElement(el);
 }
 
 void Constructor::orderOperands(void)
@@ -1864,49 +1978,55 @@ void SubtableSymbol::collectLocalValues(vector<uintb> &results) const
     construct[i]->collectLocalExports(results);
 }
 
-void SubtableSymbol::encode(Encoder &encoder) const
+void SubtableSymbol::saveXml(ostream &s) const
 
 {
   if (decisiontree == (DecisionNode *)0) return; // Not fully formed
-  encoder.openElement(sla::ELEM_SUBTABLE_SYM);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, getId());
-  encoder.writeSignedInteger(sla::ATTRIB_NUMCT, construct.size());
+  s << "<subtable_sym";
+  SleighSymbol::saveXmlHeader(s);
+  s << " numct=\"" << dec << construct.size() << "\">\n";
   for(int4 i=0;i<construct.size();++i)
-    construct[i]->encode(encoder);
-  decisiontree->encode(encoder);
-  encoder.closeElement(sla::ELEM_SUBTABLE_SYM);
+    construct[i]->saveXml(s);
+  decisiontree->saveXml(s);
+  s << "</subtable_sym>\n";
 }
 
-void SubtableSymbol::encodeHeader(Encoder &encoder) const
+void SubtableSymbol::saveXmlHeader(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_SUBTABLE_SYM_HEAD);
-  SleighSymbol::encodeHeader(encoder);
-  encoder.closeElement(sla::ELEM_SUBTABLE_SYM_HEAD);
+  s << "<subtable_sym_head";
+  SleighSymbol::saveXmlHeader(s);
+  s << "/>\n";
 }
 
-void SubtableSymbol::decode(Decoder &decoder,SleighBase *trans)
+void SubtableSymbol::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  int4 numct = decoder.readSignedInteger(sla::ATTRIB_NUMCT);
-  construct.reserve(numct);
-  uint4 subel = decoder.peekElement();
-  while(subel != 0) {
-    if (subel == sla::ELEM_CONSTRUCTOR) {
+  {
+    int4 numct;
+    istringstream s(el->getAttributeValue("numct"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> numct;
+    construct.reserve(numct);
+  }
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  while(iter != list.end()) {
+    if ((*iter)->getName() == "constructor") {
       Constructor *ct = new Constructor();
       addConstructor(ct);
-      ct->decode(decoder,trans);
+      ct->restoreXml(*iter,trans);
     }
-    else if (subel == sla::ELEM_DECISION) {
+    else if ((*iter)->getName() == "decision") {
       decisiontree = new DecisionNode();
-      decisiontree->decode(decoder,(DecisionNode *)0,this);
+      decisiontree->restoreXml(*iter,(DecisionNode *)0,this);
     }
-    subel = decoder.peekElement();
+    ++iter;
   }
   pattern = (TokenPattern *)0;
   beingbuilt = false;
   errors = 0;
-  decoder.closeElement(sla::ELEM_SUBTABLE_SYM.getId());
 }
 
 void SubtableSymbol::buildDecisionTree(DecisionProperties &props)
@@ -2301,52 +2421,73 @@ Constructor *DecisionNode::resolve(ParserWalker &walker) const
   return children[val]->resolve(walker);
 }
 
-void DecisionNode::encode(Encoder &encoder) const
+void DecisionNode::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_DECISION);
-  encoder.writeSignedInteger(sla::ATTRIB_NUMBER, num);
-  encoder.writeBool(sla::ATTRIB_CONTEXT, contextdecision);
-  encoder.writeSignedInteger(sla::ATTRIB_STARTBIT, startbit);
-  encoder.writeSignedInteger(sla::ATTRIB_SIZE, bitsize);
+  s << "<decision";
+  s << " number=\"" << dec << num << "\"";
+  s << " context=\"";
+  if (contextdecision)
+    s << "true\"";
+  else
+    s << "false\"";
+  s << " start=\"" << startbit << "\"";
+  s << " size=\"" << bitsize << "\"";
+  s << ">\n";
   for(int4 i=0;i<list.size();++i) {
-    encoder.openElement(sla::ELEM_PAIR);
-    encoder.writeSignedInteger(sla::ATTRIB_ID, list[i].second->getId());
-    list[i].first->encode(encoder);
-    encoder.closeElement(sla::ELEM_PAIR);
+    s << "<pair id=\"" << dec << list[i].second->getId() << "\">\n";
+    list[i].first->saveXml(s);
+    s << "</pair>\n";
   }
   for(int4 i=0;i<children.size();++i)
-    children[i]->encode(encoder);
-  encoder.closeElement(sla::ELEM_DECISION);
+    children[i]->saveXml(s);
+  s << "</decision>\n";
 }
 
-void DecisionNode::decode(Decoder &decoder,DecisionNode *par,SubtableSymbol *sub)
+void DecisionNode::restoreXml(const Element *el,DecisionNode *par,SubtableSymbol *sub)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_DECISION);
   parent = par;
-  num = decoder.readSignedInteger(sla::ATTRIB_NUMBER);
-  contextdecision = decoder.readBool(sla::ATTRIB_CONTEXT);
-  startbit = decoder.readSignedInteger(sla::ATTRIB_STARTBIT);
-  bitsize = decoder.readSignedInteger(sla::ATTRIB_SIZE);
-  uint4 subel = decoder.peekElement();
-  while(subel != 0) {
-    if (subel == sla::ELEM_PAIR) {
-      decoder.openElement();
-      uintm id = decoder.readSignedInteger(sla::ATTRIB_ID);
-      Constructor *ct = sub->getConstructor(id);
-      DisjointPattern *pat = DisjointPattern::decodeDisjoint(decoder);
+  {
+    istringstream s(el->getAttributeValue("number"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> num;
+  }
+  contextdecision = xml_readbool(el->getAttributeValue("context"));
+  {
+    istringstream s(el->getAttributeValue("start"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> startbit;
+  }
+  {
+    istringstream s(el->getAttributeValue("size"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> bitsize;
+  }
+  const List &childlist(el->getChildren());
+  List::const_iterator iter;
+  iter = childlist.begin();
+  while(iter != childlist.end()) {
+    if ((*iter)->getName() == "pair") {
+      Constructor *ct;
+      DisjointPattern *pat;
+      uintm id;
+      istringstream s((*iter)->getAttributeValue("id"));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> id;
+      ct = sub->getConstructor(id);
+      pat = DisjointPattern::restoreDisjoint((*iter)->getChildren().front());
+      //This increments num      addConstructorPair(pat,ct);
       list.push_back(pair<DisjointPattern *,Constructor *>(pat,ct));
-      decoder.closeElement(subel);
+      //delete pat;		// addConstructorPair makes its own copy
     }
-    else if (subel == sla::ELEM_DECISION) {
+    else if ((*iter)->getName() == "decision") {
       DecisionNode *subnode = new DecisionNode();
-      subnode->decode(decoder,this,sub);
+      subnode->restoreXml(*iter,this,sub);
       children.push_back(subnode);
     }
-    subel = decoder.peekElement();
+    ++iter;
   }
-  decoder.closeElement(el);
 }
 
 static void calc_maskword(int4 sbit,int4 ebit,int4 &num,int4 &shift,uintm &mask)
@@ -2397,27 +2538,40 @@ void ContextOp::validate(void) const
   }
 }
 
-void ContextOp::encode(Encoder &encoder) const
+void ContextOp::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_CONTEXT_OP);
-  encoder.writeSignedInteger(sla::ATTRIB_I, num);
-  encoder.writeSignedInteger(sla::ATTRIB_SHIFT, shift);
-  encoder.writeUnsignedInteger(sla::ATTRIB_MASK, mask);
-  patexp->encode(encoder);
-  encoder.closeElement(sla::ELEM_CONTEXT_OP);
+  s << "<context_op";
+  s << " i=\"" << dec << num << "\"";
+  s << " shift=\"" << shift << "\"";
+  s << " mask=\"0x" << hex << mask << "\" >\n";
+  patexp->saveXml(s);
+  s << "</context_op>\n";
 }
 
-void ContextOp::decode(Decoder &decoder,SleighBase *trans)
+void ContextOp::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_CONTEXT_OP);
-  num = decoder.readSignedInteger(sla::ATTRIB_I);
-  shift = decoder.readSignedInteger(sla::ATTRIB_SHIFT);
-  mask = decoder.readUnsignedInteger(sla::ATTRIB_MASK);
-  patexp = PatternExpression::decodeExpression(decoder,trans);
+  {
+    istringstream s(el->getAttributeValue("i"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> num;
+  }
+  {
+    istringstream s(el->getAttributeValue("shift"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> shift;
+  }
+  {
+    istringstream s(el->getAttributeValue("mask"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> mask;
+  }
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  patexp = (PatternValue *)PatternExpression::restoreExpression(*iter,trans);
   patexp->layClaim();
-  decoder.closeElement(el);
 }
 
 ContextChange *ContextOp::clone(void) const
@@ -2447,27 +2601,41 @@ void ContextCommit::apply(ParserWalkerChange &walker) const
   walker.getParserContext()->addCommit(sym,num,mask,flow,walker.getPoint());
 }
 
-void ContextCommit::encode(Encoder &encoder) const
+void ContextCommit::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_COMMIT);
-  encoder.writeUnsignedInteger(sla::ATTRIB_ID, sym->getId());
-  encoder.writeSignedInteger(sla::ATTRIB_NUMBER, num);
-  encoder.writeUnsignedInteger(sla::ATTRIB_MASK, mask);
-  encoder.writeBool(sla::ATTRIB_FLOW, flow);
-  encoder.closeElement(sla::ELEM_COMMIT);
+  s << "<commit";
+  a_v_u(s,"id",sym->getId());
+  a_v_i(s,"num",num);
+  a_v_u(s,"mask",mask);
+  a_v_b(s,"flow",flow);
+  s << "/>\n";
 }
 
-void ContextCommit::decode(Decoder &decoder,SleighBase *trans)
+void ContextCommit::restoreXml(const Element *el,SleighBase *trans)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_COMMIT);
-  uintm id = decoder.readUnsignedInteger(sla::ATTRIB_ID);
-  sym = (TripleSymbol *)trans->findSymbol(id);
-  num = decoder.readSignedInteger(sla::ATTRIB_NUMBER);
-  mask = decoder.readUnsignedInteger(sla::ATTRIB_MASK);
-  flow = decoder.readBool(sla::ATTRIB_FLOW);
-  decoder.closeElement(el);
+  uintm id;
+  {
+    istringstream s(el->getAttributeValue("id"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> id;
+    sym = (TripleSymbol *)trans->findSymbol(id);
+  }
+  {
+    istringstream s(el->getAttributeValue("num"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> num;
+  }
+  {
+    istringstream s(el->getAttributeValue("mask"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> mask;
+  }
+  if (el->getNumAttributes()==4)
+    flow = xml_readbool(el->getAttributeValue("flow"));
+  else
+    flow = true;		// Default is to flow.  flow=true
 }
 
 ContextChange *ContextCommit::clone(void) const

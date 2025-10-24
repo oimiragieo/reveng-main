@@ -1,115 +1,69 @@
 # REVENG Documentation Hub
 
-Welcome to the REVENG Universal Reverse Engineering Platform documentation. This hub provides comprehensive guides for users, developers, and AI agents.
+Welcome to the home of REVENG reference material. The site is organised so that engineers, analysts, and automation agents can quickly locate the guidance they need.
 
-## 🚀 Quick Start
+## Start Here
 
-- [Installation Guide](getting-started/installation.md) - Platform-specific setup instructions
-- [Quick Start](getting-started/quick-start.md) - Get up and running in 3 commands
-- [Troubleshooting](getting-started/troubleshooting.md) - Common issues and solutions
+- [Installation](getting-started/installation.md) – prerequisites and platform-specific notes.
+- [Quick Start](getting-started/quick-start.md) – first analysis in minutes.
+- [Troubleshooting](getting-started/troubleshooting.md) – targeted fixes for common setup problems.
 
-## 👥 User Guides
+## Platform Architecture
 
-### CLI Usage
-- [Command Reference](user-guide/cli-usage.md) - Complete CLI documentation
-- [Binary Analysis](user-guide/binary-analysis.md) - Analysis workflows and examples
-- [Multi-Language Support](user-guide/multi-language.md) - Java, C#, Python analysis
-- [Configuration](user-guide/configuration.md) - Settings and customization
+- [Runtime Overview](architecture/overview.md) – explains the core pipeline, data flow, and service boundaries.
+- [Package Map](architecture/package-map.md) – documents top-level packages: `reveng.agents`, `reveng.security`, `reveng.reporting`, and `reveng.integrations`.
+- [Pipeline Steps](architecture/pipeline.md) – describes each processing phase, including newly modularised vulnerability and threat intelligence steps.
 
-### Web Interface
-- [Web UI Guide](user-guide/web-interface.md) - Visual interface documentation
-- [Known Limitations](web_interface/STATUS.md) - Current experimental status
+## User Operations
 
-## 🛠️ Developer Resources
+- [CLI Reference](user-guide/cli-usage.md) – subcommands, flags, and workflows.
+- [Binary Analysis Playbooks](user-guide/binary-analysis.md) – practical scenarios across languages.
+- [Configuration](user-guide/configuration.md) – YAML, environment, and CLI overrides.
 
-### Architecture & Development
-- [System Architecture](architecture/ARCHITECTURE.md) - High-level system design
-- [Contributing Guide](development/CONTRIBUTING.md) - How to contribute
-- [Tool Development](development/tool-development.md) - Creating custom tools
-- [Plugin Development](guides/plugin-development.md) - Plugin system guide
-- [API Reference](api/API_REFERENCE.md) - Complete API documentation
-- [Testing Guidelines](development/testing.md) - Test development guide
+## Automation & AI
 
-### Advanced Topics
-- [Advanced Analysis](guides/advanced-analysis.md) - Advanced techniques
-- [Windows Analysis](guides/windows-analysis.md) - Windows-specific workflows
-- [Pipeline Development](guides/pipeline-development.md) - Custom analysis pipelines
+- [Agent Integration](ai-assistant-guide/README.md) – how external agents interact with REVENG APIs.
+- [Natural-Language Interface](ai-assistant-guide/automation.md) – conversation-driven analysis flows.
+- [Model Selection Matrix](ai-assistant-guide/tool-selection-matrix.md) – recommended toolchains.
 
-## 🤖 AI Assistant Guide
+## Developer & Contributor Resources
 
-- [Claude Integration](ai-assistant-guide/claude-integration.md) - AI-specific setup
-- [Tool Selection Matrix](ai-assistant-guide/tool-selection-matrix.md) - Decision guide for AI agents
-- [Automation Workflows](ai-assistant-guide/automation.md) - Workflow automation
+- [Developer Guide](developer-guide/README.md) – repository conventions and tooling.
+- [Testing Guide](developer-guide/testing.md) – suite structure (`unit`, `integration`, `security`, `e2e`).
+- [Extending REVENG](guides/plugin-development.md) – plugin and tool authoring.
+- [API Reference](api/API_REFERENCE.md) – HTTP and Python APIs.
 
-## 🚀 Deployment
+## Deployment
 
-- [Docker Deployment](deployment/docker.md) - Container deployment
-- [Kubernetes Deployment](deployment/kubernetes.md) - K8s orchestration
-- [Production Setup](deployment/production.md) - Production deployment guide
+- [Docker](deployment/docker.md) – container images and compose layouts.
+- [Kubernetes](deployment/kubernetes.md) – production-grade orchestration.
+- [Enterprise Playbooks](deployment/enterprise.md) – hardening and observability.
 
-## 📊 Case Studies & Reports
+## Reports & History
 
-### Case Studies
-- [KARP Analysis](case-studies/karp-analysis.md) - Complete case study (50% → 90% accuracy)
+- [Security Audit](reports/security-audit.md) – vulnerability posture.
+- [Validation Report](reports/validation-report.md) – functional test coverage.
+- [Historical Snapshots](history/) – archived programme updates and decision logs.
 
-### Technical Reports
-- [Implementation Complete](reports/implementation-complete.md) - Final implementation status
-- [Transformation Summary](reports/transformation-summary.md) - Platform transformation overview
-- [Security Audit](reports/security-audit.md) - Security assessment results
-- [Validation Report](reports/validation-report.md) - Testing and validation results
-- [Cross-Platform Testing](reports/cross-platform-testing.md) - Platform compatibility results
+## Quick Reference
 
-## 📚 Training Materials
-
-- [Malware Analysis Fundamentals](training/610.1-malware-analysis-fundamentals.pdf) - SANS FOR610 training materials
-
-## 🔗 External Resources
-
-- [GitHub Repository](https://github.com/oimiragieo/reveng-main)
-- [Issue Tracker](https://github.com/oimiragieo/reveng-main/issues)
-- [Discussions](https://github.com/oimiragieo/reveng-main/discussions)
-- [Releases](https://github.com/oimiragieo/reveng-main/releases)
-
-## 📋 Quick Reference
-
-### Essential Commands
 ```bash
 # Install
 pip install reveng-toolkit
 
-# Basic analysis
-reveng analyze malware.exe
+# Core CLI usage
+reveng analyze binary.exe --enhanced
 
-# Enhanced analysis
-reveng analyze --enhanced suspicious.jar
-
-# Web interface
+# Launch web UI
 reveng serve --host 0.0.0.0 --port 3000
 ```
 
-### Python API
 ```python
 from reveng.api import REVENGAPI
 
-# Create API instance
 api = REVENGAPI()
-
-# Analyze binary
-result = api.analyze_binary('/path/to/binary.exe')
-
-# Detect malware
-threat = api.detect_malware('/suspicious.exe')
-
-# Reconstruct binary
-source = api.reconstruct_binary('/target.exe', output_format='c')
+result = api.analyze_binary("/path/to/binary.exe")
+threat = api.detect_malware("/suspicious.exe")
 ```
 
-## 🆘 Support
-
-- **Documentation Issues**: [Create an issue](https://github.com/oimiragieo/reveng-main/issues)
-- **Feature Requests**: [Start a discussion](https://github.com/oimiragieo/reveng-main/discussions)
-- **Security Issues**: [Security Policy](SECURITY.md)
-
----
-
-*This documentation is continuously updated. Last updated: January 2025*
+Need help? Open an [issue](https://github.com/oimiragieo/reveng-main/issues) or join the [discussions](https://github.com/oimiragieo/reveng-main/discussions). Security disclosures follow the [policy](../SECURITY.md).

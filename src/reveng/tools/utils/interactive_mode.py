@@ -19,7 +19,6 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +154,9 @@ class REVENGShell(cmd.Cmd):
 
         # Apply filter
         if arg:
-            functions = [f for f in functions if arg.lower() in f.get("name", "").lower()]
+            functions = [
+                f for f in functions if arg.lower() in f.get("name", "").lower()
+            ]
 
         print(f"Functions ({len(functions)}):")
         print("-" * 70)
@@ -373,7 +374,7 @@ class REVENGShell(cmd.Cmd):
             print(f"Error: Rebuilt binary not found: {rebuilt_path}")
             return
 
-        print(f"Comparing binaries...")
+        print("Comparing binaries...")
 
         try:
             from ..binary.binary_diff import BinaryDiff

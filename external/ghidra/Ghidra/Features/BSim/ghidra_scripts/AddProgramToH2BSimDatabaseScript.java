@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,14 +25,15 @@ import generic.lsh.vector.LSHVectorFactory;
 import ghidra.app.script.GhidraScript;
 import ghidra.features.base.values.GhidraValuesMap;
 import ghidra.features.bsim.query.*;
-import ghidra.features.bsim.query.FunctionDatabase.BSimError;
+import ghidra.features.bsim.query.BSimServerInfo.DBType;
+import ghidra.features.bsim.query.FunctionDatabase.Error;
 import ghidra.features.bsim.query.FunctionDatabase.ErrorCategory;
 import ghidra.features.bsim.query.description.DatabaseInformation;
 import ghidra.features.bsim.query.description.DescriptionManager;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager;
 import ghidra.features.bsim.query.file.BSimH2FileDBConnectionManager.BSimH2FileDataSource;
 import ghidra.features.bsim.query.protocol.*;
-import ghidra.framework.model.DomainFile;
+import ghidra.framework.model.DomainFolder;
 import ghidra.framework.protocol.ghidra.GhidraURL;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionManager;
@@ -55,12 +56,6 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 			return;
 		}
 
-		if (currentProgram.isChanged()) {
-			popup(currentProgram.getName() + " has unsaved changes.  Please save the program" +
-					" before adding it to a BSim database.");
-			return;
-		}
-
 		GhidraValuesMap values = new GhidraValuesMap();
 		values.defineFile(DATABASE, null, new File(System.getProperty("user.home")));
 		values.setValidator((valueMap, status) -> {
@@ -76,16 +71,22 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 		askValues("Select Database File", null, values);
 
 		File h2DbFile = values.getFile(DATABASE);
-		BSimServerInfo serverInfo = new BSimServerInfo(h2DbFile.getAbsolutePath());
 
-		BSimH2FileDataSource existingBDS =
-			BSimH2FileDBConnectionManager.getDataSourceIfExists(serverInfo);
-		if (existingBDS != null && existingBDS.getActiveConnections() > 0) {
-			popup("There is an existing connection to the database.");
-			return;
-		}
-
-		try (FunctionDatabase h2Database = BSimClientFactory.buildClient(serverInfo, false)) {
+		FunctionDatabase h2Database = null;
+		try {
+			BSimServerInfo serverInfo =
+				new BSimServerInfo(DBType.file, null, 0, h2DbFile.getAbsolutePath());
+			h2Database = BSimClientFactory.buildClient(serverInfo, false);
+			BSimH2FileDataSource bds =
+				BSimH2FileDBConnectionManager.getDataSourceIfExists(h2Database.getServerInfo());
+			if (bds == null) {
+				popup(h2DbFile.getAbsolutePath() + " is not an H2 database file");
+				return;
+			}
+			if (bds.getActiveConnections() > 0) {
+				popup("There is an existing connection to the database.");
+				return;
+			}
 
 			h2Database.initialize();
 			DatabaseInformation dbInfo = h2Database.getInfo();
@@ -99,23 +100,14 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 				gensig.addFunctionTags(dbInfo.functionTags);
 				gensig.addDateColumnName(dbInfo.dateColumnName);
 
-				DomainFile dFile = currentProgram.getDomainFile();
-				URL fileURL = dFile.getSharedProjectURL(null);
-				if (fileURL == null) {
-					fileURL = dFile.getLocalProjectURL(null);
+				DomainFolder df = currentProgram.getDomainFile().getParent();
+				URL folderURL = df.getSharedProjectURL();
+				if (folderURL == null) {
+					folderURL = df.getLocalProjectURL();
 				}
-				if (fileURL == null) {
-					popup("Cannot add signatures for program which has never been saved");
-					return;
-				}
+				String path = GhidraURL.getProjectPathname(folderURL);
 
-				String path = GhidraURL.getProjectPathname(fileURL);
-				//bsim adds the program name to the path so we need to remove the program
-				//name here
-				int lastSlash = path.lastIndexOf('/');
-				path = lastSlash == 0 ? "/" : path.substring(0, lastSlash);
-
-				URL normalizedProjectURL = GhidraURL.getProjectURL(fileURL);
+				URL normalizedProjectURL = GhidraURL.getProjectURL(folderURL);
 				String repo = normalizedProjectURL.toExternalForm();
 
 				gensig.openProgram(this.currentProgram, null, null, null, repo, path);
@@ -123,11 +115,6 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 				final Iterator<Function> iter = fman.getFunctions(true);
 				gensig.scanFunctions(iter, fman.getFunctionCount(), monitor);
 				final DescriptionManager manager = gensig.getDescriptionManager();
-				if (manager.numFunctions() == 0) {
-					Msg.showWarn(this, null, "Skipping Insert",
-						currentProgram.getName() + " contains no functions with bodies");
-					return;
-				}
 
 				//need to call sortCallGraph on each FunctionDescription
 				//this de-dupes the list of callees for each function
@@ -138,7 +125,7 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 				InsertRequest insertreq = new InsertRequest();
 				insertreq.manage = manager;
 				if (insertreq.execute(h2Database) == null) {
-					BSimError lastError = h2Database.getLastError();
+					Error lastError = h2Database.getLastError();
 					if ((lastError.category == ErrorCategory.Format) ||
 						(lastError.category == ErrorCategory.Nonfatal)) {
 						Msg.showWarn(this, null, "Skipping Insert",
@@ -173,13 +160,11 @@ public class AddProgramToH2BSimDatabaseScript extends GhidraScript {
 
 		}
 		finally {
-			if (existingBDS == null) {
-				// Dispose database source if it did not previously exist
+			if (h2Database != null) {
+				h2Database.close();
 				BSimH2FileDataSource bds =
-					BSimH2FileDBConnectionManager.getDataSourceIfExists(serverInfo);
-				if (bds != null) {
-					bds.dispose();
-				}
+					BSimH2FileDBConnectionManager.getDataSourceIfExists(h2Database.getServerInfo());
+				bds.dispose();
 			}
 		}
 	}

@@ -45,8 +45,8 @@ public:
   bool alwaysFalse(void) const { return (nonzerosize==-1); }
   bool isInstructionMatch(ParserWalker &walker) const;
   bool isContextMatch(ParserWalker &walker) const;
-  void encode(Encoder &encoder) const;
-  void decode(Decoder &decoder);
+  void saveXml(ostream &s) const;
+  void restoreXml(const Element *el);
 };
 
 class DisjointPattern;
@@ -64,8 +64,8 @@ public:
   virtual bool alwaysTrue(void) const=0;
   virtual bool alwaysFalse(void) const=0;
   virtual bool alwaysInstructionTrue(void) const=0;
-  virtual void encode(Encoder &encoder) const=0;
-  virtual void decode(Decoder &decoder)=0;
+  virtual void saveXml(ostream &s) const=0;
+  virtual void restoreXml(const Element *el)=0;
 };
 
 class DisjointPattern : public Pattern { // A pattern with no ORs in it
@@ -79,14 +79,14 @@ public:
   bool specializes(const DisjointPattern *op2) const;
   bool identical(const DisjointPattern *op2) const;
   bool resolvesIntersect(const DisjointPattern *op1,const DisjointPattern *op2) const;
-  static DisjointPattern *decodeDisjoint(Decoder &decoder);
+  static DisjointPattern *restoreDisjoint(const Element *el);
 };
 
 class InstructionPattern : public DisjointPattern { // Matches the instruction bitstream
   PatternBlock *maskvalue;
   virtual PatternBlock *getBlock(bool context) const { return context ? (PatternBlock *)0 : maskvalue; }
 public:
-  InstructionPattern(void) { maskvalue = (PatternBlock *)0; } // For use with decode
+  InstructionPattern(void) { maskvalue = (PatternBlock *)0; } // For use with restoreXml
   InstructionPattern(PatternBlock *mv) { maskvalue = mv; }
   InstructionPattern(bool tf) { maskvalue = new PatternBlock(tf); }
   PatternBlock *getBlock(void) { return maskvalue; }
@@ -100,15 +100,15 @@ public:
   virtual bool alwaysTrue(void) const { return maskvalue->alwaysTrue(); }
   virtual bool alwaysFalse(void) const { return maskvalue->alwaysFalse(); }
   virtual bool alwaysInstructionTrue(void) const { return maskvalue->alwaysTrue(); }
-  virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder);
+  virtual void saveXml(ostream &s) const;
+  virtual void restoreXml(const Element *el);
 };
 
 class ContextPattern : public DisjointPattern { // Matches the context bitstream
   PatternBlock *maskvalue;
   virtual PatternBlock *getBlock(bool context) const { return context ? maskvalue : (PatternBlock *)0; }
 public:
-  ContextPattern(void) { maskvalue = (PatternBlock *)0; } // For use with decode
+  ContextPattern(void) { maskvalue = (PatternBlock *)0; } // For use with restoreXml
   ContextPattern(PatternBlock *mv) { maskvalue = mv; }
   PatternBlock *getBlock(void) { return maskvalue; }
   virtual ~ContextPattern(void) { if (maskvalue != (PatternBlock *)0) delete maskvalue; }
@@ -121,8 +121,8 @@ public:
   virtual bool alwaysTrue(void) const { return maskvalue->alwaysTrue(); }
   virtual bool alwaysFalse(void) const { return maskvalue->alwaysFalse(); }
   virtual bool alwaysInstructionTrue(void) const { return true; }
-  virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder);
+  virtual void saveXml(ostream &s) const;
+  virtual void restoreXml(const Element *el);
 };
 
 // A pattern with a context piece and an instruction piece
@@ -144,14 +144,14 @@ public:
   virtual Pattern *doOr(const Pattern *b,int4 sa) const;
   virtual Pattern *doAnd(const Pattern *b,int4 sa) const;
   virtual Pattern *commonSubPattern(const Pattern *b,int4 sa) const;
-  virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder);
+  virtual void saveXml(ostream &s) const;
+  virtual void restoreXml(const Element *el);
 };
 
 class OrPattern : public Pattern {
   vector<DisjointPattern *> orlist;
 public:
-  OrPattern(void) {}		// For use with decode
+  OrPattern(void) {}		// For use with restoreXml
   OrPattern(DisjointPattern *a,DisjointPattern *b);
   OrPattern(const vector<DisjointPattern *> &list);
   virtual ~OrPattern(void);
@@ -166,8 +166,8 @@ public:
   virtual Pattern *doOr(const Pattern *b,int4 sa) const;
   virtual Pattern *doAnd(const Pattern *b,int4 sa) const;
   virtual Pattern *commonSubPattern(const Pattern *b,int4 sa) const;
-  virtual void encode(Encoder &encoder) const;
-  virtual void decode(Decoder &decoder);
+  virtual void saveXml(ostream &s) const;
+  virtual void restoreXml(const Element *el);
 };
 
 } // End namespace ghidra

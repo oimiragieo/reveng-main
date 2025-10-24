@@ -17,18 +17,25 @@
 //the language selected by the user.
 //@category Program
 
+import javax.swing.SwingUtilities;
+
+import docking.DialogComponentProvider;
 import ghidra.app.script.GhidraScript;
 import ghidra.app.services.ProgramManager;
+import ghidra.plugin.importer.NewLanguagePanel;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
 
 public class CreateEmptyProgramScript extends GhidraScript {
+	private NewLanguageDialog dialog = new NewLanguageDialog();
+
 	@Override
 	public void run() throws Exception {
+		SwingUtilities.invokeAndWait(() -> state.getTool().showDialog(dialog));
 
-		LanguageCompilerSpecPair pair = askLanguage("New Program: Select Language", "Select");
+		LanguageCompilerSpecPair pair = dialog.getSelectedLanguageCompilerSpecPair();
 		if (pair == null) {
 			println("User cancelled operation.");
 		}
@@ -37,9 +44,7 @@ public class CreateEmptyProgramScript extends GhidraScript {
 				Language language = pair.getLanguage();
 				CompilerSpec compilerSpec = pair.getCompilerSpec();
 
-				String name = "Untitled-" + language.getLanguageID().toString().replace(':', '_') +
-					"_" + compilerSpec.getCompilerSpecID();
-				Program program = new ProgramDB(name, language, compilerSpec, this);
+				Program program = new ProgramDB("Untitled", language, compilerSpec, this);
 
 				ProgramManager programManager = state.getTool().getService(ProgramManager.class);
 				programManager.openProgram(program);
@@ -49,6 +54,49 @@ public class CreateEmptyProgramScript extends GhidraScript {
 			catch (Exception e) {
 				Msg.showInfo(getClass(), null, "Error Creating New Program", e.getMessage());
 			}
+		}
+	}
+
+	private class NewLanguageDialog extends DialogComponentProvider {
+		private NewLanguagePanel panel;
+		private boolean isOK;
+
+		NewLanguageDialog() {
+			super("New Program: Select Language", true, true, true, false);
+
+			panel = new NewLanguagePanel();
+			panel.setShowRecommendedCheckbox(false);
+
+			addWorkPanel(panel);
+			addOKButton();
+			addCancelButton();
+			setPreferredSize(500, 250);
+		}
+
+		@Override
+		protected void okCallback() {
+			if (panel.getSelectedLcsPair() == null) {
+				setStatusText("Please select a language.");
+				return;
+			}
+			isOK = true;
+			close();
+		}
+
+		@Override
+		public void close() {
+			super.close();
+			panel.dispose();
+		}
+
+		@Override
+		protected void cancelCallback() {
+			isOK = false;
+			close();
+		}
+
+		LanguageCompilerSpecPair getSelectedLanguageCompilerSpecPair() {
+			return isOK ? panel.getSelectedLcsPair() : null;
 		}
 	}
 }

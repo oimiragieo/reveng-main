@@ -137,12 +137,12 @@ def analyze():
             logger.info(f"Running Ghidra: {' '.join(cmd)}")
 
             try:
-                # Run Ghidra headless
+                # Run Ghidra headless (increased timeout for decompilation)
                 result = subprocess.run(
                     cmd,
                     capture_output=True,
                     text=True,
-                    timeout=120,
+                    timeout=300,  # 5 minutes for large binaries with decompilation
                     cwd=str(GHIDRA_PATH)
                 )
 

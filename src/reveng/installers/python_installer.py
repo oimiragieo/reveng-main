@@ -2,14 +2,10 @@
 Python package installer for REVENG
 """
 
-import json
 import logging
-import os
-import platform
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
 
 from ..core.dependency_manager import ToolStatus
 from .base_installer import BaseInstaller, InstallMethod

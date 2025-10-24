@@ -314,8 +314,8 @@ python examples/basic/02_java_analysis.py --step-by-step
    
    Description of what this example demonstrates.
    """
-   
-   from reveng_analyzer import REVENGAnalyzer
+
+   from reveng.analyzer import REVENGAnalyzer
    
    def main():
        # Your example code here

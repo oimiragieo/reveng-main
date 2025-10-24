@@ -8,22 +8,17 @@ that combines executive reporting, technical documentation, and multi-format exp
 Requirements: 7.1, 7.2, 7.3, 7.4, 7.5
 """
 
-import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 # Import our reporting engines
 from ..visualization.executive_reporting_engine import (
-    BusinessImpact,
     ExecutiveReportingEngine,
     ExecutiveSummary,
-    RemediationRoadmap,
-    RiskLevel,
-    RiskMetric,
 )
 from ..visualization.technical_reporting_engine import (
     Dataset,
@@ -105,9 +100,13 @@ class ComprehensiveReportingSystem:
         self.output_dir = Path(config.output_directory)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Comprehensive reporting system initialized for {config.organization_name}")
+        logger.info(
+            f"Comprehensive reporting system initialized for {config.organization_name}"
+        )
 
-    def generate_comprehensive_report(self, analysis_results: Dict[str, Any]) -> Dict[str, str]:
+    def generate_comprehensive_report(
+        self, analysis_results: Dict[str, Any]
+    ) -> Dict[str, str]:
         """
         Generate comprehensive report package with all requested formats
 
@@ -176,13 +175,18 @@ class ComprehensiveReportingSystem:
             # Generate research package
             if ReportType.RESEARCH_PACKAGE in self.config.report_types:
                 datasets = self._create_dataset_info(analysis_results)
-                package_path = self.technical_engine.create_reproducible_research_package(
-                    findings, methodology, datasets
+                package_path = (
+                    self.technical_engine.create_reproducible_research_package(
+                        findings, methodology, datasets
+                    )
                 )
                 generated_reports[ReportType.RESEARCH_PACKAGE.value] = package_path
 
             # Generate threat intelligence exports
-            if ReportType.THREAT_INTELLIGENCE in self.config.report_types and threat_intel:
+            if (
+                ReportType.THREAT_INTELLIGENCE in self.config.report_types
+                and threat_intel
+            ):
                 ti_exports = self._generate_threat_intelligence_exports(threat_intel)
                 generated_reports.update(ti_exports)
 
@@ -192,7 +196,9 @@ class ComprehensiveReportingSystem:
                 generated_reports.update(siem_exports)
 
             # Generate master index
-            index_path = self._generate_master_index(generated_reports, analysis_results)
+            index_path = self._generate_master_index(
+                generated_reports, analysis_results
+            )
             generated_reports["master_index"] = index_path
 
             logger.info(
@@ -204,7 +210,9 @@ class ComprehensiveReportingSystem:
             logger.error(f"Error generating comprehensive report: {e}")
             raise
 
-    def generate_live_demonstration_package(self, analysis_results: Dict[str, Any]) -> str:
+    def generate_live_demonstration_package(
+        self, analysis_results: Dict[str, Any]
+    ) -> str:
         """
         Generate live demonstration package for presentations
 
@@ -214,7 +222,9 @@ class ComprehensiveReportingSystem:
         Returns:
             Path to demonstration package
         """
-        demo_dir = self.output_dir / f"live_demo_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        demo_dir = (
+            self.output_dir / f"live_demo_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        )
         demo_dir.mkdir(exist_ok=True)
 
         # Generate executive dashboard for live demo
@@ -229,10 +239,10 @@ class ComprehensiveReportingSystem:
         shutil.copy2(dashboard_path, demo_dir / "live_dashboard.html")
 
         # Generate presentation slides
-        slides_path = self._generate_presentation_slides(analysis_results, demo_dir)
+        self._generate_presentation_slides(analysis_results, demo_dir)
 
         # Generate demo script
-        script_path = self._generate_demo_script(analysis_results, demo_dir)
+        self._generate_demo_script(analysis_results, demo_dir)
 
         # Create demo package
         package_path = self._create_demo_package(demo_dir)
@@ -240,7 +250,9 @@ class ComprehensiveReportingSystem:
         logger.info(f"Live demonstration package created: {package_path}")
         return str(package_path)
 
-    def _create_executive_summary(self, analysis_results: Dict[str, Any]) -> ExecutiveSummary:
+    def _create_executive_summary(
+        self, analysis_results: Dict[str, Any]
+    ) -> ExecutiveSummary:
         """Create executive summary from analysis results"""
         # Count findings by severity
         critical_count = 0
@@ -278,12 +290,20 @@ class ComprehensiveReportingSystem:
         # Generate key recommendations
         recommendations = []
         if "corporate_exposure" in analysis_results:
-            recommendations.append("Implement immediate credential rotation and secrets management")
+            recommendations.append(
+                "Implement immediate credential rotation and secrets management"
+            )
         if critical_count > 0:
-            recommendations.append("Address critical vulnerabilities with emergency patches")
+            recommendations.append(
+                "Address critical vulnerabilities with emergency patches"
+            )
         if "threat_intelligence" in analysis_results:
-            recommendations.append("Deploy threat hunting capabilities for identified IOCs")
-        recommendations.append("Establish continuous security monitoring and assessment")
+            recommendations.append(
+                "Deploy threat hunting capabilities for identified IOCs"
+            )
+        recommendations.append(
+            "Establish continuous security monitoring and assessment"
+        )
 
         # Generate executive summary text
         summary_text = f"""
@@ -306,7 +326,9 @@ class ComprehensiveReportingSystem:
             executive_summary=summary_text.strip(),
         )
 
-    def _extract_technical_findings(self, analysis_results: Dict[str, Any]) -> List[Finding]:
+    def _extract_technical_findings(
+        self, analysis_results: Dict[str, Any]
+    ) -> List[Finding]:
         """Extract technical findings from analysis results"""
         findings = []
 
@@ -317,7 +339,7 @@ class ComprehensiveReportingSystem:
             for vuln in vulns.get("memory_vulnerabilities", []):
                 evidence = [
                     Evidence(
-                        id=f"E_{len(findings)+1}",
+                        id=f"E_{len(findings) + 1}",
                         type=EvidenceType.CODE_SNIPPET,
                         title="Vulnerable Code Location",
                         description=f"Vulnerability found at {vuln.get('location', 'unknown location')}",
@@ -327,9 +349,11 @@ class ComprehensiveReportingSystem:
                 ]
 
                 finding = Finding(
-                    id=f"F_{len(findings)+1}",
+                    id=f"F_{len(findings) + 1}",
                     title=vuln.get("type", "Memory Vulnerability"),
-                    description=vuln.get("description", "Memory safety vulnerability detected"),
+                    description=vuln.get(
+                        "description", "Memory safety vulnerability detected"
+                    ),
                     severity=vuln.get("severity", "Medium"),
                     category="Memory Safety",
                     evidence_chain=evidence,
@@ -345,7 +369,7 @@ class ComprehensiveReportingSystem:
             for cred in exposure.get("credentials_found", []):
                 evidence = [
                     Evidence(
-                        id=f"E_{len(findings)+1}",
+                        id=f"E_{len(findings) + 1}",
                         type=EvidenceType.CONFIGURATION,
                         title="Exposed Credential",
                         description=f"Hardcoded credential found in {cred.get('location', 'unknown')}",
@@ -355,7 +379,7 @@ class ComprehensiveReportingSystem:
                 ]
 
                 finding = Finding(
-                    id=f"F_{len(findings)+1}",
+                    id=f"F_{len(findings) + 1}",
                     title=f"Exposed {cred.get('type', 'Credential')}",
                     description=f"Hardcoded {cred.get('type', 'credential')} discovered in source code",
                     severity="High",
@@ -435,7 +459,9 @@ class ComprehensiveReportingSystem:
             description="Threat intelligence extracted from binary analysis",
             threat_actor=threat_data.get("apt_attribution", {}).get("group"),
             malware_family=threat_data.get("malware_classification", {}).get("family"),
-            attack_patterns=threat_data.get("mitre_attack_mapping", {}).get("techniques", []),
+            attack_patterns=threat_data.get("mitre_attack_mapping", {}).get(
+                "techniques", []
+            ),
             iocs=iocs,
             vulnerabilities=[],
             confidence=threat_data.get("confidence", 0.7),
@@ -492,20 +518,22 @@ class ComprehensiveReportingSystem:
             for export_format in self.config.export_formats:
                 if export_format == ExportFormat.STIX2_JSON:
                     path = self.export_engine.export_stix2(threat_intel, export_format)
-                    exports[f"stix2_json"] = path
+                    exports["stix2_json"] = path
                 elif export_format == ExportFormat.MISP_JSON:
                     path = self.export_engine.export_misp(threat_intel)
-                    exports[f"misp_json"] = path
+                    exports["misp_json"] = path
                 elif export_format == ExportFormat.YARA_RULES:
                     path = self.export_engine.export_yara_rules(threat_intel)
-                    exports[f"yara_rules"] = path
+                    exports["yara_rules"] = path
                 elif export_format == ExportFormat.IOC_CSV:
                     path = self.export_engine.export_ioc_csv(threat_intel)
-                    exports[f"ioc_csv"] = path
+                    exports["ioc_csv"] = path
 
         return exports
 
-    def _generate_siem_integrations(self, threat_intel: ThreatIntelligence) -> Dict[str, str]:
+    def _generate_siem_integrations(
+        self, threat_intel: ThreatIntelligence
+    ) -> Dict[str, str]:
         """Generate SIEM integration files"""
         integrations = {}
 
@@ -540,7 +568,7 @@ class ComprehensiveReportingSystem:
         <h1>Comprehensive Security Analysis Report</h1>
         <p>Organization: {self.config.organization_name}</p>
         <p>Analyst: {self.config.analyst_name}</p>
-        <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p>Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
     </div>
 
     <div class="section">
@@ -559,7 +587,11 @@ class ComprehensiveReportingSystem:
         """
 
         for report_type, path in generated_reports.items():
-            if "technical" in report_type or "academic" in report_type or "research" in report_type:
+            if (
+                "technical" in report_type
+                or "academic" in report_type
+                or "research" in report_type
+            ):
                 index_html += f'<a href="{Path(path).name}" class="report-link">{report_type.replace("_", " ").title()}</a>\n'
 
         index_html += """
@@ -579,7 +611,9 @@ class ComprehensiveReportingSystem:
 </html>
         """
 
-        index_path = self.output_dir / f"index_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+        index_path = (
+            self.output_dir / f"index_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+        )
         with open(index_path, "w", encoding="utf-8") as f:
             f.write(index_html)
 
@@ -627,7 +661,9 @@ class ComprehensiveReportingSystem:
 
         return str(slides_path)
 
-    def _generate_demo_script(self, analysis_results: Dict[str, Any], demo_dir: Path) -> str:
+    def _generate_demo_script(
+        self, analysis_results: Dict[str, Any], demo_dir: Path
+    ) -> str:
         """Generate demo script for presentations"""
         script_path = demo_dir / "demo_script.md"
 
@@ -657,7 +693,7 @@ class ComprehensiveReportingSystem:
 - Address questions
 - Provide contact information and next steps
 
-## Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+## Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         """
 
         with open(script_path, "w") as f:
@@ -669,7 +705,10 @@ class ComprehensiveReportingSystem:
         """Create demo package ZIP file"""
         import zipfile
 
-        zip_path = self.output_dir / f"demo_package_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+        zip_path = (
+            self.output_dir
+            / f"demo_package_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip"
+        )
 
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file_path in demo_dir.rglob("*"):
@@ -739,7 +778,9 @@ if __name__ == "__main__":
             print(f"  {report_type}: {path}")
 
         # Generate live demo package
-        demo_package = reporting_system.generate_live_demonstration_package(sample_results)
+        demo_package = reporting_system.generate_live_demonstration_package(
+            sample_results
+        )
         print(f"Demo package: {demo_package}")
 
     except Exception as e:

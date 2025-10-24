@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,10 +18,9 @@
 // See binutils' c++filt for more information on supported options.
 
 //
-//@category Demangler
+//@category Examples.Demangler
 import ghidra.app.script.GhidraScript;
 import ghidra.app.util.demangler.DemangledObject;
-import ghidra.app.util.demangler.MangledContext;
 import ghidra.app.util.demangler.gnu.*;
 import ghidra.program.model.symbol.Symbol;
 
@@ -57,9 +56,7 @@ public class DemangleElfWithOptionScript extends GhidraScript {
 			options = options.withDemanglerFormat(GnuDemanglerFormat.ARM, true);
 		*/
 
-		MangledContext mangledContext =
-			demangler.createMangledContext(mangled, options, currentProgram, currentAddress);
-		DemangledObject demangledObject = demangler.demangle(mangledContext);
+		DemangledObject demangledObject = demangler.demangle(mangled, options);
 		if (demangledObject == null) {
 			println("Could not demangle: " + mangled);
 			return;

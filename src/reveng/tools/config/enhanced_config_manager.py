@@ -338,11 +338,15 @@ class EnhancedConfigManager:
                 issues.append(f"Module {i} timeout must be positive")
 
             if module.confidence_threshold < 0 or module.confidence_threshold > 1:
-                issues.append(f"Module {i} confidence threshold must be between 0 and 1")
+                issues.append(
+                    f"Module {i} confidence threshold must be between 0 and 1"
+                )
 
         return issues
 
-    def create_default_config_file(self, output_path: str = "enhanced_analysis_config.json"):
+    def create_default_config_file(
+        self, output_path: str = "enhanced_analysis_config.json"
+    ):
         """
         Create a default configuration file with comments
 

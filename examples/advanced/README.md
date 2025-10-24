@@ -82,7 +82,7 @@ python examples/advanced/05_enterprise_features.py --enterprise
 
 ```python
 # examples/advanced/custom_analyzer.py
-from reveng_analyzer import REVENGAnalyzer
+from reveng.analyzer import REVENGAnalyzer
 from tools.custom_analyzer import CustomAnalyzer
 
 class MyCustomAnalyzer(CustomAnalyzer):
@@ -144,7 +144,7 @@ class MyPlugin(Plugin):
 import os
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-from reveng_analyzer import REVENGAnalyzer
+from reveng.analyzer import REVENGAnalyzer
 
 class BatchProcessor:
     def __init__(self, input_dir, output_dir):
@@ -236,7 +236,7 @@ with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
 ```python
 # examples/advanced/memory_efficient.py
 import gc
-from reveng_analyzer import REVENGAnalyzer
+from reveng.analyzer import REVENGAnalyzer
 
 def analyze_with_cleanup(binary_path):
     """Analyze with memory cleanup"""

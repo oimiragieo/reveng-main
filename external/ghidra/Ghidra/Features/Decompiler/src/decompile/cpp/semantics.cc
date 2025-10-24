@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -290,6 +290,39 @@ void ConstTpl::transfer(const vector<HandleTpl *> &params)
   }
 }
 
+void ConstTpl::printHandleSelector(ostream &s,v_field val)
+
+{
+  switch(val) {
+  case v_space:
+    s << "space";
+    break;
+  case v_offset:
+    s << "offset";
+    break;
+  case v_size:
+    s << "size";
+    break;
+  case v_offset_plus:
+    s << "offset_plus";
+    break;
+  }
+}
+
+ConstTpl::v_field ConstTpl::readHandleSelector(const string &name)
+
+{
+  if (name == "space")
+    return v_space;
+  if (name == "offset")
+    return v_offset;
+  if (name == "size")
+    return v_size;
+  if (name == "offset_plus")
+    return v_offset_plus;
+  throw LowlevelError("Bad handle selector");
+}
+
 void ConstTpl::changeHandleIndex(const vector<int4> &handmap)
 
 {
@@ -297,129 +330,120 @@ void ConstTpl::changeHandleIndex(const vector<int4> &handmap)
     value.handle_index = handmap[value.handle_index];
 }
 
-void ConstTpl::encode(Encoder &encoder) const
+void ConstTpl::saveXml(ostream &s) const
 
 {
+  s << "<const_tpl type=\"";
   switch(type) {
   case real:
-    encoder.openElement(sla::ELEM_CONST_REAL);
-    encoder.writeUnsignedInteger(sla::ATTRIB_VAL, value_real);
-    encoder.closeElement(sla::ELEM_CONST_REAL);
+    s << "real\" val=\"0x" << hex << value_real << "\"/>";
     break;
   case handle:
-    encoder.openElement(sla::ELEM_CONST_HANDLE);
-    encoder.writeSignedInteger(sla::ATTRIB_VAL, value.handle_index);
-    encoder.writeSignedInteger(sla::ATTRIB_S, select);
+    s << "handle\" val=\"" << dec << value.handle_index << "\" ";
+    s << "s=\"";
+    printHandleSelector(s,select);
+    s << "\"";
     if (select == v_offset_plus)
-      encoder.writeUnsignedInteger(sla::ATTRIB_PLUS, value_real);
-    encoder.closeElement(sla::ELEM_CONST_HANDLE);
+      s << " plus=\"0x" << hex << value_real << "\"";
+    s << "/>";
     break;
   case j_start:
-    encoder.openElement(sla::ELEM_CONST_START);
-    encoder.closeElement(sla::ELEM_CONST_START);
+    s << "start\"/>";
     break;
   case j_next:
-    encoder.openElement(sla::ELEM_CONST_NEXT);
-    encoder.closeElement(sla::ELEM_CONST_NEXT);
+    s << "next\"/>";
     break;
   case j_next2:
-    encoder.openElement(sla::ELEM_CONST_NEXT2);
-    encoder.closeElement(sla::ELEM_CONST_NEXT2);
+    s << "next2\"/>";
     break;
   case j_curspace:
-    encoder.openElement(sla::ELEM_CONST_CURSPACE);
-    encoder.closeElement(sla::ELEM_CONST_CURSPACE);
+    s << "curspace\"/>";
     break;
   case j_curspace_size:
-    encoder.openElement(sla::ELEM_CONST_CURSPACE_SIZE);
-    encoder.closeElement(sla::ELEM_CONST_CURSPACE_SIZE);
+    s << "curspace_size\"/>";
     break;
   case spaceid:
-    encoder.openElement(sla::ELEM_CONST_SPACEID);
-    encoder.writeSpace(sla::ATTRIB_SPACE, value.spaceid);
-    encoder.closeElement(sla::ELEM_CONST_SPACEID);
+    s << "spaceid\" name=\"" << value.spaceid->getName() << "\"/>";
     break;
   case j_relative:
-    encoder.openElement(sla::ELEM_CONST_RELATIVE);
-    encoder.writeUnsignedInteger(sla::ATTRIB_VAL, value_real);
-    encoder.closeElement(sla::ELEM_CONST_RELATIVE);
+    s << "relative\" val=\"0x" << hex << value_real << "\"/>";
     break;
   case j_flowref:
-    encoder.openElement(sla::ELEM_CONST_FLOWREF);
-    encoder.closeElement(sla::ELEM_CONST_FLOWREF);
+    s << "flowref\"/>";
     break;
   case j_flowref_size:
-    encoder.openElement(sla::ELEM_CONST_FLOWREF_SIZE);
-    encoder.closeElement(sla::ELEM_CONST_FLOWREF_SIZE);
+    s << "flowref_size\"/>";
     break;
   case j_flowdest:
-    encoder.openElement(sla::ELEM_CONST_FLOWDEST);
-    encoder.closeElement(sla::ELEM_CONST_FLOWDEST);
+    s << "flowdest\"/>";
     break;
   case j_flowdest_size:
-    encoder.openElement(sla::ELEM_CONST_FLOWDEST_SIZE);
-    encoder.closeElement(sla::ELEM_CONST_FLOWDEST_SIZE);
+    s << "flowdest_size\"/>";
     break;
   }
 }
 
-void ConstTpl::decode(Decoder &decoder)
+void ConstTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
 
 {
-  uint4 el = decoder.openElement();
-  if (el == sla::ELEM_CONST_REAL) {
+  const string &typestring(el->getAttributeValue("type"));
+  if (typestring == "real") {
     type = real;
-    value_real = decoder.readUnsignedInteger(sla::ATTRIB_VAL);
+    istringstream s(el->getAttributeValue("val"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> value_real;
   }
-  else if (el == sla::ELEM_CONST_HANDLE) {
+  else if (typestring=="handle") {
     type = handle;
-    value.handle_index = decoder.readSignedInteger(sla::ATTRIB_VAL);
-    uint4 selectInt = decoder.readSignedInteger(sla::ATTRIB_S);
-    if (selectInt > v_offset_plus)
-      throw DecoderError("Bad handle selector encoding");
-    select = (v_field)selectInt;
+    istringstream s(el->getAttributeValue("val"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> value.handle_index;
+    select = readHandleSelector(el->getAttributeValue("s"));
     if (select == v_offset_plus) {
-      value_real = decoder.readUnsignedInteger(sla::ATTRIB_PLUS);
+      istringstream s2(el->getAttributeValue("plus"));
+      s2.unsetf(ios::dec | ios::hex | ios::oct);
+      s2 >> value_real;
     }
   }
-  else if (el == sla::ELEM_CONST_START) {
+  else if (typestring=="start") {
     type = j_start;
   }
-  else if (el == sla::ELEM_CONST_NEXT) {
+  else if (typestring=="next") {
     type = j_next;
   }
-  else if (el == sla::ELEM_CONST_NEXT2) {
+  else if (typestring=="next2") {
     type = j_next2;
   }
-  else if (el == sla::ELEM_CONST_CURSPACE) {
+  else if (typestring=="curspace") {
     type = j_curspace;
   }
-  else if (el == sla::ELEM_CONST_CURSPACE_SIZE) {
+  else if (typestring=="curspace_size") {
     type = j_curspace_size;
   }
-  else if (el == sla::ELEM_CONST_SPACEID) {
+  else if (typestring=="spaceid") {
     type = spaceid;
-    value.spaceid = decoder.readSpace(sla::ATTRIB_SPACE);
+    value.spaceid = manage->getSpaceByName(el->getAttributeValue("name"));
   }
-  else if (el == sla::ELEM_CONST_RELATIVE) {
+  else if (typestring=="relative") {
     type = j_relative;
-    value_real = decoder.readUnsignedInteger(sla::ATTRIB_VAL);
+    istringstream s(el->getAttributeValue("val"));
+    s.unsetf(ios::dec | ios::hex | ios::oct);
+    s >> value_real;
   }
-  else if (el == sla::ELEM_CONST_FLOWREF) {
+  else if (typestring == "flowref") {
     type = j_flowref;
   }
-  else if (el == sla::ELEM_CONST_FLOWREF_SIZE) {
+  else if (typestring == "flowref_size") {
     type = j_flowref_size;
   }
-  else if (el == sla::ELEM_CONST_FLOWDEST) {
+  else if (typestring == "flowdest") {
     type = j_flowdest;
   }
-  else if (el == sla::ELEM_CONST_FLOWDEST_SIZE) {
+  else if (typestring == "flowdest_size") {
     type = j_flowdest_size;
   }
   else
     throw LowlevelError("Bad constant type");
-  decoder.closeElement(el);
 }
 
 VarnodeTpl::VarnodeTpl(int4 hand,bool zerosize) :
@@ -520,36 +544,27 @@ bool VarnodeTpl::adjustTruncation(int4 sz,bool isbigendian)
   return true;
 }
 
-void VarnodeTpl::encode(Encoder &encoder) const
+void VarnodeTpl::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_VARNODE_TPL);
-  space.encode(encoder);
-  offset.encode(encoder);
-  size.encode(encoder);
-  encoder.closeElement(sla::ELEM_VARNODE_TPL);
+  s << "<varnode_tpl>";
+  space.saveXml(s);
+  offset.saveXml(s);
+  size.saveXml(s);
+  s << "</varnode_tpl>\n";
 }
 
-void VarnodeTpl::decode(Decoder &decoder)
+void VarnodeTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_VARNODE_TPL);
-  space.decode(decoder);
-  offset.decode(decoder);
-  size.decode(decoder);
-  decoder.closeElement(el);
-}
-
-bool VarnodeTpl::operator==(const VarnodeTpl &op2) const
-
-{
-  return space==op2.space && offset==op2.offset && size==op2.size;
-}
-
-bool VarnodeTpl::operator!=(const VarnodeTpl &op2) const
-
-{
-  return !(*this == op2);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  space.restoreXml(*iter,manage);
+  ++iter;
+  offset.restoreXml(*iter,manage);
+  ++iter;
+  size.restoreXml(*iter,manage);
 }
 
 bool VarnodeTpl::operator<(const VarnodeTpl &op2) const
@@ -618,32 +633,39 @@ void HandleTpl::changeHandleIndex(const vector<int4> &handmap)
   temp_offset.changeHandleIndex(handmap);
 }
 
-void HandleTpl::encode(Encoder &encoder) const
+void HandleTpl::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_HANDLE_TPL);
-  space.encode(encoder);
-  size.encode(encoder);
-  ptrspace.encode(encoder);
-  ptroffset.encode(encoder);
-  ptrsize.encode(encoder);
-  temp_space.encode(encoder);
-  temp_offset.encode(encoder);
-  encoder.closeElement(sla::ELEM_HANDLE_TPL);
+  s << "<handle_tpl>";
+  space.saveXml(s);
+  size.saveXml(s);
+  ptrspace.saveXml(s);
+  ptroffset.saveXml(s);
+  ptrsize.saveXml(s);
+  temp_space.saveXml(s);
+  temp_offset.saveXml(s);
+  s << "</handle_tpl>\n";
 }
 
-void HandleTpl::decode(Decoder &decoder)
+void HandleTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_HANDLE_TPL);
-  space.decode(decoder);
-  size.decode(decoder);
-  ptrspace.decode(decoder);
-  ptroffset.decode(decoder);
-  ptrsize.decode(decoder);
-  temp_space.decode(decoder);
-  temp_offset.decode(decoder);
-  decoder.closeElement(el);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  space.restoreXml(*iter,manage);
+  ++iter;
+  size.restoreXml(*iter,manage);
+  ++iter;
+  ptrspace.restoreXml(*iter,manage);
+  ++iter;
+  ptroffset.restoreXml(*iter,manage);
+  ++iter;
+  ptrsize.restoreXml(*iter,manage);
+  ++iter;
+  temp_space.restoreXml(*iter,manage);
+  ++iter;
+  temp_offset.restoreXml(*iter,manage);
 }
 
 OpTpl::~OpTpl(void)
@@ -688,43 +710,39 @@ void OpTpl::changeHandleIndex(const vector<int4> &handmap)
     (*iter)->changeHandleIndex(handmap);
 }
 
-void OpTpl::encode(Encoder &encoder) const
+void OpTpl::saveXml(ostream &s) const
 
 {
-  encoder.openElement(sla::ELEM_OP_TPL);
-  encoder.writeOpcode(sla::ATTRIB_CODE, opc);
-  if (output == (VarnodeTpl *)0) {
-    encoder.openElement(sla::ELEM_NULL);
-    encoder.closeElement(sla::ELEM_NULL);
-  }
+  s << "<op_tpl code=\"" << get_opname(opc) << "\">";
+  if (output == (VarnodeTpl *)0)
+    s << "<null/>\n";
   else
-    output->encode(encoder);
+    output->saveXml(s);
   for(int4 i=0;i<input.size();++i)
-    input[i]->encode(encoder);
-  encoder.closeElement(sla::ELEM_OP_TPL);
+    input[i]->saveXml(s);
+  s << "</op_tpl>\n";
 }
 
-void OpTpl::decode(Decoder &decoder)
+void OpTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_OP_TPL);
-  opc = decoder.readOpcode(sla::ATTRIB_CODE);
-  uint4 subel = decoder.peekElement();
-  if (subel == sla::ELEM_NULL) {
-    decoder.openElement();
-    decoder.closeElement(subel);
+  opc = get_opcode(el->getAttributeValue("code"));
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  if ((*iter)->getName() == "null")
     output = (VarnodeTpl *)0;
-  }
   else {
     output = new VarnodeTpl();
-    output->decode(decoder);
+    output->restoreXml(*iter,manage);
   }
-  while(decoder.peekElement() != 0) {
+  ++iter;
+  while(iter != list.end()) {
     VarnodeTpl *vn = new VarnodeTpl();
-    vn->decode(decoder);
+    vn->restoreXml(*iter,manage);
     input.push_back(vn);
+    ++iter;
   }
-  decoder.closeElement(el);
 }
 
 ConstructTpl::~ConstructTpl(void)
@@ -864,61 +882,63 @@ void ConstructTpl::deleteOps(const vector<int4> &indices)
     vec.pop_back();
 }
 
-void ConstructTpl::encode(Encoder &encoder,int4 sectionid) const
+void ConstructTpl::saveXml(ostream &s,int4 sectionid) const
 
 {
-  encoder.openElement(sla::ELEM_CONSTRUCT_TPL);
+  s << "<construct_tpl";
   if (sectionid >=0 )
-    encoder.writeSignedInteger(sla::ATTRIB_SECTION, sectionid);
+    s << " section=\"" << dec << sectionid << "\"";
   if (delayslot != 0)
-    encoder.writeSignedInteger(sla::ATTRIB_DELAY, delayslot);
+    s << " delay=\"" << dec << delayslot << "\"";
   if (numlabels != 0)
-    encoder.writeSignedInteger(sla::ATTRIB_LABELS, numlabels);
+    s << " labels=\"" << dec << numlabels << "\"";
+  s << ">\n";
   if (result != (HandleTpl *)0)
-    result->encode(encoder);
-  else {
-    encoder.openElement(sla::ELEM_NULL);
-    encoder.closeElement(sla::ELEM_NULL);
-  }
+    result->saveXml(s);
+  else
+    s << "<null/>";
   for(int4 i=0;i<vec.size();++i)
-    vec[i]->encode(encoder);
-  encoder.closeElement(sla::ELEM_CONSTRUCT_TPL);
+    vec[i]->saveXml(s);
+  s << "</construct_tpl>\n";
 }
 
-int4 ConstructTpl::decode(Decoder &decoder)
+int4 ConstructTpl::restoreXml(const Element *el,const AddrSpaceManager *manage)
 
 {
-  uint4 el = decoder.openElement(sla::ELEM_CONSTRUCT_TPL);
   int4 sectionid = -1;
-  uint4 attrib = decoder.getNextAttributeId();
-  while(attrib != 0) {
-    if (attrib == sla::ATTRIB_DELAY) {
-      delayslot = decoder.readSignedInteger();
+  for(int4 i=0;i<el->getNumAttributes();++i) {
+    if (el->getAttributeName(i)=="delay") {
+      istringstream s(el->getAttributeValue(i));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> delayslot;
     }
-    else if (attrib == sla::ATTRIB_LABELS) {
-      numlabels = decoder.readSignedInteger();
+    else if (el->getAttributeName(i)=="labels") {
+      istringstream s(el->getAttributeValue(i));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> numlabels;
     }
-    else if (attrib == sla::ATTRIB_SECTION) {
-      sectionid = decoder.readSignedInteger();
+    else if (el->getAttributeName(i)=="section") {
+      istringstream s(el->getAttributeValue(i));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> sectionid;
     }
-    attrib = decoder.getNextAttributeId();
   }
-  uint4 subel = decoder.peekElement();
-  if (subel == sla::ELEM_NULL) {
-    decoder.openElement();
-    decoder.closeElement(subel);
+  const List &list(el->getChildren());
+  List::const_iterator iter;
+  iter = list.begin();
+  if ((*iter)->getName() == "null")
     result = (HandleTpl *)0;
-  }
   else {
     result = new HandleTpl();
-    result->decode(decoder);
+    result->restoreXml(*iter,manage);
   }
-  while(decoder.peekElement() != 0) {
+  ++iter;
+  while(iter != list.end()) {
     OpTpl *op = new OpTpl();
-    op->decode(decoder);
+    op->restoreXml(*iter,manage);
     vec.push_back(op);
+    ++iter;
   }
-  decoder.closeElement(el);
   return sectionid;
 }
 

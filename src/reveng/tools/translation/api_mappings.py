@@ -303,7 +303,11 @@ def get_mappings_by_category(category: str) -> Dict[str, APIMapping]:
     Returns:
         Dictionary of API mappings in that category
     """
-    return {name: mapping for name, mapping in API_MAPPINGS.items() if mapping.category == category}
+    return {
+        name: mapping
+        for name, mapping in API_MAPPINGS.items()
+        if mapping.category == category
+    }
 
 
 def get_all_categories() -> List[str]:

@@ -80,6 +80,7 @@ isa_availability.h
 mbdata.h
 msdos.h
 mtdll.h
+nlsdownlevel.h
 nlsint.h
 nmmintrin.h
 oscalls.h
@@ -136,9 +137,6 @@ mmdeviceapi.h
 mprapi.h
 msctfmonitorapi.h
 ndfapi.h
-winsock2.h
-ws2tcpip.h
-iphlpapi.h
 netioapi.h
 npapi.h
 nspapi.h
@@ -173,6 +171,7 @@ wpapi.h
 wpcapi.h
 wscapi.h
 wsdapi.h
+wspiapi.h
 rpcproxy.h
 
 -D_M_IX86=300

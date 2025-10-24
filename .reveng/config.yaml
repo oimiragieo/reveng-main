@@ -41,6 +41,13 @@ output:
   export_formats:
   - json
   - markdown
+tools:
+  install_dir: ~/.reveng/tools
+  cache_dir: ~/.reveng/cache
+  per_tool_overrides:
+    # Optional: Override install directory per tool
+    # ghidra: /opt/ghidra
+    # cfr: ~/.local/share/cfr
 performance:
   max_workers: 4
   enable_cache: true

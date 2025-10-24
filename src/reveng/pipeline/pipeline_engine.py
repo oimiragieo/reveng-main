@@ -4,21 +4,18 @@ REVENG Automated Analysis Pipeline Engine
 Automated analysis pipeline with tool chaining, error handling, and result aggregation.
 """
 
-import json
-import logging
-import os
-import sys
-import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import yaml
 
-from ..core.errors import AnalysisFailureError, PipelineExecutionError, create_error_context
+from ..core.errors import (
+    PipelineExecutionError,
+    create_error_context,
+)
 from ..core.logger import get_logger
 
 
@@ -148,7 +145,9 @@ class AnalysisPipeline:
     def execute_pipeline(self, pipeline: Pipeline, binary_path: str) -> PipelineResult:
         """Execute complete pipeline"""
         try:
-            self.logger.info(f"Starting pipeline execution: {pipeline.name} on {binary_path}")
+            self.logger.info(
+                f"Starting pipeline execution: {pipeline.name} on {binary_path}"
+            )
 
             start_time = time.time()
             stage_results = []
@@ -338,7 +337,9 @@ class AnalysisPipeline:
                 retry_count=0,
             )
 
-    def _execute_static_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
+    def _execute_static_analysis(
+        self, stage: PipelineStage, binary_path: str
+    ) -> Dict[str, Any]:
         """Execute static analysis stage"""
         try:
             # Import analyzers
@@ -356,7 +357,9 @@ class AnalysisPipeline:
             # Business logic analysis
             if stage.config.get("business_logic_analysis", True):
                 business_extractor = BusinessLogicExtractor()
-                business_result = business_extractor.analyze_application_domain(binary_path)
+                business_result = business_extractor.analyze_application_domain(
+                    binary_path
+                )
                 results["business_logic"] = asdict(business_result)
 
             return results
@@ -365,7 +368,9 @@ class AnalysisPipeline:
             self.logger.error(f"Static analysis failed: {e}")
             return {}
 
-    def _execute_pe_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
+    def _execute_pe_analysis(
+        self, stage: PipelineStage, binary_path: str
+    ) -> Dict[str, Any]:
         """Execute PE analysis stage"""
         try:
             # Import PE analyzers
@@ -392,7 +397,9 @@ class AnalysisPipeline:
             self.logger.error(f"PE analysis failed: {e}")
             return {}
 
-    def _execute_ghidra_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
+    def _execute_ghidra_analysis(
+        self, stage: PipelineStage, binary_path: str
+    ) -> Dict[str, Any]:
         """Execute Ghidra analysis stage"""
         try:
             from ..ghidra.scripting_engine import GhidraScriptingEngine
@@ -406,7 +413,9 @@ class AnalysisPipeline:
             self.logger.error(f"Ghidra analysis failed: {e}")
             return {}
 
-    def _execute_hex_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
+    def _execute_hex_analysis(
+        self, stage: PipelineStage, binary_path: str
+    ) -> Dict[str, Any]:
         """Execute hex analysis stage"""
         try:
             from ..tools.hex_editor import HexEditor
@@ -420,7 +429,9 @@ class AnalysisPipeline:
             self.logger.error(f"Hex analysis failed: {e}")
             return {}
 
-    def _execute_malware_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
+    def _execute_malware_analysis(
+        self, stage: PipelineStage, binary_path: str
+    ) -> Dict[str, Any]:
         """Execute malware analysis stage"""
         try:
             # This would implement malware analysis
@@ -431,7 +442,9 @@ class AnalysisPipeline:
             self.logger.error(f"Malware analysis failed: {e}")
             return {}
 
-    def _execute_ml_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
+    def _execute_ml_analysis(
+        self, stage: PipelineStage, binary_path: str
+    ) -> Dict[str, Any]:
         """Execute ML analysis stage"""
         try:
             # This would implement ML analysis
@@ -442,7 +455,9 @@ class AnalysisPipeline:
             self.logger.error(f"ML analysis failed: {e}")
             return {}
 
-    def _execute_report_generation(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
+    def _execute_report_generation(
+        self, stage: PipelineStage, binary_path: str
+    ) -> Dict[str, Any]:
         """Execute report generation stage"""
         try:
             # This would implement report generation
@@ -456,7 +471,9 @@ class AnalysisPipeline:
             self.logger.error(f"Report generation failed: {e}")
             return {}
 
-    def _aggregate_stage_outputs(self, stage_results: List[StageResult]) -> Dict[str, Any]:
+    def _aggregate_stage_outputs(
+        self, stage_results: List[StageResult]
+    ) -> Dict[str, Any]:
         """Aggregate outputs from all stages"""
         try:
             aggregated = {}

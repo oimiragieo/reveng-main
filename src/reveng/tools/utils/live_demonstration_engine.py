@@ -11,18 +11,15 @@ Requirements: 8.1, 8.3
 
 import json
 import logging
-import os
 import queue
 import random
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-import yaml
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -118,7 +115,9 @@ class LiveDemonstrationEngine:
     ) -> LiveDemonstration:
         """Create a tailored demonstration for specific client type"""
 
-        demo_id = f"client_demo_{client_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        demo_id = (
+            f"client_demo_{client_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        )
 
         if client_type == "executive":
             return self._create_executive_demonstration(demo_id, analysis_results)
@@ -446,7 +445,9 @@ class LiveDemonstrationEngine:
                 duration_seconds=300,
                 prerequisites=[],
                 expected_outcome="Understanding of analysis capabilities",
-                interactive_elements=[{"type": "capability_matrix", "interactive": True}],
+                interactive_elements=[
+                    {"type": "capability_matrix", "interactive": True}
+                ],
                 visual_aids=["capability_overview.png"],
                 talking_points=[
                     "Universal binary analysis capabilities",
@@ -495,7 +496,7 @@ class LiveDemonstrationEngine:
             for i, step in enumerate(demo.steps):
                 self.demo_state["current_step"] = i + 1
 
-                logger.info(f"Executing step {i+1}/{len(demo.steps)}: {step.title}")
+                logger.info(f"Executing step {i + 1}/{len(demo.steps)}: {step.title}")
 
                 # Execute step based on action type
                 step_result = self._execute_demonstration_step(step)
@@ -506,7 +507,9 @@ class LiveDemonstrationEngine:
                     callback(self.demo_state)
 
                 # Simulate step duration (in real demo, this would be actual execution time)
-                time.sleep(min(step.duration_seconds / 10, 2))  # Accelerated for testing
+                time.sleep(
+                    min(step.duration_seconds / 10, 2)
+                )  # Accelerated for testing
 
             self.demo_state["status"] = "completed"
             self.demo_state["end_time"] = datetime.now()
@@ -557,7 +560,9 @@ class LiveDemonstrationEngine:
 
         return step_result
 
-    def _simulate_analysis_execution(self, step: DemonstrationStep) -> List[Dict[str, Any]]:
+    def _simulate_analysis_execution(
+        self, step: DemonstrationStep
+    ) -> List[Dict[str, Any]]:
         """Simulate analysis execution for demonstration"""
 
         outputs = []
@@ -608,7 +613,9 @@ class LiveDemonstrationEngine:
 
         return outputs
 
-    def _generate_step_visualizations(self, step: DemonstrationStep) -> List[Dict[str, Any]]:
+    def _generate_step_visualizations(
+        self, step: DemonstrationStep
+    ) -> List[Dict[str, Any]]:
         """Generate visualizations for demonstration step"""
 
         visualizations = []
@@ -625,7 +632,9 @@ class LiveDemonstrationEngine:
 
         return visualizations
 
-    def _prepare_explanation_materials(self, step: DemonstrationStep) -> List[Dict[str, Any]]:
+    def _prepare_explanation_materials(
+        self, step: DemonstrationStep
+    ) -> List[Dict[str, Any]]:
         """Prepare explanation materials for demonstration step"""
 
         materials = []
@@ -648,7 +657,9 @@ class LiveDemonstrationEngine:
 
         return materials
 
-    def _handle_interactive_elements(self, step: DemonstrationStep) -> List[Dict[str, Any]]:
+    def _handle_interactive_elements(
+        self, step: DemonstrationStep
+    ) -> List[Dict[str, Any]]:
         """Handle interactive elements in demonstration step"""
 
         interactions = []
@@ -672,7 +683,8 @@ class LiveDemonstrationEngine:
             raise ValueError("No active demonstration to report on")
 
         duration = (
-            self.demo_state.get("end_time", datetime.now()) - self.demo_state["start_time"]
+            self.demo_state.get("end_time", datetime.now())
+            - self.demo_state["start_time"]
         ).total_seconds()
 
         report = {
@@ -771,7 +783,9 @@ class LiveDemonstrationEngine:
     ) -> Dict[str, Any]:
         """Create real-time security assessment for consulting engagement"""
 
-        assessment_id = f"assessment_{organization_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        assessment_id = (
+            f"assessment_{organization_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        )
 
         assessment = {
             "assessment_id": assessment_id,
@@ -803,7 +817,9 @@ class LiveDemonstrationEngine:
                 assessment["end_time"] = datetime.now().isoformat()
 
                 # Save assessment results
-                assessment_filepath = self.output_dir / "assessments" / f"{assessment_id}.json"
+                assessment_filepath = (
+                    self.output_dir / "assessments" / f"{assessment_id}.json"
+                )
                 with open(assessment_filepath, "w") as f:
                     json.dump(assessment, f, indent=2, default=str)
 
@@ -850,14 +866,16 @@ class LiveDemonstrationEngine:
         # Randomly select findings for simulation
         import random
 
-        selected_findings = random.sample(finding_types, random.randint(1, len(finding_types)))
+        selected_findings = random.sample(
+            finding_types, random.randint(1, len(finding_types))
+        )
 
         for finding in selected_findings:
             findings.append(
                 {
                     "application": application,
                     "timestamp": datetime.now().isoformat(),
-                    "finding_id": f"finding_{len(findings)+1}",
+                    "finding_id": f"finding_{len(findings) + 1}",
                     **finding,
                 }
             )
@@ -1037,7 +1055,9 @@ class LiveDemonstrationEngine:
         with open(portfolio_filepath, "w") as f:
             json.dump(asdict(portfolio_analysis), f, indent=2, default=str)
 
-        logger.info(f"Portfolio analysis completed for {organization_name}: {portfolio_filepath}")
+        logger.info(
+            f"Portfolio analysis completed for {organization_name}: {portfolio_filepath}"
+        )
         return portfolio_analysis
 
 
@@ -1046,8 +1066,12 @@ def main():
 
     # Sample analysis results for testing
     sample_analysis_results = {
-        "credentials_found": [{"type": "API_KEY", "value": "sk-***", "location": "0x1234"}],
-        "vulnerabilities": [{"type": "Buffer Overflow", "severity": "high", "cvss_score": 8.5}],
+        "credentials_found": [
+            {"type": "API_KEY", "value": "sk-***", "location": "0x1234"}
+        ],
+        "vulnerabilities": [
+            {"type": "Buffer Overflow", "severity": "high", "cvss_score": 8.5}
+        ],
     }
 
     # Initialize engine
@@ -1061,11 +1085,13 @@ def main():
 
     # Execute demonstration (simulated)
     def progress_callback(state):
-        print(f"Progress: Step {state['current_step']}/{state['total_steps']} - {state['status']}")
+        print(
+            f"Progress: Step {state['current_step']}/{state['total_steps']} - {state['status']}"
+        )
 
     try:
         report = engine.execute_live_demonstration(exec_demo, progress_callback)
-        print(f"Demonstration completed successfully")
+        print("Demonstration completed successfully")
         print(f"Key findings: {len(report['key_findings'])}")
     except Exception as e:
         print(f"Demonstration failed: {e}")

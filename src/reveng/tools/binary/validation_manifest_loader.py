@@ -22,7 +22,7 @@ import fnmatch
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 # Try to import YAML support
 try:
@@ -34,7 +34,11 @@ except ImportError:
     logging.warning("PyYAML not installed - only JSON manifests supported")
     logging.warning("Install with: pip install pyyaml")
 
-from reveng.tools.binary.validation_config import SmokeTest, ValidationConfig, ValidationMode
+from reveng.tools.binary.validation_config import (
+    SmokeTest,
+    ValidationConfig,
+    ValidationMode,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +124,9 @@ class ValidationManifestLoader:
         else:
             # Use defaults
             mode = default_mode
-            smoke_tests = None  # Will be populated by ValidationConfig if mode is SMOKE_TEST
+            smoke_tests = (
+                None  # Will be populated by ValidationConfig if mode is SMOKE_TEST
+            )
             checksum_algorithm = "sha256"
 
         return ValidationConfig(

@@ -62,12 +62,9 @@ public class BuildGhidraJarScript extends GhidraScript {
 		builder.addExcludedFileExtension(".pdf");
 
 		File installDir = Application.getInstallationDirectory().getFile(true);
-		File file = new File(installDir, "ghidra.jar");
-		builder.buildJar(file, null, monitor);
+		builder.buildJar(new File(installDir, "ghidra.jar"), null, monitor);
 
 		// uncomment the following line to create a src zip for debugging.
 		// builder.buildSrcZip(new File(installDir, "GhidraSrc.zip"), monitor);
-
-		println("Finished writing jar: " + file);
 	}
 }

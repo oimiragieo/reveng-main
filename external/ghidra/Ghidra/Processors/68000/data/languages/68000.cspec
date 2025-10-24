@@ -37,14 +37,8 @@
         </pentry>
       </input>
       <output>
-        <pentry minsize="4" maxsize="10" metatype="float" >
-          <register name="FP0"/>
-        </pentry>
         <pentry minsize="1" maxsize="4">
-          <register name="D0" />
-        </pentry>
-        <pentry minsize="5" maxsize="8">
-          <addr space="join" piece1="D0" piece2="D1"/>
+          <register name="D0"/>
         </pentry>
       </output>
       <unaffected>
@@ -60,12 +54,6 @@
         <register name="A5"/>
         <register name="A6"/>
         <register name="SP"/>
-        <register name="FP2"/>
-        <register name="FP3"/>
-        <register name="FP4"/>
-        <register name="FP5"/>
-        <register name="FP6"/>
-        <register name="FP7"/>
       </unaffected>
       <killedbycall>
         <register name="D0"/>

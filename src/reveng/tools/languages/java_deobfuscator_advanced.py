@@ -13,17 +13,13 @@ Advanced deobfuscation techniques for Java bytecode:
 Handles obfuscation from: ProGuard, Allatori, DexGuard, Zelix KlassMaster
 """
 
-import ast
 import base64
-import hashlib
 import json
 import logging
-import os
 import re
-from collections import defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import List, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -246,7 +242,9 @@ class StringDecryptor:
     def _decrypt_base64_strings(self, source: str) -> str:
         """Detect and decrypt Base64-encoded strings"""
         # Pattern: new String(Base64.decode("..."))
-        pattern = r'new\s+String\s*\(\s*Base64\.decode\s*\(\s*"([A-Za-z0-9+/=]+)"\s*\)\s*\)'
+        pattern = (
+            r'new\s+String\s*\(\s*Base64\.decode\s*\(\s*"([A-Za-z0-9+/=]+)"\s*\)\s*\)'
+        )
 
         def replace_func(match):
             try:
@@ -515,7 +513,6 @@ class JavaAdvancedDeobfuscator:
             logger.error(f"Failed to read {java_file}: {e}")
             return None
 
-        original_source = source
         total_changes = 0
 
         # Step 1: Control flow simplification
@@ -619,7 +616,9 @@ def main():
         default="deobfuscated_advanced",
         help="Output directory for deobfuscated code",
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose logging"
+    )
 
     args = parser.parse_args()
 

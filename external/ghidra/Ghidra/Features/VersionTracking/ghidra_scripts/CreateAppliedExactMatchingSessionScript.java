@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // An example of how to create Version Tracking session, run some correlators to find matching
-// data and then save the session.
+// data and and then save the session.
 //@category Examples.Version Tracking
 
 import java.util.Collection;
@@ -63,7 +63,8 @@ public class CreateAppliedExactMatchingSessionScript extends GhidraScript {
 			return;
 		}
 
-		VTSession session = new VTSessionDB(name, sourceProgram, destinationProgram, this);
+		VTSession session =
+			VTSessionDB.createVTSession(name, sourceProgram, destinationProgram, this);
 
 		// it seems clunky to have to create this separately, but I'm not sure how else to do it
 		folder.createFile(name, session, monitor);

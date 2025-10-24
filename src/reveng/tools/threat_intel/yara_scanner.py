@@ -113,7 +113,8 @@ class YARAScanner:
             for match in yara_matches:
                 # Extract string matches
                 string_matches = [
-                    (offset, identifier, data) for offset, identifier, data in match.strings
+                    (offset, identifier, data)
+                    for offset, identifier, data in match.strings
                 ]
 
                 yara_match = YARAMatch(
@@ -155,7 +156,8 @@ class YARAScanner:
 
             for match in yara_matches:
                 string_matches = [
-                    (offset, identifier, data) for offset, identifier, data in match.strings
+                    (offset, identifier, data)
+                    for offset, identifier, data in match.strings
                 ]
 
                 yara_match = YARAMatch(

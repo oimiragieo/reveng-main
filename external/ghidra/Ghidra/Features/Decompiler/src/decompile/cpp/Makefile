@@ -50,9 +50,9 @@ YACC=bison
 # libraries
 #INCLUDES=-I$(BFDHOME)/include
 INCLUDES=
-BFDLIB=-lbfd
+BFDLIB=-lbfd -lz
 
-LNK=-lz
+LNK=
 
 # Source files
 ALL_SOURCE= $(wildcard *.cc)
@@ -79,15 +79,15 @@ EXTERNAL_CONSOLEEXT_NAMES=$(subst .cc,,$(notdir $(EXTERNAL_CONSOLEEXT_SOURCE)))
 CORE=	xml marshal space float address pcoderaw translate opcodes globalcontext
 # Additional core files for any projects that decompile
 DECCORE=capability architecture options graph cover block cast typeop database cpool \
-	comment stringmanage modelrules fspec action loadimage grammar varnode op type \
-	variable varmap jumptable emulate emulateutil flow userop expression multiprecision \
+	comment stringmanage modelrules fspec action loadimage grammar varnode op \
+	type variable varmap jumptable emulate emulateutil flow userop \
 	funcdata funcdata_block funcdata_op funcdata_varnode unionresolve pcodeinject \
 	heritage prefersplit rangeutil ruleaction subflow blockaction merge double \
-	transform constseq coreaction condexe override dynamic crc32 prettyprint \
+	transform coreaction condexe override dynamic crc32 prettyprint \
 	printlanguage printc printjava memstate opbehavior paramid signature $(COREEXT_NAMES)
 # Files used for any project that use the sleigh decoder
 SLEIGH=	sleigh pcodeparse pcodecompile sleighbase slghsymbol \
-	slghpatexpress slghpattern semantics context slaformat compression filemanage
+	slghpatexpress slghpattern semantics context filemanage
 # Additional files for the GHIDRA specific build
 GHIDRA=	ghidra_arch inject_ghidra ghidra_translate loadimage_ghidra \
 	typegrp_ghidra database_ghidra ghidra_context cpool_ghidra \
@@ -99,7 +99,7 @@ SPECIAL=consolemain sleighexample test
 # Any additional modules for the command line decompiler
 EXTRA= $(filter-out $(CORE) $(DECCORE) $(SLEIGH) $(GHIDRA) $(SLACOMP) $(SPECIAL),$(ALL_NAMES))
 
-EXECS=decomp_dbg decomp_opt decomp_test_dbg ghidra_dbg ghidra_opt sleigh_dbg sleigh_opt libdecomp_dbg.a libdecomp.a
+EXECS=decomp_dbg decomp_opt ghidra_test_dbg ghidra_dbg ghidra_opt sleigh_dbg sleigh_opt libdecomp_dbg.a libdecomp.a
 
 # Possible conditional compilation flags
 #     __TERMINAL__             # Turn on terminal support for console mode
@@ -191,7 +191,7 @@ endif
 ifeq ($(MAKECMDGOALS),decomp_opt)
 	DEPNAMES=com_opt/depend
 endif
-ifneq (,$(filter $(MAKECMDGOALS),decomp_test_dbg test))
+ifneq (,$(filter $(MAKECMDGOALS),ghidra_test_dbg test))
 	DEPNAMES=test_dbg/depend
 endif
 ifeq ($(MAKECMDGOALS),reallyclean)
@@ -253,18 +253,17 @@ decomp_dbg:	$(COMMANDLINE_DBG_OBJS)
 decomp_opt:	$(COMMANDLINE_OPT_OBJS)
 	$(CXX) $(OPT_CXXFLAGS) $(ARCH_TYPE) -o decomp_opt $(COMMANDLINE_OPT_OBJS) $(BFDLIB) $(LNK)
 
-#decomp_test_dbg:	DBG_CXXFLAGS += -D_GLIBCXX_ASSERTIONS -fsanitize=address,undefined
-decomp_test_dbg:	$(TEST_DEBUG_OBJS)
-	$(CXX) $(DBG_CXXFLAGS) $(ARCH_TYPE) -o decomp_test_dbg $(TEST_DEBUG_OBJS) $(BFDLIB) $(LNK)
+ghidra_test_dbg:	$(TEST_DEBUG_OBJS)
+	$(CXX) $(DBG_CXXFLAGS) $(ARCH_TYPE) -o ghidra_test_dbg $(TEST_DEBUG_OBJS) $(BFDLIB) $(LNK)
 
-test: decomp_test_dbg
-	./decomp_test_dbg
+test: ghidra_test_dbg
+	./ghidra_test_dbg
 
 ghidra_dbg:	$(GHIDRA_DBG_OBJS)
-	$(CXX) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE) -o ghidra_dbg $(GHIDRA_DBG_OBJS)
+	$(CXX) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE) -o ghidra_dbg $(GHIDRA_DBG_OBJS) $(LNK)
 
 ghidra_opt:	$(GHIDRA_OPT_OBJS)
-	$(CXX) $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE)  -o ghidra_opt $(GHIDRA_OPT_OBJS)
+	$(CXX) $(OPT_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE)  -o ghidra_opt $(GHIDRA_OPT_OBJS) $(LNK)
 
 sleigh_dbg:	$(SLEIGH_DBG_OBJS)
 	$(CXX) $(DBG_CXXFLAGS) $(ADDITIONAL_FLAGS) $(MAKE_STATIC) $(ARCH_TYPE) -o sleigh_dbg $(SLEIGH_DBG_OBJS) $(LNK)

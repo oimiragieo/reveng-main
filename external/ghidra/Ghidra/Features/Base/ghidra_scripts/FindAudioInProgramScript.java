@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 //Finds programs containing various audio resources such as WAV's 
-//@category Search
-import java.util.ArrayList;
-import java.util.List;
-
+//@category Resources
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.*;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.WAVEDataType;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FindAudioInProgramScript extends GhidraScript {
 
@@ -35,10 +36,8 @@ public class FindAudioInProgramScript extends GhidraScript {
 
 		//look for WAV data types
 		WAVEDataType wdt = new WAVEDataType();
-		MIDIDataType mdt = new MIDIDataType();
 
 		totalFound += findAudioData("WAV", wdt, WAVEDataType.MAGIC, WAVEDataType.MAGIC_MASK);
-		totalFound += findAudioData("MIDI", mdt, MIDIDataType.MAGIC, MIDIDataType.MAGIC_MASK);
 
 		if (totalFound == 0) {
 			println("No Audio data found in " + currentProgram.getName());
@@ -55,12 +54,12 @@ public class FindAudioInProgramScript extends GhidraScript {
 
 		int numDataFound = 0;
 		List<Address> foundList = scanForAudioData(pattern, mask);
-		//Loop over all potential found audio
+		//Loop over all potential found WAVs
 		for (int i = 0; i < foundList.size(); i++) {
 			boolean foundData = false;
-			//See if already applied data type
+			//See if already applied WAV
 			Data data = getDataAt(foundList.get(i));
-			//If not already applied, try to apply audio data type
+			//If not already applied, try to apply WAV data type
 			if (data == null) {
 				println("Trying to apply " + dataName + " datatype at " +
 					foundList.get(i).toString());
@@ -68,7 +67,7 @@ public class FindAudioInProgramScript extends GhidraScript {
 				try {
 					Data newData = createData(foundList.get(i), dt);
 					if (newData != null) {
-						printf("Applied %s at %s", dataName, newData.getAddressString(false, true));
+						println("Applied WAV at " + newData.getAddressString(false, true));
 						foundData = true;
 					}
 				}
@@ -109,8 +108,7 @@ public class FindAudioInProgramScript extends GhidraScript {
 						break;
 					}
 					found =
-						memory.findBytes(start, blocks[i].getEnd(), imageBytes, mask, true,
-							monitor);
+						memory.findBytes(start, blocks[i].getEnd(), imageBytes, mask, true, monitor);
 					if (found != null) {
 						foundImages.add(found);
 						start = found.add(1);

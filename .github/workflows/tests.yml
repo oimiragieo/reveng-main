@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: [3.11, 3.12]
+        python-version: [3.9, 3.11]
 
     steps:
     - uses: actions/checkout@v4
@@ -44,19 +44,16 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
+        python -m pip install -e .[dev]
+        python -m pip install -r requirements-optional.txt || true
 
     - name: Lint with flake8
       run: |
-        # Stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 src tests
 
     - name: Test with pytest
       run: |
-        python -m pytest tests/ --cov=tools --cov-report=xml --cov-report=html
+        python -m pytest tests/unit tests/integration --cov=reveng --cov-report=xml --cov-report=term
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -68,11 +65,11 @@ jobs:
 
     - name: Run security tests
       run: |
-        python -m pytest tests/test_security.py -v
+        python -m pytest tests/security -v
 
     - name: Test installation
       run: |
-        python scripts/setup/verify_installation.py
+        python ops/scripts/setup/verify_installation.py
 
   integration-test:
     runs-on: ubuntu-latest
@@ -89,16 +86,15 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
+        python -m pip install -e .[dev]
 
     - name: Run integration tests
       run: |
-        python scripts/testing/run_enhanced_tests.py
+        python ops/scripts/testing/run_enhanced_tests.py
 
     - name: Test examples
       run: |
-        python scripts/testing/run_examples.py
+        python ops/scripts/testing/run_examples.py
 
   web-interface-test:
     runs-on: ubuntu-latest

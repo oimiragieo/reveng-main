@@ -4,11 +4,9 @@ Base installer class for REVENG tools
 
 import json
 import logging
-import os
 import platform
 import shutil
 import subprocess
-import sys
 import tarfile
 import zipfile
 from abc import ABC, abstractmethod
@@ -115,7 +113,6 @@ class BaseInstaller(ABC):
 
     def _download_file(self, url: str, filename: str) -> Path:
         """Download file from URL"""
-        import urllib.request
 
         file_path = self.install_path / filename
 
@@ -137,7 +134,9 @@ class BaseInstaller(ABC):
             logger.error(f"Failed to download {filename}: {e}")
             raise
 
-    def _extract_archive(self, archive_path: Path, extract_to: Optional[Path] = None) -> Path:
+    def _extract_archive(
+        self, archive_path: Path, extract_to: Optional[Path] = None
+    ) -> Path:
         """
         Extract archive file safely (prevents path traversal attacks)
 
@@ -162,7 +161,9 @@ class BaseInstaller(ABC):
             logger.error(f"Failed to extract {archive_path}: {e}")
             raise
 
-    def _run_command(self, command: List[str], cwd: Optional[Path] = None) -> Tuple[bool, str]:
+    def _run_command(
+        self, command: List[str], cwd: Optional[Path] = None
+    ) -> Tuple[bool, str]:
         """Run command and return success status and output"""
         try:
             result = subprocess.run(

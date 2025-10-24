@@ -163,7 +163,8 @@ def secure_temp_file(
         ]
 
         is_allowed = any(
-            str(dir_path).startswith(str(allowed_dir)) for allowed_dir in allowed_temp_dirs
+            str(dir_path).startswith(str(allowed_dir))
+            for allowed_dir in allowed_temp_dirs
         )
 
         if not is_allowed:
@@ -331,13 +332,17 @@ def validate_analysis_config(config: Dict[str, Any]) -> Dict[str, Any]:
 
     # Validate timeout
     timeout = config.get("timeout", 3600)
-    if not isinstance(timeout, (int, float)) or timeout <= 0 or timeout > 86400:  # Max 24 hours
+    if (
+        not isinstance(timeout, (int, float)) or timeout <= 0 or timeout > 86400
+    ):  # Max 24 hours
         raise ValidationError("Invalid timeout: must be between 1 and 86400 seconds")
     validated_config["timeout"] = int(timeout)
 
     # Validate max file size
     max_size = config.get("max_file_size_mb", 500)
-    if not isinstance(max_size, (int, float)) or max_size <= 0 or max_size > 10000:  # Max 10GB
+    if (
+        not isinstance(max_size, (int, float)) or max_size <= 0 or max_size > 10000
+    ):  # Max 10GB
         raise ValidationError("Invalid max_file_size_mb: must be between 1 and 10000")
     validated_config["max_file_size_mb"] = int(max_size)
 
@@ -361,7 +366,9 @@ def validate_analysis_config(config: Dict[str, Any]) -> Dict[str, Any]:
     ai_provider = config.get("ai_provider", "ollama")
     allowed_providers = {"ollama", "claude", "openai", "local", "none"}
     if ai_provider not in allowed_providers:
-        raise ValidationError(f"Invalid AI provider: {ai_provider}. Allowed: {allowed_providers}")
+        raise ValidationError(
+            f"Invalid AI provider: {ai_provider}. Allowed: {allowed_providers}"
+        )
     validated_config["ai_provider"] = ai_provider
 
     return validated_config

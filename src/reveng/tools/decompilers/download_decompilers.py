@@ -103,7 +103,7 @@ def download_file(url: str, dest_path: Path, filename: str) -> bool:
             print(f"  ✓ Downloaded {filename} ({size_mb:.2f} MB)")
             return True
         else:
-            print(f"  ✗ Download failed: File is empty or missing")
+            print("  ✗ Download failed: File is empty or missing")
             return False
 
     except urllib.error.URLError as e:
@@ -136,10 +136,10 @@ def verify_checksum(file_path: Path, expected_sha256: Optional[str]) -> bool:
 
         actual = sha256.hexdigest()
         if actual.lower() == expected_sha256.lower():
-            print(f"  ✓ Checksum verified")
+            print("  ✓ Checksum verified")
             return True
         else:
-            print(f"  ✗ Checksum mismatch!")
+            print("  ✗ Checksum mismatch!")
             print(f"    Expected: {expected_sha256}")
             print(f"    Got:      {actual}")
             return False
@@ -164,7 +164,7 @@ def test_jar(jar_path: Path, jar_name: str) -> bool:
 
     try:
         # Try to run jar with --help or -h
-        result = subprocess.run(
+        subprocess.run(
             ["java", "-jar", str(jar_path), "--help"], capture_output=True, timeout=5
         )
 
@@ -178,7 +178,7 @@ def test_jar(jar_path: Path, jar_name: str) -> bool:
         print(f"  ⚠ {jar_name} timeout (may still work)")
         return True  # Timeout is okay, jar is probably valid
     except FileNotFoundError:
-        print(f"  ✗ Java not found - cannot test JAR")
+        print("  ✗ Java not found - cannot test JAR")
         return False
     except Exception as e:
         print(f"  ⚠ Could not test {jar_name}: {e}")
@@ -211,7 +211,7 @@ def download_decompilers(download_optional: bool = False) -> Tuple[int, int]:
         # Skip optional if not requested
         if not info["required"] and not download_optional:
             print(f"Skipping {info['name']} (optional)")
-            print(f"  Use --all flag to download optional decompilers")
+            print("  Use --all flag to download optional decompilers")
             print()
             continue
 
@@ -239,13 +239,13 @@ def download_decompilers(download_optional: bool = False) -> Tuple[int, int]:
                 if test_jar(dest_path, info["name"]):
                     successful += 1
                 else:
-                    print(f"  ⚠ JAR test failed but file was downloaded")
+                    print("  ⚠ JAR test failed but file was downloaded")
                     successful += 1  # Count as success anyway
             else:
-                print(f"  ⚠ Checksum failed but file was downloaded")
+                print("  ⚠ Checksum failed but file was downloaded")
                 successful += 1  # Count as success anyway
         else:
-            print(f"  ✗ Download failed")
+            print("  ✗ Download failed")
 
         print()
 

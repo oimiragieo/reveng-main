@@ -4,15 +4,10 @@ REVENG PE Import Table Analyzer
 Analyze PE import table for API usage, categorization, and behavioral analysis.
 """
 
-import json
-import logging
-import os
 import struct
-import sys
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..core.errors import AnalysisFailureError, create_error_context
 from ..core.logger import get_logger
@@ -109,10 +104,14 @@ class ImportAnalyzer:
             behavioral_indicators = self._analyze_behavioral_indicators(api_calls)
 
             # Calculate risk score
-            risk_score = self._calculate_risk_score(suspicious_apis, behavioral_indicators)
+            risk_score = self._calculate_risk_score(
+                suspicious_apis, behavioral_indicators
+            )
 
             # Calculate analysis confidence
-            confidence = self._calculate_analysis_confidence(api_calls, categorized_apis)
+            confidence = self._calculate_analysis_confidence(
+                api_calls, categorized_apis
+            )
 
             result = ImportAnalysis(
                 dlls=dlls,
@@ -124,7 +123,9 @@ class ImportAnalyzer:
                 analysis_confidence=confidence,
             )
 
-            self.logger.info(f"Completed import analysis with {confidence:.2f} confidence")
+            self.logger.info(
+                f"Completed import analysis with {confidence:.2f} confidence"
+            )
             return result
 
         except Exception as e:
@@ -205,7 +206,9 @@ class ImportAnalyzer:
             self.logger.warning(f"Failed to extract API calls: {e}")
             return []
 
-    def _categorize_apis(self, api_calls: List[APIInfo]) -> Dict[APICategory, List[APIInfo]]:
+    def _categorize_apis(
+        self, api_calls: List[APIInfo]
+    ) -> Dict[APICategory, List[APIInfo]]:
         """Categorize APIs by functionality"""
         try:
             categorized = {category: [] for category in APICategory}
@@ -237,7 +240,9 @@ class ImportAnalyzer:
             self.logger.warning(f"Failed to detect suspicious APIs: {e}")
             return []
 
-    def _analyze_behavioral_indicators(self, api_calls: List[APIInfo]) -> Dict[str, List[str]]:
+    def _analyze_behavioral_indicators(
+        self, api_calls: List[APIInfo]
+    ) -> Dict[str, List[str]]:
         """Analyze behavioral indicators from API calls"""
         try:
             indicators = {}
@@ -309,7 +314,9 @@ class ImportAnalyzer:
                 confidence += 0.3
 
             # Confidence from known APIs
-            known_apis = sum(1 for api in api_calls if api.category != APICategory.UNKNOWN)
+            known_apis = sum(
+                1 for api in api_calls if api.category != APICategory.UNKNOWN
+            )
             if len(api_calls) > 0:
                 confidence += 0.4 * (known_apis / len(api_calls))
 
@@ -330,7 +337,9 @@ class ImportAnalyzer:
                     name=function,
                     dll=dll_name,
                     category=APICategory(api_data.get("category", "unknown")),
-                    suspicious_level=SuspiciousLevel(api_data.get("suspicious_level", "safe")),
+                    suspicious_level=SuspiciousLevel(
+                        api_data.get("suspicious_level", "safe")
+                    ),
                     description=api_data.get("description", ""),
                     usage_context=api_data.get("usage_context"),
                 )
@@ -358,7 +367,7 @@ class ImportAnalyzer:
 
             # Fallback: determine by name patterns
             api_name = api.name.lower()
-            dll_name = api.dll.lower()
+            api.dll.lower()
 
             # File I/O APIs
             if any(
@@ -383,20 +392,30 @@ class ImportAnalyzer:
 
             # Registry APIs
             if any(
-                pattern in api_name for pattern in ["regopenkey", "regsetvalue", "regqueryvalue"]
+                pattern in api_name
+                for pattern in ["regopenkey", "regsetvalue", "regqueryvalue"]
             ):
                 return APICategory.REGISTRY
 
             # Crypto APIs
-            if any(pattern in api_name for pattern in ["crypt", "encrypt", "decrypt", "hash"]):
+            if any(
+                pattern in api_name
+                for pattern in ["crypt", "encrypt", "decrypt", "hash"]
+            ):
                 return APICategory.CRYPTO
 
             # GUI APIs
-            if any(pattern in api_name for pattern in ["createwindow", "showwindow", "messagebox"]):
+            if any(
+                pattern in api_name
+                for pattern in ["createwindow", "showwindow", "messagebox"]
+            ):
                 return APICategory.GUI
 
             # Memory APIs
-            if any(pattern in api_name for pattern in ["virtualalloc", "virtualfree", "heapalloc"]):
+            if any(
+                pattern in api_name
+                for pattern in ["virtualalloc", "virtualfree", "heapalloc"]
+            ):
                 return APICategory.MEMORY
 
             # System APIs
@@ -468,7 +487,9 @@ class ImportAnalyzer:
 
             # Parse optional header
             optional_header_size = coff_header[5]
-            optional_header = data[pe_offset + 16 : pe_offset + 16 + optional_header_size]
+            optional_header = data[
+                pe_offset + 16 : pe_offset + 16 + optional_header_size
+            ]
 
             return {
                 "pe_offset": pe_offset,

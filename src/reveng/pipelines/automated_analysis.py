@@ -6,16 +6,13 @@ for malware analysis, .NET analysis, quick triage, and deep analysis.
 """
 
 import json
-import logging
-import os
-import sys
 import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, BinaryIO, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-from ..core.errors import AnalysisFailureError, REVENGError, create_error_context
+from ..core.errors import AnalysisFailureError, create_error_context
 from ..core.logger import get_logger
 
 logger = get_logger()
@@ -153,7 +150,9 @@ class AutomatedAnalysisPipeline:
                     details="Binary file not found",
                 )
 
-            self.logger.info(f"Running analysis pipeline: {template_name} on {binary_path}")
+            self.logger.info(
+                f"Running analysis pipeline: {template_name} on {binary_path}"
+            )
 
             # Get template
             template = self.templates[template_name]
@@ -177,7 +176,9 @@ class AutomatedAnalysisPipeline:
 
             # Execute pipeline stages
             for stage in template.stages:
-                stage_results = self._execute_stage(stage, steps, binary_path, output_path)
+                stage_results = self._execute_stage(
+                    stage, steps, binary_path, output_path
+                )
                 result.stage_results[stage] = stage_results
 
                 # Check for critical errors
@@ -253,7 +254,9 @@ class AutomatedAnalysisPipeline:
                                 f"Required step failed: {step.name}"
                             )
                         else:
-                            stage_results["warnings"].append(f"Optional step failed: {step.name}")
+                            stage_results["warnings"].append(
+                                f"Optional step failed: {step.name}"
+                            )
 
                 except Exception as e:
                     self.logger.error(f"Step execution failed: {step.name} - {e}")
@@ -263,10 +266,14 @@ class AutomatedAnalysisPipeline:
                             f"Required step failed: {step.name} - {e}"
                         )
                     else:
-                        stage_results["warnings"].append(f"Optional step failed: {step.name} - {e}")
+                        stage_results["warnings"].append(
+                            f"Optional step failed: {step.name} - {e}"
+                        )
 
             stage_results["end_time"] = time.time()
-            stage_results["duration"] = stage_results["end_time"] - stage_results["start_time"]
+            stage_results["duration"] = (
+                stage_results["end_time"] - stage_results["start_time"]
+            )
 
             self.logger.info(
                 f"Stage {stage.value} completed: {stage_results['steps_executed']} successful, {stage_results['steps_failed']} failed"
@@ -324,7 +331,9 @@ class AutomatedAnalysisPipeline:
             return step_result
 
         except subprocess.TimeoutExpired:
-            self.logger.error(f"Step {step.name} timed out after {step.timeout} seconds")
+            self.logger.error(
+                f"Step {step.name} timed out after {step.timeout} seconds"
+            )
             return {
                 "step_name": step.name,
                 "success": False,
@@ -381,7 +390,8 @@ class AutomatedAnalysisPipeline:
                     if stage_result.get("critical_errors")
                 ),
                 "total_steps": sum(
-                    stage_result.get("steps_executed", 0) + stage_result.get("steps_failed", 0)
+                    stage_result.get("steps_executed", 0)
+                    + stage_result.get("steps_failed", 0)
                     for stage_result in result.stage_results.values()
                 ),
                 "successful_steps": sum(
@@ -397,7 +407,9 @@ class AutomatedAnalysisPipeline:
             }
 
             if summary["total_steps"] > 0:
-                summary["success_rate"] = summary["successful_steps"] / summary["total_steps"]
+                summary["success_rate"] = (
+                    summary["successful_steps"] / summary["total_steps"]
+                )
 
             return summary
 
@@ -428,38 +440,38 @@ class AutomatedAnalysisPipeline:
 <body>
     <div class="header">
         <h1>REVENG Analysis Report</h1>
-        <p><strong>Pipeline:</strong> {report['pipeline_name']}</p>
-        <p><strong>Binary:</strong> {report['binary_path']}</p>
-        <p><strong>Execution Time:</strong> {report['execution_time']:.2f} seconds</p>
-        <p><strong>Status:</strong> <span class="{'success' if report['success'] else 'error'}">{'SUCCESS' if report['success'] else 'FAILED'}</span></p>
+        <p><strong>Pipeline:</strong> {report["pipeline_name"]}</p>
+        <p><strong>Binary:</strong> {report["binary_path"]}</p>
+        <p><strong>Execution Time:</strong> {report["execution_time"]:.2f} seconds</p>
+        <p><strong>Status:</strong> <span class="{"success" if report["success"] else "error"}">{"SUCCESS" if report["success"] else "FAILED"}</span></p>
     </div>
 
     <div class="section">
         <h2>Summary</h2>
         <div class="summary">
-            <p><strong>Total Stages:</strong> {report['summary']['total_stages']}</p>
-            <p><strong>Successful Stages:</strong> {report['summary']['successful_stages']}</p>
-            <p><strong>Failed Stages:</strong> {report['summary']['failed_stages']}</p>
-            <p><strong>Total Steps:</strong> {report['summary']['total_steps']}</p>
-            <p><strong>Successful Steps:</strong> {report['summary']['successful_steps']}</p>
-            <p><strong>Failed Steps:</strong> {report['summary']['failed_steps']}</p>
-            <p><strong>Success Rate:</strong> {report['summary']['success_rate']:.2%}</p>
+            <p><strong>Total Stages:</strong> {report["summary"]["total_stages"]}</p>
+            <p><strong>Successful Stages:</strong> {report["summary"]["successful_stages"]}</p>
+            <p><strong>Failed Stages:</strong> {report["summary"]["failed_stages"]}</p>
+            <p><strong>Total Steps:</strong> {report["summary"]["total_steps"]}</p>
+            <p><strong>Successful Steps:</strong> {report["summary"]["successful_steps"]}</p>
+            <p><strong>Failed Steps:</strong> {report["summary"]["failed_steps"]}</p>
+            <p><strong>Success Rate:</strong> {report["summary"]["success_rate"]:.2%}</p>
         </div>
     </div>
 
     <div class="section">
         <h2>Stage Results</h2>
-        {self._generate_stage_html(report['stage_results'])}
+        {self._generate_stage_html(report["stage_results"])}
     </div>
 
     <div class="section">
         <h2>Errors</h2>
-        {self._generate_errors_html(report['errors'])}
+        {self._generate_errors_html(report["errors"])}
     </div>
 
     <div class="section">
         <h2>Warnings</h2>
-        {self._generate_warnings_html(report['warnings'])}
+        {self._generate_warnings_html(report["warnings"])}
     </div>
 </body>
 </html>
@@ -471,7 +483,9 @@ class AutomatedAnalysisPipeline:
         except Exception as e:
             self.logger.error(f"Failed to generate HTML report: {e}")
 
-    def _generate_stage_html(self, stage_results: Dict[PipelineStage, Dict[str, Any]]) -> str:
+    def _generate_stage_html(
+        self, stage_results: Dict[PipelineStage, Dict[str, Any]]
+    ) -> str:
         """Generate HTML for stage results"""
 
         html = ""
@@ -479,9 +493,9 @@ class AutomatedAnalysisPipeline:
             html += f"""
             <div class="section">
                 <h3>{stage.value}</h3>
-                <p><strong>Steps Executed:</strong> {results.get('steps_executed', 0)}</p>
-                <p><strong>Steps Failed:</strong> {results.get('steps_failed', 0)}</p>
-                <p><strong>Duration:</strong> {results.get('duration', 0):.2f} seconds</p>
+                <p><strong>Steps Executed:</strong> {results.get("steps_executed", 0)}</p>
+                <p><strong>Steps Failed:</strong> {results.get("steps_failed", 0)}</p>
+                <p><strong>Duration:</strong> {results.get("duration", 0):.2f} seconds</p>
             </div>
             """
         return html

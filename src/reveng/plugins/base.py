@@ -6,14 +6,11 @@ Base classes and interfaces for the REVENG plugin system.
 
 import abc
 import logging
-import os
-import sys
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional
 
-from ..core.errors import PluginError, REVENGError, create_error_context
+from ..core.errors import PluginError
 from ..core.logger import get_logger
 
 logger = get_logger()
@@ -183,7 +180,9 @@ class PluginBase(abc.ABC):
     def set_status(self, status: PluginStatus):
         """Set plugin status"""
         self.status = status
-        self.logger.info(f"Plugin {self.metadata.name} status changed to {status.value}")
+        self.logger.info(
+            f"Plugin {self.metadata.name} status changed to {status.value}"
+        )
 
     def get_status(self) -> PluginStatus:
         """Get plugin status"""
@@ -298,7 +297,9 @@ class AIPlugin(PluginBase):
     """Base class for AI enhancement plugins"""
 
     @abc.abstractmethod
-    def ai_enhance(self, context: PluginContext, data: Dict[str, Any]) -> Dict[str, Any]:
+    def ai_enhance(
+        self, context: PluginContext, data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Apply AI enhancement"""
         pass
 

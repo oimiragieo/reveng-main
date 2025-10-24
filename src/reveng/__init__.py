@@ -64,5 +64,5 @@ __keywords__ = [
 
 # Development status
 __status__ = "Production/Stable"
-__python_requires__ = ">=3.11"
-__supported_python_versions__ = ["3.11", "3.12"]
+__python_requires__ = ">=3.9"
+__supported_python_versions__ = ["3.9", "3.10", "3.11"]

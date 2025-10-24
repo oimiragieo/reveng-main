@@ -31,8 +31,35 @@ except ImportError as e:
     sys.exit(1)
 
 
-def main():
-    """Main CLI entry point"""
+def main(argv=None):
+    """Thin wrapper that delegates to the production CLI."""
+    if argv is not None:
+        sys.argv = [sys.argv[0], *list(argv)]
+
+    try:
+        from reveng.cli import main as cli_main
+    except ImportError as exc:  # pragma: no cover
+        print(f"Error: Failed to load REVENG CLI: {exc}")
+        print("Run in the project root and install dependencies with:")
+        print("  pip install -r requirements.txt")
+        return 1
+
+    try:
+        return cli_main()
+    except SystemExit as exc:  # Allow cli_main to control exit codes
+        return int(exc.code or 0)
+    except KeyboardInterrupt:
+        return 130
+    except Exception as exc:  # pragma: no cover
+        try:
+            get_logger().error(f"Unexpected REVENG error: {exc}")
+        except Exception:
+            print(f"Unexpected REVENG error: {exc}")
+        return 1
+
+
+def _legacy_main():
+    """Deprecated CLI entry point retained for compatibility."""
     parser = create_parser()
     args = parser.parse_args()
 
@@ -808,4 +835,4 @@ def cmd_ml_status(args):
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

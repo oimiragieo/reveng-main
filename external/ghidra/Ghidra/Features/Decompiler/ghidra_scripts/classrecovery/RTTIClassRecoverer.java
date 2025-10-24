@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,17 +16,17 @@
 //DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
 package classrecovery;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import ghidra.app.util.NamespaceUtils;
 import ghidra.framework.options.Options;
-import ghidra.framework.plugintool.ServiceProvider;
+import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.Namespace;
 import ghidra.program.model.symbol.SymbolType;
+import ghidra.program.util.ProgramLocation;
 import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
@@ -36,21 +36,31 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 	boolean programHasRTTIApplied = false;
 
 	String ghidraVersion;
-
+	Program program;
+	TaskMonitor monitor;
 	boolean hasDebugSymbols;
 
-	RTTIClassRecoverer(Program program, ServiceProvider serviceProvider, FlatProgramAPI api,
-			boolean createBookmarks, boolean useShortTemplates, boolean nameVfunctions,
-			boolean makeVfunctionsThisCalls,boolean hasDebugSymbols, TaskMonitor monitor)
-			throws Exception {
 
-		super(program, serviceProvider, api, createBookmarks, useShortTemplates, nameVfunctions,
-			makeVfunctionsThisCalls,monitor);
+	RTTIClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
+			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
+			boolean nameVfunctions, boolean hasDebugSymbols, TaskMonitor monitor) throws Exception {
 
+		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
+			monitor);
+
+		this.program = program;
+		this.monitor = monitor;
+		this.location = location;
+		this.tool = tool;
+		this.api = api;
+		this.createBookmarks = createBookmarks;
+		this.useShortTemplates = useShortTemplates;
+		this.nameVfunctions = nameVfunctions;
 		this.hasDebugSymbols = hasDebugSymbols;
 
 		ghidraVersion = getVersionOfGhidra();
 	}
+
 
 	public DecompilerScriptUtils getDecompilerUtils() {
 		return decompilerUtils;
@@ -90,14 +100,20 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 		return options.getString("Created With Ghidra Version", null);
 	}
 
+
+
 	public void fixUpProgram() throws CancelledException, Exception {
 		return;
 	}
+
 
 	public List<RecoveredClass> createRecoveredClasses() throws Exception {
 
 		return new ArrayList<RecoveredClass>();
 	}
+
+
+
 
 	/**
 	 * Method to promote the namespace is a class namespace. 
@@ -107,15 +123,17 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 	 */
 	public Namespace promoteToClassNamespace(Namespace namespace) throws InvalidInputException {
 
-		Namespace newClass = NamespaceUtils.convertNamespaceToClass(namespace);
+			Namespace newClass = NamespaceUtils.convertNamespaceToClass(namespace);
 
-		SymbolType symbolType = newClass.getSymbol().getSymbolType();
-		if (symbolType == SymbolType.CLASS) {
-			return newClass;
-		}
-		Msg.debug(this, "Could not promote " + namespace.getName() + " to a class namespace");
-		return null;
+			SymbolType symbolType = newClass.getSymbol().getSymbolType();
+			if (symbolType == SymbolType.CLASS) {
+				return newClass;
+			}
+			Msg.debug(this,
+				"Could not promote " + namespace.getName() + " to a class namespace");
+			return null;
 	}
+
 
 	/**
 	 * Method to iterate over all the RecoveredClass objects and see if there is an existing class structure data type already
@@ -126,8 +144,10 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 	public void retrieveExistingClassStructures(List<RecoveredClass> recoveredClasses)
 			throws CancelledException {
 
-		for (RecoveredClass recoveredClass : recoveredClasses) {
+		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
+		while (recoveredClassIterator.hasNext()) {
 			monitor.checkCancelled();
+			RecoveredClass recoveredClass = recoveredClassIterator.next();
 
 			// if class is non-virtual have to search for an existing class datatype
 
@@ -136,16 +156,16 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 			if (possibleExistingClassStructures.length == 0) {
 				continue;
 			}
-			for (DataType possibleExistingClassStructure : possibleExistingClassStructures) {
+			for (int i = 0; i < possibleExistingClassStructures.length; i++) {
 				monitor.checkCancelled();
-				if (!(possibleExistingClassStructure instanceof Structure)) {
+				if (!(possibleExistingClassStructures[i] instanceof Structure)) {
 					continue;
 				}
-				if (possibleExistingClassStructure.isNotYetDefined()) {
+				if (possibleExistingClassStructures[i].isNotYetDefined()) {
 					continue;
 				}
 
-				Structure existingClassStructure = (Structure) possibleExistingClassStructure;
+				Structure existingClassStructure = (Structure) possibleExistingClassStructures[i];
 
 				recoveredClass.addExistingClassStructure(existingClassStructure);
 				break;
@@ -154,8 +174,10 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 			//Iterate over constructor/destructor functions
 			List<Function> constructorOrDestructorFunctions =
 				recoveredClass.getConstructorOrDestructorFunctions();
-			for (Function constDestFunction : constructorOrDestructorFunctions) {
+			Iterator<Function> constDestIterator = constructorOrDestructorFunctions.iterator();
+			while (constDestIterator.hasNext()) {
 				monitor.checkCancelled();
+				Function constDestFunction = constDestIterator.next();
 				Namespace parentNamespace = constDestFunction.getParentNamespace();
 				if (!parentNamespace.equals(recoveredClass.getClassNamespace())) {
 					continue;
@@ -198,20 +220,25 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 		}
 	}
 
+
+
 	/**
 	 * Method to get class data information from destructors if a class has no constructors
 	 * @param recoveredClasses list of classes
 	 * @throws CancelledException if cancelled
 	 * @throws InvalidInputException if issues setting function return
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
-	 * @throws CircularDependencyException if parent namespace is descendant of given namespace
+	 * @throws CircularDependencyException if parent namespace is descendent of given namespace
 	 */
 	public void figureOutClassDataMembers(List<RecoveredClass> recoveredClasses)
 			throws CancelledException, DuplicateNameException, InvalidInputException,
 			CircularDependencyException {
 
-		for (RecoveredClass recoveredClass : recoveredClasses) {
+		Iterator<RecoveredClass> classIterator = recoveredClasses.iterator();
+		while (classIterator.hasNext()) {
 			monitor.checkCancelled();
+			RecoveredClass recoveredClass = classIterator.next();
+
 			// we can only figure out structure info for functions with vftable since that is
 			// what we use to determine which variable is being used to store the class structure
 			if (!recoveredClass.hasVftable()) {
@@ -230,8 +257,11 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 			memberFunctionsToProcess.addAll(recoveredClass.getIndeterminateList());
 			memberFunctionsToProcess.addAll(recoveredClass.getInlinedConstructorList());
 
-			for (Function memberFunction : memberFunctionsToProcess) {
+			Iterator<Function> memberFunctionIterator = memberFunctionsToProcess.iterator();
+			while (memberFunctionIterator.hasNext()) {
 				monitor.checkCancelled();
+				Function memberFunction = memberFunctionIterator.next();
+
 				if (getVftableReferences(memberFunction) == null) {
 					continue;
 				}
@@ -247,5 +277,10 @@ public class RTTIClassRecoverer extends RecoveredClassHelper {
 			}
 		}
 	}
+
+
+
+
+
 
 }
