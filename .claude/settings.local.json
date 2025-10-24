@@ -18,7 +18,8 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(git tag:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
