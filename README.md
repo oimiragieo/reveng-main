@@ -363,9 +363,26 @@ This means you can:
 - [x] **v2.0** – Multi-language support (Java, C#, Python)
 - [x] **v2.2** – ML-assisted triage and enhanced analysis
 - [x] **v3.0** – AI-powered binary reconstruction ✅ **YOU ARE HERE**
-- [ ] **v3.1** – Enhanced AI models (Claude Opus, GPT-4o)
-- [ ] **v3.2** – Advanced exploit generation and validation
-- [ ] **v4.0** – Distributed analysis and cloud deployment
+
+### 🚀 Upcoming: v4.0 - World-Class Platform (Research Complete!)
+
+**Phase 1: Foundation (v3.1)** - 5-10x Performance Boost
+- [ ] **LLM4Decompile Integration** – Specialized decompilation models (20-40% better accuracy)
+- [ ] **Incremental Compilation** – ccache/sccache support (5-10x faster rebuilds)
+- [ ] **GPU Acceleration** – CUDA/ROCm for 10-100x batch processing speedup
+
+**Phase 2: Advanced Features (v3.2)** - Revolutionary Capabilities
+- [ ] **Symbolic Execution Engine** – angr + Z3 integration for automatic vulnerability discovery
+- [ ] **ML Type Reconstruction** – Neural network-based type inference (90%+ accuracy)
+- [ ] **Smart Compiler** – AI-powered error recovery and automatic fixing
+
+**Phase 3: Enterprise Features (v4.0)** - Industry-Leading Platform
+- [ ] **LLVM Binary Lifting** – BinRec/McSema-style lifting to LLVM IR
+- [ ] **Semantic Binary Diffing** – Advanced patch analysis and vulnerability verification
+- [ ] **LLVM Optimization Pipeline** – 95%+ recompilation accuracy with optimization matching
+- [ ] **Distributed Compilation** – distcc support for 10x speedup across machines
+
+📄 **See detailed research**: [RESEARCH_PROPOSAL_2025.md](RESEARCH_PROPOSAL_2025.md)
 
 ---
 
