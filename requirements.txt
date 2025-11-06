@@ -72,10 +72,35 @@ pandas>=2.0.0,<3.0.0
 # - Ollama: Install from https://ollama.ai (local LLM)
 # - Anthropic: Set ANTHROPIC_API_KEY environment variable
 # - OpenAI: Set OPENAI_API_KEY environment variable
+# - Google: Set GEMINI_API_KEY environment variable
 
-# Optional: Deep learning (for advanced code reconstruction)
-# torch>=2.0.0 --index-url https://download.pytorch.org/whl/cpu
-# transformers>=4.30.0
+# v4.0 NEW: Deep learning for advanced features (RECOMMENDED)
+# PyTorch for GPU acceleration and LLM4Decompile
+torch>=2.0.0
+transformers>=4.30.0
+accelerate>=0.20.0
+
+# v4.0 NEW: LLM4Decompile specialized models
+# Note: Models will be downloaded on first use (~18GB for 9B model)
+
+# =============================================================================
+# v4.0 NEW FEATURES - Advanced reverse engineering capabilities
+# =============================================================================
+
+# Symbolic Execution and Constraint Solving
+angr>=9.2.0,<10.0.0  # Symbolic execution framework
+z3-solver>=4.12.0,<5.0.0  # SMT solver for constraints
+claripy>=9.2.0,<10.0.0  # Constraint solver (installed with angr)
+
+# Type Reconstruction and Analysis
+pycparser>=2.21,<3.0.0  # C code parsing for type analysis
+
+# Binary Lifting and LLVM Integration
+# Note: Requires LLVM toolchain installed (see system requirements)
+pyelftools>=0.29,<1.0.0  # ELF binary parsing
+
+# Semantic Binary Diffing
+scipy>=1.10.0,<2.0.0  # Already listed above, needed for Hungarian algorithm
 
 # =============================================================================
 # SYSTEM REQUIREMENTS (NOT Python packages)
@@ -96,7 +121,25 @@ pandas>=2.0.0,<3.0.0
 #    - macOS: xcode-select --install && brew install clang-format cppcheck
 #    - Windows: Install MinGW-w64 or Visual Studio Build Tools
 
-# 4. Code quality tools (system packages)
+# 4. v4.0 NEW: LLVM Toolchain (for binary lifting and optimization)
+#    - Linux: sudo apt install llvm llvm-dev clang
+#    - macOS: brew install llvm
+#    - Windows: Download from https://releases.llvm.org/
+#    - Verify: llvm-dis --version, opt --version, llc --version
+
+# 5. v4.0 NEW: Build Acceleration Tools (optional but recommended)
+#    - ccache: Compiler cache for 5-10x faster rebuilds
+#      Linux: sudo apt install ccache
+#      macOS: brew install ccache
+#    - distcc: Distributed compilation (optional)
+#      Linux: sudo apt install distcc
+#      macOS: brew install distcc
+
+# 6. v4.0 NEW: Binary Analysis Tools (optional)
+#    - objdump: For disassembly (usually pre-installed)
+#    - readelf: For ELF analysis (usually pre-installed)
+
+# 7. Code quality tools (system packages)
 #    - clang-format: Code formatting
 #    - cppcheck: Static analysis
 #    - black: Python code formatting (pip install black)
