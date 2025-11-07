@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DecompilationResult:
     """Result from LLM4Decompile"""
+
     success: bool
     source_code: str
     optimization_level: str
@@ -42,9 +43,7 @@ class LLM4DecompileEngine:
     """
 
     def __init__(
-        self,
-        model_name: str = "albertan017/LLM4Decompile-9B-v2",
-        device: str = "auto"
+        self, model_name: str = "albertan017/LLM4Decompile-9B-v2", device: str = "auto"
     ):
         self.model_name = model_name
         self.device = device
@@ -68,12 +67,11 @@ class LLM4DecompileEngine:
                 self.model_name,
                 device_map=self.device,
                 torch_dtype=torch.float16,  # Use FP16 for memory efficiency
-                trust_remote_code=True
+                trust_remote_code=True,
             )
 
             self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name,
-                trust_remote_code=True
+                self.model_name, trust_remote_code=True
             )
 
             self.model_loaded = True
@@ -94,7 +92,7 @@ class LLM4DecompileEngine:
         self,
         assembly: str,
         optimization_level: str = "O0",
-        function_name: str = "unknown"
+        function_name: str = "unknown",
     ) -> DecompilationResult:
         """
         Decompile assembly to C with optimization-level awareness
@@ -122,7 +120,7 @@ class LLM4DecompileEngine:
             return DecompilationResult(
                 success=True,
                 source_code=source_code,
-                optimization_level=optimization_level
+                optimization_level=optimization_level,
             )
 
         except Exception as e:
@@ -131,13 +129,11 @@ class LLM4DecompileEngine:
                 success=False,
                 source_code="",
                 optimization_level=optimization_level,
-                error=str(e)
+                error=str(e),
             )
 
     async def decompile_binary(
-        self,
-        binary_path: str,
-        optimization_level: str = "O0"
+        self, binary_path: str, optimization_level: str = "O0"
     ) -> Dict[str, DecompilationResult]:
         """
         Decompile entire binary by functions
@@ -158,21 +154,14 @@ class LLM4DecompileEngine:
             logger.info(f"Decompiling function: {func_name}")
 
             result = await self.decompile_function(
-                asm_code,
-                optimization_level,
-                func_name
+                asm_code, optimization_level, func_name
             )
 
             results[func_name] = result
 
         return results
 
-    def _format_prompt(
-        self,
-        assembly: str,
-        opt_level: str,
-        function_name: str
-    ) -> str:
+    def _format_prompt(self, assembly: str, opt_level: str, function_name: str) -> str:
         """
         Format prompt for LLM4Decompile model
 
@@ -198,10 +187,7 @@ Decompiled C code:
 
         # Tokenize
         inputs = self.tokenizer(
-            prompt,
-            return_tensors="pt",
-            truncation=True,
-            max_length=4096
+            prompt, return_tensors="pt", truncation=True, max_length=4096
         ).to(self.model.device)
 
         # Generate
@@ -211,14 +197,11 @@ Decompiled C code:
                 max_new_tokens=max_tokens,
                 temperature=0.1,  # Low temperature for deterministic output
                 do_sample=False,  # Greedy decoding for best quality
-                pad_token_id=self.tokenizer.eos_token_id
+                pad_token_id=self.tokenizer.eos_token_id,
             )
 
         # Decode
-        generated_text = self.tokenizer.decode(
-            outputs[0],
-            skip_special_tokens=True
-        )
+        generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
 
         return generated_text
 
@@ -226,20 +209,18 @@ Decompiled C code:
         """Extract C code from model output"""
         # The model should generate code after the prompt
         # Look for code between ```c and ```
-        match = re.search(r'```c\n(.*?)\n```', generated_text, re.DOTALL)
+        match = re.search(r"```c\n(.*?)\n```", generated_text, re.DOTALL)
         if match:
             return match.group(1)
 
         # Fallback: extract everything after "Decompiled C code:"
         match = re.search(
-            r'Decompiled C code:\s*```c?\n(.*)',
-            generated_text,
-            re.DOTALL
+            r"Decompiled C code:\s*```c?\n(.*)", generated_text, re.DOTALL
         )
         if match:
             code = match.group(1)
             # Remove trailing ```
-            code = re.sub(r'\n```\s*$', '', code)
+            code = re.sub(r"\n```\s*$", "", code)
             return code
 
         # Last resort: return everything after the prompt
@@ -259,7 +240,7 @@ Decompiled C code:
                 ["objdump", "-d", binary_path],
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             if result.returncode != 0:
@@ -271,25 +252,25 @@ Decompiled C code:
             current_func = None
             current_asm = []
 
-            for line in result.stdout.split('\n'):
+            for line in result.stdout.split("\n"):
                 # Function header: "0000000000001234 <function_name>:"
-                if re.match(r'^[0-9a-f]+ <(.+)>:\s*$', line):
+                if re.match(r"^[0-9a-f]+ <(.+)>:\s*$", line):
                     # Save previous function
                     if current_func and current_asm:
-                        functions[current_func] = '\n'.join(current_asm)
+                        functions[current_func] = "\n".join(current_asm)
 
                     # Start new function
-                    match = re.match(r'^[0-9a-f]+ <(.+)>:\s*$', line)
+                    match = re.match(r"^[0-9a-f]+ <(.+)>:\s*$", line)
                     current_func = match.group(1)
                     current_asm = []
 
                 # Assembly line
-                elif current_func and re.match(r'^\s+[0-9a-f]+:', line):
+                elif current_func and re.match(r"^\s+[0-9a-f]+:", line):
                     current_asm.append(line.strip())
 
             # Save last function
             if current_func and current_asm:
-                functions[current_func] = '\n'.join(current_asm)
+                functions[current_func] = "\n".join(current_asm)
 
             logger.info(f"Extracted {len(functions)} functions from {binary_path}")
             return functions
@@ -302,7 +283,7 @@ Decompiled C code:
         self,
         original_binary: str,
         decompiled_source: str,
-        optimization_level: str = "O0"
+        optimization_level: str = "O0",
     ) -> float:
         """
         Measure re-executability: can decompiled code be recompiled?
@@ -311,10 +292,7 @@ Decompiled C code:
         """
         try:
             # Compile decompiled source
-            recompiled = await self._recompile(
-                decompiled_source,
-                optimization_level
-            )
+            recompiled = await self._recompile(decompiled_source, optimization_level)
 
             if not recompiled:
                 return 0.0
@@ -328,37 +306,23 @@ Decompiled C code:
             logger.error(f"Re-executability evaluation failed: {e}")
             return 0.0
 
-    async def _recompile(
-        self,
-        source_code: str,
-        opt_level: str
-    ) -> Optional[str]:
+    async def _recompile(self, source_code: str, opt_level: str) -> Optional[str]:
         """Try to compile decompiled code"""
         import tempfile
 
         try:
             # Write source to temp file
-            with tempfile.NamedTemporaryFile(
-                mode='w',
-                suffix='.c',
-                delete=False
-            ) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".c", delete=False) as f:
                 f.write(source_code)
                 source_file = f.name
 
             # Compile
-            output_file = source_file.replace('.c', '.out')
+            output_file = source_file.replace(".c", ".out")
 
             result = subprocess.run(
-                [
-                    "gcc",
-                    f"-{opt_level}",
-                    source_file,
-                    "-o",
-                    output_file
-                ],
+                ["gcc", f"-{opt_level}", source_file, "-o", output_file],
                 capture_output=True,
-                timeout=30
+                timeout=30,
             )
 
             # Cleanup source
@@ -374,11 +338,7 @@ Decompiled C code:
             logger.error(f"Recompilation failed: {e}")
             return None
 
-    async def _test_equivalence(
-        self,
-        original: str,
-        recompiled: str
-    ) -> float:
+    async def _test_equivalence(self, original: str, recompiled: str) -> float:
         """
         Test behavioral equivalence between original and recompiled
 
@@ -396,7 +356,7 @@ Decompiled C code:
                     [original],
                     input=test_input.encode(),
                     capture_output=True,
-                    timeout=2
+                    timeout=2,
                 )
 
                 # Run recompiled
@@ -404,7 +364,7 @@ Decompiled C code:
                     [recompiled],
                     input=test_input.encode(),
                     capture_output=True,
-                    timeout=2
+                    timeout=2,
                 )
 
                 total += 1
@@ -453,15 +413,14 @@ class MultiModelEnsemble:
         if self.gemini is None:
             try:
                 from reveng.ai.gemini_engine import GeminiEngine
+
                 self.gemini = GeminiEngine()
             except:
                 pass
         return self.gemini
 
     async def decompile_with_ensemble(
-        self,
-        binary: str,
-        optimization_level: str = "O2"
+        self, binary: str, optimization_level: str = "O2"
     ) -> str:
         """
         Use ensemble for best decompilation results
@@ -477,8 +436,7 @@ class MultiModelEnsemble:
         # Try LLM4Decompile
         logger.info("Trying LLM4Decompile...")
         llm4d_results = await self.llm4decompile.decompile_binary(
-            binary,
-            optimization_level
+            binary, optimization_level
         )
 
         # Combine all functions
@@ -511,7 +469,9 @@ class MultiModelEnsemble:
         else:
             return llm4d_code  # Fallback to first result
 
-    def _combine_functions(self, function_results: Dict[str, DecompilationResult]) -> str:
+    def _combine_functions(
+        self, function_results: Dict[str, DecompilationResult]
+    ) -> str:
         """Combine function decompilations into single source file"""
         functions_code = []
 
@@ -529,10 +489,7 @@ class MultiModelEnsemble:
         return header + "\n\n".join(functions_code)
 
     async def _evaluate_quality(
-        self,
-        code: str,
-        original_binary: str,
-        opt_level: str
+        self, code: str, original_binary: str, opt_level: str
     ) -> float:
         """
         Evaluate code quality
@@ -549,8 +506,7 @@ class MultiModelEnsemble:
 
         # Test equivalence
         equivalence = await self.llm4decompile._test_equivalence(
-            original_binary,
-            recompiled
+            original_binary, recompiled
         )
 
         # 50% for compiling, 50% for equivalence

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CompileResult:
     """Result of LLVM compilation"""
+
     success: bool
     output: str
     optimization_level: str
@@ -50,7 +51,7 @@ class LLVMOptimizationPipeline:
         """Find LLVM tools"""
         tools = {}
 
-        for tool in ['clang', 'opt', 'llc', 'llvm-dis', 'llvm-as']:
+        for tool in ["clang", "opt", "llc", "llvm-dis", "llvm-as"]:
             path = self._which(tool)
             if path:
                 tools[tool] = path
@@ -62,11 +63,7 @@ class LLVMOptimizationPipeline:
     def _which(self, program: str) -> Optional[str]:
         """Find program in PATH"""
         try:
-            result = subprocess.run(
-                ["which", program],
-                capture_output=True,
-                timeout=5
-            )
+            result = subprocess.run(["which", program], capture_output=True, timeout=5)
             if result.returncode == 0:
                 return result.stdout.decode().strip()
         except:
@@ -79,7 +76,7 @@ class LLVMOptimizationPipeline:
         output: str,
         optimization_level: str = "O2",
         match_original: bool = True,
-        original_binary: Optional[str] = None
+        original_binary: Optional[str] = None,
     ) -> CompileResult:
         """
         Compile using LLVM with optimization level matching
@@ -123,7 +120,7 @@ class LLVMOptimizationPipeline:
                 output=output,
                 optimization_level=optimization_level,
                 equivalence_score=equivalence,
-                ir_file=optimized_ir
+                ir_file=optimized_ir,
             )
 
         except Exception as e:
@@ -132,7 +129,7 @@ class LLVMOptimizationPipeline:
                 success=False,
                 output="",
                 optimization_level=optimization_level,
-                error=str(e)
+                error=str(e),
             )
 
     async def _compile_to_ir(self, source: str, opt_level: str) -> str:
@@ -149,14 +146,10 @@ class LLVMOptimizationPipeline:
             f"-{opt_level}",
             source,
             "-o",
-            ir_file
+            ir_file,
         ]
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            timeout=60
-        )
+        result = subprocess.run(cmd, capture_output=True, timeout=60)
 
         if result.returncode != 0:
             raise RuntimeError(f"Failed to compile to IR: {result.stderr.decode()}")
@@ -184,11 +177,7 @@ class LLVMOptimizationPipeline:
         # Run optimizer
         cmd = [self.llvm_bin["opt"]] + passes + [ir_file, "-S", "-o", optimized]
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            timeout=120
-        )
+        result = subprocess.run(cmd, capture_output=True, timeout=120)
 
         if result.returncode != 0:
             logger.warning(f"Optimization passes failed: {result.stderr.decode()}")
@@ -251,18 +240,9 @@ class LLVMOptimizationPipeline:
         if "llc" not in self.llvm_bin:
             raise RuntimeError("llc not found")
 
-        cmd = [
-            self.llvm_bin["llc"],
-            ir_file,
-            "-o",
-            asm_file
-        ]
+        cmd = [self.llvm_bin["llc"], ir_file, "-o", asm_file]
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            timeout=60
-        )
+        result = subprocess.run(cmd, capture_output=True, timeout=60)
 
         if result.returncode != 0:
             raise RuntimeError(f"Failed to generate assembly: {result.stderr.decode()}")
@@ -276,18 +256,9 @@ class LLVMOptimizationPipeline:
         if "clang" not in self.llvm_bin:
             raise RuntimeError("clang not found")
 
-        cmd = [
-            self.llvm_bin["clang"],
-            asm_file,
-            "-o",
-            output
-        ]
+        cmd = [self.llvm_bin["clang"], asm_file, "-o", output]
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            timeout=60
-        )
+        result = subprocess.run(cmd, capture_output=True, timeout=60)
 
         if result.returncode != 0:
             raise RuntimeError(f"Failed to assemble/link: {result.stderr.decode()}")
@@ -315,9 +286,9 @@ class LLVMOptimizationPipeline:
 
             # Heuristic 2: Check for vectorization (SSE/AVX instructions)
             has_vectorization = (
-                b"xmm" in code or  # SSE
-                b"ymm" in code or  # AVX
-                b"zmm" in code     # AVX-512
+                b"xmm" in code  # SSE
+                or b"ymm" in code  # AVX
+                or b"zmm" in code  # AVX-512
             )
             if has_vectorization:
                 return "O3"
@@ -336,11 +307,7 @@ class LLVMOptimizationPipeline:
             logger.warning(f"Failed to detect optimization level: {e}")
             return "O2"  # Default
 
-    async def _verify_equivalence(
-        self,
-        recompiled: str,
-        original: str
-    ) -> float:
+    async def _verify_equivalence(self, recompiled: str, original: str) -> float:
         """
         Verify behavioral equivalence using test cases
 
@@ -389,10 +356,7 @@ class LLVMOptimizationPipeline:
     def _run_binary(self, binary: str, input_data: str, timeout: int = 2) -> str:
         """Run binary with input and capture output"""
         result = subprocess.run(
-            [binary],
-            input=input_data.encode(),
-            capture_output=True,
-            timeout=timeout
+            [binary], input=input_data.encode(), capture_output=True, timeout=timeout
         )
         return result.stdout.decode()
 
@@ -408,10 +372,7 @@ class PGOCompiler:
         self.llvm = LLVMOptimizationPipeline()
 
     async def compile_with_pgo(
-        self,
-        source: str,
-        output: str,
-        training_inputs: List[str]
+        self, source: str, output: str, training_inputs: List[str]
     ) -> CompileResult:
         """
         Use PGO to optimize for actual runtime behavior
@@ -442,7 +403,7 @@ class PGOCompiler:
                 output=output,
                 optimization_level="O3-PGO",
                 pgo_enabled=True,
-                speedup=speedup
+                speedup=speedup,
             )
 
         except Exception as e:
@@ -452,7 +413,7 @@ class PGOCompiler:
                 output="",
                 optimization_level="O3-PGO",
                 pgo_enabled=False,
-                error=str(e)
+                error=str(e),
             )
 
     async def _compile_instrumented(self, source: str) -> str:
@@ -462,30 +423,20 @@ class PGOCompiler:
         if "clang" not in self.llvm.llvm_bin:
             raise RuntimeError("clang not found")
 
-        cmd = [
-            self.llvm.llvm_bin["clang"],
-            "-fprofile-generate",
-            source,
-            "-o",
-            output
-        ]
+        cmd = [self.llvm.llvm_bin["clang"], "-fprofile-generate", source, "-o", output]
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            timeout=60
-        )
+        result = subprocess.run(cmd, capture_output=True, timeout=60)
 
         if result.returncode != 0:
-            raise RuntimeError(f"Instrumented compilation failed: {result.stderr.decode()}")
+            raise RuntimeError(
+                f"Instrumented compilation failed: {result.stderr.decode()}"
+            )
 
         logger.info(f"Created instrumented binary: {output}")
         return output
 
     async def _collect_profiles(
-        self,
-        instrumented: str,
-        training_inputs: List[str]
+        self, instrumented: str, training_inputs: List[str]
     ) -> str:
         """Run instrumented binary with training data"""
         # Run with each training input
@@ -495,7 +446,7 @@ class PGOCompiler:
                     [instrumented],
                     input=input_data.encode(),
                     capture_output=True,
-                    timeout=10
+                    timeout=10,
                 )
                 logger.debug(f"Collected profile data from input {i+1}")
             except Exception as e:
@@ -520,12 +471,7 @@ class PGOCompiler:
         logger.info(f"Generated profile data: {profile_data}")
         return profile_data
 
-    async def _compile_with_profile(
-        self,
-        source: str,
-        output: str,
-        profile_data: str
-    ):
+    async def _compile_with_profile(self, source: str, output: str, profile_data: str):
         """Recompile with profile data"""
         if "clang" not in self.llvm.llvm_bin:
             raise RuntimeError("clang not found")
@@ -536,14 +482,10 @@ class PGOCompiler:
             "-O3",
             source,
             "-o",
-            output
+            output,
         ]
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            timeout=60
-        )
+        result = subprocess.run(cmd, capture_output=True, timeout=60)
 
         if result.returncode != 0:
             raise RuntimeError(f"PGO compilation failed: {result.stderr.decode()}")
@@ -551,10 +493,7 @@ class PGOCompiler:
         logger.info(f"Created PGO-optimized binary: {output}")
 
     async def _measure_speedup(
-        self,
-        source: str,
-        pgo_binary: str,
-        test_inputs: List[str]
+        self, source: str, pgo_binary: str, test_inputs: List[str]
     ) -> Optional[float]:
         """Measure speedup from PGO"""
         # Compile baseline without PGO
@@ -562,10 +501,7 @@ class PGOCompiler:
 
         try:
             await self.llvm.compile_with_llvm(
-                source,
-                baseline,
-                optimization_level="O3",
-                match_original=False
+                source, baseline, optimization_level="O3", match_original=False
             )
         except:
             return None
@@ -582,7 +518,7 @@ class PGOCompiler:
                     [baseline],
                     input=input_data.encode(),
                     capture_output=True,
-                    timeout=5
+                    timeout=5,
                 )
             except:
                 pass
@@ -597,7 +533,7 @@ class PGOCompiler:
                     [pgo_binary],
                     input=input_data.encode(),
                     capture_output=True,
-                    timeout=5
+                    timeout=5,
                 )
             except:
                 pass

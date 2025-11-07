@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 class Architecture(Enum):
     """Supported target architectures"""
+
     X86 = "x86"
     X86_64 = "x86-64"
     ARM = "arm"
@@ -32,6 +33,7 @@ class Architecture(Enum):
 @dataclass
 class SecurityHardeningOptions:
     """Options for security hardening"""
+
     safe_stack: bool = False  # Stack safety
     address_sanitizer: bool = False  # Memory safety
     control_flow_integrity: bool = False  # CFI
@@ -41,6 +43,7 @@ class SecurityHardeningOptions:
 @dataclass
 class LiftingResult:
     """Result from binary lifting"""
+
     success: bool
     llvm_ir_path: Optional[str] = None
     optimized_ir_path: Optional[str] = None
@@ -70,10 +73,7 @@ class LLVMBinaryLifter:
         """Detect binary architecture"""
         try:
             result = subprocess.run(
-                ["file", self.binary_path],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["file", self.binary_path], capture_output=True, text=True, timeout=5
             )
 
             output = result.stdout.lower()
@@ -102,13 +102,10 @@ class LLVMBinaryLifter:
         """Find LLVM tools"""
         tools = {}
 
-        for tool in ['llvm-dis', 'llvm-as', 'opt', 'llc', 'clang']:
+        for tool in ["llvm-dis", "llvm-as", "opt", "llc", "clang"]:
             try:
                 result = subprocess.run(
-                    ["which", tool],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
+                    ["which", tool], capture_output=True, text=True, timeout=5
                 )
 
                 if result.returncode == 0:
@@ -119,10 +116,7 @@ class LLVMBinaryLifter:
 
         return tools
 
-    async def lift_to_llvm(
-        self,
-        output_path: Optional[str] = None
-    ) -> LiftingResult:
+    async def lift_to_llvm(self, output_path: Optional[str] = None) -> LiftingResult:
         """
         Dynamic binary lifting to LLVM IR
 
@@ -148,23 +142,18 @@ class LLVMBinaryLifter:
             ir_module = self._translate_to_llvm(cfg)
 
             # Step 4: Write IR to file
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 f.write(ir_module)
 
             logger.info(f"Generated LLVM IR: {output_path}")
 
             return LiftingResult(
-                success=True,
-                llvm_ir_path=output_path,
-                architecture=self.architecture
+                success=True, llvm_ir_path=output_path, architecture=self.architecture
             )
 
         except Exception as e:
             logger.error(f"Binary lifting failed: {e}")
-            return LiftingResult(
-                success=False,
-                error=str(e)
-            )
+            return LiftingResult(success=False, error=str(e))
 
     async def _record_execution_trace(self) -> List[Dict]:
         """
@@ -186,17 +175,11 @@ class LLVMBinaryLifter:
             # This is a placeholder - real implementation would use
             # dynamic instrumentation tools
             result = subprocess.run(
-                [self.binary_path],
-                input=b"test\n",
-                capture_output=True,
-                timeout=5
+                [self.binary_path], input=b"test\n", capture_output=True, timeout=5
             )
 
             # Placeholder trace data
-            trace.append({
-                'type': 'execution',
-                'success': result.returncode == 0
-            })
+            trace.append({"type": "execution", "success": result.returncode == 0})
 
         except Exception as e:
             logger.warning(f"Trace recording failed: {e}")
@@ -212,11 +195,7 @@ class LLVMBinaryLifter:
         logger.info("Recovering control flow...")
 
         # Simplified CFG representation
-        cfg = {
-            'entry': 0,
-            'blocks': [],
-            'edges': []
-        }
+        cfg = {"entry": 0, "blocks": [], "edges": []}
 
         # In production, this would:
         # 1. Disassemble binary
@@ -236,12 +215,12 @@ class LLVMBinaryLifter:
 
         # Generate LLVM IR module
         ir = "; ModuleID = 'lifted_binary'\n"
-        ir += "target datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"\n"
+        ir += 'target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128"\n'
 
         if self.architecture == "x86-64":
-            ir += "target triple = \"x86_64-unknown-linux-gnu\"\n\n"
+            ir += 'target triple = "x86_64-unknown-linux-gnu"\n\n'
         elif self.architecture == "arm64":
-            ir += "target triple = \"aarch64-unknown-linux-gnu\"\n\n"
+            ir += 'target triple = "aarch64-unknown-linux-gnu"\n\n'
 
         # Add placeholder function
         # In production, this would translate actual instructions
@@ -254,9 +233,7 @@ class LLVMBinaryLifter:
         return ir
 
     async def apply_llvm_passes(
-        self,
-        ir_path: str,
-        optimization_level: str = "O2"
+        self, ir_path: str, optimization_level: str = "O2"
     ) -> LiftingResult:
         """
         Apply LLVM optimization passes for deobfuscation
@@ -269,11 +246,8 @@ class LLVMBinaryLifter:
         """
         logger.info(f"Applying LLVM passes ({optimization_level})...")
 
-        if 'opt' not in self.llvm_tools:
-            return LiftingResult(
-                success=False,
-                error="LLVM opt tool not found"
-            )
+        if "opt" not in self.llvm_tools:
+            return LiftingResult(success=False, error="LLVM opt tool not found")
 
         try:
             optimized_path = ir_path.replace(".ll", ".opt.ll")
@@ -282,20 +256,13 @@ class LLVMBinaryLifter:
             passes = self._get_deobfuscation_passes()
 
             # Run optimizer
-            cmd = [
-                self.llvm_tools['opt']
-            ] + passes + [
-                ir_path,
-                "-S",
-                "-o",
-                optimized_path
-            ]
-
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                timeout=60
+            cmd = (
+                [self.llvm_tools["opt"]]
+                + passes
+                + [ir_path, "-S", "-o", optimized_path]
             )
+
+            result = subprocess.run(cmd, capture_output=True, timeout=60)
 
             if result.returncode != 0:
                 raise RuntimeError(f"Optimization failed: {result.stderr.decode()}")
@@ -306,15 +273,12 @@ class LLVMBinaryLifter:
                 success=True,
                 llvm_ir_path=ir_path,
                 optimized_ir_path=optimized_path,
-                architecture=self.architecture
+                architecture=self.architecture,
             )
 
         except Exception as e:
             logger.error(f"LLVM optimization failed: {e}")
-            return LiftingResult(
-                success=False,
-                error=str(e)
-            )
+            return LiftingResult(success=False, error=str(e))
 
     def _get_deobfuscation_passes(self) -> List[str]:
         """
@@ -336,10 +300,7 @@ class LLVMBinaryLifter:
         ]
 
     async def cross_compile(
-        self,
-        ir_path: str,
-        target_arch: Architecture,
-        output_path: Optional[str] = None
+        self, ir_path: str, target_arch: Architecture, output_path: Optional[str] = None
     ) -> LiftingResult:
         """
         Cross-compile to different architecture
@@ -357,47 +318,38 @@ class LLVMBinaryLifter:
 
         logger.info(f"Cross-compiling to {target_arch.value}")
 
-        if 'llc' not in self.llvm_tools or 'clang' not in self.llvm_tools:
-            return LiftingResult(
-                success=False,
-                error="LLVM tools not available"
-            )
+        if "llc" not in self.llvm_tools or "clang" not in self.llvm_tools:
+            return LiftingResult(success=False, error="LLVM tools not available")
 
         try:
             # Step 1: Compile IR to assembly for target arch
             asm_path = ir_path.replace(".ll", f".{target_arch.value}.s")
 
             llc_cmd = [
-                self.llvm_tools['llc'],
+                self.llvm_tools["llc"],
                 f"-march={target_arch.value}",
                 ir_path,
                 "-o",
-                asm_path
+                asm_path,
             ]
 
-            result = subprocess.run(
-                llc_cmd,
-                capture_output=True,
-                timeout=60
-            )
+            result = subprocess.run(llc_cmd, capture_output=True, timeout=60)
 
             if result.returncode != 0:
-                raise RuntimeError(f"Assembly generation failed: {result.stderr.decode()}")
+                raise RuntimeError(
+                    f"Assembly generation failed: {result.stderr.decode()}"
+                )
 
             # Step 2: Assemble and link
             clang_cmd = [
-                self.llvm_tools['clang'],
+                self.llvm_tools["clang"],
                 f"--target={self._get_triple(target_arch)}",
                 asm_path,
                 "-o",
-                output_path
+                output_path,
             ]
 
-            result = subprocess.run(
-                clang_cmd,
-                capture_output=True,
-                timeout=60
-            )
+            result = subprocess.run(clang_cmd, capture_output=True, timeout=60)
 
             if result.returncode != 0:
                 raise RuntimeError(f"Linking failed: {result.stderr.decode()}")
@@ -408,15 +360,12 @@ class LLVMBinaryLifter:
                 success=True,
                 llvm_ir_path=ir_path,
                 target_binary_path=output_path,
-                architecture=target_arch.value
+                architecture=target_arch.value,
             )
 
         except Exception as e:
             logger.error(f"Cross-compilation failed: {e}")
-            return LiftingResult(
-                success=False,
-                error=str(e)
-            )
+            return LiftingResult(success=False, error=str(e))
 
     def _get_triple(self, arch: Architecture) -> str:
         """Get LLVM target triple for architecture"""
@@ -434,7 +383,7 @@ class LLVMBinaryLifter:
         self,
         ir_path: str,
         options: SecurityHardeningOptions,
-        output_path: Optional[str] = None
+        output_path: Optional[str] = None,
     ) -> LiftingResult:
         """
         Apply LLVM security passes: SafeStack, AddressSanitizer, CFI
@@ -452,11 +401,8 @@ class LLVMBinaryLifter:
 
         logger.info("Applying security hardening...")
 
-        if 'opt' not in self.llvm_tools or 'clang' not in self.llvm_tools:
-            return LiftingResult(
-                success=False,
-                error="LLVM tools not available"
-            )
+        if "opt" not in self.llvm_tools or "clang" not in self.llvm_tools:
+            return LiftingResult(success=False, error="LLVM tools not available")
 
         try:
             # Apply security passes to IR
@@ -481,42 +427,35 @@ class LLVMBinaryLifter:
 
             # Apply passes if any
             if passes:
-                opt_cmd = [
-                    self.llvm_tools['opt']
-                ] + passes + [
-                    ir_path,
-                    "-S",
-                    "-o",
-                    hardened_ir
-                ]
-
-                result = subprocess.run(
-                    opt_cmd,
-                    capture_output=True,
-                    timeout=60
+                opt_cmd = (
+                    [self.llvm_tools["opt"]]
+                    + passes
+                    + [ir_path, "-S", "-o", hardened_ir]
                 )
 
+                result = subprocess.run(opt_cmd, capture_output=True, timeout=60)
+
                 if result.returncode != 0:
-                    raise RuntimeError(f"Hardening passes failed: {result.stderr.decode()}")
+                    raise RuntimeError(
+                        f"Hardening passes failed: {result.stderr.decode()}"
+                    )
             else:
                 hardened_ir = ir_path
 
             # Compile with security flags
             clang_cmd = [
-                self.llvm_tools['clang'],
+                self.llvm_tools["clang"],
                 hardened_ir,
                 "-o",
-                output_path
+                output_path,
             ] + clang_flags
 
-            result = subprocess.run(
-                clang_cmd,
-                capture_output=True,
-                timeout=60
-            )
+            result = subprocess.run(clang_cmd, capture_output=True, timeout=60)
 
             if result.returncode != 0:
-                logger.warning(f"Some security features may not be available: {result.stderr.decode()}")
+                logger.warning(
+                    f"Some security features may not be available: {result.stderr.decode()}"
+                )
                 # Continue anyway
 
             logger.info(f"Hardened binary: {output_path}")
@@ -525,12 +464,9 @@ class LLVMBinaryLifter:
                 success=True,
                 llvm_ir_path=hardened_ir,
                 target_binary_path=output_path,
-                architecture=self.architecture
+                architecture=self.architecture,
             )
 
         except Exception as e:
             logger.error(f"Security hardening failed: {e}")
-            return LiftingResult(
-                success=False,
-                error=str(e)
-            )
+            return LiftingResult(success=False, error=str(e))

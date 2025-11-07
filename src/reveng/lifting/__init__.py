@@ -8,11 +8,7 @@ Cross-architecture binary transformation:
 - Security hardening without source code
 """
 
-from .llvm_lifter import (
-    LLVMBinaryLifter,
-    LiftingResult,
-    SecurityHardeningOptions
-)
+from .llvm_lifter import LLVMBinaryLifter, LiftingResult, SecurityHardeningOptions
 
 __all__ = [
     "LLVMBinaryLifter",

@@ -54,6 +54,7 @@ class GeminiEngine:
         # Try to import google-generativeai
         try:
             import google.generativeai as genai
+
             self.genai = genai
             if self.api_key:
                 genai.configure(api_key=self.api_key)
@@ -248,9 +249,13 @@ class GeminiEngine:
         context_str = ""
         if context:
             if "imports" in context:
-                context_str += f"\n\nImported functions:\n{', '.join(context['imports'][:20])}"
+                context_str += (
+                    f"\n\nImported functions:\n{', '.join(context['imports'][:20])}"
+                )
             if "strings" in context:
-                context_str += f"\n\nString constants:\n{', '.join(context['strings'][:20])}"
+                context_str += (
+                    f"\n\nString constants:\n{', '.join(context['strings'][:20])}"
+                )
 
         return f"""You are an expert reverse engineer. Reconstruct the following decompiled function into clean, readable source code.
 
@@ -352,9 +357,7 @@ Output format (JSON):
 }}
 """
 
-    def _create_question_prompt(
-        self, question: str, context: Dict[str, Any]
-    ) -> str:
+    def _create_question_prompt(self, question: str, context: Dict[str, Any]) -> str:
         """Create prompt for question answering."""
         return f"""You are a reverse engineering expert. Answer this question about the binary analysis.
 

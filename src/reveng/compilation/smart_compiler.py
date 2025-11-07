@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CompileError:
     """Represents a compilation error"""
+
     file: str
     line: int
     column: int
@@ -34,6 +35,7 @@ class CompileError:
 @dataclass
 class CompileResult:
     """Result of compilation with error recovery"""
+
     success: bool
     output: Optional[str] = None
     error: Optional[str] = None
@@ -112,6 +114,7 @@ class SmartCompiler:
         if self.gemini is None:
             try:
                 from reveng.ai.gemini_engine import GeminiEngine
+
                 self.gemini = GeminiEngine()
             except Exception as e:
                 logger.warning(f"Failed to load Gemini engine: {e}")
@@ -123,7 +126,7 @@ class SmartCompiler:
         source_path: str,
         output: str,
         compiler: str = "gcc",
-        flags: List[str] = None
+        flags: List[str] = None,
     ) -> CompileResult:
         """
         Compile with automatic error fixing
@@ -153,17 +156,12 @@ class SmartCompiler:
             if result["success"]:
                 logger.info(f"✅ Compilation succeeded on attempt {attempt + 1}")
                 return CompileResult(
-                    success=True,
-                    output=output,
-                    attempts=attempts,
-                    errors_fixed=attempt
+                    success=True, output=output, attempts=attempts, errors_fixed=attempt
                 )
 
             # Parse errors
             errors = self._parse_errors(result["stderr"])
-            logger.warning(
-                f"⚠️  Attempt {attempt + 1} failed with {len(errors)} errors"
-            )
+            logger.warning(f"⚠️  Attempt {attempt + 1} failed with {len(errors)} errors")
 
             # Log first few errors for debugging
             for err in errors[:3]:
@@ -171,35 +169,37 @@ class SmartCompiler:
 
             # Try to fix errors
             try:
-                with open(current_source, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(current_source, "r", encoding="utf-8", errors="ignore") as f:
                     source_code = f.read()
 
                 fixed_source = await self._fix_compilation_errors(
-                    source_code,
-                    errors,
-                    attempts
+                    source_code, errors, attempts
                 )
 
                 # Save fixed source to temp file
                 temp_path = f"{source_path}.fix{attempt}.c"
-                with open(temp_path, 'w', encoding='utf-8') as f:
+                with open(temp_path, "w", encoding="utf-8") as f:
                     f.write(fixed_source)
 
                 temp_files.append(temp_path)
                 current_source = temp_path
 
-                attempts.append({
-                    "attempt": attempt + 1,
-                    "errors": [e.__dict__ for e in errors],
-                    "fixes_applied": "AI fixes" if self._get_gemini() else "heuristic fixes"
-                })
+                attempts.append(
+                    {
+                        "attempt": attempt + 1,
+                        "errors": [e.__dict__ for e in errors],
+                        "fixes_applied": (
+                            "AI fixes" if self._get_gemini() else "heuristic fixes"
+                        ),
+                    }
+                )
 
             except Exception as e:
                 logger.error(f"Failed to fix errors: {e}")
                 break
 
         # All attempts failed
-        final_errors = errors if 'errors' in locals() else []
+        final_errors = errors if "errors" in locals() else []
 
         # Cleanup temp files
         for temp_file in temp_files:
@@ -212,31 +212,23 @@ class SmartCompiler:
             success=False,
             error=f"Failed after {self.max_retries} attempts",
             attempts=attempts,
-            final_errors=final_errors
+            final_errors=final_errors,
         )
 
     def _try_compile(
-        self,
-        source: str,
-        output: str,
-        compiler: str,
-        flags: List[str]
+        self, source: str, output: str, compiler: str, flags: List[str]
     ) -> Dict:
         """Try to compile, return result dict"""
         cmd = [compiler, source, "-o", output] + flags
 
         try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                timeout=60
-            )
+            result = subprocess.run(cmd, capture_output=True, timeout=60)
 
             return {
                 "success": result.returncode == 0,
                 "stdout": result.stdout.decode(),
                 "stderr": result.stderr.decode(),
-                "returncode": result.returncode
+                "returncode": result.returncode,
             }
 
         except subprocess.TimeoutExpired:
@@ -244,7 +236,7 @@ class SmartCompiler:
                 "success": False,
                 "stdout": "",
                 "stderr": "Compilation timeout",
-                "returncode": -1
+                "returncode": -1,
             }
 
     def _parse_errors(self, stderr: str) -> List[CompileError]:
@@ -252,9 +244,9 @@ class SmartCompiler:
         errors = []
 
         # Pattern: file.c:line:column: error: message
-        pattern = r'([^:]+):(\d+):(\d+):\s+(error|warning):\s+(.+)'
+        pattern = r"([^:]+):(\d+):(\d+):\s+(error|warning):\s+(.+)"
 
-        for line in stderr.split('\n'):
+        for line in stderr.split("\n"):
             match = re.match(pattern, line)
             if match:
                 file, line_num, col, severity, message = match.groups()
@@ -262,14 +254,16 @@ class SmartCompiler:
                 # Classify error type
                 error_type = self._classify_error(message)
 
-                errors.append(CompileError(
-                    file=file,
-                    line=int(line_num),
-                    column=int(col),
-                    message=message,
-                    error_type=error_type,
-                    severity=severity
-                ))
+                errors.append(
+                    CompileError(
+                        file=file,
+                        line=int(line_num),
+                        column=int(col),
+                        message=message,
+                        error_type=error_type,
+                        severity=severity,
+                    )
+                )
 
         return errors
 
@@ -289,10 +283,7 @@ class SmartCompiler:
             return "other"
 
     async def _fix_compilation_errors(
-        self,
-        source: str,
-        errors: List[CompileError],
-        previous_attempts: List[Dict]
+        self, source: str, errors: List[CompileError], previous_attempts: List[Dict]
     ) -> str:
         """
         Use heuristics and AI to automatically fix compilation errors
@@ -305,7 +296,9 @@ class SmartCompiler:
 
         # Fix missing headers (heuristic)
         if missing_headers or undefined_symbols:
-            source = self._add_missing_headers(source, missing_headers + undefined_symbols)
+            source = self._add_missing_headers(
+                source, missing_headers + undefined_symbols
+            )
 
         # Fix syntax errors (heuristic)
         if syntax_errors:
@@ -327,11 +320,7 @@ class SmartCompiler:
 
         return source
 
-    def _add_missing_headers(
-        self,
-        source: str,
-        errors: List[CompileError]
-    ) -> str:
+    def _add_missing_headers(self, source: str, errors: List[CompileError]) -> str:
         """
         Add missing #include headers
         """
@@ -352,7 +341,7 @@ class SmartCompiler:
             return source
 
         # Check which headers are already included
-        existing_includes = set(re.findall(r'#include\s+<([^>]+)>', source))
+        existing_includes = set(re.findall(r"#include\s+<([^>]+)>", source))
         new_headers = headers_to_add - existing_includes
 
         if new_headers:
@@ -360,7 +349,7 @@ class SmartCompiler:
             header_lines = "\n".join(f"#include <{h}>" for h in sorted(new_headers))
 
             # Find position to insert (after existing includes)
-            include_match = re.search(r'((?:#include[^\n]+\n)+)', source)
+            include_match = re.search(r"((?:#include[^\n]+\n)+)", source)
             if include_match:
                 # Insert after existing includes
                 pos = include_match.end()
@@ -375,15 +364,11 @@ class SmartCompiler:
         """Find which header provides a symbol"""
         return self.symbol_to_header.get(symbol)
 
-    def _fix_syntax_errors(
-        self,
-        source: str,
-        errors: List[CompileError]
-    ) -> str:
+    def _fix_syntax_errors(self, source: str, errors: List[CompileError]) -> str:
         """
         Fix common syntax errors heuristically
         """
-        lines = source.split('\n')
+        lines = source.split("\n")
 
         for error in errors:
             if error.line > len(lines):
@@ -395,24 +380,20 @@ class SmartCompiler:
             # Fix missing semicolons
             if "expected ';'" in error.message:
                 # Add semicolon at end of line if not already there
-                if not line.rstrip().endswith(';'):
-                    lines[line_idx] = line.rstrip() + ';'
+                if not line.rstrip().endswith(";"):
+                    lines[line_idx] = line.rstrip() + ";"
 
             # Fix missing braces
             elif "expected '}'" in error.message:
-                lines[line_idx] = line + '}'
+                lines[line_idx] = line + "}"
 
             # Fix missing closing parenthesis
             elif "expected ')'" in error.message:
-                lines[line_idx] = line + ')'
+                lines[line_idx] = line + ")"
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
-    async def _fix_type_errors_ai(
-        self,
-        source: str,
-        errors: List[CompileError]
-    ) -> str:
+    async def _fix_type_errors_ai(self, source: str, errors: List[CompileError]) -> str:
         """
         Use AI to fix type errors
         """
@@ -422,8 +403,7 @@ class SmartCompiler:
 
         # Format errors for AI
         error_desc = "\n".join(
-            f"Line {e.line}: {e.message}"
-            for e in errors[:5]  # Limit to first 5 errors
+            f"Line {e.line}: {e.message}" for e in errors[:5]  # Limit to first 5 errors
         )
 
         prompt = f"""Fix these C compilation type errors:
@@ -443,7 +423,7 @@ Keep all functionality the same, only fix type issues."""
             fixed = await gemini.generate_code(prompt)
 
             # Extract code from response if it contains markdown
-            code_match = re.search(r'```c?\n(.*?)\n```', fixed, re.DOTALL)
+            code_match = re.search(r"```c?\n(.*?)\n```", fixed, re.DOTALL)
             if code_match:
                 fixed = code_match.group(1)
 
@@ -454,9 +434,7 @@ Keep all functionality the same, only fix type issues."""
             return source
 
     async def _comprehensive_ai_fix(
-        self,
-        source: str,
-        errors: List[CompileError]
+        self, source: str, errors: List[CompileError]
     ) -> str:
         """
         Use AI for comprehensive error fixing when many errors exist
@@ -485,7 +463,7 @@ Output ONLY the fixed code, no explanations."""
             fixed = await gemini.generate_code(prompt)
 
             # Extract code
-            code_match = re.search(r'```c?\n(.*?)\n```', fixed, re.DOTALL)
+            code_match = re.search(r"```c?\n(.*?)\n```", fixed, re.DOTALL)
             if code_match:
                 fixed = code_match.group(1)
 
@@ -511,38 +489,40 @@ Output ONLY the fixed code, no explanations."""
             issues.append(f"Potentially undefined symbols: {', '.join(undefined)}")
 
         # Check for unbalanced braces
-        if source.count('{') != source.count('}'):
+        if source.count("{") != source.count("}"):
             issues.append("Unbalanced braces")
 
         # Check for unbalanced parentheses
-        if source.count('(') != source.count(')'):
+        if source.count("(") != source.count(")"):
             issues.append("Unbalanced parentheses")
 
         return issues
 
     def _has_main_function(self, source: str) -> bool:
         """Check if source has main function"""
-        return bool(re.search(r'\bmain\s*\(', source))
+        return bool(re.search(r"\bmain\s*\(", source))
 
     def _find_undefined_symbols(self, source: str) -> Set[str]:
         """Find potentially undefined symbols"""
         # Extract function calls
-        function_calls = set(re.findall(r'\b(\w+)\s*\(', source))
+        function_calls = set(re.findall(r"\b(\w+)\s*\(", source))
 
         # Filter out likely defined functions
-        defined_functions = set(re.findall(
-            r'(?:void|int|char|float|double|long|short|static|extern)\s+(\w+)\s*\(',
-            source
-        ))
+        defined_functions = set(
+            re.findall(
+                r"(?:void|int|char|float|double|long|short|static|extern)\s+(\w+)\s*\(",
+                source,
+            )
+        )
 
         # Add main to defined
-        defined_functions.add('main')
+        defined_functions.add("main")
 
         # Find undefined
         undefined = function_calls - defined_functions
 
         # Filter out keywords and common functions
-        keywords = {'if', 'while', 'for', 'switch', 'return', 'sizeof', 'typeof'}
+        keywords = {"if", "while", "for", "switch", "return", "sizeof", "typeof"}
         undefined -= keywords
 
         return undefined
@@ -586,7 +566,7 @@ Output ONLY the fixed code, no explanations."""
         )
 
         # Insert after includes
-        include_match = re.search(r'((?:#include[^\n]+\n)+)', source)
+        include_match = re.search(r"((?:#include[^\n]+\n)+)", source)
         if include_match:
             pos = include_match.end()
             source = source[:pos] + "\n" + declarations + "\n\n" + source[pos:]

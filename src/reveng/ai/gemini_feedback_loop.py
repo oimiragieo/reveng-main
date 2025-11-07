@@ -70,7 +70,9 @@ class GeminiFeedbackLoop:
         logger.info("🔄 Starting Gemini Feedback Loop...")
 
         if not self.gemini.is_available():
-            logger.error("❌ Gemini not available. Set GEMINI_API_KEY environment variable.")
+            logger.error(
+                "❌ Gemini not available. Set GEMINI_API_KEY environment variable."
+            )
             return
 
         iteration = 0
@@ -95,7 +97,9 @@ class GeminiFeedbackLoop:
                 await self._generate_feedback_report(iteration, state, feedback)
 
                 # Wait before next iteration
-                logger.info(f"\n⏰ Next iteration in {self.interval_minutes} minutes...")
+                logger.info(
+                    f"\n⏰ Next iteration in {self.interval_minutes} minutes..."
+                )
                 await asyncio.sleep(self.interval_minutes * 60)
 
             except KeyboardInterrupt:
@@ -130,7 +134,8 @@ class GeminiFeedbackLoop:
         # Check recent reconstruction results
         analysis_dirs = list(self.output_dir.glob("analysis_*"))
         state["recent_results"] = [
-            str(d.name) for d in sorted(analysis_dirs, key=lambda x: x.stat().st_mtime)[-5:]
+            str(d.name)
+            for d in sorted(analysis_dirs, key=lambda x: x.stat().st_mtime)[-5:]
         ]
 
         # Check for errors in logs
@@ -243,8 +248,14 @@ Be specific and actionable. Focus on high-impact improvements.
                 priority = action.get("priority", "unknown")
                 effort = action.get("effort", "unknown")
                 desc = action.get("action", "")
-                icon = "🔴" if priority == "critical" else "🟡" if priority == "high" else "🟢"
-                logger.info(f"    {icon} [{priority.upper()}] {desc} (effort: {effort})")
+                icon = (
+                    "🔴"
+                    if priority == "critical"
+                    else "🟡" if priority == "high" else "🟢"
+                )
+                logger.info(
+                    f"    {icon} [{priority.upper()}] {desc} (effort: {effort})"
+                )
 
         # Auto-apply safe improvements (if enabled)
         if self.auto_apply:
@@ -296,7 +307,9 @@ Be specific and actionable. Focus on high-impact improvements.
 
         report.append("## Project State")
         report.append("")
-        report.append(f"- Python Files: {state['codebase_stats'].get('python_files', 0)}")
+        report.append(
+            f"- Python Files: {state['codebase_stats'].get('python_files', 0)}"
+        )
         report.append(f"- Total LOC: ~{state['codebase_stats'].get('total_loc', 0):,}")
         report.append(f"- Recent Analyses: {len(state['recent_results'])}")
         report.append(f"- Recent Errors: {len(state['errors'])}")

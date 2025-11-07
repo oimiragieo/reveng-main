@@ -103,6 +103,39 @@ pyelftools>=0.29,<1.0.0  # ELF binary parsing
 scipy>=1.10.0,<2.0.0  # Already listed above, needed for Hungarian algorithm
 
 # =============================================================================
+# v5.0 NEW FEATURES - Next-generation reverse engineering capabilities
+# =============================================================================
+
+# Differential Fuzzing and Validation
+# Note: AFL++ and libFuzzer require system installation
+# Linux: sudo apt install afl++ clang-tools
+# macOS: brew install afl-fuzz
+
+# Exploit Chain Generation
+# networkx>=3.1,<4.0.0  # Already listed above for graph-based analysis
+# Note: ROPgadget tool recommended - pip install ropgadget
+
+# Intel PT Hardware Analysis
+# Note: Requires Intel CPU with PT support and Linux kernel 4.1+
+# Install perf tools: sudo apt install linux-tools-generic
+# Install libipt: sudo apt install libipt-dev
+
+# LLM-Powered Deobfuscation
+openai>=1.0.0  # OpenAI GPT-4 API client
+anthropic>=0.7.0  # Anthropic Claude API client
+
+# Deep Learning Binary Classification
+# torch>=2.0.0  # Already listed above
+# transformers>=4.30.0  # Already listed above
+
+# Cloud Platform (Kubernetes-based)
+kubernetes>=28.0.0  # Kubernetes Python client
+boto3>=1.28.0  # AWS SDK for cloud storage
+
+# JIT Adaptive Compilation
+# Uses existing LLVM toolchain
+
+# =============================================================================
 # SYSTEM REQUIREMENTS (NOT Python packages)
 # =============================================================================
 
@@ -144,6 +177,23 @@ scipy>=1.10.0,<2.0.0  # Already listed above, needed for Hungarian algorithm
 #    - cppcheck: Static analysis
 #    - black: Python code formatting (pip install black)
 #    - pylint: Python linting (pip install pylint)
+#    - mypy: Python type checking (pip install mypy)
+
+# 8. v5.0 NEW: Fuzzing and Exploitation Tools
+#    - AFL++: Coverage-guided fuzzing
+#      Linux: sudo apt install afl++
+#      macOS: brew install afl-fuzz
+#    - ROPgadget: ROP chain generation
+#      pip install ropgadget
+#    - pwntools: Exploit development (optional)
+#      pip install pwntools
+
+# 9. v5.0 NEW: Hardware Analysis Tools
+#    - perf: Linux performance analysis with Intel PT
+#      Linux: sudo apt install linux-tools-$(uname -r)
+#    - Intel Processor Trace support requires:
+#      - Intel CPU with PT support (most modern Intel CPUs)
+#      - Linux kernel 4.1+ with PT enabled
 
 # =============================================================================
 # INSTALLATION INSTRUCTIONS

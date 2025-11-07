@@ -13,7 +13,7 @@ from .symbolic_execution_engine import (
     SymbolicExecutionEngine,
     SymbolicVulnerability,
     ExploitInput,
-    PathExplorationResult
+    PathExplorationResult,
 )
 
 __all__ = [

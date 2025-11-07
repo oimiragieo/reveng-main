@@ -224,9 +224,7 @@ class PackerDetector:
 
             # Read entry point RVA
             entrypoint_offset = pe_offset + 40
-            struct.unpack(
-                "<I", data[entrypoint_offset : entrypoint_offset + 4]
-            )[0]
+            struct.unpack("<I", data[entrypoint_offset : entrypoint_offset + 4])[0]
 
             # Check if entry point is in unusual section
             # (Would need full section parsing for accurate check)

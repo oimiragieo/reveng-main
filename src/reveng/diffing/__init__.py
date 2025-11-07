@@ -12,7 +12,7 @@ from .semantic_differ import (
     SemanticBinaryDiffer,
     DiffResult,
     GraphAlignment,
-    SecurityImpact
+    SecurityImpact,
 )
 
 __all__ = [

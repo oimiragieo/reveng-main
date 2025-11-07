@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ExploitInput:
     """Generated exploit input for a vulnerability"""
+
     vulnerability_type: str
     input_data: bytes
     expected_outcome: str  # 'crash', 'arbitrary_write', 'arbitrary_read', etc.
@@ -31,18 +32,20 @@ class ExploitInput:
 @dataclass
 class SymbolicVulnerability:
     """Vulnerability discovered through symbolic execution"""
+
     type: str  # 'buffer_overflow', 'use_after_free', 'null_deref', etc.
     address: int
     function_name: str
     description: str
     exploit_input: Optional[ExploitInput] = None
-    severity: str = 'medium'  # 'critical', 'high', 'medium', 'low'
+    severity: str = "medium"  # 'critical', 'high', 'medium', 'low'
     cwe_id: Optional[str] = None
 
 
 @dataclass
 class PathExplorationResult:
     """Results from symbolic path exploration"""
+
     paths_explored: int
     vulnerabilities: List[SymbolicVulnerability]
     code_coverage: float
@@ -81,7 +84,7 @@ class SymbolicExecutionEngine:
             self.project = angr.Project(
                 self.binary_path,
                 auto_load_libs=self.auto_load_libs,
-                load_options={'auto_load_libs': False}  # Faster analysis
+                load_options={"auto_load_libs": False},  # Faster analysis
             )
 
             # Build control flow graph
@@ -92,9 +95,7 @@ class SymbolicExecutionEngine:
             logger.info("Binary loaded successfully")
 
         except ImportError:
-            logger.error(
-                "angr not installed. Install with: pip install angr"
-            )
+            logger.error("angr not installed. Install with: pip install angr")
             raise
 
         except Exception as e:
@@ -105,7 +106,7 @@ class SymbolicExecutionEngine:
         self,
         target_function: Optional[str] = None,
         max_depth: int = 100,
-        timeout: int = 300
+        timeout: int = 300,
     ) -> PathExplorationResult:
         """
         Symbolically execute all paths in the binary or a specific function
@@ -125,7 +126,9 @@ class SymbolicExecutionEngine:
 
         start_time = time.time()
 
-        logger.info(f"Starting symbolic execution (max_depth={max_depth}, timeout={timeout}s)")
+        logger.info(
+            f"Starting symbolic execution (max_depth={max_depth}, timeout={timeout}s)"
+        )
 
         # Find target function
         if target_function:
@@ -137,7 +140,7 @@ class SymbolicExecutionEngine:
                     vulnerabilities=[],
                     code_coverage=0.0,
                     execution_time=0.0,
-                    constraints_solved=0
+                    constraints_solved=0,
                 )
             entry_addr = func.addr
         else:
@@ -194,13 +197,10 @@ class SymbolicExecutionEngine:
             vulnerabilities=vulnerabilities,
             code_coverage=coverage,
             execution_time=execution_time,
-            constraints_solved=paths_explored
+            constraints_solved=paths_explored,
         )
 
-    def _check_state_for_vulnerabilities(
-        self,
-        state
-    ) -> List[SymbolicVulnerability]:
+    def _check_state_for_vulnerabilities(self, state) -> List[SymbolicVulnerability]:
         """
         Check a symbolic state for vulnerabilities
 
@@ -218,43 +218,45 @@ class SymbolicExecutionEngine:
             # Check for buffer overflow
             if self._is_buffer_overflow(state):
                 vuln = SymbolicVulnerability(
-                    type='buffer_overflow',
+                    type="buffer_overflow",
                     address=state.addr,
                     function_name=self._get_function_name(state.addr),
-                    description='Potential buffer overflow detected',
-                    severity='critical',
-                    cwe_id='CWE-120'
+                    description="Potential buffer overflow detected",
+                    severity="critical",
+                    cwe_id="CWE-120",
                 )
 
                 # Generate exploit input
-                vuln.exploit_input = self._generate_exploit_input(state, 'buffer_overflow')
+                vuln.exploit_input = self._generate_exploit_input(
+                    state, "buffer_overflow"
+                )
 
                 vulnerabilities.append(vuln)
 
             # Check for null pointer dereference
             if self._is_null_deref(state):
                 vuln = SymbolicVulnerability(
-                    type='null_pointer_dereference',
+                    type="null_pointer_dereference",
                     address=state.addr,
                     function_name=self._get_function_name(state.addr),
-                    description='Null pointer dereference detected',
-                    severity='high',
-                    cwe_id='CWE-476'
+                    description="Null pointer dereference detected",
+                    severity="high",
+                    cwe_id="CWE-476",
                 )
 
-                vuln.exploit_input = self._generate_exploit_input(state, 'null_deref')
+                vuln.exploit_input = self._generate_exploit_input(state, "null_deref")
 
                 vulnerabilities.append(vuln)
 
             # Check for division by zero
             if self._is_divide_by_zero(state):
                 vuln = SymbolicVulnerability(
-                    type='division_by_zero',
+                    type="division_by_zero",
                     address=state.addr,
                     function_name=self._get_function_name(state.addr),
-                    description='Division by zero detected',
-                    severity='medium',
-                    cwe_id='CWE-369'
+                    description="Division by zero detected",
+                    severity="medium",
+                    cwe_id="CWE-369",
                 )
 
                 vulnerabilities.append(vuln)
@@ -296,7 +298,7 @@ class SymbolicExecutionEngine:
         try:
             # Check if any memory access uses a NULL pointer
             for action in state.history.actions:
-                if action.type == 'mem' and action.action == 'read':
+                if action.type == "mem" and action.action == "read":
                     addr = action.addr
                     if state.solver.satisfiable(extra_constraints=[addr == 0]):
                         return True
@@ -311,7 +313,7 @@ class SymbolicExecutionEngine:
         try:
             # Check recent operations
             for action in state.history.actions:
-                if action.type == 'operation' and action.action in ['Div', 'Mod']:
+                if action.type == "operation" and action.action in ["Div", "Mod"]:
                     divisor = action.args[1]  # Second argument is divisor
                     if state.solver.satisfiable(extra_constraints=[divisor == 0]):
                         return True
@@ -321,11 +323,7 @@ class SymbolicExecutionEngine:
 
         return False
 
-    def _generate_exploit_input(
-        self,
-        state,
-        vuln_type: str
-    ) -> ExploitInput:
+    def _generate_exploit_input(self, state, vuln_type: str) -> ExploitInput:
         """
         Generate concrete exploit input that triggers the vulnerability
 
@@ -343,9 +341,11 @@ class SymbolicExecutionEngine:
                 return ExploitInput(
                     vulnerability_type=vuln_type,
                     input_data=input_data,
-                    expected_outcome='crash' if vuln_type == 'buffer_overflow' else 'undefined',
+                    expected_outcome=(
+                        "crash" if vuln_type == "buffer_overflow" else "undefined"
+                    ),
                     constraints=[str(c) for c in state.solver.constraints[:5]],
-                    confidence=0.8
+                    confidence=0.8,
                 )
 
         except Exception as e:
@@ -354,9 +354,9 @@ class SymbolicExecutionEngine:
         # Fallback
         return ExploitInput(
             vulnerability_type=vuln_type,
-            input_data=b'A' * 100,  # Generic overflow pattern
-            expected_outcome='unknown',
-            confidence=0.3
+            input_data=b"A" * 100,  # Generic overflow pattern
+            expected_outcome="unknown",
+            confidence=0.3,
         )
 
     def _get_function_name(self, address: int) -> str:
@@ -398,9 +398,7 @@ class SymbolicExecutionEngine:
             return 0.0
 
     async def generate_test_cases(
-        self,
-        coverage_target: float = 0.95,
-        max_cases: int = 100
+        self, coverage_target: float = 0.95, max_cases: int = 100
     ) -> List[bytes]:
         """
         Generate test inputs for maximum code coverage
@@ -463,10 +461,7 @@ class SymbolicExecutionEngine:
         logger.info(f"Generated {len(test_cases)} test cases")
         return test_cases
 
-    async def deobfuscate_function(
-        self,
-        function_name: str
-    ) -> Optional[str]:
+    async def deobfuscate_function(self, function_name: str) -> Optional[str]:
         """
         Deobfuscate a function using symbolic execution and SMT simplification
 

@@ -8,11 +8,7 @@ Provides massive speedup through:
 - Optimized memory management
 """
 
-from .gpu_accelerator import (
-    GPUAcceleratedAnalyzer,
-    ParallelDecompiler,
-    BatchProcessor
-)
+from .gpu_accelerator import GPUAcceleratedAnalyzer, ParallelDecompiler, BatchProcessor
 
 __all__ = [
     "GPUAcceleratedAnalyzer",

@@ -302,9 +302,11 @@ class AIAnalysisResult:
                     result[field_name] = self._dict_from_dataclass(value)
                 elif isinstance(value, list):
                     result[field_name] = [
-                        self._dict_from_dataclass(item)
-                        if hasattr(item, "__dataclass_fields__")
-                        else item
+                        (
+                            self._dict_from_dataclass(item)
+                            if hasattr(item, "__dataclass_fields__")
+                            else item
+                        )
                         for item in value
                     ]
                 elif isinstance(value, Enum):

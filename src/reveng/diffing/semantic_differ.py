@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FunctionMatch:
     """Matched function between two binaries"""
+
     func1_name: str
     func2_name: str
     similarity: float
@@ -31,6 +32,7 @@ class FunctionMatch:
 @dataclass
 class GraphAlignment:
     """Result of graph alignment"""
+
     matched: List[FunctionMatch]
     added: List[str]  # Functions only in binary2
     removed: List[str]  # Functions only in binary1
@@ -40,6 +42,7 @@ class GraphAlignment:
 @dataclass
 class SecurityImpact:
     """Security impact analysis of changes"""
+
     vulnerabilities_fixed: List[Dict]
     vulnerabilities_introduced: List[Dict]
     cve_ids: List[str]
@@ -51,6 +54,7 @@ class SecurityImpact:
 @dataclass
 class DiffResult:
     """Complete binary diff result"""
+
     binary1: str
     binary2: str
     alignment: GraphAlignment
@@ -81,6 +85,7 @@ class SemanticBinaryDiffer:
         if self.ghidra is None:
             try:
                 from reveng.integrations.ghidra.ghidra_engine import GhidraEngine
+
                 self.ghidra = GhidraEngine()
             except:
                 logger.warning("Ghidra not available")
@@ -91,6 +96,7 @@ class SemanticBinaryDiffer:
         if self.gemini is None:
             try:
                 from reveng.ai.gemini_engine import GeminiEngine
+
                 self.gemini = GeminiEngine()
             except:
                 logger.warning("Gemini not available")
@@ -112,7 +118,7 @@ class SemanticBinaryDiffer:
             return DiffResult(
                 binary1=self.binary1,
                 binary2=self.binary2,
-                alignment=GraphAlignment([], [], [])
+                alignment=GraphAlignment([], [], []),
             )
 
         code1 = await ghidra.decompile(self.binary1)
@@ -132,7 +138,7 @@ class SemanticBinaryDiffer:
             binary1=self.binary1,
             binary2=self.binary2,
             alignment=alignment,
-            semantic_similarity=similarity
+            semantic_similarity=similarity,
         )
 
         logger.info(f"Semantic similarity: {similarity:.2%}")
@@ -149,30 +155,26 @@ class SemanticBinaryDiffer:
 
         # Extract functions (simplified parsing)
         import re
+
         functions = re.findall(
-            r'(void|int|char|long|short|float|double)\s+(\w+)\s*\([^)]*\)\s*\{',
-            code
+            r"(void|int|char|long|short|float|double)\s+(\w+)\s*\([^)]*\)\s*\{", code
         )
 
         for return_type, func_name in functions:
             # Add function as node
-            cfg.add_node(func_name, type='function', return_type=return_type)
+            cfg.add_node(func_name, type="function", return_type=return_type)
 
         # Extract function calls to build edges
-        for match in re.finditer(r'(\w+)\s*\(', code):
-            caller = 'main'  # Simplified - would need context analysis
+        for match in re.finditer(r"(\w+)\s*\(", code):
+            caller = "main"  # Simplified - would need context analysis
             callee = match.group(1)
 
             if callee in cfg:
-                cfg.add_edge(caller, callee, type='call')
+                cfg.add_edge(caller, callee, type="call")
 
         return cfg
 
-    def _align_graphs(
-        self,
-        cfg1: nx.DiGraph,
-        cfg2: nx.DiGraph
-    ) -> GraphAlignment:
+    def _align_graphs(self, cfg1: nx.DiGraph, cfg2: nx.DiGraph) -> GraphAlignment:
         """
         Graph alignment using maximum weighted bipartite matching
 
@@ -201,12 +203,14 @@ class SemanticBinaryDiffer:
 
             for i, j in zip(row_ind, col_ind):
                 if similarity[i, j] >= threshold:
-                    matches.append(FunctionMatch(
-                        func1_name=funcs1[i],
-                        func2_name=funcs2[j],
-                        similarity=similarity[i, j],
-                        is_modified=similarity[i, j] < 1.0
-                    ))
+                    matches.append(
+                        FunctionMatch(
+                            func1_name=funcs1[i],
+                            func2_name=funcs2[j],
+                            similarity=similarity[i, j],
+                            is_modified=similarity[i, j] < 1.0,
+                        )
+                    )
 
             # Find added/removed functions
             matched_funcs1 = {m.func1_name for m in matches}
@@ -219,7 +223,7 @@ class SemanticBinaryDiffer:
                 matched=matches,
                 added=added,
                 removed=removed,
-                similarity_matrix=similarity
+                similarity_matrix=similarity,
             )
 
         except ImportError:
@@ -227,11 +231,7 @@ class SemanticBinaryDiffer:
             return self._greedy_matching(similarity, funcs1, funcs2)
 
     def _compute_similarity_matrix(
-        self,
-        cfg1: nx.DiGraph,
-        cfg2: nx.DiGraph,
-        funcs1: List[str],
-        funcs2: List[str]
+        self, cfg1: nx.DiGraph, cfg2: nx.DiGraph, funcs1: List[str], funcs2: List[str]
     ) -> np.ndarray:
         """
         Compute structural and semantic similarity matrix
@@ -262,16 +262,14 @@ class SemanticBinaryDiffer:
                 neighbors2 = set(cfg2.neighbors(func2))
 
                 if neighbors1 or neighbors2:
-                    struct_sim = len(neighbors1 & neighbors2) / len(neighbors1 | neighbors2)
+                    struct_sim = len(neighbors1 & neighbors2) / len(
+                        neighbors1 | neighbors2
+                    )
                 else:
                     struct_sim = 1.0 if not (neighbors1 or neighbors2) else 0.0
 
                 # Weighted combination
-                similarity[i, j] = (
-                    0.4 * name_sim +
-                    0.3 * degree_sim +
-                    0.3 * struct_sim
-                )
+                similarity[i, j] = 0.4 * name_sim + 0.3 * degree_sim + 0.3 * struct_sim
 
         return similarity
 
@@ -295,10 +293,7 @@ class SemanticBinaryDiffer:
         return intersection / union
 
     def _greedy_matching(
-        self,
-        similarity: np.ndarray,
-        funcs1: List[str],
-        funcs2: List[str]
+        self, similarity: np.ndarray, funcs1: List[str], funcs2: List[str]
     ) -> GraphAlignment:
         """Greedy matching fallback"""
         matches = []
@@ -315,12 +310,14 @@ class SemanticBinaryDiffer:
 
         for sim, i, j in pairs:
             if i not in matched1 and j not in matched2 and sim >= 0.5:
-                matches.append(FunctionMatch(
-                    func1_name=funcs1[i],
-                    func2_name=funcs2[j],
-                    similarity=sim,
-                    is_modified=sim < 1.0
-                ))
+                matches.append(
+                    FunctionMatch(
+                        func1_name=funcs1[i],
+                        func2_name=funcs2[j],
+                        similarity=sim,
+                        is_modified=sim < 1.0,
+                    )
+                )
                 matched1.add(i)
                 matched2.add(j)
 
@@ -334,7 +331,9 @@ class SemanticBinaryDiffer:
         if not alignment.matched and not alignment.added and not alignment.removed:
             return 1.0  # Both empty
 
-        total_funcs = len(alignment.matched) + len(alignment.added) + len(alignment.removed)
+        total_funcs = (
+            len(alignment.matched) + len(alignment.added) + len(alignment.removed)
+        )
 
         if total_funcs == 0:
             return 1.0
@@ -359,7 +358,8 @@ class SemanticBinaryDiffer:
 
         # Identify security-relevant changes
         security_changes = [
-            m for m in diff.alignment.matched
+            m
+            for m in diff.alignment.matched
             if m.is_modified and self._is_security_relevant(m.func1_name)
         ]
 
@@ -369,16 +369,18 @@ class SemanticBinaryDiffer:
                 vulnerabilities_fixed=[],
                 vulnerabilities_introduced=[],
                 cve_ids=[],
-                exploitability_change='unchanged',
-                patch_completeness='unknown',
-                risk_assessment='unknown'
+                exploitability_change="unchanged",
+                patch_completeness="unknown",
+                risk_assessment="unknown",
             )
 
         # Use Gemini to analyze security implications
-        change_summary = "\n".join([
-            f"Modified: {m.func1_name} -> {m.func2_name} (similarity: {m.similarity:.2f})"
-            for m in security_changes[:10]
-        ])
+        change_summary = "\n".join(
+            [
+                f"Modified: {m.func1_name} -> {m.func2_name} (similarity: {m.similarity:.2f})"
+                for m in security_changes[:10]
+            ]
+        )
 
         prompt = f"""Analyze this binary patch for security impact:
 
@@ -404,9 +406,9 @@ Provide concise analysis."""
                 vulnerabilities_fixed=[],  # Would parse from AI response
                 vulnerabilities_introduced=[],
                 cve_ids=[],
-                exploitability_change='decreased',  # Assume patch improves security
-                patch_completeness='partial',
-                risk_assessment=analysis[:200] if analysis else'unknown'
+                exploitability_change="decreased",  # Assume patch improves security
+                patch_completeness="partial",
+                risk_assessment=analysis[:200] if analysis else "unknown",
             )
 
         except Exception as e:
@@ -415,18 +417,30 @@ Provide concise analysis."""
                 vulnerabilities_fixed=[],
                 vulnerabilities_introduced=[],
                 cve_ids=[],
-                exploitability_change='unknown',
-                patch_completeness='unknown',
-                risk_assessment='Analysis failed'
+                exploitability_change="unknown",
+                patch_completeness="unknown",
+                risk_assessment="Analysis failed",
             )
 
     def _is_security_relevant(self, func_name: str) -> bool:
         """Check if function is security-relevant"""
         security_keywords = [
-            'auth', 'login', 'password', 'crypt', 'hash',
-            'validate', 'verify', 'check', 'secure',
-            'memcpy', 'strcpy', 'sprintf', 'scanf',  # Dangerous functions
-            'malloc', 'free', 'alloc'  # Memory management
+            "auth",
+            "login",
+            "password",
+            "crypt",
+            "hash",
+            "validate",
+            "verify",
+            "check",
+            "secure",
+            "memcpy",
+            "strcpy",
+            "sprintf",
+            "scanf",  # Dangerous functions
+            "malloc",
+            "free",
+            "alloc",  # Memory management
         ]
 
         func_lower = func_name.lower()
@@ -447,8 +461,11 @@ Provide concise analysis."""
             return self._simple_patch_summary(diff)
 
         # Format diff for AI
-        modified = [f"{m.func1_name} (changed {(1-m.similarity)*100:.0f}%)"
-                   for m in diff.alignment.matched if m.is_modified]
+        modified = [
+            f"{m.func1_name} (changed {(1-m.similarity)*100:.0f}%)"
+            for m in diff.alignment.matched
+            if m.is_modified
+        ]
 
         prompt = f"""Generate a concise patch summary for this binary diff:
 

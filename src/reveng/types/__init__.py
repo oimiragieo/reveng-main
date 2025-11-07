@@ -12,7 +12,7 @@ from .ml_type_reconstructor import (
     MLTypeReconstructor,
     TypeInfo,
     Structure,
-    FunctionSignature
+    FunctionSignature,
 )
 
 __all__ = [

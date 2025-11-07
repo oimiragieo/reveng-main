@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AnalysisResult:
     """Result of binary analysis"""
+
     binary_path: str
     success: bool
     decompiled_code: Optional[str] = None
@@ -39,6 +40,7 @@ class AnalysisResult:
 @dataclass
 class BatchResult:
     """Results from batch processing"""
+
     total_binaries: int
     successful: int
     failed: int
@@ -76,7 +78,7 @@ class GPUAcceleratedAnalyzer:
                 logger.info(f"Using CUDA GPU: {gpu_name}")
                 return device
 
-            elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
                 device = torch.device("mps")  # Apple Silicon
                 logger.info("Using Apple Metal GPU")
                 return device
@@ -106,10 +108,7 @@ class GPUAcceleratedAnalyzer:
             logger.error(f"Failed to load models: {e}")
 
     async def batch_analyze_binaries(
-        self,
-        binary_paths: List[str],
-        max_parallel: int = 10,
-        use_gpu: bool = True
+        self, binary_paths: List[str], max_parallel: int = 10, use_gpu: bool = True
     ) -> BatchResult:
         """
         Analyze multiple binaries in parallel with GPU acceleration
@@ -139,13 +138,15 @@ class GPUAcceleratedAnalyzer:
 
         for batch in tqdm(batches, desc="Analyzing batches"):
             # Parallel CPU preprocessing
-            preprocessed = await asyncio.gather(*[
-                self._preprocess_binary(path) for path in batch
-            ], return_exceptions=True)
+            preprocessed = await asyncio.gather(
+                *[self._preprocess_binary(path) for path in batch],
+                return_exceptions=True,
+            )
 
             # Filter out exceptions
             valid_preprocessed = [
-                (path, data) for path, data in zip(batch, preprocessed)
+                (path, data)
+                for path, data in zip(batch, preprocessed)
                 if not isinstance(data, Exception)
             ]
 
@@ -156,26 +157,29 @@ class GPUAcceleratedAnalyzer:
                 )
 
                 # Parallel CPU postprocessing
-                postprocessed = await asyncio.gather(*[
-                    self._postprocess_result(path, result)
-                    for (path, _), result in zip(valid_preprocessed, gpu_results)
-                ], return_exceptions=True)
+                postprocessed = await asyncio.gather(
+                    *[
+                        self._postprocess_result(path, result)
+                        for (path, _), result in zip(valid_preprocessed, gpu_results)
+                    ],
+                    return_exceptions=True,
+                )
 
             else:
                 # CPU-only processing
-                postprocessed = await asyncio.gather(*[
-                    self._analyze_binary_cpu(path)
-                    for path in batch
-                ], return_exceptions=True)
+                postprocessed = await asyncio.gather(
+                    *[self._analyze_binary_cpu(path) for path in batch],
+                    return_exceptions=True,
+                )
 
             # Collect results
             for path, result in zip(batch, postprocessed):
                 if isinstance(result, Exception):
-                    results.append(AnalysisResult(
-                        binary_path=path,
-                        success=False,
-                        error=str(result)
-                    ))
+                    results.append(
+                        AnalysisResult(
+                            binary_path=path, success=False, error=str(result)
+                        )
+                    )
                     failed += 1
                 else:
                     results.append(result)
@@ -194,19 +198,12 @@ class GPUAcceleratedAnalyzer:
             total_time=total_time,
             avg_time_per_binary=avg_time,
             results=results,
-            speedup_factor=self._estimate_speedup(len(binary_paths), total_time)
+            speedup_factor=self._estimate_speedup(len(binary_paths), total_time),
         )
 
-    def _create_batches(
-        self,
-        items: List[str],
-        batch_size: int
-    ) -> List[List[str]]:
+    def _create_batches(self, items: List[str], batch_size: int) -> List[List[str]]:
         """Create batches for processing"""
-        return [
-            items[i:i + batch_size]
-            for i in range(0, len(items), batch_size)
-        ]
+        return [items[i : i + batch_size] for i in range(0, len(items), batch_size)]
 
     async def _preprocess_binary(self, binary_path: str) -> Dict:
         """
@@ -216,15 +213,15 @@ class GPUAcceleratedAnalyzer:
         """
         try:
             # Read binary
-            with open(binary_path, 'rb') as f:
+            with open(binary_path, "rb") as f:
                 data = f.read()
 
             # Extract basic features
             features = {
-                'path': binary_path,
-                'size': len(data),
-                'data': data[:10000],  # First 10KB for analysis
-                'timestamp': time.time()
+                "path": binary_path,
+                "size": len(data),
+                "data": data[:10000],  # First 10KB for analysis
+                "timestamp": time.time(),
             }
 
             return features
@@ -257,11 +254,7 @@ class GPUAcceleratedAnalyzer:
 
             # For now, return placeholder results
             return [
-                {
-                    'binary_path': d['path'],
-                    'features': {},
-                    'predictions': {}
-                }
+                {"binary_path": d["path"], "features": {}, "predictions": {}}
                 for d in data_batch
             ]
 
@@ -272,16 +265,10 @@ class GPUAcceleratedAnalyzer:
 
     def _cpu_inference(self, data: Dict) -> Dict:
         """CPU fallback inference"""
-        return {
-            'binary_path': data['path'],
-            'features': {},
-            'predictions': {}
-        }
+        return {"binary_path": data["path"], "features": {}, "predictions": {}}
 
     async def _postprocess_result(
-        self,
-        binary_path: str,
-        gpu_result: Dict
+        self, binary_path: str, gpu_result: Dict
     ) -> AnalysisResult:
         """
         Postprocess GPU results (CPU operation)
@@ -290,18 +277,12 @@ class GPUAcceleratedAnalyzer:
             # Convert GPU results to analysis result
             # This would integrate with existing REVENG analysis
             return AnalysisResult(
-                binary_path=binary_path,
-                success=True,
-                analysis_time=0.1
+                binary_path=binary_path, success=True, analysis_time=0.1
             )
 
         except Exception as e:
             logger.error(f"Postprocessing failed for {binary_path}: {e}")
-            return AnalysisResult(
-                binary_path=binary_path,
-                success=False,
-                error=str(e)
-            )
+            return AnalysisResult(binary_path=binary_path, success=False, error=str(e))
 
     async def _analyze_binary_cpu(self, binary_path: str) -> AnalysisResult:
         """CPU-only analysis (fallback)"""
@@ -314,15 +295,11 @@ class GPUAcceleratedAnalyzer:
             return AnalysisResult(
                 binary_path=binary_path,
                 success=True,
-                analysis_time=time.time() - start_time
+                analysis_time=time.time() - start_time,
             )
 
         except Exception as e:
-            return AnalysisResult(
-                binary_path=binary_path,
-                success=False,
-                error=str(e)
-            )
+            return AnalysisResult(binary_path=binary_path, success=False, error=str(e))
 
     def _estimate_speedup(self, num_binaries: int, total_time: float) -> float:
         """Estimate speedup compared to sequential processing"""
@@ -346,10 +323,7 @@ class ParallelDecompiler:
         self.num_instances = num_instances
         logger.info(f"Initialized {num_instances} parallel decompiler instances")
 
-    async def parallel_decompilation(
-        self,
-        binary_paths: List[str]
-    ) -> Dict[str, str]:
+    async def parallel_decompilation(self, binary_paths: List[str]) -> Dict[str, str]:
         """
         Decompile multiple binaries in parallel
 
@@ -387,11 +361,7 @@ class ParallelDecompiler:
 
         return result_dict
 
-    async def _decompile_with_instance(
-        self,
-        binary: str,
-        instance_id: int
-    ) -> str:
+    async def _decompile_with_instance(self, binary: str, instance_id: int) -> str:
         """
         Decompile using specific Ghidra instance
 
@@ -433,7 +403,7 @@ class BatchProcessor:
         self,
         binary_paths: List[str],
         operations: List[str] = None,
-        use_gpu: bool = True
+        use_gpu: bool = True,
     ) -> BatchResult:
         """
         Process multiple binaries with full pipeline
@@ -447,7 +417,7 @@ class BatchProcessor:
             BatchResult with all results
         """
         if operations is None:
-            operations = ['decompile', 'analyze']
+            operations = ["decompile", "analyze"]
 
         start_time = time.time()
 
@@ -458,7 +428,7 @@ class BatchProcessor:
         results = []
 
         # Decompilation (if requested)
-        if 'decompile' in operations:
+        if "decompile" in operations:
             decompiled = await self.parallel_decompiler.parallel_decompilation(
                 binary_paths
             )
@@ -466,10 +436,9 @@ class BatchProcessor:
             decompiled = {path: None for path in binary_paths}
 
         # Analysis (if requested)
-        if 'analyze' in operations:
+        if "analyze" in operations:
             analysis_result = await self.gpu_analyzer.batch_analyze_binaries(
-                binary_paths,
-                use_gpu=use_gpu
+                binary_paths, use_gpu=use_gpu
             )
             results = analysis_result.results
 
@@ -480,11 +449,11 @@ class BatchProcessor:
         else:
             # Create results from decompilation only
             for path, code in decompiled.items():
-                results.append(AnalysisResult(
-                    binary_path=path,
-                    success=code is not None,
-                    decompiled_code=code
-                ))
+                results.append(
+                    AnalysisResult(
+                        binary_path=path, success=code is not None, decompiled_code=code
+                    )
+                )
 
         total_time = time.time() - start_time
         successful = sum(1 for r in results if r.success)
@@ -497,7 +466,7 @@ class BatchProcessor:
             total_time=total_time,
             avg_time_per_binary=total_time / len(binary_paths) if binary_paths else 0,
             results=results,
-            speedup_factor=self._calculate_speedup(len(binary_paths), total_time)
+            speedup_factor=self._calculate_speedup(len(binary_paths), total_time),
         )
 
     def _calculate_speedup(self, num_binaries: int, total_time: float) -> float:
@@ -508,10 +477,7 @@ class BatchProcessor:
         return speedup
 
     async def process_directory(
-        self,
-        directory: str,
-        pattern: str = "*.exe",
-        **kwargs
+        self, directory: str, pattern: str = "*.exe", **kwargs
     ) -> BatchResult:
         """
         Process all binaries in a directory

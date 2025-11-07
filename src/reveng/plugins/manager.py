@@ -153,9 +153,9 @@ class PluginManager:
                         f"Plugin {plugin_name} depends on unknown plugin: {dependency}"
                     )
                     self.plugins[plugin_name].status = PluginStatus.ERROR
-                    self.plugins[
-                        plugin_name
-                    ].error_message = f"Missing dependency: {dependency}"
+                    self.plugins[plugin_name].error_message = (
+                        f"Missing dependency: {dependency}"
+                    )
 
     def _check_circular_dependencies(self):
         """Check for circular dependencies"""

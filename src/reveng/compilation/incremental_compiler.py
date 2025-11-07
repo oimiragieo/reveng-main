@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CompileResult:
     """Result of compilation operation"""
+
     success: bool
     output: str
     build_time: float
@@ -38,6 +39,7 @@ class CompileResult:
 @dataclass
 class BuildManifest:
     """Manifest tracking build state for incremental builds"""
+
     source_files: List[str]
     object_files: List[str]
     checksums: Dict[str, str]
@@ -46,16 +48,16 @@ class BuildManifest:
 
     def save(self, path: Path):
         """Save manifest to JSON file"""
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             json.dump(asdict(self), f, indent=2)
 
     @classmethod
-    def load(cls, path: Path) -> Optional['BuildManifest']:
+    def load(cls, path: Path) -> Optional["BuildManifest"]:
         """Load manifest from JSON file"""
         if not path.exists():
             return None
         try:
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 data = json.load(f)
             return cls(**data)
         except Exception as e:
@@ -140,9 +142,7 @@ class IncrementalCompiler:
         # Check if ccache is available
         try:
             result = subprocess.run(
-                ["ccache", "--version"],
-                capture_output=True,
-                timeout=5
+                ["ccache", "--version"], capture_output=True, timeout=5
             )
             if result.returncode == 0:
                 os.environ["CCACHE_DIR"] = str(self.cache_dir / "ccache")
@@ -160,7 +160,7 @@ class IncrementalCompiler:
         output: str,
         compiler: str = "gcc",
         flags: List[str] = None,
-        previous_build: Optional[BuildManifest] = None
+        previous_build: Optional[BuildManifest] = None,
     ) -> CompileResult:
         """
         Incremental compilation: only recompile changed files
@@ -237,9 +237,8 @@ class IncrementalCompiler:
             checksums=self._compute_checksums(source_files),
             timestamp=time.time(),
             dependencies={
-                f: list(self.dependency_graph.get_dependencies(f))
-                for f in source_files
-            }
+                f: list(self.dependency_graph.get_dependencies(f)) for f in source_files
+            },
         )
         manifest.save(self.cache_dir / "build_manifest.json")
 
@@ -252,7 +251,7 @@ class IncrementalCompiler:
             files_compiled=len(affected),
             cache_hits=cache_hits,
             cache_misses=cache_misses,
-            error=error
+            error=error,
         )
 
     def _analyze_dependencies(self, source_files: List[str]):
@@ -261,11 +260,12 @@ class IncrementalCompiler:
         """
         for src_file in source_files:
             try:
-                with open(src_file, 'r', encoding='utf-8', errors='ignore') as f:
+                with open(src_file, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
 
                 # Extract #include directives
                 import re
+
                 includes = re.findall(r'#include\s+[<"]([^>"]+)[>"]', content)
 
                 for include in includes:
@@ -292,11 +292,7 @@ class IncrementalCompiler:
 
         return None
 
-    def _detect_changes(
-        self,
-        files: List[str],
-        previous: BuildManifest
-    ) -> Set[str]:
+    def _detect_changes(self, files: List[str], previous: BuildManifest) -> Set[str]:
         """Detect which files changed since last build"""
         changed = set()
 
@@ -311,9 +307,7 @@ class IncrementalCompiler:
         return changed
 
     def _compute_affected_files(
-        self,
-        changed: Set[str],
-        all_files: List[str]
+        self, changed: Set[str], all_files: List[str]
     ) -> Set[str]:
         """
         Compute transitive closure of affected files
@@ -330,10 +324,7 @@ class IncrementalCompiler:
         return affected
 
     def _compile_with_cache(
-        self,
-        source: str,
-        compiler: str,
-        flags: List[str]
+        self, source: str, compiler: str, flags: List[str]
     ) -> tuple[Optional[str], bool]:
         """
         Compile using ccache for automatic caching
@@ -349,14 +340,12 @@ class IncrementalCompiler:
             cmd = [compiler, "-c", source, "-o", output] + flags
 
         try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                timeout=120
-            )
+            result = subprocess.run(cmd, capture_output=True, timeout=120)
 
             if result.returncode != 0:
-                logger.error(f"Compilation failed for {source}: {result.stderr.decode()}")
+                logger.error(
+                    f"Compilation failed for {source}: {result.stderr.decode()}"
+                )
                 return None, False
 
             # Check if this was a cache hit (ccache sets CCACHE_LOGFILE)
@@ -376,26 +365,19 @@ class IncrementalCompiler:
         """Link object files into executable"""
         cmd = [compiler] + object_files + ["-o", output]
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            timeout=60
-        )
+        result = subprocess.run(cmd, capture_output=True, timeout=60)
 
         if result.returncode != 0:
             raise subprocess.CalledProcessError(
-                result.returncode,
-                cmd,
-                result.stdout,
-                result.stderr
+                result.returncode, cmd, result.stdout, result.stderr
             )
 
     def _hash_file(self, filepath: str) -> str:
         """Compute SHA256 hash of file"""
         sha256 = hashlib.sha256()
         try:
-            with open(filepath, 'rb') as f:
-                for chunk in iter(lambda: f.read(8192), b''):
+            with open(filepath, "rb") as f:
+                for chunk in iter(lambda: f.read(8192), b""):
                     sha256.update(chunk)
             return sha256.hexdigest()
         except Exception as e:
@@ -413,10 +395,7 @@ class IncrementalCompiler:
 
         try:
             result = subprocess.run(
-                ["ccache", "-s"],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["ccache", "-s"], capture_output=True, text=True, timeout=5
             )
 
             stats = {"enabled": True, "raw_output": result.stdout}
@@ -427,7 +406,9 @@ class IncrementalCompiler:
                 if "cache hit" in line_lower:
                     stats["hit_rate"] = line.split()[-1] if line.split() else "unknown"
                 elif "cache size" in line_lower:
-                    stats["cache_size"] = line.split()[-1] if line.split() else "unknown"
+                    stats["cache_size"] = (
+                        line.split()[-1] if line.split() else "unknown"
+                    )
 
             return stats
 
@@ -467,10 +448,7 @@ class DistributedCompiler(IncrementalCompiler):
             logger.warning("distcc not available")
 
     def _compile_with_cache(
-        self,
-        source: str,
-        compiler: str,
-        flags: List[str]
+        self, source: str, compiler: str, flags: List[str]
     ) -> tuple[Optional[str], bool]:
         """
         Compile using both ccache and distcc for maximum performance
@@ -488,11 +466,7 @@ class DistributedCompiler(IncrementalCompiler):
             cmd = ["distcc", compiler, "-c", source, "-o", output] + flags
 
         try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                timeout=120
-            )
+            result = subprocess.run(cmd, capture_output=True, timeout=120)
 
             if result.returncode != 0:
                 logger.error(f"Distributed compilation failed for {source}")

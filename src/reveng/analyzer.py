@@ -128,7 +128,11 @@ class REVENGAnalyzer:
         self.binary_name = (
             Path(self.binary_path).stem if self.binary_path else "unknown"
         )
-        self.analysis_folder = Path(analysis_folder) if analysis_folder else Path(f"analysis_{self.binary_name}")
+        self.analysis_folder = (
+            Path(analysis_folder)
+            if analysis_folder
+            else Path(f"analysis_{self.binary_name}")
+        )
         self.results = {}
         self.enhanced_results = {}
         self.ollama_available = False
@@ -207,8 +211,8 @@ class REVENGAnalyzer:
         """
         if self.progress_callback:
             event_data = data or {}
-            event_data['timestamp'] = datetime.now().isoformat()
-            event_data['binary'] = self.binary_name
+            event_data["timestamp"] = datetime.now().isoformat()
+            event_data["binary"] = self.binary_name
             try:
                 self.progress_callback(event_type, event_data)
             except Exception as e:
@@ -239,15 +243,21 @@ class REVENGAnalyzer:
             capabilities["enhanced_modules"] = {
                 "corporate_exposure": {
                     "enabled": self.enhanced_features.enable_corporate_exposure,
-                    "available": self._check_module_available("reveng.security.corporate_exposure_detector"),
+                    "available": self._check_module_available(
+                        "reveng.security.corporate_exposure_detector"
+                    ),
                 },
                 "vulnerability_discovery": {
                     "enabled": self.enhanced_features.enable_vulnerability_discovery,
-                    "available": self._check_module_available("reveng.security.vulnerability_discovery"),
+                    "available": self._check_module_available(
+                        "reveng.security.vulnerability_discovery"
+                    ),
                 },
                 "threat_intelligence": {
                     "enabled": self.enhanced_features.enable_threat_intelligence,
-                    "available": self._check_module_available("reveng.intelligence.threat_correlator"),
+                    "available": self._check_module_available(
+                        "reveng.intelligence.threat_correlator"
+                    ),
                 },
                 "enhanced_reconstruction": {
                     "enabled": self.enhanced_features.enable_enhanced_reconstruction,
@@ -255,13 +265,16 @@ class REVENGAnalyzer:
                 },
                 "demonstration_generation": {
                     "enabled": self.enhanced_features.enable_demonstration_generation,
-                    "available": self._check_module_available("reveng.security.demonstration_generator"),
+                    "available": self._check_module_available(
+                        "reveng.security.demonstration_generator"
+                    ),
                 },
             }
 
         # Check tool availability
         try:
             from reveng.core.dependency_manager import DependencyManager
+
             dm = DependencyManager()
             tool_status = dm.check_all_dependencies()
             capabilities["tools"] = tool_status
@@ -283,8 +296,11 @@ class REVENGAnalyzer:
         """Check if Ghidra is available"""
         try:
             from reveng.tools.config.ghidra_engine import GhidraEngine
+
             # Quick connection check (don't fail fast)
-            GhidraEngine(server_url="http://127.0.0.1:13370", timeout=2, fail_fast=False)
+            GhidraEngine(
+                server_url="http://127.0.0.1:13370", timeout=2, fail_fast=False
+            )
             return True
         except Exception:
             return False
@@ -303,25 +319,27 @@ class REVENGAnalyzer:
             # Check for Java (required for Ghidra and Java bytecode analysis)
             import subprocess
             import re
+
             try:
                 result = subprocess.run(
-                    ["java", "-version"],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
+                    ["java", "-version"], capture_output=True, text=True, timeout=5
                 )
                 if result.returncode == 0:
                     # Parse Java version from output
                     # Java version output: "java version "1.8.0_301"" or "openjdk version "17.0.2""
                     java_version_output = result.stderr or result.stdout
-                    version_match = re.search(r'version "(\d+)\.?(\d+)?', java_version_output)
+                    version_match = re.search(
+                        r'version "(\d+)\.?(\d+)?', java_version_output
+                    )
 
                     if version_match:
                         major_version = int(version_match.group(1))
                         # Java versions: 1.x format (old) vs x format (new)
                         # Java 8 = 1.8, Java 11+ = 11, 17, etc.
                         if major_version == 1 and version_match.group(2):
-                            actual_version = int(version_match.group(2))  # e.g., 1.8 -> 8
+                            actual_version = int(
+                                version_match.group(2)
+                            )  # e.g., 1.8 -> 8
                         else:
                             actual_version = major_version  # e.g., 17 -> 17
 
@@ -329,16 +347,30 @@ class REVENGAnalyzer:
 
                         # Relaxed version check with warnings
                         if actual_version >= 17:
-                            logger.info(f"Java {actual_version} detected - fully compatible")
+                            logger.info(
+                                f"Java {actual_version} detected - fully compatible"
+                            )
                         elif actual_version >= 11:
-                            logger.warning(f"Java {actual_version} detected - Ghidra recommends Java 17+, but will work")
-                            logger.warning("Consider upgrading to Java 17+ for best compatibility")
+                            logger.warning(
+                                f"Java {actual_version} detected - Ghidra recommends Java 17+, but will work"
+                            )
+                            logger.warning(
+                                "Consider upgrading to Java 17+ for best compatibility"
+                            )
                         elif actual_version >= 8:
-                            logger.warning(f"Java {actual_version} detected - older version may have limited compatibility")
-                            logger.warning("Ghidra requires Java 17+, some features may not work correctly")
+                            logger.warning(
+                                f"Java {actual_version} detected - older version may have limited compatibility"
+                            )
+                            logger.warning(
+                                "Ghidra requires Java 17+, some features may not work correctly"
+                            )
                         else:
-                            logger.error(f"Java {actual_version} detected - too old for Ghidra")
-                            missing_tools.append(f"Java 17+ (found Java {actual_version}, upgrade recommended)")
+                            logger.error(
+                                f"Java {actual_version} detected - too old for Ghidra"
+                            )
+                            missing_tools.append(
+                                f"Java 17+ (found Java {actual_version}, upgrade recommended)"
+                            )
                     else:
                         validation_results["java"] = "available_unknown_version"
                         logger.warning("Java detected but version could not be parsed")
@@ -354,7 +386,9 @@ class REVENGAnalyzer:
             ghidra_status = dep_manager.check_all_dependencies().get("ghidra", False)
             validation_results["ghidra"] = "available" if ghidra_status else "not_found"
             if not ghidra_status:
-                logger.warning("Ghidra not installed - native binary analysis will be limited")
+                logger.warning(
+                    "Ghidra not installed - native binary analysis will be limited"
+                )
 
             # Store validation results for later reference
             self.tool_availability = validation_results
@@ -506,16 +540,19 @@ class REVENGAnalyzer:
                 details={
                     "path": str(self.binary_path) if self.binary_path else None,
                     "name": self.binary_name,
-                }
+                },
             )
             logger.error(str(error))
-            self._emit_progress('error', {
-                'error_code': error.error_code.value,
-                'severity': error.severity,
-                'message': error.message,
-                'recovery': error.recovery,
-                'details': error.details
-            })
+            self._emit_progress(
+                "error",
+                {
+                    "error_code": error.error_code.value,
+                    "severity": error.severity,
+                    "message": error.message,
+                    "recovery": error.recovery,
+                    "details": error.details,
+                },
+            )
             error_summary = {
                 "status": "error",
                 "error_code": error.error_code.value,
@@ -543,13 +580,20 @@ class REVENGAnalyzer:
             logger.info(f"Audit session started: {session_id}")
 
         # Emit analysis start event
-        self._emit_progress('analysis_start', {
-            'target': str(self.binary_path),
-            'ai_enabled': self.ollama_available,
-            'ai_provider': 'ollama' if self.ollama_available else 'heuristics',
-            'enhanced_analysis': self.enhanced_features.is_any_enhanced_enabled(),
-            'enhanced_modules_count': self._count_enabled_modules() if self.enhanced_features.is_any_enhanced_enabled() else 0
-        })
+        self._emit_progress(
+            "analysis_start",
+            {
+                "target": str(self.binary_path),
+                "ai_enabled": self.ollama_available,
+                "ai_provider": "ollama" if self.ollama_available else "heuristics",
+                "enhanced_analysis": self.enhanced_features.is_any_enhanced_enabled(),
+                "enhanced_modules_count": (
+                    self._count_enabled_modules()
+                    if self.enhanced_features.is_any_enhanced_enabled()
+                    else 0
+                ),
+            },
+        )
 
         logger.info("=" * 70)
         logger.info(" REVENG - Reverse Engineering Toolkit")
@@ -568,42 +612,77 @@ class REVENGAnalyzer:
 
         try:
             # Step 1: AI-powered binary analysis
-            self._emit_progress('step_start', {'step': 1, 'name': 'AI-Powered Binary Analysis', 'icon': 'CHART'})
+            self._emit_progress(
+                "step_start",
+                {"step": 1, "name": "AI-Powered Binary Analysis", "icon": "CHART"},
+            )
             logger.info("[CHART] Step 1: AI-Powered Binary Analysis...")
             self._step1_ai_analysis()
 
             # Step 2: Complete disassembly
-            self._emit_progress('step_start', {'step': 2, 'name': 'Complete Disassembly', 'icon': 'SEARCH'})
+            self._emit_progress(
+                "step_start",
+                {"step": 2, "name": "Complete Disassembly", "icon": "SEARCH"},
+            )
             logger.info("[SEARCH] Step 2: Complete Disassembly...")
             self._step2_disassembly()
 
             # Step 3: AI inspection with extra thinking
-            self._emit_progress('step_start', {'step': 3, 'name': 'AI Inspection with Extra Thinking', 'icon': 'BRAIN'})
+            self._emit_progress(
+                "step_start",
+                {
+                    "step": 3,
+                    "name": "AI Inspection with Extra Thinking",
+                    "icon": "BRAIN",
+                },
+            )
             logger.info("[BRAIN] Step 3: AI Inspection with Extra Thinking...")
             self._step3_ai_inspection()
 
             # Step 4: Specification library creation
-            self._emit_progress('step_start', {'step': 4, 'name': 'Specification Library Creation', 'icon': 'BOOKS'})
+            self._emit_progress(
+                "step_start",
+                {"step": 4, "name": "Specification Library Creation", "icon": "BOOKS"},
+            )
             logger.info("[BOOKS] Step 4: Specification Library Creation...")
             self._step4_specifications()
 
             # Step 5: Human-readable code conversion
-            self._emit_progress('step_start', {'step': 5, 'name': 'Human-Readable Code Conversion', 'icon': 'WRITE'})
+            self._emit_progress(
+                "step_start",
+                {"step": 5, "name": "Human-Readable Code Conversion", "icon": "WRITE"},
+            )
             logger.info("[WRITE] Step 5: Human-Readable Code Conversion...")
             self._step5_human_readable()
 
             # Step 6: Deobfuscation and domain splitting
-            self._emit_progress('step_start', {'step': 6, 'name': 'Deobfuscation and Domain Splitting', 'icon': 'TOOLS'})
+            self._emit_progress(
+                "step_start",
+                {
+                    "step": 6,
+                    "name": "Deobfuscation and Domain Splitting",
+                    "icon": "TOOLS",
+                },
+            )
             logger.info("[TOOLS] Step 6: Deobfuscation and Domain Splitting...")
             self._step6_deobfuscation()
 
             # Step 7: Implementation of missing features
-            self._emit_progress('step_start', {'step': 7, 'name': 'Implementation of Missing Features', 'icon': 'POWER'})
+            self._emit_progress(
+                "step_start",
+                {
+                    "step": 7,
+                    "name": "Implementation of Missing Features",
+                    "icon": "POWER",
+                },
+            )
             logger.info("[POWER] Step 7: Implementation of Missing Features...")
             self._step7_implementation()
 
             # Step 8: Binary validation (if rebuilt binary exists)
-            self._emit_progress('step_start', {'step': 8, 'name': 'Binary Validation', 'icon': 'CHECK'})
+            self._emit_progress(
+                "step_start", {"step": 8, "name": "Binary Validation", "icon": "CHECK"}
+            )
             logger.info("[CHECK] Step 8: Binary Validation...")
             self._step8_validation()
 
@@ -615,13 +694,29 @@ class REVENGAnalyzer:
 
                 # Step 9: Corporate data exposure analysis
                 if self.enhanced_features.enable_corporate_exposure:
-                    self._emit_progress('step_start', {'step': 9, 'name': 'Corporate Data Exposure Analysis', 'icon': 'EXPOSURE'})
-                    logger.info("[EXPOSURE] Step 9: Corporate Data Exposure Analysis...")
+                    self._emit_progress(
+                        "step_start",
+                        {
+                            "step": 9,
+                            "name": "Corporate Data Exposure Analysis",
+                            "icon": "EXPOSURE",
+                        },
+                    )
+                    logger.info(
+                        "[EXPOSURE] Step 9: Corporate Data Exposure Analysis..."
+                    )
                     self._step9_corporate_exposure()
 
                 # Step 10: Automated vulnerability discovery
                 if self.enhanced_features.enable_vulnerability_discovery:
-                    self._emit_progress('step_start', {'step': 10, 'name': 'Automated Vulnerability Discovery', 'icon': 'VULNERABILITY'})
+                    self._emit_progress(
+                        "step_start",
+                        {
+                            "step": 10,
+                            "name": "Automated Vulnerability Discovery",
+                            "icon": "VULNERABILITY",
+                        },
+                    )
                     logger.info(
                         "[VULNERABILITY] Step 10: Automated Vulnerability Discovery..."
                     )
@@ -629,19 +724,44 @@ class REVENGAnalyzer:
 
                 # Step 11: Threat intelligence correlation
                 if self.enhanced_features.enable_threat_intelligence:
-                    self._emit_progress('step_start', {'step': 11, 'name': 'Threat Intelligence Correlation', 'icon': 'INTELLIGENCE'})
-                    logger.info("[INTELLIGENCE] Step 11: Threat Intelligence Correlation...")
+                    self._emit_progress(
+                        "step_start",
+                        {
+                            "step": 11,
+                            "name": "Threat Intelligence Correlation",
+                            "icon": "INTELLIGENCE",
+                        },
+                    )
+                    logger.info(
+                        "[INTELLIGENCE] Step 11: Threat Intelligence Correlation..."
+                    )
                     self._step11_threat_intelligence()
 
                 # Step 12: Enhanced binary reconstruction
                 if self.enhanced_features.enable_enhanced_reconstruction:
-                    self._emit_progress('step_start', {'step': 12, 'name': 'Enhanced Binary Reconstruction', 'icon': 'RECONSTRUCTION'})
-                    logger.info("[RECONSTRUCTION] Step 12: Enhanced Binary Reconstruction...")
+                    self._emit_progress(
+                        "step_start",
+                        {
+                            "step": 12,
+                            "name": "Enhanced Binary Reconstruction",
+                            "icon": "RECONSTRUCTION",
+                        },
+                    )
+                    logger.info(
+                        "[RECONSTRUCTION] Step 12: Enhanced Binary Reconstruction..."
+                    )
                     self._step12_enhanced_reconstruction()
 
                 # Step 13: Security demonstration generation
                 if self.enhanced_features.enable_demonstration_generation:
-                    self._emit_progress('step_start', {'step': 13, 'name': 'Security Demonstration Generation', 'icon': 'DEMONSTRATION'})
+                    self._emit_progress(
+                        "step_start",
+                        {
+                            "step": 13,
+                            "name": "Security Demonstration Generation",
+                            "icon": "DEMONSTRATION",
+                        },
+                    )
                     logger.info(
                         "[DEMONSTRATION] Step 13: Security Demonstration Generation..."
                     )
@@ -659,16 +779,23 @@ class REVENGAnalyzer:
             steps_succeeded, steps_failed, steps_skipped = self._count_step_statuses()
 
             # Emit analysis complete event
-            self._emit_progress('analysis_complete', {
-                'status': final_status,
-                'steps_total': total_steps,
-                'steps_succeeded': steps_succeeded,
-                'steps_failed': steps_failed,
-                'steps_skipped': steps_skipped,
-                'analysis_folder': str(self.analysis_folder),
-                'enhanced_modules': self._count_enabled_modules() if self.enhanced_features.is_any_enhanced_enabled() else 0,
-                'duration_seconds': time.time() - start_time
-            })
+            self._emit_progress(
+                "analysis_complete",
+                {
+                    "status": final_status,
+                    "steps_total": total_steps,
+                    "steps_succeeded": steps_succeeded,
+                    "steps_failed": steps_failed,
+                    "steps_skipped": steps_skipped,
+                    "analysis_folder": str(self.analysis_folder),
+                    "enhanced_modules": (
+                        self._count_enabled_modules()
+                        if self.enhanced_features.is_any_enhanced_enabled()
+                        else 0
+                    ),
+                    "duration_seconds": time.time() - start_time,
+                },
+            )
 
             logger.info("=" * 70)
             if final_status == "success":
@@ -705,18 +832,21 @@ class REVENGAnalyzer:
                 error = REVENGError(
                     error_code=ErrorCode.ANALYSIS_STEP_FAILED,
                     message=str(e),
-                    details={"exception_type": type(e).__name__}
+                    details={"exception_type": type(e).__name__},
                 )
 
             logger.error(f"Error in REVENG analysis: {error}")
-            self._emit_progress('error', {
-                'error_code': error.error_code.value,
-                'severity': error.severity,
-                'message': error.message,
-                'recovery': error.recovery,
-                'details': error.details,
-                'duration_seconds': time.time() - start_time
-            })
+            self._emit_progress(
+                "error",
+                {
+                    "error_code": error.error_code.value,
+                    "severity": error.severity,
+                    "message": error.message,
+                    "recovery": error.recovery,
+                    "details": error.details,
+                    "duration_seconds": time.time() - start_time,
+                },
+            )
 
             # End audit session with error
             if self.audit_logger:
@@ -764,9 +894,11 @@ class REVENGAnalyzer:
             "analysis_folder": str(self.analysis_folder),
             "ollama_available": self.ollama_available,
             "enhanced_modules_enabled": self.enhanced_features.is_any_enhanced_enabled(),
-            "enabled_module_count": self._count_enabled_modules()
-            if self.enhanced_features.is_any_enhanced_enabled()
-            else 0,
+            "enabled_module_count": (
+                self._count_enabled_modules()
+                if self.enhanced_features.is_any_enhanced_enabled()
+                else 0
+            ),
             "results": self.results,
             "enhanced_results": self.enhanced_results,
             "metadata": self.results.get("metadata", {}),
@@ -959,14 +1091,16 @@ class REVENGAnalyzer:
             # Create Ghidra Engine with fail-fast mode
             try:
                 ghidra = GhidraEngine(
-                    server_url="http://127.0.0.1:13370", timeout=300, fail_fast=True  # 5min for large binaries with decompilation
+                    server_url="http://127.0.0.1:13370",
+                    timeout=300,
+                    fail_fast=True,  # 5min for large binaries with decompilation
                 )
             except GhidraConnectionError as e:
                 # Ghidra server not available - gracefully degrade
                 error = REVENGError(
                     error_code=ErrorCode.TOOL_GHIDRA_SERVER_UNAVAILABLE,
                     message=str(e),
-                    details={"server_url": "http://127.0.0.1:1337"}
+                    details={"server_url": "http://127.0.0.1:1337"},
                 )
 
                 logger.error("=" * 70)
@@ -976,13 +1110,16 @@ class REVENGAnalyzer:
                 logger.error("=" * 70)
 
                 # Emit structured error event
-                self._emit_progress('error', {
-                    'error_code': error.error_code.value,
-                    'severity': error.severity,
-                    'message': error.message,
-                    'recovery': error.recovery,
-                    'details': error.details
-                })
+                self._emit_progress(
+                    "error",
+                    {
+                        "error_code": error.error_code.value,
+                        "severity": error.severity,
+                        "message": error.message,
+                        "recovery": error.recovery,
+                        "details": error.details,
+                    },
+                )
 
                 self.results["step2"] = {
                     "status": "error",
@@ -990,11 +1127,13 @@ class REVENGAnalyzer:
                     "severity": error.severity,
                     "message": error.message,
                     "recovery": error.recovery,
-                    "details": error.details
+                    "details": error.details,
                 }
 
                 # Continue analysis with degraded functionality instead of stopping
-                logger.warning("Continuing analysis without Ghidra - functionality will be limited")
+                logger.warning(
+                    "Continuing analysis without Ghidra - functionality will be limited"
+                )
                 return
 
             # Ghidra is available - perform comprehensive analysis
@@ -1049,12 +1188,14 @@ class REVENGAnalyzer:
             logger.error(
                 "Please ensure the Ghidra Analysis Server infrastructure is installed"
             )
-            logger.warning("Continuing analysis without Ghidra module - functionality will be limited")
+            logger.warning(
+                "Continuing analysis without Ghidra module - functionality will be limited"
+            )
             self.results["step2"] = {
                 "status": "error",
                 "error": "ghidra_engine_not_found",
                 "message": str(e),
-                "recovery": "Analysis continues with limited functionality"
+                "recovery": "Analysis continues with limited functionality",
             }
         except Exception as e:
             logger.error(f"Error in Ghidra analysis: {e}")
@@ -1062,7 +1203,7 @@ class REVENGAnalyzer:
             self.results["step2"] = {
                 "status": "error",
                 "error": str(e),
-                "recovery": "Analysis continues with limited functionality"
+                "recovery": "Analysis continues with limited functionality",
             }
 
     def _step3_ai_inspection(self):
@@ -1353,15 +1494,18 @@ class REVENGAnalyzer:
             error = REVENGError(
                 error_code=ErrorCode.ML_MODEL_NOT_AVAILABLE,
                 message=f"Corporate exposure detector module not available: {e}",
-                details={"module": "reveng.security.corporate_exposure_detector"}
+                details={"module": "reveng.security.corporate_exposure_detector"},
             )
             logger.warning(str(error))
-            self._emit_progress('step_complete', {
-                'step': 9,
-                'status': 'skipped',
-                'reason': 'ml_module_unavailable',
-                'error': error.to_dict()
-            })
+            self._emit_progress(
+                "step_complete",
+                {
+                    "step": 9,
+                    "status": "skipped",
+                    "reason": "ml_module_unavailable",
+                    "error": error.to_dict(),
+                },
+            )
             self.enhanced_results["step9"] = {
                 "status": "skipped",
                 "error_code": error.error_code.value,
@@ -1372,14 +1516,13 @@ class REVENGAnalyzer:
             error = REVENGError(
                 error_code=ErrorCode.ANALYSIS_STEP_FAILED,
                 message=f"Corporate exposure analysis failed: {e}",
-                details={"step": 9, "exception_type": type(e).__name__}
+                details={"step": 9, "exception_type": type(e).__name__},
             )
             logger.error(str(error))
-            self._emit_progress('step_complete', {
-                'step': 9,
-                'status': 'error',
-                'error': error.to_dict()
-            })
+            self._emit_progress(
+                "step_complete",
+                {"step": 9, "status": "error", "error": error.to_dict()},
+            )
             self.enhanced_results["step9"] = {
                 "status": "error",
                 "error_code": error.error_code.value,
@@ -1401,6 +1544,7 @@ class REVENGAnalyzer:
         logger.info("Step 10: Automated vulnerability discovery (CODE-LEVEL)")
         # Lazy import for performance optimization
         from reveng.pipeline.steps import run_vulnerability_discovery
+
         run_vulnerability_discovery(self)
 
     def _step11_threat_intelligence(self):
@@ -1418,6 +1562,7 @@ class REVENGAnalyzer:
         logger.info("Step 11: Threat intelligence correlation (BEHAVIORAL)")
         # Lazy import for performance optimization
         from reveng.pipeline.steps import run_threat_intelligence
+
         run_threat_intelligence(self)
 
     def _step12_enhanced_reconstruction(self):
@@ -1463,15 +1608,18 @@ class REVENGAnalyzer:
             error = REVENGError(
                 error_code=ErrorCode.ML_MODEL_NOT_AVAILABLE,
                 message=f"Binary reassembler module not available: {e}",
-                details={"module": "reveng.tools.core.binary_reassembler_v2"}
+                details={"module": "reveng.tools.core.binary_reassembler_v2"},
             )
             logger.warning(str(error))
-            self._emit_progress('step_complete', {
-                'step': 12,
-                'status': 'skipped',
-                'reason': 'ml_module_unavailable',
-                'error': error.to_dict()
-            })
+            self._emit_progress(
+                "step_complete",
+                {
+                    "step": 12,
+                    "status": "skipped",
+                    "reason": "ml_module_unavailable",
+                    "error": error.to_dict(),
+                },
+            )
             self.enhanced_results["step12"] = {
                 "status": "skipped",
                 "error_code": error.error_code.value,
@@ -1482,14 +1630,13 @@ class REVENGAnalyzer:
             error = REVENGError(
                 error_code=ErrorCode.ANALYSIS_STEP_FAILED,
                 message=f"Enhanced binary reconstruction failed: {e}",
-                details={"step": 12, "exception_type": type(e).__name__}
+                details={"step": 12, "exception_type": type(e).__name__},
             )
             logger.error(str(error))
-            self._emit_progress('step_complete', {
-                'step': 12,
-                'status': 'error',
-                'error': error.to_dict()
-            })
+            self._emit_progress(
+                "step_complete",
+                {"step": 12, "status": "error", "error": error.to_dict()},
+            )
             self.enhanced_results["step12"] = {
                 "status": "error",
                 "error_code": error.error_code.value,
@@ -1546,15 +1693,18 @@ class REVENGAnalyzer:
             error = REVENGError(
                 error_code=ErrorCode.ML_MODEL_NOT_AVAILABLE,
                 message=f"Demonstration generator module not available: {e}",
-                details={"module": "reveng.tools.utils.demonstration_generator"}
+                details={"module": "reveng.tools.utils.demonstration_generator"},
             )
             logger.warning(str(error))
-            self._emit_progress('step_complete', {
-                'step': 13,
-                'status': 'skipped',
-                'reason': 'ml_module_unavailable',
-                'error': error.to_dict()
-            })
+            self._emit_progress(
+                "step_complete",
+                {
+                    "step": 13,
+                    "status": "skipped",
+                    "reason": "ml_module_unavailable",
+                    "error": error.to_dict(),
+                },
+            )
             self.enhanced_results["step13"] = {
                 "status": "skipped",
                 "error_code": error.error_code.value,
@@ -1565,14 +1715,13 @@ class REVENGAnalyzer:
             error = REVENGError(
                 error_code=ErrorCode.ANALYSIS_STEP_FAILED,
                 message=f"Demonstration generation failed: {e}",
-                details={"step": 13, "exception_type": type(e).__name__}
+                details={"step": 13, "exception_type": type(e).__name__},
             )
             logger.error(str(error))
-            self._emit_progress('step_complete', {
-                'step': 13,
-                'status': 'error',
-                'error': error.to_dict()
-            })
+            self._emit_progress(
+                "step_complete",
+                {"step": 13, "status": "error", "error": error.to_dict()},
+            )
             self.enhanced_results["step13"] = {
                 "status": "error",
                 "error_code": error.error_code.value,
@@ -1750,7 +1899,9 @@ class REVENGAnalyzer:
         functions_dir = self.analysis_folder / "functions"
         functions_dir.mkdir(exist_ok=True)
 
-        logger.info(f"Writing {len(decompiled_code)} decompiled functions to {functions_dir}")
+        logger.info(
+            f"Writing {len(decompiled_code)} decompiled functions to {functions_dir}"
+        )
 
         # Write each function to a separate .c file
         for address, code in decompiled_code.items():

@@ -98,7 +98,7 @@ def load_checksums() -> Dict[str, Dict[str, str]]:
         return {}
 
     try:
-        with open(checksums_file, 'r', encoding='utf-8') as f:
+        with open(checksums_file, "r", encoding="utf-8") as f:
             checksums = yaml.safe_load(f)
             return checksums if checksums else {}
     except Exception as e:
@@ -154,8 +154,8 @@ def validate_checksum(file_path: Path, expected_sha256: str) -> bool:
 def create_retry_session(
     retries: int = 3,
     backoff_factor: float = 0.5,
-    status_forcelist: tuple = (429, 500, 502, 503, 504)
-) -> 'requests.Session':
+    status_forcelist: tuple = (429, 500, 502, 503, 504),
+) -> "requests.Session":
     """
     Create a requests session with retry logic and exponential backoff
 
@@ -179,7 +179,7 @@ def create_retry_session(
         backoff_factor=backoff_factor,
         status_forcelist=status_forcelist,
         allowed_methods=["HEAD", "GET", "OPTIONS"],  # Safe methods only
-        raise_on_status=False  # Let requests handle HTTP errors
+        raise_on_status=False,  # Let requests handle HTTP errors
     )
 
     adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -195,7 +195,7 @@ def download_with_retry(
     output_path: Path,
     max_retries: int = 3,
     chunk_size: int = 8192,
-    timeout: int = 60
+    timeout: int = 60,
 ) -> bool:
     """
     Download a file with retry logic and exponential backoff
@@ -223,10 +223,10 @@ def download_with_retry(
         response.raise_for_status()
 
         # Download with progress
-        total_size = int(response.headers.get('content-length', 0))
+        total_size = int(response.headers.get("content-length", 0))
         downloaded = 0
 
-        with open(output_path, 'wb') as f:
+        with open(output_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=chunk_size):
                 if chunk:  # filter out keep-alive chunks
                     f.write(chunk)
@@ -285,7 +285,12 @@ class InstallationResult:
 class BaseInstaller(ABC):
     """Base class for tool installers"""
 
-    def __init__(self, tool_name: str, tool_version: str = "latest", custom_install_dir: Path = None):
+    def __init__(
+        self,
+        tool_name: str,
+        tool_version: str = "latest",
+        custom_install_dir: Path = None,
+    ):
         self.tool_name = tool_name
         self.tool_version = tool_version
 
@@ -298,10 +303,14 @@ class BaseInstaller(ABC):
             env_path = os.getenv(env_var)
             if env_path:
                 self.install_dir = Path(env_path)
-                logger.info(f"Using custom install path from {env_var}: {self.install_dir}")
+                logger.info(
+                    f"Using custom install path from {env_var}: {self.install_dir}"
+                )
             else:
                 # Default: ~/.reveng/tools/{tool_name}
-                base_dir = os.getenv("REVENG_TOOLS_DIR", str(Path.home() / ".reveng" / "tools"))
+                base_dir = os.getenv(
+                    "REVENG_TOOLS_DIR", str(Path.home() / ".reveng" / "tools")
+                )
                 self.install_dir = Path(base_dir) / tool_name
 
         self.logger = logging.getLogger(f"installer.{tool_name}")
@@ -382,13 +391,11 @@ class GhidraInstaller(BaseInstaller):
                     url=self.ghidra_url,
                     output_path=temp_file_path,
                     max_retries=3,
-                    timeout=120  # 2 minutes for large file
+                    timeout=120,  # 2 minutes for large file
                 )
             except Exception as e:
                 self.logger.error(f"Failed to download Ghidra: {e}")
-                return InstallationResult(
-                    False, "ghidra", "", f"Download failed: {e}"
-                )
+                return InstallationResult(False, "ghidra", "", f"Download failed: {e}")
 
             # Validate checksum before extraction
             try:
@@ -398,7 +405,9 @@ class GhidraInstaller(BaseInstaller):
                     self.logger.info("Validating download integrity...")
                     validate_checksum(temp_file_path, expected_sha256)
                 else:
-                    self.logger.warning("No checksum available for Ghidra - skipping validation")
+                    self.logger.warning(
+                        "No checksum available for Ghidra - skipping validation"
+                    )
                     self.logger.warning("Download integrity cannot be guaranteed")
             except ValueError as e:
                 # Checksum mismatch - delete file and fail
@@ -650,7 +659,9 @@ class DIEInstaller(BaseInstaller):
     """Installer for Detect It Easy (Windows/Linux/macOS)"""
 
     def __init__(self, custom_install_dir: Path = None):
-        super().__init__("detect_it_easy", "3.08", custom_install_dir=custom_install_dir)
+        super().__init__(
+            "detect_it_easy", "3.08", custom_install_dir=custom_install_dir
+        )
         self.platform = get_platform()
         self.arch = get_architecture()
 
@@ -962,7 +973,9 @@ class ResourceHackerInstaller(BaseInstaller):
     """Installer for Resource Hacker (Windows-only PE resource editor)"""
 
     def __init__(self, custom_install_dir: Path = None):
-        super().__init__("resource_hacker", "5.1.7", custom_install_dir=custom_install_dir)
+        super().__init__(
+            "resource_hacker", "5.1.7", custom_install_dir=custom_install_dir
+        )
         self.platform = get_platform()
         self.rh_url = (
             "https://www.angusj.com/resourcehacker/resource_hacker.zip"
@@ -1068,11 +1081,19 @@ class DependencyManager:
         if is_windows:
             self.tools.update(
                 {
-                    "ilspy": ILSpyInstaller(custom_install_dir=get_install_dir("ilspy")),
-                    "detect_it_easy": DIEInstaller(custom_install_dir=get_install_dir("detect_it_easy")),
-                    "scylla": ScyllaInstaller(custom_install_dir=get_install_dir("scylla")),
+                    "ilspy": ILSpyInstaller(
+                        custom_install_dir=get_install_dir("ilspy")
+                    ),
+                    "detect_it_easy": DIEInstaller(
+                        custom_install_dir=get_install_dir("detect_it_easy")
+                    ),
+                    "scylla": ScyllaInstaller(
+                        custom_install_dir=get_install_dir("scylla")
+                    ),
                     "hxd": HxDInstaller(custom_install_dir=get_install_dir("hxd")),
-                    "resource_hacker": ResourceHackerInstaller(custom_install_dir=get_install_dir("resource_hacker")),
+                    "resource_hacker": ResourceHackerInstaller(
+                        custom_install_dir=get_install_dir("resource_hacker")
+                    ),
                 }
             )
         else:
@@ -1116,7 +1137,7 @@ class DependencyManager:
             return {}
 
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 config = yaml.safe_load(f)
                 return config if config else {}
         except Exception as e:
@@ -1189,12 +1210,14 @@ class DependencyManager:
                 else:
                     if dry_run:
                         # Dry run mode - simulate installation
-                        self.logger.info(f"[DRY RUN] Would install {tool_name} to {installer.install_dir}")
+                        self.logger.info(
+                            f"[DRY RUN] Would install {tool_name} to {installer.install_dir}"
+                        )
                         results[tool_name] = InstallationResult(
                             True,
                             tool_name,
                             str(installer.install_dir),
-                            f"DRY RUN: Would install {tool_name} version {installer.tool_version}"
+                            f"DRY RUN: Would install {tool_name} version {installer.tool_version}",
                         )
                     else:
                         # Actual installation

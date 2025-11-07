@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class CompilationError(Exception):
     """Raised when code compilation fails."""
+
     pass
 
 
@@ -156,9 +157,7 @@ class BinaryRecompilationEngine:
             raise ValueError("GhidraEngine not configured")
 
         logger.info(f"  Analyzing {binary_path} with Ghidra...")
-        ghidra_data = await asyncio.to_thread(
-            self.ghidra.analyze_binary, binary_path
-        )
+        ghidra_data = await asyncio.to_thread(self.ghidra.analyze_binary, binary_path)
 
         logger.info(f"  ✅ Functions: {len(ghidra_data.get('functions', []))}")
         logger.info(f"  ✅ Decompiled: {len(ghidra_data.get('decompiled_code', {}))}")
@@ -297,7 +296,9 @@ class BinaryRecompilationEngine:
             logger.info("  Running static vulnerability detection...")
             static_vulns = self._static_vulnerability_scan(c_code)
             vulnerabilities.extend(static_vulns)
-            logger.info(f"  ✅ Found {len(static_vulns)} pattern-matched vulnerabilities")
+            logger.info(
+                f"  ✅ Found {len(static_vulns)} pattern-matched vulnerabilities"
+            )
 
         return vulnerabilities
 
@@ -314,11 +315,17 @@ class BinaryRecompilationEngine:
             logger.info("  No vulnerabilities found, skipping exploit generation")
             return exploits
 
-        logger.info(f"  Generating exploits for {len(vulnerabilities)} vulnerabilities...")
+        logger.info(
+            f"  Generating exploits for {len(vulnerabilities)} vulnerabilities..."
+        )
 
         for vuln in vulnerabilities[:5]:  # Limit to top 5
             if self.gemini and self.gemini.is_available():
-                c_code = Path(source_files.get("c", "")).read_text() if "c" in source_files else ""
+                c_code = (
+                    Path(source_files.get("c", "")).read_text()
+                    if "c" in source_files
+                    else ""
+                )
                 exploit = await self.gemini.generate_exploit(vuln, c_code)
                 if exploit:
                     exploits.append(exploit)
@@ -461,11 +468,31 @@ Output only the Python code, no explanations.
         # Dangerous function patterns
         dangerous_patterns = {
             "strcpy": {"type": "buffer_overflow", "cwe": "CWE-120", "severity": "high"},
-            "gets": {"type": "buffer_overflow", "cwe": "CWE-120", "severity": "critical"},
-            "sprintf": {"type": "buffer_overflow", "cwe": "CWE-120", "severity": "high"},
-            "strcat": {"type": "buffer_overflow", "cwe": "CWE-120", "severity": "medium"},
-            "system(": {"type": "command_injection", "cwe": "CWE-78", "severity": "critical"},
-            "popen(": {"type": "command_injection", "cwe": "CWE-78", "severity": "high"},
+            "gets": {
+                "type": "buffer_overflow",
+                "cwe": "CWE-120",
+                "severity": "critical",
+            },
+            "sprintf": {
+                "type": "buffer_overflow",
+                "cwe": "CWE-120",
+                "severity": "high",
+            },
+            "strcat": {
+                "type": "buffer_overflow",
+                "cwe": "CWE-120",
+                "severity": "medium",
+            },
+            "system(": {
+                "type": "command_injection",
+                "cwe": "CWE-78",
+                "severity": "critical",
+            },
+            "popen(": {
+                "type": "command_injection",
+                "cwe": "CWE-78",
+                "severity": "high",
+            },
         }
 
         lines = code.split("\n")
