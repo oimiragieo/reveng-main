@@ -215,7 +215,8 @@ async def demo_llm4decompile():
         )
 
         print(f"✅ Decompilation complete!")
-        print(f"   Source lines: {len(result.split('\\n'))}")
+        line_count = len(result.split('\n'))
+        print(f"   Source lines: {line_count}")
         print(f"   Preview:\n{result[:500]}...")
 
     except Exception as e:
