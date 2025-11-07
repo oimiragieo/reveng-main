@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SourceMapResult:
     """Result from source map recovery"""
+
     success: bool
     sources: Dict[str, str]  # filename -> source code
     error: Optional[str] = None
@@ -43,10 +44,7 @@ class SourceMapRecoverer:
     This is equivalent to shipping your source alongside the "binary".
     """
 
-    def find_sourcemaps(
-        self,
-        url_or_file: str
-    ) -> List[str]:
+    def find_sourcemaps(self, url_or_file: str) -> List[str]:
         """
         Find source map files
 
@@ -58,7 +56,7 @@ class SourceMapRecoverer:
         """
         maps = []
 
-        if url_or_file.startswith('http'):
+        if url_or_file.startswith("http"):
             # URL - check for .map file
             maps = self._find_sourcemaps_url(url_or_file)
         else:
@@ -79,22 +77,19 @@ class SourceMapRecoverer:
 
             # Check for sourceMappingURL comment
             # //# sourceMappingURL=file.js.map
-            match = re.search(
-                r'//[@#]\s*sourceMappingURL=(.+)',
-                content
-            )
+            match = re.search(r"//[@#]\s*sourceMappingURL=(.+)", content)
 
             if match:
                 map_url = match.group(1).strip()
 
                 # Resolve relative URL
-                if not map_url.startswith('http'):
+                if not map_url.startswith("http"):
                     map_url = urljoin(url, map_url)
 
                 maps.append(map_url)
 
             # Also try .map extension directly
-            map_url_direct = url + '.map'
+            map_url_direct = url + ".map"
             try:
                 response = requests.head(map_url_direct, timeout=5)
                 if response.status_code == 200:
@@ -113,14 +108,11 @@ class SourceMapRecoverer:
         maps = []
 
         try:
-            with open(filepath, 'r') as f:
+            with open(filepath, "r") as f:
                 content = f.read()
 
             # Check for sourceMappingURL
-            match = re.search(
-                r'//[@#]\s*sourceMappingURL=(.+)',
-                content
-            )
+            match = re.search(r"//[@#]\s*sourceMappingURL=(.+)", content)
 
             if match:
                 map_file = match.group(1).strip()
@@ -133,7 +125,7 @@ class SourceMapRecoverer:
                     maps.append(str(map_path))
 
             # Also try .map extension
-            map_path_direct = Path(filepath).with_suffix(filepath + '.map')
+            map_path_direct = Path(filepath).with_suffix(filepath + ".map")
             if map_path_direct.exists():
                 if str(map_path_direct) not in maps:
                     maps.append(str(map_path_direct))
@@ -143,10 +135,7 @@ class SourceMapRecoverer:
 
         return maps
 
-    def recover(
-        self,
-        sourcemap_url_or_file: str
-    ) -> SourceMapResult:
+    def recover(self, sourcemap_url_or_file: str) -> SourceMapResult:
         """
         Recover original sources from source map
 
@@ -160,11 +149,11 @@ class SourceMapRecoverer:
 
         try:
             # Load source map
-            if sourcemap_url_or_file.startswith('http'):
+            if sourcemap_url_or_file.startswith("http"):
                 response = requests.get(sourcemap_url_or_file, timeout=10)
                 sourcemap = response.json()
             else:
-                with open(sourcemap_url_or_file, 'r') as f:
+                with open(sourcemap_url_or_file, "r") as f:
                     sourcemap = json.load(f)
 
             # Extract sources
@@ -178,8 +167,8 @@ class SourceMapRecoverer:
             #   ...
             # }
 
-            source_files = sourcemap.get('sources', [])
-            source_contents = sourcemap.get('sourcesContent', [])
+            source_files = sourcemap.get("sources", [])
+            source_contents = sourcemap.get("sourcesContent", [])
 
             if len(source_files) != len(source_contents):
                 logger.warning(
@@ -195,37 +184,26 @@ class SourceMapRecoverer:
 
             logger.info(f"Recovered {len(sources)} source files")
 
-            return SourceMapResult(
-                success=True,
-                sources=sources
-            )
+            return SourceMapResult(success=True, sources=sources)
 
         except Exception as e:
             logger.error(f"Source map recovery failed: {e}")
-            return SourceMapResult(
-                success=False,
-                sources={},
-                error=str(e)
-            )
+            return SourceMapResult(success=False, sources={}, error=str(e))
 
     def _clean_filename(self, filename: str) -> str:
         """Clean up source map filename"""
         # Remove webpack:// prefix
-        filename = re.sub(r'^webpack:///?', '', filename)
+        filename = re.sub(r"^webpack:///?", "", filename)
 
         # Remove leading ./
-        filename = re.sub(r'^\./', '', filename)
+        filename = re.sub(r"^\./", "", filename)
 
         # Convert to valid path
-        filename = filename.replace('..', '_')
+        filename = filename.replace("..", "_")
 
         return filename
 
-    def save_directory(
-        self,
-        sources: Dict[str, str],
-        output_dir: str
-    ) -> None:
+    def save_directory(self, sources: Dict[str, str], output_dir: str) -> None:
         """
         Save recovered sources to directory structure
 
@@ -242,15 +220,12 @@ class SourceMapRecoverer:
             file_path.parent.mkdir(parents=True, exist_ok=True)
 
             # Write source
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 f.write(content)
 
         logger.info(f"Saved {len(sources)} files to {output_dir}")
 
-    def scan_webapp(
-        self,
-        base_url: str
-    ) -> List[str]:
+    def scan_webapp(self, base_url: str) -> List[str]:
         """
         Scan web application for exposed source maps
 

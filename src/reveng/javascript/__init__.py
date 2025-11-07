@@ -22,18 +22,12 @@ from .deobfuscator import (
     JavaScriptDeobfuscator,
     DeobfuscationResult,
     ObfuscationType,
-    DeobfuscationStage
+    DeobfuscationStage,
 )
 
-from .detectors import (
-    ObfuscationDetector,
-    DetectionResult
-)
+from .detectors import ObfuscationDetector, DetectionResult
 
-from .source_map_recoverer import (
-    SourceMapRecoverer,
-    SourceMapResult
-)
+from .source_map_recoverer import SourceMapRecoverer, SourceMapResult
 
 __all__ = [
     "JavaScriptDeobfuscator",

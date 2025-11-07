@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class ObfuscationType(Enum):
     """Types of JavaScript obfuscation"""
+
     MINIFIED = "minified"  # Just whitespace removed, short var names
     PACKED = "packed"  # eval-based runtime unpacking
     WEBPACK = "webpack_bundled"  # Webpack module bundling
@@ -43,6 +44,7 @@ class ObfuscationType(Enum):
 
 class DeobfuscationStage(Enum):
     """Stages in the deobfuscation pipeline"""
+
     DETECTION = "detection"
     SOURCEMAP_RECOVERY = "sourcemap_recovery"
     UNPACKING = "unpacking"
@@ -59,6 +61,7 @@ class DeobfuscationStage(Enum):
 @dataclass
 class DeobfuscationResult:
     """Result from JavaScript deobfuscation"""
+
     success: bool
     original_code: str
     deobfuscated_code: str
@@ -72,11 +75,11 @@ class DeobfuscationResult:
     @property
     def reduction_ratio(self) -> float:
         """How much more readable the code became (lines reduced)"""
-        orig_lines = len(self.original_code.split('\n'))
-        deob_lines = len(self.deobfuscated_code.split('\n'))
+        orig_lines = len(self.original_code.split("\n"))
+        deob_lines = len(self.deobfuscated_code.split("\n"))
         if orig_lines == 0:
             return 0.0
-        return (deob_lines / orig_lines)
+        return deob_lines / orig_lines
 
 
 class JavaScriptDeobfuscator:
@@ -108,7 +111,7 @@ class JavaScriptDeobfuscator:
         llm_provider: str = "gpt4",
         webcrack_path: str = "webcrack",
         prettier_path: str = "prettier",
-        unuglifyjs_path: str = "unuglify-js"
+        unuglifyjs_path: str = "unuglify-js",
     ):
         """
         Initialize deobfuscator
@@ -133,10 +136,10 @@ class JavaScriptDeobfuscator:
         # Check tool availability
         self.tools_available = self._check_tools()
 
-        if not self.tools_available['webcrack']:
+        if not self.tools_available["webcrack"]:
             logger.warning("webcrack not found - install with: npm install -g webcrack")
 
-        if use_ml and not self.tools_available['unuglifyjs']:
+        if use_ml and not self.tools_available["unuglifyjs"]:
             logger.warning("UnuglifyJS not found - ML renaming disabled")
             self.use_ml = False
 
@@ -147,45 +150,37 @@ class JavaScriptDeobfuscator:
         # Check webcrack
         try:
             subprocess.run(
-                [self.webcrack_path, "--version"],
-                capture_output=True,
-                timeout=5
+                [self.webcrack_path, "--version"], capture_output=True, timeout=5
             )
-            tools['webcrack'] = True
+            tools["webcrack"] = True
             logger.info("webcrack available")
         except:
-            tools['webcrack'] = False
+            tools["webcrack"] = False
 
         # Check prettier
         try:
             subprocess.run(
-                [self.prettier_path, "--version"],
-                capture_output=True,
-                timeout=5
+                [self.prettier_path, "--version"], capture_output=True, timeout=5
             )
-            tools['prettier'] = True
+            tools["prettier"] = True
             logger.info("prettier available")
         except:
-            tools['prettier'] = False
+            tools["prettier"] = False
 
         # Check unuglifyjs
         try:
             subprocess.run(
-                [self.unuglifyjs_path, "--help"],
-                capture_output=True,
-                timeout=5
+                [self.unuglifyjs_path, "--help"], capture_output=True, timeout=5
             )
-            tools['unuglifyjs'] = True
+            tools["unuglifyjs"] = True
             logger.info("unuglify-js available")
         except:
-            tools['unuglifyjs'] = False
+            tools["unuglifyjs"] = False
 
         return tools
 
     async def deobfuscate(
-        self,
-        code: str,
-        filename: str = "input.js"
+        self, code: str, filename: str = "input.js"
     ) -> DeobfuscationResult:
         """
         Main deobfuscation pipeline
@@ -198,6 +193,7 @@ class JavaScriptDeobfuscator:
             DeobfuscationResult with deobfuscated code
         """
         import time
+
         start_time = time.time()
 
         original_code = code
@@ -209,6 +205,7 @@ class JavaScriptDeobfuscator:
         # Stage 1: Detection
         logger.info("Stage 1: Detecting obfuscation types...")
         from .detectors import ObfuscationDetector
+
         detector = ObfuscationDetector()
         detection = detector.detect(code)
 
@@ -220,7 +217,7 @@ class JavaScriptDeobfuscator:
         # Skipped for now as we just have code, not a URL
 
         # Stage 3: Unpacking & Unbundling with webcrack
-        if self.tools_available.get('webcrack'):
+        if self.tools_available.get("webcrack"):
             logger.info("Stage 3: Running webcrack (unpack/unbundle)...")
             code = await self._run_webcrack(code)
             stages_applied.append(DeobfuscationStage.UNPACKING)
@@ -245,7 +242,7 @@ class JavaScriptDeobfuscator:
         stages_applied.append(DeobfuscationStage.DEAD_CODE_REMOVAL)
 
         # Stage 7: ML-based variable renaming
-        if self.use_ml and self.tools_available.get('unuglifyjs'):
+        if self.use_ml and self.tools_available.get("unuglifyjs"):
             logger.info("Stage 7: ML variable renaming (UnuglifyJS)...")
             code = await self._rename_variables_ml(code)
             stages_applied.append(DeobfuscationStage.ML_RENAMING)
@@ -261,7 +258,7 @@ class JavaScriptDeobfuscator:
             stages_applied.append(DeobfuscationStage.LLM_ENHANCEMENT)
 
         # Stage 9: Code formatting
-        if self.tools_available.get('prettier'):
+        if self.tools_available.get("prettier"):
             logger.info("Stage 9: Formatting with Prettier...")
             code = self._format_code(code)
             stages_applied.append(DeobfuscationStage.FORMATTING)
@@ -289,7 +286,7 @@ class JavaScriptDeobfuscator:
             confidence=confidence,
             warnings=warnings,
             llm_analysis=llm_analysis,
-            execution_time=execution_time
+            execution_time=execution_time,
         )
 
     async def _run_webcrack(self, code: str) -> str:
@@ -312,14 +309,10 @@ class JavaScriptDeobfuscator:
                 output_dir = Path(tmpdir) / "output"
 
                 result = subprocess.run(
-                    [
-                        self.webcrack_path,
-                        str(input_file),
-                        "-o", str(output_dir)
-                    ],
+                    [self.webcrack_path, str(input_file), "-o", str(output_dir)],
                     capture_output=True,
                     text=True,
-                    timeout=60
+                    timeout=60,
                 )
 
                 # Read output
@@ -333,7 +326,9 @@ class JavaScriptDeobfuscator:
                     for f in sorted(output_files):
                         deobfuscated += f.read_text() + "\n\n"
 
-                    logger.info(f"webcrack processed successfully ({len(output_files)} files)")
+                    logger.info(
+                        f"webcrack processed successfully ({len(output_files)} files)"
+                    )
                     return deobfuscated.strip()
                 else:
                     logger.warning("webcrack produced no output")
@@ -393,7 +388,7 @@ class JavaScriptDeobfuscator:
         Accuracy: 60-80%
         """
         try:
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as f:
                 f.write(code)
                 input_file = f.name
 
@@ -402,7 +397,7 @@ class JavaScriptDeobfuscator:
                 [self.unuglifyjs_path, input_file],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0:
@@ -423,10 +418,7 @@ class JavaScriptDeobfuscator:
             except:
                 pass
 
-    async def _enhance_with_llm(
-        self,
-        code: str
-    ) -> Tuple[str, Dict]:
+    async def _enhance_with_llm(self, code: str) -> Tuple[str, Dict]:
         """
         LLM-powered semantic enhancement
 
@@ -490,11 +482,14 @@ Respond in JSON:
             response = await openai.ChatCompletion.acreate(
                 model="gpt-4-turbo-preview",
                 messages=[
-                    {"role": "system", "content": "You are a JavaScript deobfuscation and security expert."},
-                    {"role": "user", "content": prompt}
+                    {
+                        "role": "system",
+                        "content": "You are a JavaScript deobfuscation and security expert.",
+                    },
+                    {"role": "user", "content": prompt},
                 ],
                 temperature=0.1,
-                max_tokens=4000
+                max_tokens=4000,
             )
 
             content = response.choices[0].message.content
@@ -512,7 +507,7 @@ Respond in JSON:
 
             result = json.loads(content)
 
-            return result['code'], result
+            return result["code"], result
 
         except ImportError:
             logger.error("openai package not installed: pip install openai")
@@ -543,7 +538,7 @@ Respond in JSON:
                 input=code,
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0:
@@ -557,11 +552,7 @@ Respond in JSON:
             logger.error(f"Formatting failed: {e}")
             return code
 
-    def _validate_equivalence(
-        self,
-        original: str,
-        deobfuscated: str
-    ) -> float:
+    def _validate_equivalence(self, original: str, deobfuscated: str) -> float:
         """
         Validate behavioral equivalence
 
@@ -597,9 +588,10 @@ Respond in JSON:
             confidence += 0.2 * func_ratio
 
         # Check for common JS patterns
-        has_valid_patterns = any(p in deobfuscated for p in [
-            "function", "var ", "let ", "const ", "=>", "return"
-        ])
+        has_valid_patterns = any(
+            p in deobfuscated
+            for p in ["function", "var ", "let ", "const ", "=>", "return"]
+        )
 
         if has_valid_patterns:
             confidence += 0.2
@@ -607,8 +599,9 @@ Respond in JSON:
         # Check for improvements (more readable variable names)
         # Short var names like a, b, c indicate not deobfuscated well
         import re
-        short_vars_orig = len(re.findall(r'\b[a-z]\b', original))
-        short_vars_deob = len(re.findall(r'\b[a-z]\b', deobfuscated))
+
+        short_vars_orig = len(re.findall(r"\b[a-z]\b", original))
+        short_vars_deob = len(re.findall(r"\b[a-z]\b", deobfuscated))
 
         if short_vars_deob < short_vars_orig * 0.8:
             confidence += 0.1  # Good: fewer single-letter variables

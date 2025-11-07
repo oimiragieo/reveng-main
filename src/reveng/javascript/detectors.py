@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DetectionResult:
     """Result from obfuscation detection"""
+
     obfuscation_types: List[ObfuscationType]
     confidence: float
     details: dict
@@ -51,42 +52,42 @@ class ObfuscationDetector:
         # Check for minification
         if self._is_minified(code):
             types.append(ObfuscationType.MINIFIED)
-            details['minified'] = True
+            details["minified"] = True
 
         # Check for packing (eval-based)
         if self._is_packed(code):
             types.append(ObfuscationType.PACKED)
-            details['packed'] = True
+            details["packed"] = True
 
         # Check for webpack
         if self._is_webpack(code):
             types.append(ObfuscationType.WEBPACK)
-            details['webpack'] = True
+            details["webpack"] = True
 
         # Check for browserify
         if self._is_browserify(code):
             types.append(ObfuscationType.BROWSERIFY)
-            details['browserify'] = True
+            details["browserify"] = True
 
         # Check for obfuscator.io
         if self._is_obfuscator_io(code):
             types.append(ObfuscationType.OBFUSCATOR_IO)
-            details['obfuscator_io'] = True
+            details["obfuscator_io"] = True
 
         # Check for control flow flattening
         if self._is_cfg_flattened(code):
             types.append(ObfuscationType.CFG_FLATTENED)
-            details['cfg_flattened'] = True
+            details["cfg_flattened"] = True
 
         # Check for JSFuck
         if self._is_jsfuck(code):
             types.append(ObfuscationType.JSFUCK)
-            details['jsfuck'] = True
+            details["jsfuck"] = True
 
         # Check for string encryption
         if self._is_string_encrypted(code):
             types.append(ObfuscationType.STRING_ENCRYPTED)
-            details['string_encrypted'] = True
+            details["string_encrypted"] = True
 
         # Calculate confidence
         confidence = min(1.0, len(types) * 0.2 + 0.4)
@@ -95,9 +96,7 @@ class ObfuscationDetector:
             types.append(ObfuscationType.MINIFIED)  # Default assumption
 
         return DetectionResult(
-            obfuscation_types=types,
-            confidence=confidence,
-            details=details
+            obfuscation_types=types, confidence=confidence, details=details
         )
 
     def _is_minified(self, code: str) -> bool:
@@ -107,7 +106,7 @@ class ObfuscationDetector:
         # - Short variable names (a, b, c, d...)
         # - No whitespace after operators
 
-        lines = code.split('\n')
+        lines = code.split("\n")
 
         # Check for very long lines
         avg_line_length = sum(len(line) for line in lines) / max(len(lines), 1)
@@ -119,7 +118,7 @@ class ObfuscationDetector:
             return True
 
         # Check for short variable names
-        short_vars = len(re.findall(r'\b[a-z]\b', code))
+        short_vars = len(re.findall(r"\b[a-z]\b", code))
         if short_vars > 20:
             return True
 
@@ -131,10 +130,10 @@ class ObfuscationDetector:
         # - eval(function(p,a,c,k,e,d)...)
         # - Large base64/hex strings with eval
 
-        if 'eval' in code and 'function(p,a,c,k,e,d)' in code:
+        if "eval" in code and "function(p,a,c,k,e,d)" in code:
             return True
 
-        if 'eval' in code and re.search(r'\\x[0-9a-f]{2}', code):
+        if "eval" in code and re.search(r"\\x[0-9a-f]{2}", code):
             return True
 
         return False
@@ -147,10 +146,10 @@ class ObfuscationDetector:
         # - /******/ pattern
 
         webpack_patterns = [
-            '__webpack_require__',
-            'webpackJsonp',
-            '__webpack_exports__',
-            r'/\*{6}/',  # Comment block separator
+            "__webpack_require__",
+            "webpackJsonp",
+            "__webpack_exports__",
+            r"/\*{6}/",  # Comment block separator
         ]
 
         for pattern in webpack_patterns:
@@ -167,8 +166,8 @@ class ObfuscationDetector:
         # - (function(){...}())
 
         browserify_patterns = [
-            r'\(function\(\)\{',
-            r'module\.exports',
+            r"\(function\(\)\{",
+            r"module\.exports",
             r'require\(["\']',
         ]
 
@@ -187,9 +186,9 @@ class ObfuscationDetector:
         # - Hex-encoded strings
 
         obfuscator_patterns = [
-            r'_0x[0-9a-f]{4,}',  # Hex variable names
-            r'var\s+_0x[0-9a-f]+\s*=\s*\[',  # String array
-            r'\\x[0-9a-f]{2}',  # Hex-encoded chars
+            r"_0x[0-9a-f]{4,}",  # Hex variable names
+            r"var\s+_0x[0-9a-f]+\s*=\s*\[",  # String array
+            r"\\x[0-9a-f]{2}",  # Hex-encoded chars
         ]
 
         matches = 0
@@ -206,12 +205,12 @@ class ObfuscationDetector:
         # - Large switch statements with state variable
 
         # Look for while + switch pattern
-        if re.search(r'while\s*\(\s*(!!\[\]|true|0x1)\s*\)', code):
-            if 'switch' in code:
+        if re.search(r"while\s*\(\s*(!!\[\]|true|0x1)\s*\)", code):
+            if "switch" in code:
                 return True
 
         # Look for large switch statements
-        switch_cases = len(re.findall(r'case\s+', code))
+        switch_cases = len(re.findall(r"case\s+", code))
         if switch_cases > 10:
             return True
 
@@ -222,7 +221,7 @@ class ObfuscationDetector:
         # JSFuck uses only: []!+()
         # If code is >90% these characters, it's JSFuck
 
-        allowed_chars = set('[]!+()')
+        allowed_chars = set("[]!+()")
         code_chars = set(c for c in code if not c.isspace())
 
         if not code_chars:
@@ -240,10 +239,10 @@ class ObfuscationDetector:
         # - String.fromCharCode with calculations
 
         patterns = [
-            r'String\.fromCharCode',
-            r'atob\s*\(',  # Base64 decode
-            r'\^\s*0x[0-9a-f]+',  # XOR with hex
-            r'charCodeAt.*\^',  # XOR on char codes
+            r"String\.fromCharCode",
+            r"atob\s*\(",  # Base64 decode
+            r"\^\s*0x[0-9a-f]+",  # XOR with hex
+            r"charCodeAt.*\^",  # XOR on char codes
         ]
 
         matches = 0
