@@ -11,7 +11,13 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from aiohttp import web
+# Optional HTTP transport support
+try:
+    from aiohttp import web
+    _HAS_AIOHTTP = True
+except ImportError:
+    _HAS_AIOHTTP = False
+    web = None
 
 
 class MCPTransport(ABC):
@@ -116,6 +122,10 @@ class HTTPTransport(MCPTransport):
     """
 
     def __init__(self, host: str = "127.0.0.1", port: int = 8080):
+        if not _HAS_AIOHTTP:
+            raise ImportError(
+                "HTTPTransport requires aiohttp. Install it with: pip install aiohttp>=3.9.0"
+            )
         self.host = host
         self.port = port
         self.server = None
@@ -144,7 +154,7 @@ class HTTPTransport(MCPTransport):
         if self.runner:
             await self.runner.cleanup()
 
-    async def handle_request(self, request: web.Request) -> web.Response:
+    async def handle_request(self, request, response=None):
         """Handle incoming HTTP request"""
         try:
             message = await request.json()
