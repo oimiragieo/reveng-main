@@ -38,7 +38,13 @@ __version__ = "1.0.0"
 __author__ = "REVENG Development Team"
 
 # Core client (Phase 6 - implemented)
-from .client import ClaudeSDKClient
+# Make client import optional (requires anthropic package)
+try:
+    from .client import ClaudeSDKClient
+    _HAS_CLIENT = True
+except ImportError:
+    _HAS_CLIENT = False
+    ClaudeSDKClient = None
 
 # Exceptions
 from .exceptions import (
