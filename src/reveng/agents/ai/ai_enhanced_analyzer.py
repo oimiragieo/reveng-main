@@ -19,7 +19,7 @@ import sys
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List
+from typing import TYPE_CHECKING, List
 
 # Import existing REVENG components
 try:
@@ -27,6 +27,16 @@ try:
     from ..languages.language_detector import LanguageDetector
 except ImportError as e:
     logging.warning(f"REVENG components not available: {e}")
+
+# Import data models for type hints
+if TYPE_CHECKING:
+    from .ai_enhanced_data_models import (
+        CorporateRiskAssessment,
+        DemonstrationPackage,
+        ExecutiveReport,
+        UniversalAnalysisResult,
+        VulnerabilityReport,
+    )
 
 logger = logging.getLogger(__name__)
 

@@ -816,7 +816,7 @@ class CodeSummary:
     documentation_suggestions: List["DocumentationSuggestion"] = field(
         default_factory=list
     )
-    semantic_analysis: Optional["CodeSemantics"] = None
+    semantic_analysis: Optional["SemanticAnalysis"] = None
     evidence: List["Evidence"] = field(default_factory=list)
 
 

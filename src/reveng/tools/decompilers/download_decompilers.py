@@ -84,6 +84,7 @@ def download_file(url: str, dest_path: Path, filename: str) -> bool:
 
         total_size = int(response.headers.get("content-length", 0))
         downloaded = 0
+        bar_length = 40  # Progress bar length
 
         with open(dest_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):

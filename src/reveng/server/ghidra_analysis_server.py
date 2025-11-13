@@ -264,8 +264,6 @@ analysis_engine = None
 @app.route("/health", methods=["GET"])
 def health():
     """Health check endpoint."""
-    global analysis_engine
-
     if not analysis_engine:
         return (
             jsonify(
@@ -295,8 +293,6 @@ def analyze():
     Response:
         Comprehensive JSON with all analysis data
     """
-    global analysis_engine
-
     if not analysis_engine:
         return jsonify({"error": "Analysis engine not initialized"}), 503
 
@@ -324,8 +320,6 @@ def get_function(address: str):
     Args:
         address: Function address (hex string)
     """
-    global analysis_engine
-
     if not analysis_engine:
         return jsonify({"error": "Analysis engine not initialized"}), 503
 

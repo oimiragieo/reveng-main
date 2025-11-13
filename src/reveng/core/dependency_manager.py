@@ -20,11 +20,14 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import yaml
 
 from reveng.utils.security import safe_extract_zip
+
+if TYPE_CHECKING:
+    import requests
 
 logger = logging.getLogger(__name__)
 

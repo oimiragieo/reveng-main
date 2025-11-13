@@ -169,7 +169,7 @@ class PythonBytecodeDetector:
                 try:
                     # SECURITY: Use safer deserialization for marshal
                     # Only load from trusted sources and validate data
-                    if not self._is_trusted_source(file_path):
+                    if not PythonBytecodeDetector._is_trusted_source(file_path):
                         logger.warning(
                             f"Untrusted source, skipping marshal load: {file_path}"
                         )

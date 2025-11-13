@@ -270,8 +270,6 @@ def get_progress_reporter(enabled: Optional[bool] = None) -> ProgressReporter:
     Returns:
         ProgressReporter instance
     """
-    global _global_reporter
-
     if enabled is not None:
         _global_reporter.enabled = enabled and HAS_TQDM
 

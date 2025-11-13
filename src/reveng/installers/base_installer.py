@@ -12,7 +12,7 @@ import zipfile
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from reveng.utils.security import safe_extract_tar, safe_extract_zip
 

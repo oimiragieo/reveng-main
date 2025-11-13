@@ -20,14 +20,16 @@ _LOGGER = logging.getLogger(__name__)
 def _optional_import(importer: Callable[[], Any], display_name: str) -> Any:
     try:
         return importer()
-    except (ImportError, AttributeError) as exc:
-        _LOGGER.warning("%s unavailable: %s", display_name, exc)
+    except (ImportError, AttributeError) as e:
+        _LOGGER.warning("%s unavailable: %s", display_name, e)
+        # Store exception for use in nested class
+        saved_exception = e
 
         class _Unavailable:
             def __init__(self, *args, **kwargs):
                 raise ImportError(
                     f"{display_name} is unavailable because optional dependencies could not be loaded"
-                ) from exc
+                ) from saved_exception
 
         _Unavailable.__name__ = display_name
         return _Unavailable
