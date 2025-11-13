@@ -145,11 +145,11 @@ class GhidraEngine:
                 # Post-process: Extract decompiled code from functions into separate dict
                 # This creates the expected decompiled_code format: {address: code}
                 decompiled_code = {}
-                for func in data.get('functions', []):
-                    if func.get('decompiled'):
-                        entry_point = func.get('entry_point', '')
-                        decompiled_code[entry_point] = func['decompiled']
-                data['decompiled_code'] = decompiled_code
+                for func in data.get("functions", []):
+                    if func.get("decompiled"):
+                        entry_point = func.get("entry_point", "")
+                        decompiled_code[entry_point] = func["decompiled"]
+                data["decompiled_code"] = decompiled_code
 
                 logger.info(f"✅ Analysis complete for {binary_path}")
                 logger.info(f"   Functions: {len(data.get('functions', []))}")

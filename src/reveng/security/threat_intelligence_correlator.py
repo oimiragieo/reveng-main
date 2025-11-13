@@ -528,8 +528,12 @@ class ThreatIntelligenceCorrelator:
             sha256_hash = hashlib.sha256(content).hexdigest()
             hashlib.sha512(content).hexdigest()
             # Keep MD5/SHA1 only for compatibility with existing databases
-            md5_hash = hashlib.md5(content).hexdigest()  # nosec B303 - Compatibility only
-            sha1_hash = hashlib.sha1(content).hexdigest()  # nosec B303 - Compatibility only
+            md5_hash = hashlib.md5(
+                content
+            ).hexdigest()  # nosec B303 - Compatibility only
+            sha1_hash = hashlib.sha1(
+                content
+            ).hexdigest()  # nosec B303 - Compatibility only
 
             iocs.extend(
                 [

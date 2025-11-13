@@ -369,9 +369,9 @@ class REVENGAIAssistant:
             )
 
         # Security recommendations
-        results[
-            "security_recommendations"
-        ] = await self._generate_security_recommendations(results)
+        results["security_recommendations"] = (
+            await self._generate_security_recommendations(results)
+        )
 
         return results
 
@@ -406,9 +406,9 @@ class REVENGAIAssistant:
                     request.binary_path
                 )
             elif goal == "find_vulnerabilities":
-                results[
-                    "vulnerabilities"
-                ] = await self._comprehensive_vulnerability_scan(request.binary_path)
+                results["vulnerabilities"] = (
+                    await self._comprehensive_vulnerability_scan(request.binary_path)
+                )
             elif goal == "assess_threats":
                 results["threat_assessment"] = await self._assess_threats(
                     request.binary_path
