@@ -37,40 +37,38 @@ License: MIT
 __version__ = "1.0.0"
 __author__ = "REVENG Development Team"
 
-# Core client (Phase 6 - not yet implemented)
-# from .client import ClaudeSDKClient
-# from .query import query
-
-# Tool framework (Phase 1 & 2 - implemented)
-from .tools.decorator import tool
-from .tools.base import BaseTool, ToolResult
-
-# Types
-from .types import (
-    Message,
-    MessageType,
-    TextBlock,
-    ThinkingBlock,
-    ToolUseBlock,
-    ToolResultBlock,
-    PermissionMode,
-    CostReport,
-    UsageMetrics,
-)
+# Core client (Phase 6 - implemented)
+from .client import ClaudeSDKClient
 
 # Exceptions
 from .exceptions import (
     AgentSDKError,
     ClientError,
-    ToolError,
-    SessionError,
     PermissionError,
+    SessionError,
+    ToolError,
+)
+from .tools.base import BaseTool, ToolResult
+
+# Tool framework (Phase 1 & 2 - implemented)
+from .tools.decorator import tool
+
+# Types
+from .types import (
+    CostReport,
+    Message,
+    MessageType,
+    PermissionMode,
+    TextBlock,
+    ThinkingBlock,
+    ToolResultBlock,
+    ToolUseBlock,
+    UsageMetrics,
 )
 
 __all__ = [
-    # Client (Phase 6 - not yet implemented)
-    # "ClaudeSDKClient",
-    # "query",
+    # Client (Phase 6 - implemented)
+    "ClaudeSDKClient",
     # Tools (Phase 1 & 2 - implemented)
     "tool",
     "BaseTool",

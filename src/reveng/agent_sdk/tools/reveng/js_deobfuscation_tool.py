@@ -2,8 +2,8 @@
 JavaScript deobfuscation tool - integrates REVENG JS deobfuscation capabilities.
 """
 
-from typing import Any, Dict
 import asyncio
+from typing import Any, Dict
 
 from ..base import BaseTool, ToolResult
 
@@ -43,20 +43,20 @@ The deobfuscation takes 5-30 seconds depending on code size."""
         "properties": {
             "code": {
                 "type": "string",
-                "description": "JavaScript code to deobfuscate (or path to file)"
+                "description": "JavaScript code to deobfuscate (or path to file)",
             },
             "use_ml": {
                 "type": "boolean",
                 "description": "Use ML variable renaming (better quality). Default: true",
-                "default": True
+                "default": True,
             },
             "detect_malware": {
                 "type": "boolean",
                 "description": "Check for malicious patterns. Default: true",
-                "default": True
-            }
+                "default": True,
+            },
         },
-        "required": ["code"]
+        "required": ["code"],
     }
 
     async def execute(self, args: Dict[str, Any]) -> ToolResult:
@@ -68,6 +68,7 @@ The deobfuscation takes 5-30 seconds depending on code size."""
         try:
             # Check if it's a file path
             from pathlib import Path
+
             if Path(code_or_path).is_file():
                 with open(code_or_path, "r") as f:
                     code = f.read()
@@ -88,11 +89,14 @@ The deobfuscation takes 5-30 seconds depending on code size."""
             malware_info = ""
             if detect_malware:
                 from reveng.javascript.malware_detector import MalwareDetector
+
                 detector = MalwareDetector()
                 malware_result = detector.analyze(result.deobfuscated_code)
 
                 if malware_result.is_malicious:
-                    malware_info = f"\n⚠️  MALWARE DETECTED (score: {malware_result.threat_score:.1%})\n"
+                    malware_info = (
+                        f"\n⚠️  MALWARE DETECTED (score: {malware_result.threat_score:.1%})\n"
+                    )
                     malware_info += f"Threats: {len(malware_result.indicators)}\n"
                     for ind in malware_result.indicators[:3]:
                         malware_info += f"  - {ind.category.value}: {ind.description}\n"
@@ -126,6 +130,4 @@ The deobfuscation takes 5-30 seconds depending on code size."""
                 "JavaScript deobfuscator not available. Install REVENG JS module."
             )
         except Exception as e:
-            return ToolResult.error_result(
-                f"Deobfuscation failed: {str(e)}"
-            )
+            return ToolResult.error_result(f"Deobfuscation failed: {str(e)}")

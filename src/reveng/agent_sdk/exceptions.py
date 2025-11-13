@@ -38,8 +38,7 @@ class PermissionError(AgentSDKError):
     def __init__(self, tool_name: str, reason: str = ""):
         self.tool_name = tool_name
         super().__init__(
-            f"Permission denied for tool '{tool_name}'"
-            + (f": {reason}" if reason else "")
+            f"Permission denied for tool '{tool_name}'" + (f": {reason}" if reason else "")
         )
 
 

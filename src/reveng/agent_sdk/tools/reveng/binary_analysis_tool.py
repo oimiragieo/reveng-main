@@ -2,8 +2,8 @@
 Binary analysis tool - integrates REVENG binary analysis capabilities.
 """
 
-from typing import Any, Dict
 import asyncio
+from typing import Any, Dict
 
 from ..base import BaseTool, ToolResult
 
@@ -40,17 +40,14 @@ The analysis takes 10-60 seconds depending on binary size."""
     input_schema = {
         "type": "object",
         "properties": {
-            "path": {
-                "type": "string",
-                "description": "Path to the binary file to analyze"
-            },
+            "path": {"type": "string", "description": "Path to the binary file to analyze"},
             "quick_mode": {
                 "type": "boolean",
                 "description": "Quick analysis (faster but less detailed). Default: false",
-                "default": False
-            }
+                "default": False,
+            },
         },
-        "required": ["path"]
+        "required": ["path"],
     }
 
     async def execute(self, args: Dict[str, Any]) -> ToolResult:
@@ -66,11 +63,7 @@ The analysis takes 10-60 seconds depending on binary size."""
 
             # Run analysis (async)
             loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(
-                None,
-                analyzer.analyze,
-                path
-            )
+            result = await loop.run_in_executor(None, analyzer.analyze, path)
 
             # Format result
             analysis_text = self._format_analysis(result, path, quick_mode)
@@ -86,13 +79,9 @@ The analysis takes 10-60 seconds depending on binary size."""
                 "REVENG analyzer not available. Install REVENG core components."
             )
         except FileNotFoundError:
-            return ToolResult.error_result(
-                f"Binary file not found: {path}"
-            )
+            return ToolResult.error_result(f"Binary file not found: {path}")
         except Exception as e:
-            return ToolResult.error_result(
-                f"Analysis failed: {str(e)}"
-            )
+            return ToolResult.error_result(f"Analysis failed: {str(e)}")
 
     def _format_analysis(self, result: Any, path: str, quick_mode: bool) -> str:
         """Format analysis result as text."""
@@ -102,7 +91,7 @@ The analysis takes 10-60 seconds depending on binary size."""
             "",
         ]
 
-        if hasattr(result, 'vulnerabilities'):
+        if hasattr(result, "vulnerabilities"):
             output.append(f"Vulnerabilities: {len(result.vulnerabilities)}")
             if result.vulnerabilities:
                 output.append("")
@@ -111,13 +100,13 @@ The analysis takes 10-60 seconds depending on binary size."""
                 if len(result.vulnerabilities) > 5:
                     output.append(f"  ... and {len(result.vulnerabilities) - 5} more")
 
-        if hasattr(result, 'threat_score'):
+        if hasattr(result, "threat_score"):
             output.append(f"\nThreat Score: {result.threat_score}/100")
 
-        if hasattr(result, 'file_type'):
+        if hasattr(result, "file_type"):
             output.append(f"File Type: {result.file_type}")
 
-        if not quick_mode and hasattr(result, 'functions'):
+        if not quick_mode and hasattr(result, "functions"):
             output.append(f"\nFunctions Analyzed: {len(result.functions)}")
 
         output.append("")

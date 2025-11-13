@@ -2,11 +2,11 @@
 Base classes for tools in REVENG Agent SDK.
 """
 
+import asyncio
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
-import asyncio
-import time
 
 
 @dataclass
@@ -90,6 +90,14 @@ class BaseTool(ABC):
         if not self.input_schema:
             raise ValueError(f"{self.__class__.__name__} must define 'input_schema'")
 
+    def to_anthropic_format(self) -> Dict[str, Any]:
+        """Convert tool to Anthropic API format."""
+        return {
+            "name": self.name,
+            "description": self.description,
+            "input_schema": self.input_schema,
+        }
+
     @abstractmethod
     async def execute(self, args: Dict[str, Any]) -> ToolResult:
         """
@@ -118,9 +126,7 @@ class BaseTool(ABC):
             if "required" in self.input_schema:
                 for required_field in self.input_schema["required"]:
                     if required_field not in args:
-                        return ToolResult.error_result(
-                            f"Missing required field: {required_field}"
-                        )
+                        return ToolResult.error_result(f"Missing required field: {required_field}")
 
             # Execute the tool
             result = await self.execute(args)

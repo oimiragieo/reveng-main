@@ -5,10 +5,10 @@ This module provides all type definitions, enums, and data classes
 used throughout the agent SDK.
 """
 
-from enum import Enum
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 
 class MessageType(Enum):
@@ -94,6 +94,46 @@ class Message:
         """Extract all tool result blocks."""
         return [block for block in self.content if isinstance(block, ToolResultBlock)]
 
+    def to_anthropic_format(self) -> Dict[str, Any]:
+        """Convert message to Anthropic API format."""
+        role = "user" if self.type == MessageType.USER else "assistant"
+        content = []
+
+        for block in self.content:
+            if isinstance(block, TextBlock):
+                content.append({"type": "text", "text": block.text})
+            elif isinstance(block, ThinkingBlock):
+                content.append({"type": "thinking", "thinking": block.thinking})
+            elif isinstance(block, ToolUseBlock):
+                content.append(
+                    {"type": "tool_use", "id": block.id, "name": block.name, "input": block.input}
+                )
+            elif isinstance(block, ToolResultBlock):
+                content.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": block.tool_use_id,
+                        "content": block.content,
+                    }
+                )
+
+        return {"role": role, "content": content}
+
+    @classmethod
+    def from_anthropic_response(cls, response) -> "Message":
+        """Create Message from Anthropic API response."""
+        content = []
+
+        for block in response.content:
+            if block.type == "text":
+                content.append(TextBlock(text=block.text))
+            elif block.type == "thinking":
+                content.append(ThinkingBlock(thinking=block.thinking))
+            elif block.type == "tool_use":
+                content.append(ToolUseBlock(id=block.id, name=block.name, input=block.input))
+
+        return cls(type=MessageType.ASSISTANT, content=content)
+
 
 @dataclass
 class UsageMetrics:
@@ -107,10 +147,10 @@ class UsageMetrics:
     def total_tokens(self) -> int:
         """Calculate total tokens used."""
         return (
-            self.input_tokens +
-            self.output_tokens +
-            self.cache_creation_tokens +
-            self.cache_read_tokens
+            self.input_tokens
+            + self.output_tokens
+            + self.cache_creation_tokens
+            + self.cache_read_tokens
         )
 
 
@@ -128,6 +168,9 @@ class CostReport:
     tool_calls: int = 0
     duration_seconds: float = 0.0
     model: str = "claude-sonnet-4-5"
+    start_time: str = ""
+    end_time: str = ""
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def add_usage(self, usage: UsageMetrics, model_pricing: Optional[Dict[str, float]] = None):
         """Add usage metrics and calculate cost."""

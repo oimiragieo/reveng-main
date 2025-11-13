@@ -12,9 +12,9 @@ Example:
     ```
 """
 
-from typing import Any, Callable, Dict, Union
-from functools import wraps
 import inspect
+from functools import wraps
+from typing import Any, Callable, Dict, Union
 
 from .base import BaseTool, ToolResult
 
@@ -96,6 +96,7 @@ def tool(
 
         # Auto-register with global registry
         from . import register_tool
+
         register_tool(tool_instance)
 
         # Return the original function (but mark it)
