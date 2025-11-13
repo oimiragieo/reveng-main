@@ -74,7 +74,7 @@ pycparser>=2.22,<3.0.0
 # Usage:
 #   black src/ --line-length 100  # Format code
 #   pylint src/                    # Lint code
-black>=24.0.0,<25.0.0
+black>=24.0.0,<26.0.0
 pylint>=3.0.0,<4.0.0
 
 # =============================================================================
