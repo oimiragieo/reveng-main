@@ -6,6 +6,7 @@ for malware analysis, .NET analysis, quick triage, and deep analysis.
 """
 
 import json
+import subprocess
 import time
 from dataclasses import dataclass
 from enum import Enum

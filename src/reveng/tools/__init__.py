@@ -104,14 +104,16 @@ def __getattr__(name: str) -> Any:
     if name in _MODULE_MAP:
         try:
             return importlib.import_module(_MODULE_MAP[name])
-        except ImportError as exc:
-            LOGGER.warning("Tool module '%s' unavailable: %s", name, exc)
+        except ImportError as e:
+            LOGGER.warning("Tool module '%s' unavailable: %s", name, e)
+            # Store exception for use in nested class
+            saved_exception = e
 
             class _UnavailableModule:
                 def __getattr__(self, attr):
                     raise ImportError(
                         f"Optional dependency for '{name}' is missing; module cannot be used"
-                    ) from exc
+                    ) from saved_exception
 
             return _UnavailableModule()
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -6,7 +6,10 @@ Plugin for creating function call graphs and control flow visualizations.
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
+
+if TYPE_CHECKING:
+    import networkx
 
 from ...core.logger import get_logger
 from ..base import (

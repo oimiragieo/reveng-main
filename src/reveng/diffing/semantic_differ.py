@@ -324,7 +324,7 @@ class SemanticBinaryDiffer:
         removed = [funcs1[i] for i in range(len(funcs1)) if i not in matched1]
         added = [funcs2[j] for j in range(len(funcs2)) if j not in matched2]
 
-        return GraphAlignment(matched, added, removed, similarity)
+        return GraphAlignment(matches, added, removed, similarity)
 
     def _calculate_semantic_similarity(self, alignment: GraphAlignment) -> float:
         """Calculate overall semantic similarity"""
