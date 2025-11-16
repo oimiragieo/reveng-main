@@ -1,0 +1,94 @@
+# REVENG Enterprise MCP Server - Production Docker Image
+# =====================================================
+#
+# Multi-stage build for optimized production deployment
+#
+# Build: docker build -f Dockerfile.mcp -t reveng-mcp-server:latest .
+# Run:   docker run -p 8080:8080 -e GEMINI_API_KEY=xxx reveng-mcp-server:latest
+
+# ==================================================================================
+# Stage 1: Base Image with System Dependencies
+# ==================================================================================
+FROM python:3.11-slim as base
+
+LABEL maintainer="REVENG Development Team <contact@reveng-project.org>"
+LABEL description="REVENG Enterprise MCP Server - AI-Powered Reverse Engineering"
+LABEL version="4.0.0"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    # Build tools
+    gcc \
+    g++ \
+    make \
+    cmake \
+    # Binary analysis tools
+    binutils \
+    file \
+    # Network tools
+    curl \
+    wget \
+    # Clean up
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -u 1000 -s /bin/bash reveng && \
+    mkdir -p /home/reveng/.reveng && \
+    chown -R reveng:reveng /home/reveng
+
+# ==================================================================================
+# Stage 2: Python Dependencies
+# ==================================================================================
+FROM base as dependencies
+
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    # Install AI providers (optional but recommended)
+    pip install --no-cache-dir \
+        google-generativeai \
+        anthropic \
+        openai \
+        ollama
+
+# ==================================================================================
+# Stage 3: Application
+# ==================================================================================
+FROM dependencies as application
+
+WORKDIR /app
+
+# Copy application code
+COPY src/ ./src/
+COPY reveng-mcp-server .
+COPY mcp-config.example.json .
+
+# Make scripts executable
+RUN chmod +x reveng-mcp-server
+
+# Switch to non-root user
+USER reveng
+
+# Create necessary directories
+RUN mkdir -p /home/reveng/.reveng/mcp_cache && \
+    mkdir -p /home/reveng/.reveng/audit_logs
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/app:${PATH}"
+
+# Expose ports
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Default command - run MCP server with HTTP transport
+CMD ["./reveng-mcp-server", "--transport", "http", "--port", "8080", "--host", "0.0.0.0"]
