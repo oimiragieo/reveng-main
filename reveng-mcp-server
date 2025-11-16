@@ -45,12 +45,16 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from reveng.agent_sdk.mcp.servers.reveng_enterprise_server import REVENGEnterpriseServer
 from reveng.agent_sdk.mcp.transports import HTTPTransport, StdioTransport
 
+# Ensure .reveng directory exists
+reveng_dir = Path.home() / ".reveng"
+reveng_dir.mkdir(parents=True, exist_ok=True)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(Path.home() / ".reveng" / "mcp_server.log"),
+        logging.FileHandler(reveng_dir / "mcp_server.log"),
         logging.StreamHandler(sys.stderr)
     ]
 )

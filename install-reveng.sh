@@ -155,9 +155,66 @@ else
 fi
 
 echo ""
+
+# Final comprehensive check
 echo "========================================================================="
-echo -e "${GREEN}✅ Installation Complete!${NC}"
+echo -e "${BLUE}📦 Final Verification:${NC}"
 echo "========================================================================="
+echo ""
+
+ERRORS=0
+
+# Check reveng command
+echo -n "Testing reveng command... "
+if reveng --version &> /dev/null; then
+    VERSION=$(reveng --version 2>&1)
+    echo -e "${GREEN}✓ $VERSION${NC}"
+else
+    echo -e "${RED}✗ FAILED${NC}"
+    echo "   Run: pip install -e . --force-reinstall"
+    ERRORS=$((ERRORS + 1))
+fi
+
+# Check Python module
+echo -n "Testing Python import... "
+if python3 -c "from reveng.analyzer import REVENGAnalyzer" 2>/dev/null; then
+    echo -e "${GREEN}✓ OK${NC}"
+else
+    echo -e "${RED}✗ FAILED${NC}"
+    ERRORS=$((ERRORS + 1))
+fi
+
+# Check JavaScript module
+echo -n "Testing JavaScript module... "
+if [ -x "reveng-js" ]; then
+    echo -e "${GREEN}✓ OK${NC}"
+else
+    echo -e "${YELLOW}⚠ Optional (not critical)${NC}"
+fi
+
+# Check MCP server
+echo -n "Testing MCP server... "
+if [ -x "reveng-mcp-server" ]; then
+    echo -e "${GREEN}✓ Executable${NC}"
+else
+    echo -e "${YELLOW}⚠ Not executable${NC}"
+    chmod +x reveng-mcp-server 2>/dev/null || true
+fi
+
+echo ""
+
+if [ $ERRORS -eq 0 ]; then
+    echo "========================================================================="
+    echo -e "${GREEN}✅ Installation Complete! All checks passed.${NC}"
+    echo "========================================================================="
+else
+    echo "========================================================================="
+    echo -e "${YELLOW}⚠️  Installation completed with $ERRORS error(s)${NC}"
+    echo "========================================================================="
+    echo ""
+    echo "See troubleshooting: docs/getting-started/troubleshooting.md"
+fi
+
 echo ""
 echo -e "${BLUE}📚 Quick Start:${NC}"
 echo ""
@@ -168,6 +225,7 @@ echo "  2️⃣  Deobfuscate JavaScript:"
 echo "     ./reveng-js deobfuscate obfuscated.js -o clean.js"
 echo ""
 echo "  3️⃣  Run demos:"
+echo "     python examples/my_first_analysis.py"
 echo "     python examples/javascript_deobfuscation_demo.py"
 echo ""
 echo "  4️⃣  View all commands:"
@@ -175,14 +233,15 @@ echo "     reveng --help"
 echo "     ./reveng-js --help"
 echo ""
 echo -e "${BLUE}📖 Documentation:${NC}"
+echo "   • START HERE: START_HERE.md  ← Read this first!"
 echo "   • Quick Start: QUICK_START.md"
 echo "   • JavaScript: src/reveng/javascript/README.md"
 echo "   • Full Docs: docs/"
 echo ""
 echo -e "${BLUE}🔧 Optional Setup:${NC}"
-echo "   • Ghidra: For binary disassembly (see INSTALLATION.md)"
-echo "   • AI APIs: For LLM features (set OPENAI_API_KEY, ANTHROPIC_API_KEY)"
-echo "   • Ollama: For local AI models"
+echo "   • Ghidra: For binary disassembly (see docs/getting-started/installation.md)"
+echo "   • AI APIs: For LLM features (set GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY)"
+echo "   • Ollama: For local AI models (https://ollama.ai)"
 echo ""
 echo "Happy reverse engineering! 🎉"
 echo ""
