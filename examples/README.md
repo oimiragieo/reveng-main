@@ -1,94 +1,89 @@
 # REVENG Examples
 
-This directory contains comprehensive examples demonstrating REVENG's capabilities.
+This directory contains examples demonstrating REVENG's capabilities, from beginner-friendly tutorials to advanced features.
 
-## 📁 Directory Structure
+## 📁 Current Directory Structure
 
 ```
 examples/
-├── README.md                    # This file
-├── analysis_template.py         # Custom analysis template
-├── basic/                       # Basic usage examples
-│   ├── 01_simple_analysis.py
-│   ├── 02_java_analysis.py
-│   ├── 03_csharp_analysis.py
-│   ├── 04_python_analysis.py
-│   ├── 05_native_analysis.py
-│   └── README.md
-├── advanced/                    # Advanced usage examples
-│   ├── 01_custom_analyzer.py
-│   ├── 02_plugin_development.py
-│   ├── 03_batch_processing.py
-│   ├── 04_ai_integration.py
-│   ├── 05_enterprise_features.py
-│   └── README.md
-├── outputs/                     # Example outputs
-│   ├── sample_analysis.json
-│   ├── sample_report.html
-│   └── sample_source.c
-└── templates/                   # Analysis templates
-    ├── malware_analysis.py
-    ├── vulnerability_scan.py
-    └── code_review.py
+├── README.md                           # This file
+├── my_first_analysis.py                # ✅ Start here! Simplest example
+├── javascript_deobfuscation_demo.py    # ✅ JavaScript features demo
+├── agent_sdk_demo.py                   # ✅ Agent SDK usage
+├── basic/                              # Basic examples for beginners
+│   ├── 01_simple_analysis.py           # ✅ NEW! Basic binary analysis
+│   ├── README.md                       # ✅ Getting started guide
+│   └── claude.md                       # AI context
+├── advanced/                           # Advanced feature demonstrations
+│   ├── full_recompilation_demo.py      # ✅ Complete recompilation pipeline
+│   ├── gemini_feedback_demo.py         # ✅ Self-improving feedback loop
+│   ├── v4_0_features_demo.py           # ✅ v4.0 enterprise features
+│   ├── README.md                       # Advanced examples guide
+│   └── claude.md                       # AI context
+├── test-samples/                       # Sample files for testing
+│   ├── obfuscated-simple.js            # ✅ Test JavaScript file
+│   ├── obfuscated-eval.js              # ✅ Eval-based obfuscation
+│   ├── obfuscated-strings.js           # ✅ String obfuscation
+│   └── README.md                       # Sample file descriptions
+└── use-cases/                          # Real-world use case examples
 ```
+
+**Note:** More examples are planned for future releases. See [Contributing](#contributing) to help add examples!
 
 ## 🚀 Quick Start
 
-### Basic Examples
+### For Complete Beginners (Start Here!)
 
 ```bash
-# Run a simple analysis
-python examples/basic/01_simple_analysis.py
+# 1. Your very first analysis (2 minutes)
+python examples/my_first_analysis.py
 
-# Analyze a Java file
-python examples/basic/02_java_analysis.py test_samples/HelloWorld.java
+# 2. Simple binary analysis (5 minutes)
+python examples/basic/01_simple_analysis.py /bin/ls
 
-# Analyze a C# executable
-python examples/basic/03_csharp_analysis.py app.exe
+# 3. JavaScript deobfuscation (5 minutes)
+python examples/javascript_deobfuscation_demo.py
 ```
 
 ### Advanced Examples
 
 ```bash
-# Create a custom analyzer
-python examples/advanced/01_custom_analyzer.py
+# Full recompilation pipeline (requires Ghidra)
+python examples/advanced/full_recompilation_demo.py
 
-# Batch process multiple files
-python examples/advanced/03_batch_processing.py /path/to/binaries/
+# Self-improving AI feedback loop
+python examples/advanced/gemini_feedback_demo.py
 
-# Integrate with AI services
-python examples/advanced/04_ai_integration.py
+# v4.0 Enterprise features
+python examples/advanced/v4_0_features_demo.py
 ```
 
-## 📚 Example Categories
+## 📚 Available Examples
 
-### 1. Basic Examples (`basic/`)
+### ✅ Ready to Use
 
-**Purpose**: Learn the fundamentals of REVENG usage
+| Example | Description | Time | Requirements |
+|---------|-------------|------|--------------|
+| **my_first_analysis.py** | Absolute beginner introduction | 2 min | None |
+| **basic/01_simple_analysis.py** | Basic binary analysis | 5 min | None |
+| **javascript_deobfuscation_demo.py** | JS deobfuscation features | 5 min | Node.js (optional) |
+| **agent_sdk_demo.py** | Agent SDK usage | 10 min | None |
+| **advanced/full_recompilation_demo.py** | Complete pipeline | 30 min | Ghidra, API keys |
+| **advanced/gemini_feedback_demo.py** | Self-improving AI | 15 min | Gemini API key |
+| **advanced/v4_0_features_demo.py** | Enterprise features | 20 min | API keys |
 
-- **`01_simple_analysis.py`** - Basic binary analysis
-- **`02_java_analysis.py`** - Java bytecode analysis
-- **`03_csharp_analysis.py`** - .NET IL analysis
-- **`04_python_analysis.py`** - Python bytecode analysis
-- **`05_native_analysis.py`** - Native binary analysis
+### 🚧 Coming Soon
 
-### 2. Advanced Examples (`advanced/`)
+These examples are referenced in older docs but not yet implemented:
 
-**Purpose**: Explore advanced features and customization
+- Java bytecode analysis
+- C#/.NET analysis
+- Python bytecode analysis
+- Custom analyzer creation
+- Plugin development
+- Batch processing
 
-- **`01_custom_analyzer.py`** - Create custom analyzers
-- **`02_plugin_development.py`** - Develop plugins
-- **`03_batch_processing.py`** - Process multiple files
-- **`04_ai_integration.py`** - AI service integration
-- **`05_enterprise_features.py`** - Enterprise features
-
-### 3. Analysis Templates (`templates/`)
-
-**Purpose**: Pre-built analysis templates for common use cases
-
-- **`malware_analysis.py`** - Malware analysis template
-- **`vulnerability_scan.py`** - Vulnerability scanning
-- **`code_review.py`** - Code review and audit
+**Want to help?** See [Contributing](#contributing) below!
 
 ## 🧪 Running Examples
 

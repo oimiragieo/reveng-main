@@ -6,16 +6,18 @@ Complete installation instructions for the REVENG Universal Reverse Engineering 
 
 ### Required Software
 
-#### Python 3.11 or Higher
+#### Python 3.9 or Higher
 ```bash
 # Check Python version
-python --version  # Should be 3.11+
+python --version  # Should be 3.9+ (3.11+ recommended)
 
 # Install Python (if needed)
 # Windows: Download from python.org
-# Linux: sudo apt install python3.11
-# macOS: brew install python@3.11
+# Linux: sudo apt install python3.9  # or python3.11
+# macOS: brew install python@3.9     # or python@3.11
 ```
+
+**Note:** Python 3.9+ is the minimum requirement, but Python 3.11+ is recommended for best performance.
 
 #### System Requirements
 - **RAM:** 4GB minimum (8GB+ recommended)
@@ -37,20 +39,28 @@ java -version  # Should be 17+
 
 ## Installation Methods
 
-### Method 1: PyPI (Recommended) ✅
+### Method 1: From Source (Recommended) ✅
 
-**Fastest installation for end users**
+**Current installation method - PyPI package coming soon**
 
 ```bash
-# Install REVENG
-pip install reveng-toolkit
+# Clone repository
+git clone https://github.com/oimiragieo/reveng-main.git
+cd reveng-main
+
+# Quick install (automated)
+./install-reveng.sh
+
+# OR manual install
+pip install -e .
 
 # Verify installation
-reveng --version
-reveng doctor  # Check dependencies
+reveng --version  # Should show: REVENG v4.0.0
 ```
 
-### Method 2: From Source 🔧
+**Note:** PyPI package (`pip install reveng`) is not yet published. Install from source for now.
+
+### Method 2: Development Mode 🔧
 
 **For contributors and developers**
 
@@ -65,25 +75,24 @@ pip install -e .
 # Install development dependencies
 pip install -r requirements-dev.txt
 
+# Install pre-commit hooks
+pre-commit install
+
 # Verify installation
 reveng --version
+python -m pytest  # Run tests
 ```
 
-### Method 3: Docker 🐳
+### Method 3: Docker 🐳 (Coming Soon)
 
 **For containerized deployment**
 
 ```bash
-# Pull image
-docker pull reveng/cli:latest
-
-# Run analysis
-docker run -v $(pwd):/data reveng/cli analyze /data/binary.exe
-
-# Web interface
-docker pull reveng/web:latest
-docker run -p 3000:3000 reveng/web
+# Docker images are planned for future release
+# Check back soon or follow: https://github.com/oimiragieo/reveng-main/issues
 ```
+
+**Status:** Docker images will be available in v4.1.0
 
 ## External Dependencies
 
