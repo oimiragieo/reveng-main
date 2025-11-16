@@ -1,5 +1,5 @@
 """
-REVENG v5.0 - Cloud-Distributed Analysis Platform
+REVENG v5.0 - Cloud-Distributed Analysis Platform & Cloud Exploitation
 
 Kubernetes-based distributed binary analysis:
 - Horizontal scaling for massive binary corpora
@@ -8,8 +8,23 @@ Kubernetes-based distributed binary analysis:
 - Job queue management
 - Result aggregation
 
-Status: Framework implemented, full implementation pending
+Cloud-Native Exploitation (Modern Hacker's Playbook):
+- AWS EBS snapshot triage
+- S3 encryption bypass
+- Cloud API discovery
+- Container security scanning
 """
 
-# Skeletal imports for future implementation
-__all__ = []
+from .aws_ebs_triage import AWSEBSTriage, EBSSnapshot, SecretMatch
+from .s3_encryption_bypass import S3EncryptionBypass
+from .cloud_api_analyzer import CloudAPIAnalyzer
+from .container_scanner import ContainerScanner
+
+__all__ = [
+    'AWSEBSTriage',
+    'EBSSnapshot',
+    'SecretMatch',
+    'S3EncryptionBypass',
+    'CloudAPIAnalyzer',
+    'ContainerScanner',
+]
