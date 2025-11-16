@@ -150,6 +150,12 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+markers = [
+    "poc: Proof-of-concept tests for new features",
+    "slow: Tests that take a long time to run",
+    "integration: Integration tests",
+    "unit: Unit tests",
+]
 
 [tool.mypy]
 python_version = "3.9"
