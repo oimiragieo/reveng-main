@@ -10,10 +10,11 @@ REVENG is a revolutionary AI-powered security platform that **proves vulnerabili
 
 This is the **master documentation index** for the entire REVENG codebase, serving as a comprehensive guide to all 107 `claude.md` files throughout the project. Use this index to navigate the codebase efficiently and understand the complete system architecture.
 
-**Version**: 4.0.0 (ULTRATHINK Optimization Release)
+**Version**: 4.0.0 (Enterprise AI Tool Suite with MCP Integration)
 **License**: MIT
 **Python**: 3.9+
 **Platforms**: Linux, macOS, Windows
+**MCP Compatible**: ✅ Model Context Protocol Support
 
 ---
 
@@ -40,7 +41,7 @@ This is the **master documentation index** for the entire REVENG codebase, servi
 | **Total `claude.md` Files** | 107 |
 | **Total Directories** | 524+ |
 | **Python Files** | 326+ |
-| **Lines of Code (src/reveng)** | ~101,800+ |
+| **Lines of Code (src/reveng)** | ~104,500+ |
 | **Test Files** | 48+ |
 | **Test Cases** | 500+ |
 | **Test Coverage** | 91% |
@@ -50,6 +51,8 @@ This is the **master documentation index** for the entire REVENG codebase, servi
 | **Example Scripts** | 10+ |
 | **Performance (v4.0)** | 17-41% faster pipeline |
 | **GPU Acceleration** | 10-100x batch speedup |
+| **MCP Tools** | 15+ specialized reverse engineering tools |
+| **MCP Support** | ✅ Model Context Protocol compatible |
 
 ---
 
@@ -111,6 +114,42 @@ Comprehensive index of all 69 `claude.md` files in `src/reveng`, organized by ca
 - **Permission System**: Allowlist/denylist, pre/post hooks, rate limiting
 - **Cost Tracking**: Session-based tracking, per-model calculation, analytics
 - **Enterprise Ready**: Security controls, audit logging, session management
+
+#### MCP Enterprise Integration (v4.0 NEW)
+
+| Component | Path | Description |
+|-----------|------|-------------|
+| **MCP Server** | [reveng_enterprise_server.py](/home/user/reveng-main/src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py) | Enterprise MCP server (1000+ lines, 15+ tools) |
+| **Entry Point** | [reveng-mcp-server](/home/user/reveng-main/reveng-mcp-server) | Standalone MCP server launcher |
+| **Documentation** | [docs/mcp/](/home/user/reveng-main/docs/mcp/) | Comprehensive MCP integration guide (600+ lines) |
+| **POC Tests** | [test_mcp_integration.py](/home/user/reveng-main/tests/poc/test_mcp_integration.py) | MCP integration tests (14 tests) |
+| **Configuration** | [mcp-config.example.json](/home/user/reveng-main/mcp-config.example.json) | Claude Desktop configuration |
+| **Dockerfile** | [Dockerfile.mcp](/home/user/reveng-main/Dockerfile.mcp) | Production container image |
+| **Kubernetes** | [k8s/deployment.yaml](/home/user/reveng-main/k8s/deployment.yaml) | K8s deployment (10 resources) |
+
+**MCP Enterprise Features**:
+- **15+ Specialized Tools**: Binary analysis, vulnerability detection, exploit generation, JS deobfuscation
+- **Enterprise Security**: Rate limiting (5 req/sec), audit logging (JSON lines), secure caching
+- **Resource Providers**: Analysis results, documentation, reports
+- **Prompt Templates**: Malware analysis, vulnerability research, JS deobfuscation workflows
+- **Production Deployment**: Docker, Kubernetes, health checks, auto-scaling
+- **AI-Native**: Natural language interface for all reverse engineering tasks
+
+**Quick Start**:
+```bash
+# Launch MCP server for Claude Desktop
+./reveng-mcp-server
+
+# Or with HTTP for network access
+./reveng-mcp-server --transport http --port 8080
+```
+
+**Example AI Queries**:
+```
+"Analyze this binary for vulnerabilities: /path/to/suspicious.exe"
+"Deobfuscate this JavaScript: /path/to/malware.js"
+"Generate exploit for buffer overflow at 0x401000"
+```
 
 #### Analysis Tools
 
@@ -852,18 +891,28 @@ See [SECURITY.md](/home/user/reveng-main/SECURITY.md) for full policy.
 
 ---
 
-## v4.0 ULTRATHINK Optimization (Current Release)
+## v4.0 Enterprise AI Tool Suite (Current Release)
 
 ### What's New in v4.0
 
-**Major Optimizations:**
+**Major Features:**
+- **🤖 MCP Integration**: Enterprise-grade Model Context Protocol server with 15+ specialized tools
+- **AI-Native Interface**: Natural language queries for binary analysis, vulnerability detection, exploit generation
 - **17-41% Faster Pipeline**: Incremental compilation with ccache/sccache reduces rebuild time from 6.3s to 0.6s
 - **90%+ Vulnerability Detection**: Enhanced symbolic execution engine with angr+Z3 (up from 60%)
 - **90% Recompilability**: LLM4Decompile integration for superior decompilation (up from 70%)
 - **10-100x GPU Speedup**: Batch processing with CUDA/ROCm/MPS support (Phase 2.1)
 - **Code Quality**: Pre-commit hooks, black formatting, comprehensive linting
 
-**New Components:**
+**New MCP Components:**
+- `src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py` (1000+ lines) - Enterprise MCP server
+- `reveng-mcp-server` - Standalone MCP server launcher
+- `docs/mcp/README.md` (600+ lines) - Comprehensive MCP documentation
+- `tests/poc/test_mcp_integration.py` - MCP integration tests
+- `Dockerfile.mcp` - Production container image
+- `k8s/deployment.yaml` - Kubernetes deployment manifests
+
+**New Optimization Components:**
 - `src/reveng/tools/binary/incremental_compiler.py` (404 lines) - Compilation caching
 - `src/reveng/security/symbolic_execution_engine.py` (516 lines) - Advanced vulnerability discovery
 - `src/reveng/ml/gpu_accelerator.py` (400+ lines) - GPU acceleration framework
@@ -954,17 +1003,19 @@ This revolutionary platform was made possible by:
 | Metric | Value |
 |--------|-------|
 | **Documentation Files (`claude.md`)** | 107 |
-| **Source Code Lines** | ~101,800+ |
+| **Source Code Lines** | ~104,500+ |
 | **Python Files** | 326+ |
 | **Total Directories** | 524+ |
 | **Test Coverage** | 91% |
 | **Test Cases** | 500+ |
-| **POC Tests (v4.0)** | 3 (LLM4Decompile, Incremental, Symbolic) |
+| **POC Tests (v4.0)** | 4 (LLM4Decompile, Incremental, Symbolic, MCP) |
 | **ML Models** | 4 (90.7% avg) |
 | **Example Scripts** | 10+ |
 | **Dependencies** | 218 packages |
 | **Supported Languages** | Java, C#, Python, Native (PE/ELF/Mach-O) |
 | **Supported Architectures** | 20+ (via Ghidra) |
+| **MCP Tools** | 15+ specialized reverse engineering tools |
+| **MCP Support** | ✅ Model Context Protocol compatible |
 | **v4.0 Performance Gain** | 17-41% faster pipeline |
 | **GPU Batch Speedup** | 10-100x (Phase 2.1) |
 
@@ -985,5 +1036,6 @@ This revolutionary platform was made possible by:
 ---
 
 *Last Updated: November 16, 2025*
-*Documentation Version: 4.0.0 (ULTRATHINK Optimization Release)*
+*Documentation Version: 4.0.0 (Enterprise AI Tool Suite with MCP Integration)*
 *Total `claude.md` Files Indexed: 107*
+*MCP Tools Available: 15+ specialized reverse engineering tools*
