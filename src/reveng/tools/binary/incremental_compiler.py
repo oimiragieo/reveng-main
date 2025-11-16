@@ -17,14 +17,13 @@ Supported compilers:
 - MSVC (via sccache on Windows)
 """
 
-import os
-import subprocess
 import logging
+import os
 import shutil
-from pathlib import Path
-from typing import Optional, Dict, List, Tuple
+import subprocess
 from dataclasses import dataclass
-import json
+from pathlib import Path
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -267,7 +266,7 @@ class IncrementalCompiler:
                             stats.cache_size = int(size * 1024 * 1024)
                         elif unit == "KB":
                             stats.cache_size = int(size * 1024)
-                    except:
+                    except Exception:
                         pass
 
             elif "files in cache" in line.lower():
@@ -297,7 +296,7 @@ class IncrementalCompiler:
                 if len(parts) >= 2:
                     try:
                         stats.hits = int(parts[-1])
-                    except:
+                    except Exception:
                         pass
 
             elif "cache misses" in line:
@@ -305,7 +304,7 @@ class IncrementalCompiler:
                 if len(parts) >= 2:
                     try:
                         stats.misses = int(parts[-1])
-                    except:
+                    except Exception:
                         pass
 
             elif "cache size" in line:
@@ -320,7 +319,7 @@ class IncrementalCompiler:
                             stats.cache_size = int(size * 1024 * 1024 * 1024)
                         elif unit == "MB":
                             stats.cache_size = int(size * 1024 * 1024)
-                    except:
+                    except Exception:
                         pass
 
         stats.max_size = 2 * 1024 * 1024 * 1024
@@ -361,9 +360,9 @@ class IncrementalCompiler:
         print(f"Cache hits:      {stats.hits:,}")
         print(f"Cache misses:    {stats.misses:,}")
         print(f"Hit rate:        {stats.hit_rate:.1%}")
-        print(
-            f"Cache size:      {stats.cache_size / (1024**3):.2f} GB / {stats.max_size / (1024**3):.0f} GB"
-        )
+        cache_size_gb = stats.cache_size / (1024**3)
+        max_size_gb = stats.max_size / (1024**3)
+        print(f"Cache size:      {cache_size_gb:.2f} GB / {max_size_gb:.0f} GB")
         print(f"Files cached:    {stats.files_cached:,}")
         print(f"{'='*60}\n")
 

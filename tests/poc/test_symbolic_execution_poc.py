@@ -8,10 +8,10 @@ Expected: 90%+ vulnerability detection accuracy (up from 60% with heuristics)
 """
 
 import os
-import pytest
 import subprocess
 import tempfile
-from pathlib import Path
+
+import pytest
 
 
 @pytest.fixture
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         )
 
         if result.returncode != 0:
-            pytest.skip(f"Failed to compile vulnerable binary")
+            pytest.skip("Failed to compile vulnerable binary")
 
         yield output_file
 
@@ -134,7 +134,7 @@ int main() { return 0; }
             # Initialize engine
             engine = SymbolicExecutionEngine(binary, analysis_depth="shallow")
 
-            print(f"\n✓ Symbolic execution engine initialized")
+            print("\n✓ Symbolic execution engine initialized")
             print(f"  Binary: {binary}")
             print(f"  Architecture: {engine.project.arch.name}")
             print(f"  Entry point: {hex(engine.project.entry)}")
@@ -167,14 +167,14 @@ def test_buffer_overflow_detection(vulnerable_buffer_overflow):
 
         engine = SymbolicExecutionEngine(vulnerable_buffer_overflow, analysis_depth="shallow")
 
-        print(f"\n" + "=" * 60)
+        print("\n" + "=" * 60)
         print("Testing Buffer Overflow Detection")
         print("=" * 60)
 
         # Find vulnerabilities
         vulns = engine.find_vulnerabilities()
 
-        print(f"\n✓ Vulnerability scan complete")
+        print("\n✓ Vulnerability scan complete")
         print(f"  Found {len(vulns)} vulnerabilities")
 
         # Should find buffer overflow in strcpy
@@ -183,7 +183,7 @@ def test_buffer_overflow_detection(vulnerable_buffer_overflow):
         print(f"\n✓ Buffer overflow vulnerabilities: {len(buffer_overflows)}")
 
         for vuln in buffer_overflows:
-            print(f"\n  Vulnerability Details:")
+            print("\n  Vulnerability Details:")
             print(f"    Type: {vuln.type.value}")
             print(f"    Severity: {vuln.severity.value}")
             print(f"    Function: {vuln.function_name}")
@@ -218,7 +218,7 @@ def test_format_string_detection(vulnerable_format_string):
 
         engine = SymbolicExecutionEngine(vulnerable_format_string, analysis_depth="shallow")
 
-        print(f"\n" + "=" * 60)
+        print("\n" + "=" * 60)
         print("Testing Format String Detection")
         print("=" * 60)
 
@@ -232,7 +232,7 @@ def test_format_string_detection(vulnerable_format_string):
         print(f"\n✓ Format string vulnerabilities: {len(format_vulns)}")
 
         for vuln in format_vulns:
-            print(f"\n  Vulnerability Details:")
+            print("\n  Vulnerability Details:")
             print(f"    Type: {vuln.type.value}")
             print(f"    Severity: {vuln.severity.value}")
             print(f"    Function: {vuln.function_name}")
@@ -242,9 +242,9 @@ def test_format_string_detection(vulnerable_format_string):
         # Should detect format string vuln
         # Note: Detection depends on angr's ability to find the printf call
         if len(format_vulns) > 0:
-            print(f"\n✓ Successfully detected format string vulnerability!")
+            print("\n✓ Successfully detected format string vulnerability!")
         else:
-            print(f"\n⚠ Format string detection may require deeper analysis")
+            print("\n⚠ Format string detection may require deeper analysis")
 
     except ImportError as e:
         pytest.skip(f"Dependencies not available: {e}")
@@ -258,14 +258,11 @@ def test_exploit_generation(vulnerable_buffer_overflow):
     Expected: Generate working proof-of-concept exploit code
     """
     try:
-        from reveng.security.symbolic_execution_engine import (
-            SymbolicExecutionEngine,
-            VulnerabilityType,
-        )
+        from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
 
         engine = SymbolicExecutionEngine(vulnerable_buffer_overflow, analysis_depth="shallow")
 
-        print(f"\n" + "=" * 60)
+        print("\n" + "=" * 60)
         print("Testing Exploit Generation")
         print("=" * 60)
 
@@ -282,10 +279,10 @@ def test_exploit_generation(vulnerable_buffer_overflow):
 
         exploit = engine.generate_exploit(vuln)
 
-        print(f"\n✓ Exploit generated")
+        print("\n✓ Exploit generated")
         print(f"  Success rate estimate: {exploit.success_rate:.0%}")
         print(f"  Description: {exploit.description}")
-        print(f"\n  Exploit Code Preview:")
+        print("\n  Exploit Code Preview:")
         print("  " + "-" * 58)
 
         # Print first 20 lines of exploit code
@@ -297,7 +294,7 @@ def test_exploit_generation(vulnerable_buffer_overflow):
         assert len(exploit.exploit_code) > 0
         assert "python" in exploit.exploit_code.lower()
 
-        print(f"\n✓ Exploit code is valid Python")
+        print("\n✓ Exploit code is valid Python")
 
     except ImportError as e:
         pytest.skip(f"Dependencies not available: {e}")
@@ -312,7 +309,7 @@ def test_vulnerability_type_coverage():
             VulnerabilityType,
         )
 
-        print(f"\n" + "=" * 60)
+        print("\n" + "=" * 60)
         print("Vulnerability Type Coverage")
         print("=" * 60)
 
@@ -362,7 +359,7 @@ def test_analysis_depth_configurations():
                 engine = SymbolicExecutionEngine(binary, analysis_depth=depth)
                 configs[depth] = {"max_paths": engine.max_paths, "timeout": engine.timeout}
 
-            print(f"\n" + "=" * 60)
+            print("\n" + "=" * 60)
             print("Analysis Depth Configurations")
             print("=" * 60)
 
@@ -375,7 +372,7 @@ def test_analysis_depth_configurations():
             assert configs["shallow"]["max_paths"] < configs["medium"]["max_paths"]
             assert configs["medium"]["max_paths"] < configs["deep"]["max_paths"]
 
-            print(f"\n✓ Analysis depth scaling verified")
+            print("\n✓ Analysis depth scaling verified")
 
         finally:
             os.remove(source)

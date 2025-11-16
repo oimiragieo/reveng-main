@@ -15,13 +15,12 @@ Capabilities:
 Accuracy: 90%+ vulnerability detection (up from 60% with heuristics)
 """
 
-import angr
-import claripy
 import logging
-from typing import List, Dict, Optional, Set, Tuple
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
+from typing import List, Optional, Tuple
+
+import angr
 
 logger = logging.getLogger(__name__)
 

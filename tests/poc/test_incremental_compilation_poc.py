@@ -7,10 +7,9 @@ Tests to verify ccache/sccache provides 5-10x speedup for iterative compilation.
 """
 
 import os
-import pytest
 import tempfile
-import time
-from pathlib import Path
+
+import pytest
 
 
 @pytest.fixture
@@ -62,7 +61,7 @@ def test_incremental_compiler_basic():
 
     compiler = IncrementalCompiler()
 
-    print(f"\n✓ Incremental compiler initialized")
+    print("\n✓ Incremental compiler initialized")
     print(f"  Cache backend: {compiler.cache_backend or 'None (direct compilation)'}")
     print(f"  Cache enabled: {compiler.cache_enabled}")
     print(f"  Cache directory: {compiler.cache_dir}")
@@ -201,7 +200,7 @@ def test_cache_hit_rate_accumulation(large_source_file):
             # After multiple compilations, hit rate should be reasonable
             assert final_rate > 0.0, "Hit rate should improve with repeated compilation"
 
-    except Exception as e:
+    except Exception:
         # Cleanup in case of error
         for i in range(5):
             output_file = large_source_file.replace(".c", f"_test{i}.out")
@@ -245,14 +244,14 @@ def test_multiple_optimization_levels(large_source_file):
             if os.path.exists(output_file):
                 os.remove(output_file)
 
-        print(f"\n✓ Compilation speedups by optimization level:")
+        print("\n✓ Compilation speedups by optimization level:")
         for opt_level, data in results.items():
             print(
                 f"  -{opt_level}: {data['speedup']:.1f}x speedup "
                 f"({data['cold']:.2f}s → {data['warm']:.2f}s)"
             )
 
-    except Exception as e:
+    except Exception:
         # Cleanup
         for opt_level in opt_levels:
             output_file = large_source_file.replace(".c", f"_{opt_level}.out")
@@ -275,7 +274,7 @@ def test_cache_statistics():
 
     assert stats is not None, "Should be able to get cache stats"
 
-    print(f"\n✓ Cache statistics:")
+    print("\n✓ Cache statistics:")
     print(f"  Hits: {stats.hits}")
     print(f"  Misses: {stats.misses}")
     print(f"  Hit rate: {stats.hit_rate:.1%}")

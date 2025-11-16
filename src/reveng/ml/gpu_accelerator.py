@@ -23,13 +23,11 @@ Dependencies:
 - Optional: nvidia-cudnn (for CUDA)
 """
 
-import os
 import logging
 import time
-from typing import List, Optional, Dict, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -315,9 +313,9 @@ class GPUAccelerator:
 
     def print_device_info(self):
         """Print detailed device information"""
-        print(f"\n{'=' * 60}")
-        print(f"GPU Acceleration Status")
-        print(f"{'=' * 60}")
+        print("\n" + "=" * 60)
+        print("GPU Acceleration Status")
+        print("=" * 60)
         print(f"Device type:    {self.device_info.device_type.value}")
         print(f"Device name:    {self.device_info.device_name}")
         print(f"Device count:   {self.device_info.device_count}")
@@ -328,7 +326,7 @@ class GPUAccelerator:
             print(f"Compute cap:    {self.device_info.compute_capability}")
 
         print(f"Mixed precision: {self.device_info.supports_mixed_precision}")
-        print(f"{'=' * 60}\n")
+        print("=" * 60 + "\n")
 
 
 class BatchDecompiler:
@@ -351,8 +349,8 @@ class BatchDecompiler:
 
     def load_model(self, model_name: str = "albertan017/LLM4Decompile-6B-v1.5"):
         """Load LLM4Decompile model on GPU"""
-        from transformers import AutoModelForCausalLM, AutoTokenizer
         import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
 
         logger.info(f"Loading {model_name} on {self.accelerator.device}")
 
@@ -417,10 +415,11 @@ if __name__ == "__main__":
     accelerator.print_device_info()
 
     if accelerator.is_available():
-        print(f"✓ GPU acceleration available!")
-        print(f"  Expected speedup: 10-100x for batch processing")
+        print("✓ GPU acceleration available!")
+        print("  Expected speedup: 10-100x for batch processing")
     else:
-        print(f"⚠ No GPU detected. Install PyTorch with CUDA support:")
+        print("⚠ No GPU detected. Install PyTorch with CUDA support:")
         print(
-            f"  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121"
+            "  pip install torch torchvision torchaudio "
+            "--index-url https://download.pytorch.org/whl/cu121"
         )

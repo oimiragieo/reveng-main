@@ -7,10 +7,11 @@ Tests to verify LLM4Decompile provides 20-40% accuracy improvement over standard
 """
 
 import os
-import pytest
 import subprocess
 import tempfile
 from pathlib import Path
+
+import pytest
 
 # Test data directory
 TEST_DATA_DIR = Path(__file__).parent / "test_binaries"
@@ -90,7 +91,7 @@ async def test_llm4decompile_basic_functionality():
             "return" in result.source_code.lower()
         ), "Decompiled code should contain return statement"
 
-        print(f"✓ Basic decompilation successful")
+        print("✓ Basic decompilation successful")
         print(f"Decompiled code:\n{result.source_code}")
 
     except ImportError as e:
@@ -223,7 +224,7 @@ def test_llm4decompile_multi_model_ensemble():
         assert ensemble.llm4decompile is not None
 
         print("✓ Multi-model ensemble initialized")
-        print(f"  - LLM4Decompile: Available")
+        print("  - LLM4Decompile: Available")
         print(f"  - Gemini: {ensemble._get_gemini() is not None}")
 
     except ImportError as e:
@@ -237,8 +238,8 @@ def test_llm4decompile_multi_model_ensemble():
 
 async def _try_compile(source_code: str, opt_level: str) -> bool:
     """Try to compile source code"""
-    import tempfile
     import os
+    import tempfile
 
     try:
         # Write source
@@ -265,7 +266,7 @@ async def _try_compile(source_code: str, opt_level: str) -> bool:
 
         return success
 
-    except Exception as e:
+    except Exception:
         return False
 
 
