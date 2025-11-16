@@ -152,7 +152,7 @@ reveng analyze --help
 ```
 
 ### Documentation
-- **FAQ:** [`docs/FAQ.md`](docs/FAQ.md) (coming soon)
+- **FAQ:** [`docs/FAQ.md`](docs/FAQ.md) - Comprehensive FAQ with 40+ questions
 - **Troubleshooting:** [`docs/getting-started/troubleshooting.md`](docs/getting-started/troubleshooting.md)
 - **API Docs:** [`docs/api/API_REFERENCE.md`](docs/api/API_REFERENCE.md)
 
