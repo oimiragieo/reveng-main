@@ -7,7 +7,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Platforms](https://img.shields.io/badge/Platforms-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey.svg)](#)
-[![Version](https://img.shields.io/badge/Version-3.0.0-brightgreen.svg)](#)
+[![Version](https://img.shields.io/badge/Version-4.0.0-brightgreen.svg)](#)
+[![MCP](https://img.shields.io/badge/MCP-Compatible-purple.svg)](#)
 
 REVENG is a revolutionary AI-powered security platform that **proves vulnerabilities through working code reconstruction**. Unlike traditional reverse engineering tools that only analyze binaries, REVENG decompiles, reconstructs, recompiles, and generates working exploits – providing irrefutable proof of security issues.
 
@@ -57,6 +58,34 @@ python examples/javascript_deobfuscation_demo.py    # Run demos
 ```
 
 📖 **Full guide**: [JavaScript Deobfuscation README](src/reveng/javascript/README.md)
+
+### 5. 🆕 Enterprise AI Integration via MCP (v4.0)
+**Transform REVENG into a world-class AI tool suite!**
+
+REVENG v4.0 introduces **Model Context Protocol (MCP) support**, enabling AI agents like Claude to perform sophisticated reverse engineering tasks through natural language:
+
+- **🤖 AI-Native Interface** - Claude Desktop integration for conversational binary analysis
+- **🛠️ 15+ Specialized Tools** - Binary analysis, vulnerability detection, exploit generation, JS deobfuscation
+- **🔒 Enterprise Security** - Rate limiting, audit logging, secure authentication
+- **📊 Resource Providers** - Access analysis results, documentation, and reports
+- **🎯 Prompt Templates** - Pre-built workflows for malware analysis, vulnerability research
+- **🚀 Production Ready** - Docker/Kubernetes deployment, comprehensive monitoring
+
+```bash
+# Start MCP server for AI integration
+./reveng-mcp-server
+
+# Or with HTTP transport
+./reveng-mcp-server --transport http --port 8080
+```
+
+**Example AI Queries:**
+- "Analyze this binary for vulnerabilities: /path/to/suspicious.exe"
+- "Deobfuscate this JavaScript and check for malware"
+- "Generate an exploit for the buffer overflow at 0x401000"
+- "Find all network connections in this Windows binary"
+
+📖 **Full guide**: [MCP Integration Documentation](docs/mcp/README.md)
 
 ## 🚀 Quick Start
 

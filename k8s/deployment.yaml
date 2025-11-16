@@ -1,0 +1,263 @@
+# REVENG Enterprise MCP Server - Kubernetes Deployment
+# =====================================================
+#
+# Deploy REVENG MCP Server to Kubernetes cluster
+#
+# Usage:
+#   kubectl apply -f k8s/
+#   kubectl port-forward svc/reveng-mcp-server 8080:8080
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: reveng
+  labels:
+    name: reveng
+    app: reveng-mcp-server
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: reveng-mcp-config
+  namespace: reveng
+data:
+  # Server configuration
+  TRANSPORT: "http"
+  PORT: "8080"
+  HOST: "0.0.0.0"
+  # Feature flags
+  ENABLE_RATE_LIMITING: "true"
+  ENABLE_AUDIT_LOG: "true"
+  # Logging
+  LOG_LEVEL: "INFO"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: reveng-mcp-secrets
+  namespace: reveng
+type: Opaque
+stringData:
+  # AI API Keys (replace with your actual keys or use external secrets management)
+  GEMINI_API_KEY: "your-gemini-api-key-here"
+  ANTHROPIC_API_KEY: "your-anthropic-api-key-here"
+  OPENAI_API_KEY: "your-openai-api-key-here"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: reveng-mcp-cache
+  namespace: reveng
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: reveng-mcp-logs
+  namespace: reveng
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reveng-mcp-server
+  namespace: reveng
+  labels:
+    app: reveng-mcp-server
+    version: v4.0.0
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: reveng-mcp-server
+  template:
+    metadata:
+      labels:
+        app: reveng-mcp-server
+        version: v4.0.0
+    spec:
+      containers:
+      - name: reveng-mcp-server
+        image: reveng-mcp-server:4.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: TRANSPORT
+          valueFrom:
+            configMapKeyRef:
+              name: reveng-mcp-config
+              key: TRANSPORT
+        - name: PORT
+          valueFrom:
+            configMapKeyRef:
+              name: reveng-mcp-config
+              key: PORT
+        - name: HOST
+          valueFrom:
+            configMapKeyRef:
+              name: reveng-mcp-config
+              key: HOST
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: reveng-mcp-secrets
+              key: GEMINI_API_KEY
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: reveng-mcp-secrets
+              key: ANTHROPIC_API_KEY
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: reveng-mcp-secrets
+              key: OPENAI_API_KEY
+        volumeMounts:
+        - name: cache
+          mountPath: /home/reveng/.reveng/mcp_cache
+        - name: logs
+          mountPath: /home/reveng/.reveng/audit_logs
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: cache
+        persistentVolumeClaim:
+          claimName: reveng-mcp-cache
+      - name: logs
+        persistentVolumeClaim:
+          claimName: reveng-mcp-logs
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reveng-mcp-server
+  namespace: reveng
+  labels:
+    app: reveng-mcp-server
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: reveng-mcp-server
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: reveng-mcp-server-hpa
+  namespace: reveng
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: reveng-mcp-server
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: reveng-mcp-server-pdb
+  namespace: reveng
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: reveng-mcp-server
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: reveng-mcp-server-ingress
+  namespace: reveng
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+spec:
+  tls:
+  - hosts:
+    - reveng-mcp.example.com
+    secretName: reveng-mcp-tls
+  rules:
+  - host: reveng-mcp.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: reveng-mcp-server
+            port:
+              number: 8080

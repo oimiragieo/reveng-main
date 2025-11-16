@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "reveng": {
+      "command": "/path/to/reveng-main/reveng-mcp-server",
+      "args": [],
+      "env": {
+        "GEMINI_API_KEY": "your-gemini-api-key-here",
+        "ANTHROPIC_API_KEY": "your-anthropic-api-key-here",
+        "OPENAI_API_KEY": "your-openai-api-key-here"
+      },
+      "description": "REVENG Enterprise - AI-Powered Reverse Engineering Platform",
+      "capabilities": [
+        "Binary analysis and decompilation",
+        "Vulnerability detection and exploit generation",
+        "JavaScript deobfuscation and malware detection",
+        "AI-powered code reconstruction",
+        "Semantic binary diffing",
+        "Malware classification and threat intelligence"
+      ]
+    }
+  }
+}
