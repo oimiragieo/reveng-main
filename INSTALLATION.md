@@ -1,8 +1,8 @@
-# REVENG v3.2.0 - Complete Installation Guide
+# REVENG v4.0.0 - Complete Installation Guide
 
-**Goal**: 100% test success (13/13 steps passing)
+**Goal**: Full platform functionality with MCP, GPU acceleration, and advanced features
 
-This guide will help you set up REVENG with all dependencies for complete functionality.
+This guide will help you set up REVENG with all dependencies for complete functionality including the new v4.0 enterprise features.
 
 ---
 
@@ -28,7 +28,7 @@ python ghidra_http_server.py
 python reveng.py --verbose analyze path/to/binary.exe
 ```
 
-**Expected Result**: 12-13/13 steps passing (92-100%)
+**Expected Result**: Full REVENG functionality including binary analysis, decompilation, and optional features like Ghidra integration and MCP server
 
 ---
 
@@ -58,10 +58,10 @@ pip install -r requirements.txt
 pip install flask flask-cors requests
 ```
 
-### 2. Install Ghidra (for Step 2 - Binary Disassembly)
+### 2. Install Ghidra (Optional - for Advanced Binary Disassembly)
 
-**Why**: Enables comprehensive binary disassembly and decompilation (Step 2)
-**Impact**: +20-25% success rate (from 69% to 90%+)
+**Why**: Enables comprehensive binary disassembly and decompilation with Ghidra integration
+**Impact**: Access to advanced decompilation features and AI-enhanced analysis
 
 #### Option A: Automated Installation
 ```bash
@@ -97,14 +97,16 @@ python setup_dependencies.py --ghidra-only
 
 5. **Test Ghidra Server**:
    ```bash
-   curl http://localhost:1337/health
+   curl http://localhost:13370/health
    # Should return: {"status": "healthy"}
    ```
 
-### 3. Install C Compiler (for Step 12 - Binary Reconstruction)
+   **Note**: The default port is 13370. If you need to use a different port, set it in your configuration.
 
-**Why**: Enables binary recompilation and reconstruction (Step 12)
-**Impact**: +7-8% success rate (from 92% to 100%)
+### 3. Install C Compiler (Optional - for Binary Reconstruction)
+
+**Why**: Enables binary recompilation and reconstruction features
+**Impact**: Access to full binary-to-source-to-binary pipeline
 
 #### Windows
 
@@ -184,35 +186,39 @@ ollama list
 ### 5. Verify Complete Installation
 
 ```bash
-python setup_dependencies.py --verify-only
+# Verify REVENG installation
+reveng --version
+
+# Check Python imports
+python3 -c "from reveng.analyzer import REVENGAnalyzer; print('✓ Core modules OK')"
+
+# Optional: Install verification script
+./verify-installation.sh
 ```
 
 **Expected Output**:
 ```
-✓ Python packages: OK
-✓ Ghidra: OK - external/ghidra
-✓ C Compiler: OK - gcc
-✓ Java: OK
-✓ ALL DEPENDENCIES VERIFIED
+REVENG v4.0.0 (Production/Stable)
+✓ Core modules OK
 ```
 
 ---
 
 ## Testing Installation
 
-### Test 1: Basic Analysis (without Ghidra/Compiler)
+### Test 1: Basic Analysis (Core Features)
 
 ```bash
-python reveng.py --verbose analyze path/to/binary.exe
+reveng analyze path/to/binary.exe
 ```
 
-**Expected**: 9/13 steps (69.2%)
-- Steps 1, 3-7, 9-11, 13: PASS
-- Step 2 (Ghidra): FAIL
-- Step 12 (Compiler): FAIL
-- Step 8: SKIP (expected)
+**Expected**: Basic analysis succeeds with core features:
+- Binary format detection
+- Static analysis
+- Basic security checks
+- Output report generation
 
-### Test 2: With Ghidra Server Running
+### Test 2: With Ghidra Integration
 
 **Terminal 1** (Start Ghidra server):
 ```bash
@@ -220,27 +226,30 @@ cd external/ghidra-server
 python ghidra_http_server.py
 ```
 
-**Terminal 2** (Run analysis):
+**Terminal 2** (Run enhanced analysis):
 ```bash
-python reveng.py --verbose analyze path/to/binary.exe
+reveng analyze --enhanced path/to/binary.exe
 ```
 
-**Expected**: 10-11/13 steps (77-85%)
-- Step 2 (Ghidra): NOW PASSES
-- Step 12 (Compiler): Still fails (if not installed)
+**Expected**: Enhanced analysis with:
+- Ghidra decompilation
+- Advanced code analysis
+- Type reconstruction
+- Comprehensive vulnerability detection
 
-### Test 3: Complete Setup (Ghidra + Compiler)
+### Test 3: MCP Server (v4.0 Feature)
 
-With both Ghidra server running AND C compiler installed:
+Test the new Model Context Protocol integration:
 
 ```bash
-python reveng.py --verbose analyze path/to/binary.exe
+# Start MCP server
+./reveng-mcp-server
+
+# In another terminal, validate MCP
+python validate-mcp.py
 ```
 
-**Expected**: 12-13/13 steps (92-100%)
-- Step 2 (Ghidra): PASS
-- Step 12 (Compiler): PASS
-- Step 8: PASS (if Step 12 succeeds)
+**Expected**: MCP server starts successfully and responds to health checks
 
 ---
 
@@ -307,7 +316,7 @@ For enhanced threat intelligence (Step 11):
 
 ### Optional: Custom Ghidra Port
 
-Default port is 1337. To change:
+Default port is 13370. To change:
 
 ```bash
 # Start server on custom port
@@ -315,7 +324,7 @@ PORT=8080 python ghidra_http_server.py
 
 # Update REVENG config
 # Edit src/reveng/integrations/ghidra/ghidra_http_client.py
-# Change: base_url: str = "http://127.0.0.1:1337"
+# Change: base_url: str = "http://127.0.0.1:13370"
 # To:     base_url: str = "http://127.0.0.1:8080"
 ```
 
