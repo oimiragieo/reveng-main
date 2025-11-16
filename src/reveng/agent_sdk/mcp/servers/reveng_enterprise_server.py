@@ -583,9 +583,10 @@ class REVENGEnterpriseServer(MCPServer):
             from reveng.analyzer import REVENGAnalyzer
 
             path = args["path"]
-            quick_mode = args.get("quick_mode", False)
-            enable_ai = args.get("enable_ai", True)
-            find_vulns = args.get("find_vulnerabilities", False)
+            # TODO: Pass these parameters to REVENGAnalyzer when supported
+            _quick_mode = args.get("quick_mode", False)  # noqa: F841
+            _enable_ai = args.get("enable_ai", True)  # noqa: F841
+            _find_vulns = args.get("find_vulnerabilities", False)  # noqa: F841
 
             # Run analysis
             analyzer = REVENGAnalyzer()
@@ -620,7 +621,8 @@ class REVENGEnterpriseServer(MCPServer):
 
             path = args["path"]
             output_path = args.get("output_path")
-            use_ai = args.get("use_ai_enhancement", True)
+            # TODO: Implement AI enhancement when supported
+            _use_ai = args.get("use_ai_enhancement", True)  # noqa: F841
 
             # Decompile with Ghidra
             ghidra = GhidraEngine()
