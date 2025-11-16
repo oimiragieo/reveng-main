@@ -5,28 +5,52 @@ REVENG Version Information
 Version management and information for the REVENG platform.
 
 Author: REVENG Development Team
-Version: 3.0.0
+Version: 4.0.0
 """
 
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-# Version information
-__version__ = "3.0.0"
-__version_info__ = (3, 0, 0)
-__version_tuple__ = (3, 0, 0)
+
+def _read_version_from_file() -> str:
+    """
+    Read version from VERSION file in project root.
+
+    Returns:
+        str: Version string from file, or fallback version
+    """
+    try:
+        # Look for VERSION file in project root
+        project_root = Path(__file__).parent.parent.parent
+        version_file = project_root / "VERSION"
+
+        if version_file.exists():
+            version = version_file.read_text().strip()
+            if version:
+                return version
+    except Exception:
+        pass
+
+    # Fallback version
+    return "4.0.0"
+
+
+# Version information - read from VERSION file
+__version__ = _read_version_from_file()
+__version_info__ = tuple(map(int, __version__.split('.')))
+__version_tuple__ = __version_info__
 
 # Build information
-__build_date__ = "2025-01-15"
-__build_time__ = "15:00:00"
-__build_timestamp__ = "2025-01-15T15:00:00Z"
+__build_date__ = "2025-11-16"
+__build_time__ = "00:00:00"
+__build_timestamp__ = "2025-11-16T00:00:00Z"
 
 # Development status
 __status__ = "Production/Stable"
 __release_type__ = "stable"
 
 # Supported Python versions
-__python_versions__ = ["3.9", "3.10", "3.11"]
+__python_versions__ = ["3.9", "3.10", "3.11", "3.12"]
 __minimum_python_version__ = "3.9"
 
 # Platform information
@@ -132,21 +156,13 @@ def read_version_from_file() -> str:
     """
     Read version from VERSION file if it exists.
 
+    This is a public API for reading the version - the internal
+    version is already read at module import time.
+
     Returns:
-        str: Version from file or default version
+        str: Version from file or current version
     """
-    try:
-        # Look for VERSION file in project root
-        project_root = Path(__file__).parent.parent.parent
-        version_file = project_root / "VERSION"
-
-        if version_file.exists():
-            with open(version_file, "r", encoding="utf-8") as f:
-                return f.read().strip()
-    except Exception:
-        pass
-
-    return __version__
+    return _read_version_from_file()
 
 
 # Export version information

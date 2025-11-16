@@ -26,7 +26,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Check if running in project root
-if [ ! -f "reveng.py" ] || [ ! -f "pyproject.toml" ]; then
+if [ ! -f "pyproject.toml" ] || [ ! -d "src/reveng" ]; then
     echo -e "${RED}❌ Error: Please run this script from the reveng-main directory${NC}"
     echo "   cd /path/to/reveng-main && ./install-reveng.sh"
     exit 1

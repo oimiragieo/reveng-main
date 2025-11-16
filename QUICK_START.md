@@ -147,8 +147,10 @@ reveng enhance-code decompiled.c
 3. **Verify**:
    ```bash
    curl http://localhost:13370/health
-   # Should return: {"status": "ok"}
+   # Should return: {"status": "healthy"}
    ```
+
+   **Note**: The Ghidra server runs on port 13370 by default.
 
 ### For AI Features
 

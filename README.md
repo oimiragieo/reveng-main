@@ -125,11 +125,14 @@ REVENG v4.0 introduces **Model Context Protocol (MCP) support**, enabling AI age
 git clone https://github.com/oimiragieo/reveng-main.git
 cd reveng-main
 
-# Install Python dependencies
-pip install -r requirements.txt
-pip install google-generativeai
+# Quick install (recommended)
+./install-reveng.sh
 
-# Set Gemini API key
+# OR manual install
+pip install -r requirements.txt
+pip install -e .
+
+# Optional: Set API keys for AI features
 export GEMINI_API_KEY="your-api-key-here"
 # Get key from: https://makersuite.google.com/app/apikey
 ```
@@ -137,18 +140,24 @@ export GEMINI_API_KEY="your-api-key-here"
 ### Run Your First Analysis
 
 ```bash
-# Terminal 1: Start Ghidra server
-cd external/ghidra-server
-python ghidra_http_server.py
+# Verify installation
+reveng --version
+# Should show: REVENG v4.0.0 (Production/Stable)
 
-# Terminal 2: Run recompilation demo
-python examples/advanced/full_recompilation_demo.py
+# Basic binary analysis (no setup required)
+reveng analyze <binary-file>
 
-# Terminal 3: Start feedback loop (optional)
-python examples/advanced/gemini_feedback_demo.py
+# Quick threat triage
+reveng triage suspicious.exe
+
+# Natural language interface
+reveng ask "What does this binary do?" <binary>
+
+# Start web interface
+reveng serve --port 3000
 ```
 
-📖 **Full guide**: [QUICK_START.md](QUICK_START.md)
+📖 **Guides**: [Getting Started](GETTING_STARTED.md) | [Quick Start](QUICK_START.md) | [CLI Reference](CLI_REFERENCE.md)
 
 ## 🎓 Key Features
 
@@ -370,6 +379,26 @@ reveng triage suspicious.exe
 # - Malware family classification
 # - IOCs (IPs, domains, file hashes)
 # - Behavioral indicators
+
+# Additional commands
+reveng vt-lookup suspicious.exe          # VirusTotal intelligence
+reveng detect-packer suspicious.exe      # Detect packing/obfuscation
+reveng generate-yara suspicious.exe      # Generate YARA signatures
+```
+
+### 5. Binary Comparison & Analysis
+```bash
+# Compare binary versions
+reveng diff old_version.exe new_version.exe
+
+# Analyze security patches
+reveng patch-analysis patched.dll
+
+# Scan with YARA rules
+reveng scan-yara binary.exe --rules malware.yar
+
+# Improve decompiled code
+reveng enhance-code decompiled.c
 ```
 
 ## 🔒 Responsible Use
