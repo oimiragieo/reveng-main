@@ -2,6 +2,8 @@
   <img src="assets/logo.png" alt="REVENG Logo" width="160" height="160">
   <h1>REVENG – AI-Powered Binary Reconstruction Platform</h1>
   <p><strong>The World's First Binary-to-Source-to-Binary Reverse Engineering Tool</strong></p>
+
+  <p><strong>🆕 New User?</strong> → <a href="START_HERE.md">📖 START HERE</a> for navigation guide</p>
 </div>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
