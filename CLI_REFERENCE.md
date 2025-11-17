@@ -12,23 +12,31 @@ Complete reference for all REVENG command-line interface commands.
 # Get version
 reveng --version
 
-# Analyze a binary
-reveng analyze <binary>
+# Core Analysis
+reveng analyze <binary>          # Comprehensive binary analysis
+reveng triage <binary>            # Quick 30-second threat assessment
+reveng ai <binary>                # AI-powered analysis
 
-# Start web interface
-reveng serve
+# Interactive
+reveng serve                      # Start web interface
+reveng ask "question" <binary>    # Natural language query
 
-# Natural language query
-reveng ask "What does this binary do?" <binary>
+# Threat Intelligence
+reveng vt-lookup <binary>         # VirusTotal lookup
+reveng vt-submit <binary>         # Submit to VirusTotal
 
-# AI-powered analysis
-reveng ai <binary>
+# YARA Operations
+reveng generate-yara <binary>     # Generate YARA rules
+reveng scan-yara <rules> <target> # Scan with YARA rules
 
-# Quick triage
-reveng triage <binary>
+# Binary Comparison
+reveng diff <binary1> <binary2>   # Binary diffing
+reveng patch-analysis <old> <new> # Security patch analysis
 
-# VirusTotal lookup
-reveng vt-lookup <binary>
+# Unpacking & Code Enhancement
+reveng detect-packer <binary>     # Detect packers
+reveng unpack <binary>            # Unpack binary
+reveng enhance-code <source>      # AI code enhancement
 ```
 
 ---
@@ -615,6 +623,271 @@ cat ~/.reveng/config.yaml
 # Test with simple query
 reveng ask "test" --verbose
 ```
+
+---
+
+## Command: `generate-yara`
+
+Generate YARA rules from binaries.
+
+### Syntax
+
+```bash
+reveng generate-yara [OPTIONS] <binary_path>
+```
+
+### Description
+
+Automatically generates YARA rules for malware detection and classification based on binary analysis. Extracts unique patterns, strings, and behavioral characteristics.
+
+### Options
+
+- `--output <path>` - Output YARA rule file (default: stdout)
+- `--name <rule_name>` - Custom rule name (default: auto-generated)
+- `--strict` - Generate strict rules with high specificity
+- `--loose` - Generate loose rules for family detection
+
+### Examples
+
+```bash
+# Generate YARA rule for malware
+reveng generate-yara malware.exe -o malware.yar
+
+# Generate strict rule with custom name
+reveng generate-yara --strict --name "Trojan_Custom" suspicious.dll
+
+# Generate family-based rule
+reveng generate-yara --loose ransomware.exe
+```
+
+### Requirements
+
+- Binary analysis completed
+- Write access to output directory
+
+---
+
+## Command: `scan-yara`
+
+Scan binaries using YARA rules.
+
+### Syntax
+
+```bash
+reveng scan-yara [OPTIONS] <rule_path> <target>
+```
+
+### Description
+
+Scan single binary or directory of binaries using YARA rules. Supports both custom and standard YARA rule sets.
+
+### Options
+
+- `--recursive` - Scan directories recursively
+- `--threads <n>` - Number of scanning threads (default: 4)
+- `--output <path>` - Save results to JSON file
+- `--match-only` - Show only matching files
+
+### Examples
+
+```bash
+# Scan single file
+reveng scan-yara rules.yar suspicious.exe
+
+# Scan directory recursively
+reveng scan-yara --recursive malware_rules/ /samples/
+
+# Fast scan with 8 threads
+reveng scan-yara --threads 8 --match-only rules.yar /binaries/
+```
+
+### Requirements
+
+- YARA rule file in valid format
+- Read access to target files
+
+---
+
+## Command: `diff`
+
+Binary diffing and comparison.
+
+### Syntax
+
+```bash
+reveng diff [OPTIONS] <binary1> <binary2>
+```
+
+### Description
+
+Performs semantic binary diffing to identify changes between two versions of a binary. Uses advanced algorithms including Hungarian algorithm for function matching.
+
+Useful for:
+- Patch analysis and security updates
+- Version comparison
+- Malware variant analysis
+- Code evolution tracking
+
+### Options
+
+- `--algorithm <type>` - Diffing algorithm: `semantic`, `structural`, `byte` (default: semantic)
+- `--output <path>` - Save diff results to file
+- `--format <format>` - Output format: `json`, `html`, `text` (default: text)
+- `--similarity <threshold>` - Minimum similarity threshold (0.0-1.0, default: 0.7)
+
+### Examples
+
+```bash
+# Basic semantic diff
+reveng diff old_version.exe new_version.exe
+
+# Detailed HTML report
+reveng diff --format html --output report.html v1.dll v2.dll
+
+# Find similar functions with custom threshold
+reveng diff --similarity 0.8 original.bin patched.bin
+```
+
+### Requirements
+
+- Two binary files in compatible formats
+- Sufficient memory for analysis
+
+---
+
+## Command: `patch-analysis`
+
+Security patch analysis and vulnerability detection.
+
+### Syntax
+
+```bash
+reveng patch-analysis [OPTIONS] <original_binary> <patched_binary>
+```
+
+### Description
+
+Analyzes security patches by comparing original and patched binaries to identify:
+- Fixed vulnerabilities
+- Security improvements
+- Changed functions
+- Attack surface reduction
+
+Generates detailed security assessment reports.
+
+### Options
+
+- `--output <path>` - Save analysis report
+- `--format <format>` - Report format: `json`, `markdown`, `html`
+- `--cve <id>` - Associate with CVE identifier
+- `--severity` - Include severity assessment
+
+### Examples
+
+```bash
+# Analyze security patch
+reveng patch-analysis vulnerable.dll patched.dll
+
+# Full report with CVE tracking
+reveng patch-analysis --cve CVE-2024-1234 --severity old.exe new.exe
+
+# JSON output for automation
+reveng patch-analysis --format json --output patch_report.json app_v1.bin app_v2.bin
+```
+
+### Requirements
+
+- Two versions of same binary (original + patched)
+- Analysis permissions
+
+---
+
+## Command: `detect-packer`
+
+Detect binary packers and obfuscators.
+
+### Syntax
+
+```bash
+reveng detect-packer [OPTIONS] <binary_path>
+```
+
+### Description
+
+Identifies packers, crypters, and obfuscators used to protect or hide binary code. Detects:
+- UPX, ASPack, PECompact, Themida, VMProtect
+- Custom packers
+- Obfuscation layers
+- Anti-debugging techniques
+
+### Options
+
+- `--verbose` - Show detailed detection information
+- `--signatures <path>` - Custom signature database
+- `--output <path>` - Save detection results
+
+### Examples
+
+```bash
+# Detect packer
+reveng detect-packer packed_malware.exe
+
+# Verbose detection with custom signatures
+reveng detect-packer --verbose --signatures custom_sigs.db binary.exe
+
+# Save results for batch processing
+reveng detect-packer --output results.json suspicious.dll
+```
+
+### Output
+
+Returns packer name, confidence level, and unpacking recommendations.
+
+---
+
+## Command: `enhance-code`
+
+AI-powered code enhancement and optimization.
+
+### Syntax
+
+```bash
+reveng enhance-code [OPTIONS] <source_file>
+```
+
+### Description
+
+Uses AI to enhance decompiled or disassembled code by:
+- Adding meaningful variable names
+- Inferring types
+- Adding comments and documentation
+- Improving code structure
+- Suggesting optimizations
+
+### Options
+
+- `--output <path>` - Enhanced code output file
+- `--model <name>` - AI model: `gemini`, `claude`, `gpt4` (default: gemini)
+- `--language <lang>` - Source language: `c`, `cpp`, `java`, `csharp`
+- `--aggressive` - Apply aggressive transformations
+
+### Examples
+
+```bash
+# Enhance decompiled C code
+reveng enhance-code decompiled.c -o enhanced.c
+
+# Use Claude for C++ code
+reveng enhance-code --model claude --language cpp source.cpp
+
+# Aggressive enhancement
+reveng enhance-code --aggressive messy_code.c
+```
+
+### Requirements
+
+- AI API key (GEMINI_API_KEY, ANTHROPIC_API_KEY, or OPENAI_API_KEY)
+- Valid source code file
 
 ---
 
