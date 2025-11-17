@@ -874,8 +874,11 @@ See [SECURITY.md](/home/user/reveng-main/SECURITY.md) for full policy.
 
 ### Documentation
 - **Main README**: [README.md](/home/user/reveng-main/README.md)
+- **Navigation Guide**: [START_HERE.md](/home/user/reveng-main/START_HERE.md)
 - **Quick Start**: [QUICK_START.md](/home/user/reveng-main/QUICK_START.md)
-- **Installation**: [INSTALLATION.md](/home/user/reveng-main/INSTALLATION.md)
+- **Getting Started**: [GETTING_STARTED.md](/home/user/reveng-main/GETTING_STARTED.md)
+- **Installation**: [docs/getting-started/installation.md](/home/user/reveng-main/docs/getting-started/installation.md)
+- **CLI Reference**: [CLI_REFERENCE.md](/home/user/reveng-main/CLI_REFERENCE.md)
 - **Full Documentation**: [docs/](/home/user/reveng-main/docs/)
 - **MkDocs Site**: https://oimiragieo.github.io/reveng-main/
 

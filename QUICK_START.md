@@ -252,8 +252,9 @@ npm install -g webcrack prettier unuglify-js
 ### Learn More
 - **[Full Documentation](docs/)** - Complete guides
 - **[JavaScript README](src/reveng/javascript/README.md)** - JS deobfuscation details
-- **[Installation Guide](INSTALLATION.md)** - Advanced setup options
+- **[Installation Guide](docs/getting-started/installation.md)** - Complete setup guide
 - **[API Reference](docs/api/API_REFERENCE.md)** - Python API docs
+- **[CLI Reference](CLI_REFERENCE.md)** - All commands and options
 
 ### Try Examples
 ```bash
@@ -295,4 +296,4 @@ reveng --help
 ---
 
 *For the complete feature list, see [README.md](README.md)*
-*For advanced setup, see [INSTALLATION.md](INSTALLATION.md)*
+*For advanced setup, see [docs/getting-started/installation.md](docs/getting-started/installation.md)*

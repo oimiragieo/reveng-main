@@ -124,14 +124,20 @@ Then read: [`CLI_REFERENCE.md`](CLI_REFERENCE.md)
 
 ## ⚠️ Important Notes
 
-### Documentation Structure Change (Nov 2025)
-We recently reorganized documentation. If you're looking for:
+### Documentation Structure (Updated Nov 2025)
 
-- **Installation guide:** Use `docs/getting-started/installation.md` (not root `INSTALLATION.md`)
-- **Quick start:** Use `QUICK_START.md` in root (canonical version)
-- **Getting started:** Use `docs/getting-started/` directory
+**Canonical Documentation Locations** - Use these for the most up-to-date information:
 
-Root-level documentation files may be outdated. Always prefer `docs/` versions for detailed guides.
+| Document Type | Canonical Location | Purpose |
+|--------------|-------------------|---------|
+| **Installation** | [`docs/getting-started/installation.md`](docs/getting-started/installation.md) | Complete installation guide with all options |
+| **Quick Start** | [`QUICK_START.md`](QUICK_START.md) | 2-minute setup (root level) |
+| **Getting Started** | [`GETTING_STARTED.md`](GETTING_STARTED.md) | Step-by-step tutorial (root level) |
+| **CLI Reference** | [`CLI_REFERENCE.md`](CLI_REFERENCE.md) | All commands and options (root level) |
+| **MCP Integration** | [`docs/mcp/README.md`](docs/mcp/README.md) | AI agent integration |
+| **JavaScript Guide** | [`src/reveng/javascript/README.md`](src/reveng/javascript/README.md) | JS deobfuscation |
+
+**Note:** Root-level `INSTALLATION.md` is a quick reference. For complete installation details, use [`docs/getting-started/installation.md`](docs/getting-started/installation.md).
 
 ### Version Information
 - **Current Version:** 4.0.0 (Production/Stable)

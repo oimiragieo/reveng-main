@@ -1,8 +1,15 @@
-# REVENG v4.0.0 - Complete Installation Guide
+# REVENG v4.0.0 - Installation Quick Reference
+
+> 📘 **For the Complete Installation Guide:** This is a quick reference. For the most up-to-date, comprehensive installation instructions, see **[docs/getting-started/installation.md](docs/getting-started/installation.md)**.
+>
+> **Quick links:**
+> - **Complete Guide:** [`docs/getting-started/installation.md`](docs/getting-started/installation.md)
+> - **Quick Start (2 min):** [`QUICK_START.md`](QUICK_START.md)
+> - **Getting Started:** [`GETTING_STARTED.md`](GETTING_STARTED.md)
 
 **Goal**: Full platform functionality with MCP, GPU acceleration, and advanced features
 
-This guide will help you set up REVENG with all dependencies for complete functionality including the new v4.0 enterprise features.
+This quick reference provides installation essentials. For detailed troubleshooting, advanced configuration, and platform-specific instructions, see the complete guide linked above.
 
 ---
 
