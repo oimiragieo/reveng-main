@@ -100,7 +100,11 @@ reveng --version
 REVENG v4.0.0 (Production/Stable)
 ```
 
-❌ If you see v3.0.0, the installation didn't complete correctly. Try: `pip install -e . --force-reinstall`
+❌ **If you see an older version (v3.x.x or earlier):**
+```bash
+# Reinstall to get the latest version
+pip install -e . --force-reinstall
+```
 
 ### 2. Check CLI Access
 
@@ -268,9 +272,10 @@ python examples/advanced/full_recompilation_demo.py
 ### 5. Read the Documentation
 
 - **[CLI Reference](CLI_REFERENCE.md)** - All commands and options
-- **[User Guide](docs/user-guide/)** - Detailed usage guides
+- **[Installation Guide](docs/getting-started/installation.md)** - Complete setup guide
 - **[MCP Integration](docs/mcp/README.md)** - AI agent integration
 - **[API Reference](docs/api/API_REFERENCE.md)** - Python API
+- **[JavaScript Guide](src/reveng/javascript/README.md)** - JS deobfuscation
 
 ---
 
@@ -437,9 +442,10 @@ reveng analyze --output-dir custom_dir <binary>
 ### Documentation
 
 - **[CLI Reference](CLI_REFERENCE.md)** - Command reference
-- **[Installation Guide](INSTALLATION.md)** - Detailed setup
-- **[User Guide](docs/user-guide/)** - How-to guides
-- **[API Docs](docs/api/)** - Python API
+- **[Installation Guide](docs/getting-started/installation.md)** - Complete setup guide
+- **[JavaScript Guide](src/reveng/javascript/README.md)** - JS deobfuscation
+- **[MCP Integration](docs/mcp/README.md)** - AI agent integration
+- **[API Reference](docs/api/API_REFERENCE.md)** - Python API
 
 ### Community
 

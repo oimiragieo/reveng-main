@@ -159,7 +159,7 @@ reveng ask "What does this binary do?" <binary>
 reveng serve --port 3000
 ```
 
-📖 **Guides**: [Getting Started](GETTING_STARTED.md) | [Quick Start](QUICK_START.md) | [CLI Reference](CLI_REFERENCE.md)
+📖 **Guides**: [Getting Started](GETTING_STARTED.md) | [Quick Start](QUICK_START.md) | [Installation](docs/getting-started/installation.md) | [CLI Reference](CLI_REFERENCE.md)
 
 ## 🎓 Key Features
 
@@ -312,8 +312,10 @@ await loop.start(max_iterations=10)
 ## 📖 Documentation
 
 ### Getting Started
-- **[QUICK_START.md](QUICK_START.md)** - 5-minute setup guide
-- **[INSTALLATION.md](INSTALLATION.md)** - Detailed installation
+- **[START_HERE.md](START_HERE.md)** - Navigation guide (start here!)
+- **[QUICK_START.md](QUICK_START.md)** - 2-minute setup guide
+- **[GETTING_STARTED.md](GETTING_STARTED.md)** - Step-by-step tutorial (10-15 min)
+- **[docs/getting-started/installation.md](docs/getting-started/installation.md)** - Complete installation guide
 - **[docs/](docs/)** - Complete documentation (303 files)
 
 ### MCP Integration (v4.0 NEW)
