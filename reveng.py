@@ -75,6 +75,7 @@ def main(argv=None):
         # Try to use REVENG logger if available, otherwise fall back to print
         try:
             from reveng.core.logger import get_logger
+
             get_logger().error(f"Unexpected REVENG error: {exc}")
         except Exception:
             print(f"\nUnexpected REVENG error: {exc}")
