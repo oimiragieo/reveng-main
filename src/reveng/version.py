@@ -37,7 +37,7 @@ def _read_version_from_file() -> str:
 
 # Version information - read from VERSION file
 __version__ = _read_version_from_file()
-__version_info__ = tuple(map(int, __version__.split('.')))
+__version_info__ = tuple(map(int, __version__.split(".")))
 __version_tuple__ = __version_info__
 
 # Build information
@@ -124,14 +124,14 @@ def is_compatible_python(version: str) -> bool:
     Check if the given Python version is compatible.
 
     Args:
-        version: Python version string (e.g., "3.11.5")
+        version: Python version string (e.g., "3.9.5")
 
     Returns:
         bool: True if compatible, False otherwise
     """
     try:
         major, minor = map(int, version.split(".")[:2])
-        return (major, minor) >= (3, 11)
+        return (major, minor) >= (3, 9)
     except (ValueError, IndexError):
         return False
 
