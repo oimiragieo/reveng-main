@@ -8,7 +8,7 @@
 
 REVENG is a revolutionary AI-powered security platform that **proves vulnerabilities through working code reconstruction**. Unlike traditional reverse engineering tools that only analyze binaries, REVENG decompiles, reconstructs, recompiles, and generates working exploits – providing irrefutable proof of security issues.
 
-This is the **master documentation index** for the entire REVENG codebase, serving as a comprehensive guide to all 107 `claude.md` files throughout the project. Use this index to navigate the codebase efficiently and understand the complete system architecture.
+This is the **master documentation index** for the entire REVENG codebase, serving as a comprehensive guide to all 112 `claude.md` files throughout the project. Use this index to navigate the codebase efficiently and understand the complete system architecture.
 
 **Version**: 4.0.0 (Enterprise AI Tool Suite with MCP Integration)
 **License**: MIT
@@ -38,7 +38,7 @@ This is the **master documentation index** for the entire REVENG codebase, servi
 
 | Metric | Value |
 |--------|-------|
-| **Total `claude.md` Files** | 107 |
+| **Total `claude.md` Files** | 112 |
 | **Total Directories** | 524+ |
 | **Python Files** | 326+ |
 | **Lines of Code (src/reveng)** | ~104,500+ |
@@ -60,7 +60,7 @@ This is the **master documentation index** for the entire REVENG codebase, servi
 
 ### Source Code (`src/reveng/`)
 
-Comprehensive index of all 69 `claude.md` files in `src/reveng`, organized by category:
+Comprehensive index of 69+ `claude.md` files in `src/reveng`, organized by category:
 
 #### Core Modules
 
@@ -444,7 +444,7 @@ pytest tests/ --cov=src/reveng
 
 AI assistants (Claude, GPT-4, etc.) can use this documentation to:
 
-1. **Understand Project Structure**: Use this index to navigate the 107 `claude.md` files
+1. **Understand Project Structure**: Use this index to navigate the 112 `claude.md` files
 2. **Find Relevant Code**: Each `claude.md` file documents its directory's purpose and contents
 3. **Use Agent SDK**: Integrate via [src/reveng/agent_sdk/claude.md](/home/user/reveng-main/src/reveng/agent_sdk/claude.md)
 4. **Execute Tasks**: Use tools in [src/reveng/agent_sdk/tools/reveng/](/home/user/reveng-main/src/reveng/agent_sdk/tools/reveng/)
@@ -1005,7 +1005,7 @@ This revolutionary platform was made possible by:
 
 | Metric | Value |
 |--------|-------|
-| **Documentation Files (`claude.md`)** | 107 |
+| **Documentation Files (`claude.md`)** | 112 |
 | **Source Code Lines** | ~104,500+ |
 | **Python Files** | 326+ |
 | **Total Directories** | 524+ |
@@ -1069,6 +1069,7 @@ This revolutionary platform was made possible by:
 
 *Last Updated: November 17, 2025*
 *Documentation Version: 4.0.0 (Enterprise AI Tool Suite with MCP Integration)*
-*Total `claude.md` Files Indexed: 107*
+*Total `claude.md` Files Indexed: 112*
 *MCP Tools Available: 15+ specialized reverse engineering tools*
-*Recent Audit: Comprehensive code quality and documentation review completed*
+*Recent Audit: Comprehensive code quality, documentation, and UX audit completed*
+*New Additions: k8s/, tests/poc/, docs/audits/, docs/internal/ claude.md files + .claude/rules/development.md*
