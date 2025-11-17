@@ -127,7 +127,6 @@ This directory contains 66+ analysis tools organized by category for the REVENG 
 | `vulnerability_dataset_loader.py` | Vulnerability dataset loading | `python tools/utils/vulnerability_dataset_loader.py` |
 | `enhanced_health_monitor.py` | Enhanced health monitoring | `python tools/utils/enhanced_health_monitor.py` |
 | `mitre_attack_mapper_backup.py` | MITRE ATT&CK mapper backup | `python tools/utils/mitre_attack_mapper_backup.py` |
-| `test_file.txt` | Test file for validation | `python tools/utils/test_file.txt` |
 
 ## 🚀 Quick Start
 

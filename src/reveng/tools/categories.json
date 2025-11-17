@@ -82,8 +82,7 @@
     "comprehensive_reporting_system.py",
     "ml_pipeline_orchestrator.py",
     "vulnerability_dataset_loader.py",
-    "enhanced_health_monitor.py",
-    "test_file.txt"
+    "enhanced_health_monitor.py"
   ],
   "workflows": {
     "basic_analysis": [
