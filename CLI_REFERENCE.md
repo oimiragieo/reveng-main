@@ -278,6 +278,92 @@ reveng vt-lookup a1b2c3d4e5f6...
 
 ---
 
+## Command: `vt-submit`
+
+Submit file to VirusTotal for analysis.
+
+### Syntax
+
+```bash
+reveng vt-submit <binary_path> [OPTIONS]
+```
+
+### Description
+
+Upload binary to VirusTotal and optionally wait for analysis results. Useful when file hasn't been analyzed before.
+
+### Options
+
+- `--api-key <key>` - VirusTotal API key (or set VT_API_KEY environment variable)
+- `--wait` - Wait for analysis to complete before returning
+
+### Examples
+
+```bash
+# Submit file
+reveng vt-submit unknown.exe
+
+# Submit and wait for results
+reveng vt-submit unknown.exe --wait
+
+# Use custom API key
+reveng vt-submit unknown.exe --api-key YOUR_KEY
+```
+
+### Requirements
+
+- VirusTotal API key: `VT_API_KEY`
+- Internet connection
+
+---
+
+## Command: `unpack`
+
+Unpack packed/compressed binary.
+
+### Syntax
+
+```bash
+reveng unpack <binary_path> [OPTIONS]
+```
+
+### Description
+
+Attempt to unpack or decompress a packed binary using various unpacking methods. Automatically detects packer type and applies appropriate unpacking technique.
+
+### Options
+
+- `--output <path>` - Path for unpacked binary (default: auto-generated)
+- `--method <type>` - Unpacking method:
+  - `auto` - Automatic detection (default)
+  - `specialized` - Use specialized unpacker for detected packer
+  - `generic` - Use generic unpacking techniques
+
+### Examples
+
+```bash
+# Auto-detect and unpack
+reveng unpack packed.exe
+
+# Specify output path
+reveng unpack packed.exe --output unpacked.exe
+
+# Use generic unpacking method
+reveng unpack packed.exe --method generic
+```
+
+### Supported Packers
+
+Common packers that can be detected and unpacked:
+- UPX
+- ASPack
+- PECompact
+- Themida (partial)
+- VMProtect (partial)
+- And many more...
+
+---
+
 ## Global Options
 
 Available for all commands:
