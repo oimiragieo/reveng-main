@@ -34,7 +34,7 @@ def create_parser():
     """Create argument parser"""
     parser = argparse.ArgumentParser(
         prog="reveng-js",
-        description="REVENG v6.0 - World-Class JavaScript Deobfuscation",
+        description="REVENG v4.0 - World-Class JavaScript Deobfuscation",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
