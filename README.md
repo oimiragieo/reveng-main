@@ -41,10 +41,10 @@ Gemini Feedback Loop continuously:
 - Proposes new features
 - Tracks progress over time
 
-### 4. 🆕 JavaScript Deobfuscation (v6.0)
+### 4. 🆕 JavaScript Deobfuscation (v4.0)
 **World's most comprehensive JavaScript deobfuscation platform!**
 
-REVENG v6.0 adds revolutionary JavaScript reverse engineering capabilities:
+REVENG v4.0 adds revolutionary JavaScript reverse engineering capabilities:
 - **10-stage pipeline** - Detection → Unpacking → ML Renaming → LLM Enhancement → Validation
 - **Malware detection** - 10 threat categories, 50+ signatures (UNIQUE!)
 - **ML variable renaming** - UnuglifyJS integration (60-80% accuracy)
