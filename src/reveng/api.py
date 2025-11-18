@@ -6,7 +6,7 @@ Unified programmatic API for the REVENG platform.
 Designed for AI agents, automation scripts, and integration with other tools.
 
 Author: REVENG Development Team
-Version: 2.1.0
+Version: 4.0.0
 License: MIT
 """
 

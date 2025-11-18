@@ -665,7 +665,7 @@ class REVENGEnterpriseServer(MCPServer):
     async def find_vulnerabilities(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Find vulnerabilities in binary"""
         try:
-            from reveng.security.symbolic_execution import SymbolicExecutionEngine
+            from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
 
             path = args["path"]
             use_symbolic = args.get("use_symbolic_execution", True)

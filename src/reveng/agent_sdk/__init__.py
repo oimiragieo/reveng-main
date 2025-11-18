@@ -30,11 +30,11 @@ Example:
     ```
 
 Author: REVENG Development Team
-Version: 1.0.0
+Version: 4.0.0
 License: MIT
 """
 
-__version__ = "1.0.0"
+__version__ = "4.0.0"
 __author__ = "REVENG Development Team"
 
 # Core client (Phase 6 - implemented)

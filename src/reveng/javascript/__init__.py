@@ -40,4 +40,4 @@ __all__ = [
     "SourceMapResult",
 ]
 
-__version__ = "6.0.0"
+__version__ = "4.0.0"  # JavaScript module version aligned with REVENG platform
