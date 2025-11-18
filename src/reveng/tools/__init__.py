@@ -4,7 +4,7 @@ import importlib
 import logging
 from typing import Any
 
-__version__ = "2.1.0"
+__version__ = "4.0.0"
 __author__ = "REVENG Development Team"
 
 LOGGER = logging.getLogger(__name__)

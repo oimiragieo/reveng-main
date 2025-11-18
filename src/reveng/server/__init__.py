@@ -5,4 +5,4 @@ This module provides a persistent server that wraps Ghidra's analysis capabiliti
 exposing them via a REST API for the REVENG analyzer to consume.
 """
 
-__version__ = "3.0.0"
+__version__ = "4.0.0"

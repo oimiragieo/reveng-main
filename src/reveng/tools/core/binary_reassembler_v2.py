@@ -16,13 +16,9 @@ Author: Enhancement
 Version: 2.1
 """
 
+import glob
 import logging
 import os
-
-# Add MinGW-w64 to PATH if not already present (Windows-specific)
-_mingw_path = r"C:\Users\oimir\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin"
-if os.path.exists(_mingw_path) and _mingw_path not in os.environ.get("PATH", ""):
-    os.environ["PATH"] = _mingw_path + os.pathsep + os.environ.get("PATH", "")
 import platform
 import shutil
 import subprocess
@@ -33,6 +29,27 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Set
+
+# Add MinGW-w64 to PATH if not already present (Windows-specific)
+# Try common MinGW locations across different installations
+if platform.system().lower() == "windows":
+    _potential_mingw_paths = [
+        r"C:\msys64\mingw64\bin",
+        r"C:\mingw64\bin",
+        r"C:\Program Files\mingw-w64\mingw64\bin",
+        os.path.expanduser(r"~\AppData\Local\Microsoft\WinGet\Packages") + r"\*\mingw64\bin",
+    ]
+    for _mingw_path in _potential_mingw_paths:
+        # Handle wildcard path for winget installations
+        if "*" in _mingw_path:
+            matches = glob.glob(_mingw_path)
+            if matches:
+                _mingw_path = matches[0]
+            else:
+                continue
+        if os.path.exists(_mingw_path) and _mingw_path not in os.environ.get("PATH", ""):
+            os.environ["PATH"] = _mingw_path + os.pathsep + os.environ.get("PATH", "")
+            break
 
 # Import reconstruction comparator
 try:

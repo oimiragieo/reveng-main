@@ -18,7 +18,7 @@ Enterprise-grade binary analysis and reassembly system that works on ANY binary:
 - Step 12: Security demonstration generation
 
 Author: REVENG Development Team
-Version: 2.1.0
+Version: 4.0.0
 License: MIT
 """
 
