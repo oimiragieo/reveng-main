@@ -274,6 +274,84 @@ def create_parser() -> argparse.ArgumentParser:
         "--output", help="Path to save enhanced code (default: <file>_enhanced.c)"
     )
 
+    # Recompile command (Binary → Source → Binary pipeline)
+    recompile_parser = subparsers.add_parser(
+        "recompile",
+        help="Binary → Source → Binary reconstruction pipeline",
+        description="Prove vulnerabilities through complete binary reconstruction",
+    )
+    recompile_parser.add_argument("binary_path", help="Path to binary file")
+    recompile_parser.add_argument(
+        "--output-dir",
+        help="Output directory for reconstruction (default: analysis_<binary_name>)",
+    )
+    recompile_parser.add_argument(
+        "--ghidra-url",
+        default="http://127.0.0.1:13370",
+        help="Ghidra server URL (default: http://127.0.0.1:13370)",
+    )
+    recompile_parser.add_argument(
+        "--no-gemini",
+        action="store_true",
+        help="Disable Gemini AI enhancement",
+    )
+    recompile_parser.add_argument(
+        "--no-exploits",
+        action="store_true",
+        help="Skip exploit generation",
+    )
+
+    # Decompile command
+    decompile_parser = subparsers.add_parser(
+        "decompile",
+        help="Decompile binary to source code",
+        description="Extract source code from binary using Ghidra + AI enhancement",
+    )
+    decompile_parser.add_argument("binary_path", help="Path to binary file")
+    decompile_parser.add_argument(
+        "--output",
+        help="Output file for decompiled code (default: <binary_name>_decompiled.c)",
+    )
+    decompile_parser.add_argument(
+        "--language",
+        choices=["c", "python", "pseudo"],
+        default="c",
+        help="Output language (default: c)",
+    )
+    decompile_parser.add_argument(
+        "--enhance",
+        action="store_true",
+        help="Apply AI enhancement to improve code quality",
+    )
+
+    # Generate exploit command
+    generate_exploit_parser = subparsers.add_parser(
+        "generate-exploit",
+        help="Generate proof-of-concept exploit",
+        description="Automatically generate working exploits for discovered vulnerabilities",
+    )
+    generate_exploit_parser.add_argument(
+        "binary_path", help="Path to binary file"
+    )
+    generate_exploit_parser.add_argument(
+        "--vulnerability",
+        help="Specific vulnerability to target (e.g., buffer_overflow, use_after_free)",
+    )
+    generate_exploit_parser.add_argument(
+        "--output",
+        help="Output file for exploit code (default: exploit_<vuln_type>.py)",
+    )
+    generate_exploit_parser.add_argument(
+        "--language",
+        choices=["python", "c", "shellcode"],
+        default="python",
+        help="Exploit language (default: python)",
+    )
+    generate_exploit_parser.add_argument(
+        "--analysis-results",
+        help="Path to previous analysis results (optional, speeds up generation)",
+    )
+
     # Enhanced analysis options
     enhanced_group = parser.add_argument_group(
         "Enhanced Analysis Options", "Control AI-enhanced analysis modules"
@@ -944,6 +1022,204 @@ def handle_enhance_code_command(args):
         return 1
 
 
+def handle_recompile_command(args):
+    """Handle the recompile command."""
+    try:
+        from .recompile_command import run_recompile_command
+
+        return run_recompile_command(
+            binary_path=args.binary_path,
+            output_dir=args.output_dir,
+            ghidra_url=args.ghidra_url,
+            use_gemini=not args.no_gemini,
+        )
+    except ImportError as e:
+        print("Error: Recompilation engine not available")
+        print(f"Details: {e}")
+        return 1
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+
+def handle_decompile_command(args):
+    """Handle the decompile command."""
+    try:
+        from ..integrations.ghidra.ghidra_engine import GhidraEngine
+
+        print("=" * 70)
+        print("  REVENG Binary Decompilation")
+        print("=" * 70)
+        print()
+
+        # Validate binary exists
+        if not Path(args.binary_path).exists():
+            print(f"Error: Binary not found: {args.binary_path}")
+            return 1
+
+        # Initialize Ghidra
+        print("Initializing Ghidra engine...")
+        ghidra = GhidraEngine()
+
+        # Perform decompilation
+        print(f"Decompiling: {args.binary_path}")
+        result = ghidra.decompile_binary(args.binary_path)
+
+        # Determine output path
+        output_path = args.output
+        if not output_path:
+            binary_name = Path(args.binary_path).stem
+            ext = {"c": ".c", "python": ".py", "pseudo": ".txt"}[args.language]
+            output_path = f"{binary_name}_decompiled{ext}"
+
+        # Save decompiled code
+        decompiled_code = result.get("decompiled_code", "")
+
+        # Apply AI enhancement if requested
+        if args.enhance and decompiled_code:
+            print("Applying AI enhancement...")
+            try:
+                from ..tools.ai.ai_enhanced import AICodeQualityEnhancer
+
+                enhancer = AICodeQualityEnhancer()
+                enhanced = enhancer.enhance_function(
+                    function_code=decompiled_code, function_name="main"
+                )
+                decompiled_code = enhanced.enhanced_code
+                print("✓ AI enhancement applied")
+            except Exception as e:
+                print(f"Warning: AI enhancement failed: {e}")
+
+        with open(output_path, "w") as f:
+            f.write(decompiled_code)
+
+        print(f"\n✓ Decompiled code saved to: {output_path}")
+        print(f"  Functions: {len(result.get('functions', []))}")
+        print(f"  Language: {args.language}")
+
+        return 0
+
+    except ImportError:
+        print("Error: Ghidra integration not available")
+        print("Please install Ghidra and start the server")
+        return 1
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+
+def handle_generate_exploit_command(args):
+    """Handle the generate-exploit command."""
+    try:
+        print("=" * 70)
+        print("  REVENG Exploit Generation")
+        print("=" * 70)
+        print()
+
+        # Validate binary exists
+        if not Path(args.binary_path).exists():
+            print(f"Error: Binary not found: {args.binary_path}")
+            return 1
+
+        # Check for existing analysis results
+        if args.analysis_results:
+            print(f"Loading analysis results from: {args.analysis_results}")
+            with open(args.analysis_results, "r") as f:
+                analysis = json.load(f)
+        else:
+            print("Running vulnerability analysis...")
+            # Run analysis first
+            from .analyzer import REVENGAnalyzer
+
+            analyzer = REVENGAnalyzer()
+            analysis = analyzer.analyze(args.binary_path)
+
+        # Find vulnerabilities
+        vulns = analysis.get("vulnerabilities", [])
+        if not vulns:
+            print("No vulnerabilities found in binary")
+            print("Try running: reveng analyze --enhanced " + args.binary_path)
+            return 1
+
+        print(f"Found {len(vulns)} vulnerabilities")
+
+        # Select vulnerability to exploit
+        target_vuln = None
+        if args.vulnerability:
+            # Find specific vulnerability
+            for v in vulns:
+                if v.get("type") == args.vulnerability:
+                    target_vuln = v
+                    break
+            if not target_vuln:
+                print(f"Error: Vulnerability '{args.vulnerability}' not found")
+                print("Available vulnerabilities:")
+                for v in vulns:
+                    print(f"  - {v.get('type')}")
+                return 1
+        else:
+            # Use first critical/high severity vulnerability
+            for v in vulns:
+                if v.get("severity") in ["critical", "high"]:
+                    target_vuln = v
+                    break
+            if not target_vuln:
+                target_vuln = vulns[0]
+
+        print(f"\nTargeting vulnerability: {target_vuln.get('type')}")
+        print(f"  Severity: {target_vuln.get('severity')}")
+        print(f"  CWE: {target_vuln.get('cwe')}")
+
+        # Generate exploit
+        print("\nGenerating exploit...")
+        from ..exploits.exploit_chain_generator import ExploitChainGenerator
+
+        generator = ExploitChainGenerator()
+        exploit = generator.generate_exploit(
+            vulnerability=target_vuln,
+            binary_path=args.binary_path,
+            language=args.language,
+        )
+
+        # Determine output path
+        output_path = args.output
+        if not output_path:
+            vuln_type = target_vuln.get("type", "unknown")
+            ext = {"python": ".py", "c": ".c", "shellcode": ".bin"}[args.language]
+            output_path = f"exploit_{vuln_type}{ext}"
+
+        # Save exploit
+        with open(output_path, "w") as f:
+            f.write(f"# Exploit for {target_vuln.get('type')}\n")
+            f.write(f"# CWE: {target_vuln.get('cwe')}\n")
+            f.write(f"# Severity: {target_vuln.get('severity')}\n\n")
+            f.write(exploit.get("exploit_code", ""))
+
+        print(f"\n✓ Exploit saved to: {output_path}")
+        print(f"  Language: {args.language}")
+        print(f"  Type: {target_vuln.get('type')}")
+
+        if exploit.get("steps"):
+            print("\nExploit steps:")
+            for i, step in enumerate(exploit["steps"], 1):
+                print(f"  {i}. {step}")
+
+        print("\n⚠️  Use responsibly: Only in authorized testing environments")
+
+        return 0
+
+    except ImportError as e:
+        print("Error: Exploit generation module not available")
+        print(f"Details: {e}")
+        return 1
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+
+        traceback.print_exc()
+        return 1
+
+
 def main():
     """Main CLI entry point."""
     parser = create_parser()
@@ -970,6 +1246,9 @@ def main():
         "detect-packer": handle_detect_packer_command,
         "unpack": handle_unpack_command,
         "enhance-code": handle_enhance_code_command,
+        "recompile": handle_recompile_command,
+        "decompile": handle_decompile_command,
+        "generate-exploit": handle_generate_exploit_command,
     }
 
     handler = handlers.get(args.command)

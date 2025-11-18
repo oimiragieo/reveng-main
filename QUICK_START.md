@@ -261,6 +261,9 @@ npm install -g webcrack prettier unuglify-js
 # List all examples
 ls examples/
 
+# First-time user demo (recommended!)
+python examples/my_first_analysis.py
+
 # JavaScript demos
 python examples/javascript_deobfuscation_demo.py
 

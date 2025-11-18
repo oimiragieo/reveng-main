@@ -386,6 +386,7 @@ reveng triage suspicious.exe
 
 # Additional commands
 reveng vt-lookup suspicious.exe          # VirusTotal intelligence
+reveng vt-submit suspicious.exe --wait   # Submit to VirusTotal
 reveng detect-packer suspicious.exe      # Detect packing/obfuscation
 reveng generate-yara suspicious.exe      # Generate YARA signatures
 ```
