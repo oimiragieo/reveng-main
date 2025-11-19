@@ -29,10 +29,10 @@ REVENG is the **world's first open-source tool** that can:
 
 ### 2. AI-Powered Security Analysis
 Multi-model AI ensemble featuring:
-- **Google Gemini Pro** – Advanced code reconstruction
+- **Google Gemini Pro** – Advanced code reconstruction (primary)
 - **Anthropic Claude** – Security analysis (via API)
-- **OpenAI GPT-4** – Vulnerability discovery (via API)
-- **Meta Code Llama** – Local inference (via Ollama)
+- **OpenAI GPT-4** – Code deobfuscation (optional, via API)
+- **Meta Code Llama** – Local inference (via Ollama, optional)
 
 ### 3. Self-Improving System
 Gemini Feedback Loop continuously:
@@ -451,20 +451,47 @@ reveng enhance-code decompiled.c
 - **Cache Hit Rate**: 99%+ for repeated analyses
 
 ### Codebase Statistics
-- **Total Lines of Code**: 122,036 across 335 Python files
-- **Production Code**: ~50,176 lines
-- **Test Code**: 13,647 lines (91% coverage)
-- **Documentation**: 303 files (195 MD + 108 claude.md)
-- **MCP Tools**: 15+ specialized reverse engineering tools
+- **Total Lines of Code**: ~102,136 production Python code
+- **Production Code**: 256 Python files across 54 modules
+- **Test Code**: 13,647 lines (91% coverage, 53 files)
+- **Documentation**: 221 markdown files (112 claude.md)
+- **MCP Tools**: 20+ specialized reverse engineering tools
+
+## 🔧 Optional Dependencies
+
+Some advanced features require optional packages not included in core requirements:
+
+```bash
+# OpenAI GPT-4 for enhanced deobfuscation (optional)
+pip install openai>=1.0.0
+export OPENAI_API_KEY="your-openai-key"
+
+# VirusTotal threat intelligence (optional)
+pip install vt-py>=0.18.0
+export VT_API_KEY="your-vt-key"
+
+# YARA rule scanning (optional)
+pip install yara-python>=4.3.0
+
+# Ollama local LLM (optional)
+pip install ollama>=0.1.0
+
+# Install all optional features
+pip install -r requirements-optional.txt
+```
+
+**Feature Status**: See [FEATURE_IMPLEMENTATION_STATUS_MATRIX.md](FEATURE_IMPLEMENTATION_STATUS_MATRIX.md) for detailed implementation status of all features, including which are optional vs. core.
 
 ## 🤝 Contributing
 
 We welcome contributions in:
-1. **AI Models** – Add Claude Opus, GPT-4o, Code Llama
-2. **Compilers** – Support MSVC, Rust, Go
+1. **AI Models** – Enhance GPT-4 integration, add Claude Opus
+2. **Core Features** – Improve devirtualization, JIT analysis (v5.0)
 3. **Exploit Templates** – Expand generation capabilities
 4. **Languages** – Better C++, Java, .NET support
 5. **Documentation** – Tutorials, videos, research papers
+
+See [FEATURE_IMPLEMENTATION_STATUS_MATRIX.md](FEATURE_IMPLEMENTATION_STATUS_MATRIX.md) for current implementation status and planned features.
 
 📖 **Guidelines**: [CONTRIBUTING.md](CONTRIBUTING.md)
 
