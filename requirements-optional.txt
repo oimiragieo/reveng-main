@@ -39,10 +39,29 @@ vt-py>=0.18.0,<1.0.0
 yara-python>=4.3.0,<5.0.0
 
 # =============================================================================
-# AI ENHANCEMENT - Ollama Local LLM
+# AI ENHANCEMENT - OpenAI GPT-4 (Optional)
+# =============================================================================
+# Enables GPT-4-powered code deobfuscation and semantic analysis.
+# This is an OPTIONAL feature - core REVENG functionality works without it.
+#
+# Setup:
+#   1. Get API key from https://platform.openai.com/api-keys
+#   2. Set environment variable: export OPENAI_API_KEY=your_api_key_here
+#
+# Features enabled:
+#   - LLM-powered deobfuscation (llm_deobfuscator.py)
+#   - JavaScript semantic analysis (javascript/deobfuscator.py)
+#   - Advanced code reconstruction
+#
+# Note: This feature requires API costs per use. The openai package supports
+# the latest OpenAI API including GPT-4 Turbo.
+openai>=1.0.0,<2.0.0
+
+# =============================================================================
+# AI ENHANCEMENT - Ollama Local LLM (Optional)
 # =============================================================================
 # Powers natural language queries, code quality enhancement, and intelligent
-# analysis through local LLM inference.
+# analysis through local LLM inference. FREE alternative to cloud AI.
 #
 # Setup:
 #   1. Install Ollama from https://ollama.ai
@@ -104,6 +123,7 @@ pylint>=3.0.0,<4.0.0
 # VirusTotal Integration   | vt-py         | VT_API_KEY          | None
 # YARA Rule Generation     | yara-python   | None                | libyara-dev
 # YARA Scanning            | yara-python   | None                | libyara-dev
+# OpenAI GPT-4 Deobfuscation | openai      | OPENAI_API_KEY      | None (API costs apply)
 # Natural Language Queries | ollama        | None                | Ollama server
 # Code Quality Enhancement | ollama        | None                | Ollama server
 # Instant Triage           | ollama        | None                | Ollama server
