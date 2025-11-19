@@ -125,13 +125,9 @@ class REVENGAnalyzer:
         # Convert to absolute path for server compatibility
         if self.binary_path:
             self.binary_path = str(Path(self.binary_path).resolve())
-        self.binary_name = (
-            Path(self.binary_path).stem if self.binary_path else "unknown"
-        )
+        self.binary_name = Path(self.binary_path).stem if self.binary_path else "unknown"
         self.analysis_folder = (
-            Path(analysis_folder)
-            if analysis_folder
-            else Path(f"analysis_{self.binary_name}")
+            Path(analysis_folder) if analysis_folder else Path(f"analysis_{self.binary_name}")
         )
         self.results = {}
         self.enhanced_results = {}
@@ -162,9 +158,7 @@ class REVENGAnalyzer:
         try:
             from reveng.tools.enterprise.audit_trail import AuditLogger
 
-            self.audit_logger = AuditLogger(
-                log_dir=str(self.analysis_folder / "audit_logs")
-            )
+            self.audit_logger = AuditLogger(log_dir=str(self.analysis_folder / "audit_logs"))
             logger.info("Audit trail initialized")
         except ImportError:
             logger.debug("Audit trail not available - continuing without audit logging")
@@ -226,7 +220,7 @@ class REVENGAnalyzer:
             Dictionary with available features, tools, and ML models
         """
         capabilities = {
-            "version": "3.0.0",
+            "version": "4.0.0",
             "core_features": {
                 "ai_analysis": self.ollama_available,
                 "ai_provider": "ollama" if self.ollama_available else "heuristics",
@@ -298,9 +292,7 @@ class REVENGAnalyzer:
             from reveng.tools.config.ghidra_engine import GhidraEngine
 
             # Quick connection check (don't fail fast)
-            GhidraEngine(
-                server_url="http://127.0.0.1:13370", timeout=2, fail_fast=False
-            )
+            GhidraEngine(server_url="http://127.0.0.1:13370", timeout=2, fail_fast=False)
             return True
         except Exception:
             return False
@@ -328,18 +320,14 @@ class REVENGAnalyzer:
                     # Parse Java version from output
                     # Java version output: "java version "1.8.0_301"" or "openjdk version "17.0.2""
                     java_version_output = result.stderr or result.stdout
-                    version_match = re.search(
-                        r'version "(\d+)\.?(\d+)?', java_version_output
-                    )
+                    version_match = re.search(r'version "(\d+)\.?(\d+)?', java_version_output)
 
                     if version_match:
                         major_version = int(version_match.group(1))
                         # Java versions: 1.x format (old) vs x format (new)
                         # Java 8 = 1.8, Java 11+ = 11, 17, etc.
                         if major_version == 1 and version_match.group(2):
-                            actual_version = int(
-                                version_match.group(2)
-                            )  # e.g., 1.8 -> 8
+                            actual_version = int(version_match.group(2))  # e.g., 1.8 -> 8
                         else:
                             actual_version = major_version  # e.g., 17 -> 17
 
@@ -347,16 +335,12 @@ class REVENGAnalyzer:
 
                         # Relaxed version check with warnings
                         if actual_version >= 17:
-                            logger.info(
-                                f"Java {actual_version} detected - fully compatible"
-                            )
+                            logger.info(f"Java {actual_version} detected - fully compatible")
                         elif actual_version >= 11:
                             logger.warning(
                                 f"Java {actual_version} detected - Ghidra recommends Java 17+, but will work"
                             )
-                            logger.warning(
-                                "Consider upgrading to Java 17+ for best compatibility"
-                            )
+                            logger.warning("Consider upgrading to Java 17+ for best compatibility")
                         elif actual_version >= 8:
                             logger.warning(
                                 f"Java {actual_version} detected - older version may have limited compatibility"
@@ -365,9 +349,7 @@ class REVENGAnalyzer:
                                 "Ghidra requires Java 17+, some features may not work correctly"
                             )
                         else:
-                            logger.error(
-                                f"Java {actual_version} detected - too old for Ghidra"
-                            )
+                            logger.error(f"Java {actual_version} detected - too old for Ghidra")
                             missing_tools.append(
                                 f"Java 17+ (found Java {actual_version}, upgrade recommended)"
                             )
@@ -386,9 +368,7 @@ class REVENGAnalyzer:
             ghidra_status = dep_manager.check_all_dependencies().get("ghidra", False)
             validation_results["ghidra"] = "available" if ghidra_status else "not_found"
             if not ghidra_status:
-                logger.warning(
-                    "Ghidra not installed - native binary analysis will be limited"
-                )
+                logger.warning("Ghidra not installed - native binary analysis will be limited")
 
             # Store validation results for later reference
             self.tool_availability = validation_results
@@ -480,9 +460,7 @@ class REVENGAnalyzer:
             # Run preflight check
             checker = OllamaPreflightChecker(self.ai_config.ollama_host)
             required_model = (
-                self.ai_config.ollama_model
-                if self.ai_config.ollama_model != "auto"
-                else None
+                self.ai_config.ollama_model if self.ai_config.ollama_model != "auto" else None
             )
 
             success, results = checker.check_all(required_model)
@@ -499,9 +477,7 @@ class REVENGAnalyzer:
 
             else:
                 self.ollama_available = False
-                logger.warning(
-                    "[FAIL] Ollama not available - AI analysis will be skipped"
-                )
+                logger.warning("[FAIL] Ollama not available - AI analysis will be skipped")
 
                 if results["errors"]:
                     for error in results["errors"]:
@@ -573,9 +549,7 @@ class REVENGAnalyzer:
         if self.audit_logger:
             session_id = self.audit_logger.start_session(
                 target_files=[self.binary_path],
-                analysis_types=[
-                    self.file_type.language if self.file_type else "unknown"
-                ],
+                analysis_types=[self.file_type.language if self.file_type else "unknown"],
             )
             logger.info(f"Audit session started: {session_id}")
 
@@ -606,9 +580,7 @@ class REVENGAnalyzer:
             f"AI Analysis: {'[ENABLED] Ollama' if self.ollama_available else '[DISABLED] Heuristics only'}"
         )
         if self.enhanced_features.is_any_enhanced_enabled():
-            logger.info(
-                f"Enhanced Analysis: [ENABLED] {self._count_enabled_modules()} modules"
-            )
+            logger.info(f"Enhanced Analysis: [ENABLED] {self._count_enabled_modules()} modules")
 
         try:
             # Step 1: AI-powered binary analysis
@@ -702,9 +674,7 @@ class REVENGAnalyzer:
                             "icon": "EXPOSURE",
                         },
                     )
-                    logger.info(
-                        "[EXPOSURE] Step 9: Corporate Data Exposure Analysis..."
-                    )
+                    logger.info("[EXPOSURE] Step 9: Corporate Data Exposure Analysis...")
                     self._step9_corporate_exposure()
 
                 # Step 10: Automated vulnerability discovery
@@ -717,9 +687,7 @@ class REVENGAnalyzer:
                             "icon": "VULNERABILITY",
                         },
                     )
-                    logger.info(
-                        "[VULNERABILITY] Step 10: Automated Vulnerability Discovery..."
-                    )
+                    logger.info("[VULNERABILITY] Step 10: Automated Vulnerability Discovery...")
                     self._step10_vulnerability_discovery()
 
                 # Step 11: Threat intelligence correlation
@@ -732,9 +700,7 @@ class REVENGAnalyzer:
                             "icon": "INTELLIGENCE",
                         },
                     )
-                    logger.info(
-                        "[INTELLIGENCE] Step 11: Threat Intelligence Correlation..."
-                    )
+                    logger.info("[INTELLIGENCE] Step 11: Threat Intelligence Correlation...")
                     self._step11_threat_intelligence()
 
                 # Step 12: Enhanced binary reconstruction
@@ -747,9 +713,7 @@ class REVENGAnalyzer:
                             "icon": "RECONSTRUCTION",
                         },
                     )
-                    logger.info(
-                        "[RECONSTRUCTION] Step 12: Enhanced Binary Reconstruction..."
-                    )
+                    logger.info("[RECONSTRUCTION] Step 12: Enhanced Binary Reconstruction...")
                     self._step12_enhanced_reconstruction()
 
                 # Step 13: Security demonstration generation
@@ -762,17 +726,13 @@ class REVENGAnalyzer:
                             "icon": "DEMONSTRATION",
                         },
                     )
-                    logger.info(
-                        "[DEMONSTRATION] Step 13: Security Demonstration Generation..."
-                    )
+                    logger.info("[DEMONSTRATION] Step 13: Security Demonstration Generation...")
                     self._step13_demonstration_generation()
 
             # Generate final report
             self._generate_final_report()
 
-            total_steps = 8 + (
-                5 if self.enhanced_features.is_any_enhanced_enabled() else 0
-            )
+            total_steps = 8 + (5 if self.enhanced_features.is_any_enhanced_enabled() else 0)
 
             # Calculate final status based on step results
             final_status = self._calculate_pipeline_status()
@@ -854,9 +814,7 @@ class REVENGAnalyzer:
                 logger.info("Audit session ended with error")
 
             self.results.setdefault("errors", []).append(error.to_dict())
-            self.results["metadata"]["finished_at"] = (
-                datetime.utcnow().isoformat() + "Z"
-            )
+            self.results["metadata"]["finished_at"] = datetime.utcnow().isoformat() + "Z"
             self.results["metadata"]["duration_seconds"] = time.time() - start_time
 
             return {
@@ -961,9 +919,7 @@ class REVENGAnalyzer:
             )
 
             # Run Java analyzer
-            analyzer = JavaBytecodeAnalyzer(
-                output_dir=str(self.analysis_folder / "java_analysis")
-            )
+            analyzer = JavaBytecodeAnalyzer(output_dir=str(self.analysis_folder / "java_analysis"))
             result = analyzer.analyze(self.binary_path)
 
             logger.info(
@@ -995,9 +951,7 @@ class REVENGAnalyzer:
             from reveng.tools.languages.csharp_il_analyzer import CSharpILAnalyzer
 
             # Run C# IL analyzer
-            analyzer = CSharpILAnalyzer(
-                output_dir=str(self.analysis_folder / "csharp_analysis")
-            )
+            analyzer = CSharpILAnalyzer(output_dir=str(self.analysis_folder / "csharp_analysis"))
             result = analyzer.analyze(self.binary_path)
 
             logger.info(
@@ -1083,9 +1037,7 @@ class REVENGAnalyzer:
             )
 
             logger.info("=" * 70)
-            logger.info(
-                "GHIDRA-FIRST ARCHITECTURE - World-Class AI Reverse Engineering"
-            )
+            logger.info("GHIDRA-FIRST ARCHITECTURE - World-Class AI Reverse Engineering")
             logger.info("=" * 70)
 
             # Create Ghidra Engine with fail-fast mode
@@ -1131,9 +1083,7 @@ class REVENGAnalyzer:
                 }
 
                 # Continue analysis with degraded functionality instead of stopping
-                logger.warning(
-                    "Continuing analysis without Ghidra - functionality will be limited"
-                )
+                logger.warning("Continuing analysis without Ghidra - functionality will be limited")
                 return
 
             # Ghidra is available - perform comprehensive analysis
@@ -1154,9 +1104,7 @@ class REVENGAnalyzer:
             logger.info("GHIDRA ANALYSIS COMPLETE")
             logger.info("=" * 70)
             logger.info(f"Functions found: {len(analysis_data.get('functions', []))}")
-            logger.info(
-                f"Functions decompiled: {len(analysis_data.get('decompiled_code', {}))}"
-            )
+            logger.info(f"Functions decompiled: {len(analysis_data.get('decompiled_code', {}))}")
             logger.info(f"Strings extracted: {len(analysis_data.get('strings', []))}")
             logger.info(f"Imports identified: {len(analysis_data.get('imports', []))}")
             logger.info(f"Exports identified: {len(analysis_data.get('exports', []))}")
@@ -1185,9 +1133,7 @@ class REVENGAnalyzer:
             pass
         except ImportError as e:
             logger.error(f"Ghidra Engine not available: {e}")
-            logger.error(
-                "Please ensure the Ghidra Analysis Server infrastructure is installed"
-            )
+            logger.error("Please ensure the Ghidra Analysis Server infrastructure is installed")
             logger.warning(
                 "Continuing analysis without Ghidra module - functionality will be limited"
             )
@@ -1243,9 +1189,7 @@ class REVENGAnalyzer:
                 "message": "SPECS folder already exists",
             }
         else:
-            logger.warning(
-                "SPECS folder not found - may need to run AI inspection first"
-            )
+            logger.warning("SPECS folder not found - may need to run AI inspection first")
             self.results["step4"] = {
                 "status": "warning",
                 "message": "SPECS folder not found",
@@ -1369,9 +1313,7 @@ class REVENGAnalyzer:
             report = validator.validate_rebuild(
                 Path(self.binary_path),
                 rebuilt_path,
-                smoke_tests=(
-                    validation_config.smoke_tests if validation_config else None
-                ),
+                smoke_tests=(validation_config.smoke_tests if validation_config else None),
             )
 
             # Save validation report
@@ -1381,18 +1323,14 @@ class REVENGAnalyzer:
             # Log results
             verdict = report["verdict"]
             if verdict["valid"]:
-                logger.info(
-                    f"Validation PASSED (confidence: {verdict['confidence']:.2f})"
-                )
+                logger.info(f"Validation PASSED (confidence: {verdict['confidence']:.2f})")
                 self.results["step8"] = {
                     "status": "success",
                     "verdict": verdict,
                     "report_path": str(report_path),
                 }
             else:
-                logger.warning(
-                    f"Validation FAILED (confidence: {verdict['confidence']:.2f})"
-                )
+                logger.warning(f"Validation FAILED (confidence: {verdict['confidence']:.2f})")
                 logger.warning(f"Errors: {verdict.get('errors', [])}")
                 self.results["step8"] = {
                     "status": "warning",
@@ -1455,24 +1393,17 @@ class REVENGAnalyzer:
 
             # Combine all decompiled code into single string for analysis
             code_to_analyze = "\n\n".join(
-                [
-                    f"// Function at {addr}\n{code}"
-                    for addr, code in decompiled_code_dict.items()
-                ]
+                [f"// Function at {addr}\n{code}" for addr, code in decompiled_code_dict.items()]
             )
 
-            logger.info(
-                f"Analyzing {len(decompiled_code_dict)} decompiled functions from Ghidra"
-            )
+            logger.info(f"Analyzing {len(decompiled_code_dict)} decompiled functions from Ghidra")
             logger.info(f"Total code size: {len(code_to_analyze)} characters")
 
             # Analyze the REAL decompiled code
             exposures = self.corporate_exposure_detector.analyze_code(
                 code_to_analyze, self.binary_path
             )
-            exposure_report = self.corporate_exposure_detector.generate_exposure_report(
-                exposures
-            )
+            exposure_report = self.corporate_exposure_detector.generate_exposure_report(exposures)
 
             logger.info(
                 f"Corporate exposure analysis completed - {exposure_report['total_exposures']} exposures found"
@@ -1841,33 +1772,22 @@ class REVENGAnalyzer:
             },
             "enhanced_steps": {
                 "step9_corporate_exposure": self.enhanced_results.get("step9", {}),
-                "step10_vulnerability_discovery": self.enhanced_results.get(
-                    "step10", {}
-                ),
+                "step10_vulnerability_discovery": self.enhanced_results.get("step10", {}),
                 "step11_threat_intelligence": self.enhanced_results.get("step11", {}),
-                "step12_enhanced_reconstruction": self.enhanced_results.get(
-                    "step12", {}
-                ),
-                "step13_demonstration_generation": self.enhanced_results.get(
-                    "step13", {}
-                ),
+                "step12_enhanced_reconstruction": self.enhanced_results.get("step12", {}),
+                "step13_demonstration_generation": self.enhanced_results.get("step13", {}),
             },
             "summary": {
-                "total_steps": 8
-                + (5 if self.enhanced_features.is_any_enhanced_enabled() else 0),
+                "total_steps": 8 + (5 if self.enhanced_features.is_any_enhanced_enabled() else 0),
                 "core_steps": 8,
-                "enhanced_steps": (
-                    5 if self.enhanced_features.is_any_enhanced_enabled() else 0
-                ),
+                "enhanced_steps": (5 if self.enhanced_features.is_any_enhanced_enabled() else 0),
                 "successful_steps": len(
                     [s for s in all_results.values() if s.get("status") == "success"]
                 ),
                 "warning_steps": len(
                     [s for s in all_results.values() if s.get("status") == "warning"]
                 ),
-                "error_steps": len(
-                    [s for s in all_results.values() if s.get("status") == "error"]
-                ),
+                "error_steps": len([s for s in all_results.values() if s.get("status") == "error"]),
                 "timeout_steps": len(
                     [s for s in all_results.values() if s.get("status") == "timeout"]
                 ),
@@ -1899,9 +1819,7 @@ class REVENGAnalyzer:
         functions_dir = self.analysis_folder / "functions"
         functions_dir.mkdir(exist_ok=True)
 
-        logger.info(
-            f"Writing {len(decompiled_code)} decompiled functions to {functions_dir}"
-        )
+        logger.info(f"Writing {len(decompiled_code)} decompiled functions to {functions_dir}")
 
         # Write each function to a separate .c file
         for address, code in decompiled_code.items():

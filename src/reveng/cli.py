@@ -39,9 +39,7 @@ def create_parser() -> argparse.ArgumentParser:
     )
 
     # Main command
-    subparsers = parser.add_subparsers(
-        dest="command", help="Available commands", metavar="COMMAND"
-    )
+    subparsers = parser.add_subparsers(dest="command", help="Available commands", metavar="COMMAND")
 
     # Analyze command
     analyze_parser = subparsers.add_parser(
@@ -130,9 +128,7 @@ def create_parser() -> argparse.ArgumentParser:
         description="Perform instant triage analysis for incident response",
     )
     triage_parser.add_argument("binary_path", help="Path to binary file")
-    triage_parser.add_argument(
-        "--bulk", nargs="+", help="Triage multiple files in batch"
-    )
+    triage_parser.add_argument("--bulk", nargs="+", help="Triage multiple files in batch")
     triage_parser.add_argument(
         "--format",
         choices=["text", "json", "markdown"],
@@ -146,9 +142,7 @@ def create_parser() -> argparse.ArgumentParser:
         help="Lookup file hash on VirusTotal",
         description="Enrich analysis with VirusTotal threat intelligence",
     )
-    vt_lookup_parser.add_argument(
-        "binary_path", help="Path to binary file or SHA256 hash"
-    )
+    vt_lookup_parser.add_argument("binary_path", help="Path to binary file or SHA256 hash")
     vt_lookup_parser.add_argument(
         "--api-key", help="VirusTotal API key (or set VT_API_KEY environment variable)"
     )
@@ -189,9 +183,7 @@ def create_parser() -> argparse.ArgumentParser:
     )
     yara_scan_parser.add_argument("binary_path", help="Path to binary file")
     yara_scan_parser.add_argument("--rules-dir", help="Directory containing YARA rules")
-    yara_scan_parser.add_argument(
-        "--rule-file", help="Single YARA rule file to scan with"
-    )
+    yara_scan_parser.add_argument("--rule-file", help="Single YARA rule file to scan with")
 
     # Binary diffing command
     diff_parser = subparsers.add_parser(
@@ -330,9 +322,7 @@ def create_parser() -> argparse.ArgumentParser:
         help="Generate proof-of-concept exploit",
         description="Automatically generate working exploits for discovered vulnerabilities",
     )
-    generate_exploit_parser.add_argument(
-        "binary_path", help="Path to binary file"
-    )
+    generate_exploit_parser.add_argument("binary_path", help="Path to binary file")
     generate_exploit_parser.add_argument(
         "--vulnerability",
         help="Specific vulnerability to target (e.g., buffer_overflow, use_after_free)",
@@ -387,9 +377,7 @@ def create_parser() -> argparse.ArgumentParser:
     config_group = parser.add_argument_group(
         "Configuration Options", "Control analysis configuration"
     )
-    config_group.add_argument(
-        "--config", help="Path to enhanced analysis configuration file"
-    )
+    config_group.add_argument("--config", help="Path to enhanced analysis configuration file")
     config_group.add_argument(
         "--no-ollama-check", action="store_true", help="Skip Ollama availability check"
     )
@@ -402,15 +390,11 @@ def create_parser() -> argparse.ArgumentParser:
     logging_group = parser.add_argument_group(
         "Logging Options", "Control logging and output verbosity"
     )
-    logging_group.add_argument(
-        "--verbose", "-V", action="store_true", help="Enable verbose output"
-    )
+    logging_group.add_argument("--verbose", "-V", action="store_true", help="Enable verbose output")
     logging_group.add_argument(
         "--quiet", "-q", action="store_true", help="Suppress non-essential output"
     )
-    logging_group.add_argument(
-        "--log-file", help="Path to log file (default: reveng_analyzer.log)"
-    )
+    logging_group.add_argument("--log-file", help="Path to log file (default: reveng_analyzer.log)")
 
     return parser
 
@@ -538,18 +522,14 @@ def handle_ask_command(args):
 
         # Handle conversational mode
         if args.conversational:
-            print(
-                "Conversational mode enabled. Ask follow-up questions (type 'quit' to exit):"
-            )
+            print("Conversational mode enabled. Ask follow-up questions (type 'quit' to exit):")
             while True:
                 try:
                     follow_up = input("\nFollow-up question: ").strip()
                     if follow_up.lower() in ["quit", "exit", "q"]:
                         break
                     if follow_up:
-                        answer = asyncio.run(
-                            ask_about_binary(follow_up, args.binary_path)
-                        )
+                        answer = asyncio.run(ask_about_binary(follow_up, args.binary_path))
                         print(f"\nAnswer: {answer}")
                 except KeyboardInterrupt:
                     print("\nExiting conversational mode...")
@@ -902,9 +882,7 @@ def handle_patch_analysis_command(args):
             output = [v.__dict__ for v in vulnerabilities]
             print(json.dumps(output, indent=2))
         else:
-            report = analyzer.generate_report(
-                vulnerabilities, format=args.format, cve=args.cve
-            )
+            report = analyzer.generate_report(vulnerabilities, format=args.format, cve=args.cve)
             print(report)
 
         return 0
@@ -987,17 +965,13 @@ def handle_enhance_code_command(args):
             code = f.read()
 
         enhancer = AICodeQualityEnhancer()
-        result = enhancer.enhance_function(
-            function_code=code, function_name=args.function_name
-        )
+        result = enhancer.enhance_function(function_code=code, function_name=args.function_name)
 
         # Determine output path
         output_path = args.output
         if not output_path:
             code_path = Path(args.code_file)
-            output_path = (
-                code_path.parent / f"{code_path.stem}_enhanced{code_path.suffix}"
-            )
+            output_path = code_path.parent / f"{code_path.stem}_enhanced{code_path.suffix}"
 
         # Save enhanced code
         with open(output_path, "w") as f:
