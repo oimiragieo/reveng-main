@@ -142,7 +142,7 @@ class REVENGAPI:
                     errors.append(f"{step_name}: {message}")
 
             result = {
-                "version": "2.1.0",
+                "version": "4.0.0",
                 "timestamp": datetime.utcnow().isoformat() + "Z",
                 "binary": {
                     "path": str(path),
@@ -172,7 +172,7 @@ class REVENGAPI:
                 "metadata": {
                     "analysis_time_seconds": metadata.get("duration_seconds", 0),
                     "tools_used": ["ghidra"] if ghidra_data else [],
-                    "reveng_version": "2.1.0",
+                    "reveng_version": "4.0.0",
                     "analysis_folder": analysis_summary.get("analysis_folder"),
                 },
             }
@@ -208,12 +208,10 @@ class REVENGAPI:
 
         try:
             # Use ML integration for code reconstruction
-            reconstruction_result = self.ml.reconstruct_code(
-                str(path), output_format=output_format
-            )
+            reconstruction_result = self.ml.reconstruct_code(str(path), output_format=output_format)
 
             return {
-                "version": "2.1.0",
+                "version": "4.0.0",
                 "timestamp": datetime.utcnow().isoformat() + "Z",
                 "binary": {"path": str(path), "size_bytes": path.stat().st_size},
                 "reconstruction": {
@@ -221,9 +219,7 @@ class REVENGAPI:
                     "source_files": reconstruction_result.get("source_files", []),
                     "main_file": reconstruction_result.get("main_file", ""),
                     "dependencies": reconstruction_result.get("dependencies", []),
-                    "build_instructions": reconstruction_result.get(
-                        "build_instructions", []
-                    ),
+                    "build_instructions": reconstruction_result.get("build_instructions", []),
                 },
                 "quality": {
                     "completeness": reconstruction_result.get("completeness", 0.0),
@@ -257,7 +253,7 @@ class REVENGAPI:
             detection_result = self.ml.detect_threats(str(path))
 
             return {
-                "version": "2.1.0",
+                "version": "4.0.0",
                 "timestamp": datetime.utcnow().isoformat() + "Z",
                 "binary": {
                     "path": str(path),
@@ -272,13 +268,9 @@ class REVENGAPI:
                 },
                 "indicators": {
                     "suspicious_apis": detection_result.get("suspicious_apis", []),
-                    "network_indicators": detection_result.get(
-                        "network_indicators", []
-                    ),
+                    "network_indicators": detection_result.get("network_indicators", []),
                     "file_indicators": detection_result.get("file_indicators", []),
-                    "behavioral_indicators": detection_result.get(
-                        "behavioral_indicators", []
-                    ),
+                    "behavioral_indicators": detection_result.get("behavioral_indicators", []),
                 },
                 "mitre_attacks": detection_result.get("mitre_attacks", []),
                 "recommendations": detection_result.get("recommendations", []),
@@ -317,7 +309,7 @@ class REVENGAPI:
                     return "JAR/ZIP"
                 else:
                     return "Unknown"
-        except:
+        except Exception:
             return "Unknown"
 
     def _detect_architecture(self, path: Path) -> str:
@@ -334,21 +326,19 @@ class REVENGAPI:
                     return "ARM"
                 else:
                     return "Unknown"
-        except:
+        except Exception:
             return "Unknown"
 
     def _calculate_confidence(self, result: Dict[str, Any]) -> float:
         """Calculate overall confidence score."""
         try:
             # Weighted average of different confidence measures
-            classification_conf = result.get("classification", {}).get(
-                "confidence", 0.0
-            )
+            classification_conf = result.get("classification", {}).get("confidence", 0.0)
             ml_conf = result.get("ml_insights", {}).get("confidence", 0.0)
 
             # Simple average for now
             return (classification_conf + ml_conf) / 2.0
-        except:
+        except Exception:
             return 0.0
 
 
@@ -365,9 +355,7 @@ def detect_malware(binary_path: Union[str, Path]) -> Dict[str, Any]:
     return api.detect_malware(binary_path)
 
 
-def reconstruct_binary(
-    binary_path: Union[str, Path], output_format: str = "c"
-) -> Dict[str, Any]:
+def reconstruct_binary(binary_path: Union[str, Path], output_format: str = "c") -> Dict[str, Any]:
     """Convenience function for binary reconstruction."""
     api = REVENGAPI()
     return api.reconstruct_binary(binary_path, output_format)

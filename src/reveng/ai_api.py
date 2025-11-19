@@ -154,15 +154,11 @@ class REVENG_AI_API:
 
         # Initialize components
         self.triage_engine = InstantTriageEngine()
-        self.nl_interface = NaturalLanguageInterface(
-            model=ollama_model, use_ollama=use_ollama
-        )
+        self.nl_interface = NaturalLanguageInterface(model=ollama_model, use_ollama=use_ollama)
 
         logger.info("REVENG AI API initialized")
 
-    def triage_binary(
-        self, binary_path: str, include_reasoning: bool = True
-    ) -> TriageResult:
+    def triage_binary(self, binary_path: str, include_reasoning: bool = True) -> TriageResult:
         """
         Perform instant triage on a binary.
 
@@ -443,9 +439,7 @@ class REVENG_AI_API:
 
             if analysis_summary.get("status") == "success":
                 binary_name = Path(binary_path).stem
-                report_path = (
-                    Path(f"analysis_{binary_name}") / "universal_analysis_report.json"
-                )
+                report_path = Path(f"analysis_{binary_name}") / "universal_analysis_report.json"
 
                 if report_path.exists():
                     with open(report_path, "r", encoding="utf-8") as f:
@@ -463,9 +457,7 @@ class REVENG_AI_API:
             c_files = list(decompiled_dir.glob("**/*.c"))
 
             if c_files:
-                logger.info(
-                    f"Generating translation hints for {len(c_files)} C files..."
-                )
+                logger.info(f"Generating translation hints for {len(c_files)} C files...")
                 results["translation_hints"] = []
 
                 for c_file in c_files[:5]:  # Limit to first 5 files
@@ -483,9 +475,7 @@ class REVENG_AI_API:
 
         return results
 
-    def explain_binary(
-        self, binary_path: str, detail_level: str = "standard"
-    ) -> NLResponse:
+    def explain_binary(self, binary_path: str, detail_level: str = "standard") -> NLResponse:
         """
         Get a comprehensive explanation of what a binary does.
 
@@ -527,9 +517,7 @@ class REVENG_AI_API:
 
         return self.ask(question, binary_path=binary_path)
 
-    def extract_iocs(
-        self, binary_path: str, ioc_types: Optional[List[str]] = None
-    ) -> NLResponse:
+    def extract_iocs(self, binary_path: str, ioc_types: Optional[List[str]] = None) -> NLResponse:
         """
         Extract indicators of compromise (IOCs) from binary.
 
@@ -577,16 +565,13 @@ class REVENG_AI_API:
             "similarity": {
                 "threat_score_diff": abs(triage1.threat_score - triage2.threat_score),
                 "common_capabilities": list(
-                    set(triage1.detected_capabilities)
-                    & set(triage2.detected_capabilities)
+                    set(triage1.detected_capabilities) & set(triage2.detected_capabilities)
                 ),
                 "unique_to_binary1": list(
-                    set(triage1.detected_capabilities)
-                    - set(triage2.detected_capabilities)
+                    set(triage1.detected_capabilities) - set(triage2.detected_capabilities)
                 ),
                 "unique_to_binary2": list(
-                    set(triage2.detected_capabilities)
-                    - set(triage1.detected_capabilities)
+                    set(triage2.detected_capabilities) - set(triage1.detected_capabilities)
                 ),
             },
         }
