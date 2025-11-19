@@ -129,7 +129,7 @@ class REVENGAIAssistant:
             vulnerabilities = self._create_vulnerabilities(analysis_results)
             threat_indicators = self._create_threat_indicators(analysis_results)
             recommendations = self._create_recommendations(insights)
-            metadata = self._create_analysis_metadata(
+            metadata = await self._create_analysis_metadata(
                 request, start_time, time.time(), analysis_strategy, binary_type
             )
 
@@ -737,7 +737,7 @@ class REVENGAIAssistant:
             recommendations.append(rec)
         return recommendations
 
-    def _create_analysis_metadata(
+    async def _create_analysis_metadata(
         self,
         request: AIAnalysisRequest,
         start_time: float,
