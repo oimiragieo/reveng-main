@@ -141,8 +141,9 @@ Then read: [`CLI_REFERENCE.md`](CLI_REFERENCE.md)
 
 ### Version Information
 - **Current Version:** 4.0.0 (Production/Stable)
-- **Release Date:** November 2025
+- **Release Date:** November 2024
 - **Major Features:** MCP integration, JavaScript deobfuscation, GPU acceleration
+- **Latest Updates:** Session 6 audit (Nov 2024) - Version consistency fixes, code quality improvements
 
 ---
 

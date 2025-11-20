@@ -17,22 +17,23 @@ This quick reference provides installation essentials. For detailed troubleshoot
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/reveng.git
-cd reveng
+git clone https://github.com/oimiragieo/reveng-main.git
+cd reveng-main
 
-# Run automated setup (installs everything)
-python setup_dependencies.py --all
+# Run automated installer
+./install-reveng.sh
 
 # Verify installation
-python setup_dependencies.py --verify-only
+reveng --version
+# Should show: REVENG v4.0.0 (Production/Stable)
 
-# Start Ghidra server (in separate terminal)
+# Optional: Start Ghidra server (in separate terminal)
 cd external/ghidra-server
-pip install flask
+pip install flask flask-cors
 python ghidra_http_server.py
 
-# Run analysis
-python reveng.py --verbose analyze path/to/binary.exe
+# Run your first analysis
+reveng analyze path/to/binary.exe
 ```
 
 **Expected Result**: Full REVENG functionality including binary analysis, decompilation, and optional features like Ghidra integration and MCP server
@@ -42,13 +43,15 @@ python reveng.py --verbose analyze path/to/binary.exe
 ## System Requirements
 
 ### Required
-- **Python**: 3.11 or higher
-- **Ollama**: With AI models installed
-- **Java**: 21 or higher (for Ghidra)
+- **Python**: 3.9 or higher
+- **pip**: Python package manager
+- **Git**: Version control system
 - **Disk Space**: ~500MB for dependencies
 
-### Optional (for 100% success)
+### Optional (for advanced features)
 - **Ghidra**: NSA's binary analysis tool (~400MB download)
+- **Java**: 21 or higher (required for Ghidra)
+- **Node.js**: 18+ (for JavaScript deobfuscation)
 - **C Compiler**: gcc, clang, or MSVC (~200MB-1GB depending on choice)
 
 ---
@@ -61,8 +64,11 @@ python reveng.py --verbose analyze path/to/binary.exe
 # Install core Python packages
 pip install -r requirements.txt
 
-# Additional packages for Ghidra server
-pip install flask flask-cors requests
+# Install REVENG package
+pip install -e .
+
+# Verify installation
+reveng --version
 ```
 
 ### 2. Install Ghidra (Optional - for Advanced Binary Disassembly)
@@ -176,18 +182,24 @@ xcode-select --install
 clang --version
 ```
 
-### 4. Install Ollama (if not already installed)
+### 4. Set Up AI Features (Optional)
 
 ```bash
-# Download from https://ollama.ai/
+# Option 1: Google Gemini (recommended, free tier available)
+export GEMINI_API_KEY="your-api-key-here"
+# Get from: https://makersuite.google.com/app/apikey
 
-# Pull recommended models
+# Option 2: OpenAI GPT-4 (optional)
+pip install openai
+export OPENAI_API_KEY="sk-your-key-here"
+
+# Option 3: Anthropic Claude (optional)
+export ANTHROPIC_API_KEY="sk-ant-your-key-here"
+
+# Option 4: Local LLM with Ollama (free, offline)
+# Download from https://ollama.ai/
 ollama pull llama2
 ollama pull codellama
-ollama pull mistral
-
-# Verify
-ollama list
 ```
 
 ### 5. Verify Complete Installation
@@ -253,10 +265,22 @@ Test the new Model Context Protocol integration:
 ./reveng-mcp-server
 
 # In another terminal, validate MCP
-python validate-mcp.py
+./validate-mcp.py
 ```
 
 **Expected**: MCP server starts successfully and responds to health checks
+
+### Test 4: JavaScript Deobfuscation
+
+```bash
+# Install JavaScript tools
+./install-js-deob.sh
+
+# Test deobfuscation
+./reveng-js deobfuscate path/to/obfuscated.js -o clean.js
+```
+
+**Expected**: Successfully deobfuscates JavaScript files
 
 ---
 
@@ -276,11 +300,14 @@ python ghidra_http_server.py
 **Cause**: C compiler not installed
 **Fix**: Install gcc, clang, or MSVC (see Step 3 above)
 
-### Issue: "Ollama analyzer not available"
+### Issue: "API authentication failed"
 
-**Cause**: Ollama not running or no models installed
+**Cause**: AI API keys not configured
 **Fix**:
 ```bash
+# Set your API key(s)
+export GEMINI_API_KEY="your-key-here"
+# Or for local LLM with Ollama
 ollama serve &
 ollama pull llama2
 ```
@@ -365,26 +392,28 @@ reveng/
 
 ## Dependency Summary
 
-| Dependency | Purpose | Size | Required | Success Impact |
+| Dependency | Purpose | Size | Required | Feature Impact |
 |------------|---------|------|----------|----------------|
-| Python 3.11+ | Core runtime | ~50MB | ✅ Required | Baseline |
-| Ollama | AI analysis | ~5GB | ✅ Required | +30% |
-| Java 21 | Ghidra runtime | ~200MB | ⚠️ For Ghidra | 0% (dependency) |
-| Ghidra | Disassembly | ~400MB | ⚠️ Recommended | +20-25% |
-| C Compiler | Recompilation | ~200MB-1GB | ⚠️ Optional | +7-8% |
-| VirusTotal API | Threat intel | 0MB | ❌ Optional | +0-2% |
+| Python 3.9+ | Core runtime | ~50MB | ✅ Required | Core functionality |
+| pip packages | Python libraries | ~200MB | ✅ Required | Core functionality |
+| Gemini API | AI analysis | 0MB | ⚠️ Recommended | AI-enhanced analysis |
+| Java 21 | Ghidra runtime | ~200MB | ⚠️ For Ghidra | Advanced decompilation |
+| Ghidra | Disassembly | ~400MB | ⚠️ Recommended | Advanced decompilation |
+| Node.js | JS deobfuscation | ~50MB | ⚠️ Optional | JavaScript analysis |
+| C Compiler | Recompilation | ~200MB-1GB | ⚠️ Optional | Binary reconstruction |
 
-**Total**: ~1-2GB for complete setup
+**Total**: ~500MB (minimal) to ~2GB (complete setup)
 
 ---
 
 ## Performance Benchmarks
 
-| Configuration | Steps Passing | Success Rate | Analysis Time |
-|---------------|---------------|--------------|---------------|
-| Minimal (Ollama only) | 9/13 | 69.2% | ~7 seconds |
-| + Ghidra | 10-11/13 | 77-85% | ~15 seconds |
-| + Ghidra + Compiler | 12-13/13 | 92-100% | ~20 seconds |
+| Configuration | Feature Coverage | Analysis Time |
+|---------------|------------------|---------------|
+| Minimal (Core only) | Basic analysis | ~5 seconds |
+| + Gemini/AI | AI-enhanced analysis | ~10 seconds |
+| + Ghidra | Advanced decompilation | ~15 seconds |
+| Complete (All features) | Full pipeline | ~20-30 seconds |
 
 ---
 
@@ -407,47 +436,42 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.11'
+          python-version: '3.9'
 
       - name: Install dependencies
         run: |
-          python setup_dependencies.py --all
-
-      - name: Start Ghidra server
-        run: |
-          cd external/ghidra-server
-          python ghidra_http_server.py &
-          sleep 5
+          ./install-reveng.sh
 
       - name: Run tests
         run: |
-          python reveng.py --verbose analyze path/to/binary.exe
+          pytest tests/ -v
 
-      - name: Verify success rate
+      - name: Test CLI
         run: |
-          # Check that at least 12/13 steps passed
-          python -c "import sys; sys.exit(0)"  # Add actual verification
+          reveng --version
+          reveng analyze test_samples/simple_binary
 ```
 
 ---
 
 ## Next Steps After Installation
 
-1. **Run Test Analysis**: Verify all steps passing
-2. **Review Documentation**: See `docs/` for guides
-3. **Try Examples**: Analyze binaries in `examples/`
-4. **Customize Configuration**: Edit config files as needed
-5. **Join Community**: Report issues, contribute improvements
+1. **Run Test Analysis**: `reveng analyze test_samples/simple_binary`
+2. **Review Documentation**: See [GETTING_STARTED.md](GETTING_STARTED.md)
+3. **Try Examples**: Run `python examples/my_first_analysis.py`
+4. **Explore CLI**: Check [CLI_REFERENCE.md](CLI_REFERENCE.md)
+5. **Join Community**: https://github.com/oimiragieo/reveng-main
 
 ---
 
 ## Getting Help
 
-- **Documentation**: `/docs`
-- **Issues**: GitHub Issues
-- **Examples**: `/examples/case-studies`
-- **Reports**: See `PRODUCTION_READINESS_REPORT.md` for detailed information
+- **Quick Start**: [QUICK_START.md](QUICK_START.md)
+- **Full Installation Guide**: [docs/getting-started/installation.md](docs/getting-started/installation.md)
+- **CLI Reference**: [CLI_REFERENCE.md](CLI_REFERENCE.md)
+- **Issues**: https://github.com/oimiragieo/reveng-main/issues
+- **Documentation**: [docs/](docs/)
 
 ---
 
-**Installation Complete!** You're ready to achieve 100% test success with REVENG.
+**Installation Complete!** You're ready to start reverse engineering with REVENG v4.0.0.
