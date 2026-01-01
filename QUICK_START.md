@@ -122,23 +122,44 @@ reveng enhance-code decompiled.c
 
 ---
 
-## 🔧 Optional Setup (Advanced Features)
+## 🔧 Ghidra Setup (Required for Native Binaries)
 
-### For Ghidra Integration (Binary Disassembly)
+### Understanding When You Need Ghidra
 
-**Why?** Enables comprehensive binary disassembly and decompilation.
+| File Type | Ghidra Required? | What Happens Without It |
+|-----------|-----------------|-------------------------|
+| `.exe`, `.dll`, `.so`, `.dylib` (Native) | **YES** | Falls back to basic Capstone disassembly (no decompilation) |
+| `.jar`, `.class` (Java) | **NO** | Full analysis works without Ghidra |
+| `.pyc`, `.pyz` (Python) | **NO** | Full analysis works without Ghidra |
+| `.dll` (C#/.NET) | **NO** | Full analysis works without Ghidra |
+| `.js` (JavaScript) | **NO** | Full deobfuscation works without Ghidra |
+
+### Quick Setup (Recommended)
+
+```bash
+# Option 1: Use the auto-start script
+python scripts/start-ghidra-server.py --background
+
+# Check if server is running
+python scripts/start-ghidra-server.py --check
+```
+
+### Manual Setup
 
 1. **Download Ghidra**:
    - Visit: https://ghidra-sre.org/
    - Download: Ghidra 11.0+ (~400MB)
 
-2. **Extract and Run Server**:
+2. **Extract and Start Server**:
    ```bash
    # Extract to external/ghidra/
    unzip ghidra_*.zip
    mv ghidra_*_PUBLIC external/ghidra
 
-   # Start Ghidra server (in separate terminal)
+   # Option A: Start REVENG Ghidra server (recommended)
+   python -m reveng.server.ghidra_analysis_server --port 13370
+
+   # Option B: Start external Ghidra HTTP server
    cd external/ghidra-server
    pip install flask flask-cors
    python ghidra_http_server.py
@@ -146,11 +167,27 @@ reveng enhance-code decompiled.c
 
 3. **Verify**:
    ```bash
-   curl http://localhost:13370/health
+   curl http://127.0.0.1:13370/health
    # Should return: {"status": "healthy"}
    ```
 
-   **Note**: The Ghidra server runs on port 13370 by default.
+### What If Ghidra Isn't Running?
+
+REVENG v4.0 now includes a **local disassembly fallback** using Capstone:
+
+```bash
+# Native binary analysis without Ghidra server
+reveng analyze binary.exe
+
+# Output will show:
+# ⚠️ LOCAL ANALYSIS COMPLETE (Limited - No Decompilation)
+# - Functions detected via call analysis
+# - Strings extracted
+# - Imports/Exports listed
+# - No decompiled C code (requires Ghidra)
+```
+
+For **full decompilation** (C code output), start the Ghidra server first.
 
 ### For AI Features
 
@@ -224,6 +261,35 @@ chmod +x reveng-js
 # Or run with python
 python reveng-js deobfuscate file.js
 ```
+
+### Ghidra server not running (native binary analysis)
+
+```bash
+# Check if server is running
+python scripts/start-ghidra-server.py --check
+
+# Start the server
+python scripts/start-ghidra-server.py --background
+
+# Alternative: Use local disassembly (no decompilation)
+# REVENG will automatically fall back to Capstone if Ghidra unavailable
+```
+
+### "No decompilation available" warning
+
+This means Ghidra server is not running. You have two options:
+
+1. **Start Ghidra** (recommended for full analysis):
+   ```bash
+   python scripts/start-ghidra-server.py --background
+   ```
+
+2. **Continue with local analysis** (limited but works):
+   - Strings extraction ✅
+   - Import/Export analysis ✅
+   - Basic function detection ✅
+   - Disassembly ✅
+   - Decompilation ❌ (requires Ghidra)
 
 ### Import errors
 
