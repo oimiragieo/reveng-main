@@ -51,26 +51,34 @@ if platform.system().lower() == "windows":
             os.environ["PATH"] = _mingw_path + os.pathsep + os.environ.get("PATH", "")
             break
 
-# Import reconstruction comparator
+# Import reconstruction comparator (using relative import)
 try:
-    from reconstruction_comparator import ComparisonResult, ReconstructionComparator
+    from ..utils.reconstruction_comparator import ComparisonResult, ReconstructionComparator
 except ImportError:
-    logger = logging.getLogger(__name__)
-    logger.warning(
-        "reconstruction_comparator module not found, comparison features will be limited"
-    )
-    ReconstructionComparator = None
-    ComparisonResult = None
+    try:
+        # Fallback for direct script execution
+        from reveng.tools.utils.reconstruction_comparator import ComparisonResult, ReconstructionComparator
+    except ImportError:
+        logger = logging.getLogger(__name__)
+        logger.debug(
+            "reconstruction_comparator module not found, comparison features will be limited"
+        )
+        ReconstructionComparator = None
+        ComparisonResult = None
 
-# Import our validation module
+# Import our validation module (using relative import)
 try:
-    from validation_config import BinaryValidator, ValidationConfig, ValidationMode
+    from ..binary.validation_config import BinaryValidator, ValidationConfig, ValidationMode
 except ImportError:
-    logger = logging.getLogger(__name__)
-    logger.warning("validation_config module not found, validation will be limited")
-    BinaryValidator = None
-    ValidationConfig = None
-    ValidationMode = None
+    try:
+        # Fallback for direct script execution
+        from reveng.tools.binary.validation_config import BinaryValidator, ValidationConfig, ValidationMode
+    except ImportError:
+        logger = logging.getLogger(__name__)
+        logger.debug("validation_config module not found, validation will be limited")
+        BinaryValidator = None
+        ValidationConfig = None
+        ValidationMode = None
 
 logging.basicConfig(
     level=logging.INFO,

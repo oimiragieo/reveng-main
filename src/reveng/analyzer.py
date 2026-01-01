@@ -1073,6 +1073,65 @@ class REVENGAnalyzer:
                     },
                 )
 
+                # Try local disassembly fallback
+                logger.info("=" * 70)
+                logger.info("ATTEMPTING LOCAL DISASSEMBLY FALLBACK")
+                logger.info("=" * 70)
+
+                try:
+                    from reveng.integrations.local_disassembler import (
+                        LocalDisassembler,
+                        get_local_disassembler,
+                    )
+
+                    local_disasm = get_local_disassembler()
+                    if local_disasm:
+                        logger.info("Using Capstone-based local disassembler...")
+                        local_result = local_disasm.analyze_binary(self.binary_path)
+
+                        if local_result.success:
+                            # Convert to Ghidra-compatible format
+                            analysis_data = local_disasm.to_ghidra_format(local_result)
+                            self.ghidra_analysis_data = analysis_data
+
+                            # Create a compatible data extractor
+                            from reveng.integrations.ghidra.ghidra_engine import GhidraDataExtractor
+                            self.ghidra_extractor = GhidraDataExtractor(analysis_data)
+
+                            logger.info("=" * 70)
+                            logger.info("LOCAL ANALYSIS COMPLETE (Limited - No Decompilation)")
+                            logger.info("=" * 70)
+                            logger.info(f"Format: {local_result.binary_format}")
+                            logger.info(f"Architecture: {local_result.architecture} ({local_result.bits}-bit)")
+                            logger.info(f"Functions detected: {len(local_result.functions)}")
+                            logger.info(f"Strings extracted: {len(local_result.strings)}")
+                            logger.info(f"Imports: {len(local_result.imports)}")
+                            logger.info(f"Exports: {len(local_result.exports)}")
+                            logger.info("⚠️  NOTE: No decompilation available. Start Ghidra for full analysis.")
+                            logger.info("=" * 70)
+
+                            self.results["step2"] = {
+                                "status": "success",
+                                "mode": "local_capstone",
+                                "warning": "Limited analysis - no decompilation. Start Ghidra for full analysis.",
+                                "format": local_result.binary_format,
+                                "architecture": local_result.architecture,
+                                "bits": local_result.bits,
+                                "functions_count": len(local_result.functions),
+                                "strings_count": len(local_result.strings),
+                                "imports_count": len(local_result.imports),
+                                "exports_count": len(local_result.exports),
+                            }
+                            return
+                        else:
+                            logger.warning(f"Local disassembly failed: {local_result.error}")
+                    else:
+                        logger.warning("Local disassembler not available (missing capstone)")
+
+                except ImportError as local_e:
+                    logger.warning(f"Local disassembler module not available: {local_e}")
+
+                # If local disassembly also failed, record the original Ghidra error
                 self.results["step2"] = {
                     "status": "error",
                     "error_code": error.error_code.value,
@@ -1082,8 +1141,7 @@ class REVENGAnalyzer:
                     "details": error.details,
                 }
 
-                # Continue analysis with degraded functionality instead of stopping
-                logger.warning("Continuing analysis without Ghidra - functionality will be limited")
+                logger.warning("Analysis continues without disassembly - functionality will be very limited")
                 return
 
             # Ghidra is available - perform comprehensive analysis

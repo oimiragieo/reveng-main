@@ -96,10 +96,18 @@ class GhidraEngine:
                 f"❌ Error: Could not connect to Ghidra Analysis Server at {self.server_url}\n"
                 f"\n"
                 f"   The server is not running. Please start it with:\n"
-                f"   python -m reveng.server.ghidra_analysis_server --port 1337\n"
                 f"\n"
-                f"   Or if you have Ghidra MCP running:\n"
-                f"   python -m reveng.server.ghidra_analysis_server --ghidra-url http://127.0.0.1:8080\n"
+                f"   Option 1 - Start the REVENG Ghidra server:\n"
+                f"     python -m reveng.server.ghidra_analysis_server --port 13370\n"
+                f"\n"
+                f"   Option 2 - Use the external Ghidra HTTP server:\n"
+                f"     cd external/ghidra-server && python ghidra_http_server.py\n"
+                f"\n"
+                f"   Option 3 - Use Docker (recommended):\n"
+                f"     docker-compose up ghidra-server\n"
+                f"\n"
+                f"   For native binary analysis (PE/ELF/Mach-O), Ghidra is REQUIRED.\n"
+                f"   For Java/Python/C# files, Ghidra is NOT needed.\n"
             )
         except requests.exceptions.Timeout:
             raise GhidraConnectionError(
