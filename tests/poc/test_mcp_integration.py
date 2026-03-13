@@ -17,12 +17,10 @@ Version: 4.0.0
 License: MIT
 """
 
-import asyncio
 import json
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -31,12 +29,17 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from reveng.agent_sdk.mcp.server import MCPMessageType, MCPPrompt, MCPResource, MCPServer, MCPTool
-from reveng.agent_sdk.mcp.servers.reveng_enterprise_server import (
+from reveng.agent_sdk.mcp.servers.reveng_enterprise_server import (  # noqa: E402
     AuditLogger,
     RateLimiter,
     REVENGEnterpriseServer,
 )
+from reveng.malware.memory_forensics import (  # noqa: E402
+    MemoryAnalysis,
+    MemoryArtifact,
+    ProcessInfo,
+)
+from reveng.tools.diffing.binary_differ import DiffResult, FunctionMatch  # noqa: E402
 
 
 # ==================================================================================
@@ -114,6 +117,8 @@ def test_tool_registration(mcp_server):
         "decompile_binary",
         "recompile_binary",
         "diff_binaries",
+        "scan_yara",
+        "analyze_memory_dump",
         "find_vulnerabilities",
         "generate_exploit",
         "classify_malware",
@@ -186,8 +191,195 @@ async def test_tools_list_message(mcp_server):
     assert "description" in tool
     assert "inputSchema" in tool
 
-    print(f"\n✓ Tools list message handled correctly")
+    print("\n✓ Tools list message handled correctly")
     print(f"  Returned {len(response['result']['tools'])} tools")
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_tools_list_includes_forensic_tools(mcp_server):
+    """Test new forensic tools are listed with schemas."""
+    message = {"jsonrpc": "2.0", "id": 20, "method": "tools/list", "params": {}}
+
+    response = await mcp_server.handle_message(message)
+
+    tools = {tool["name"]: tool for tool in response["result"]["tools"]}
+
+    assert "scan_yara" in tools
+    assert "analyze_memory_dump" in tools
+    assert "diff_binaries" in tools
+    assert tools["scan_yara"]["inputSchema"]["required"] == ["path", "rules_path"]
+    assert tools["analyze_memory_dump"]["inputSchema"]["required"] == ["path"]
+    assert tools["diff_binaries"]["inputSchema"]["required"] == ["binary1", "binary2"]
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_scan_yara_tool_returns_structured_matches(mcp_server, temp_dir):
+    """Test YARA scanning executes backend logic and returns structured JSON."""
+    binary_path = temp_dir / "sample.bin"
+    binary_path.write_bytes(b"MZ\x90\x00suspicious data")
+    rules_path = temp_dir / "sample.yar"
+    rules_path.write_text("rule test_rule { condition: true }", encoding="utf-8")
+
+    yara_match = Mock(
+        rule_name="test_rule",
+        namespace="default",
+        tags=["malware"],
+        meta={"family": "demo"},
+        strings=[(16, "$a", b"suspicious")],
+    )
+    scanner_instance = Mock()
+    scanner_instance.scan_file.return_value = [yara_match]
+
+    with patch(
+        "reveng.tools.threat_intel.yara_scanner.YARAScanner", return_value=scanner_instance
+    ):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 21,
+                "method": "tools/call",
+                "params": {
+                    "name": "scan_yara",
+                    "arguments": {"path": str(binary_path), "rules_path": str(rules_path)},
+                },
+            }
+        )
+
+    assert "result" in response
+    assert response["result"]["match_count"] == 1
+    assert response["result"]["matches"][0]["rule"] == "test_rule"
+    assert response["result"]["matches"][0]["meta"]["family"] == "demo"
+    assert response["result"]["matches"][0]["strings"][0]["identifier"] == "$a"
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_analyze_memory_dump_tool_returns_structured_analysis(mcp_server, temp_dir):
+    """Test memory dump analysis executes backend logic and returns structured JSON."""
+    dump_path = temp_dir / "sample.dmp"
+    dump_path.write_bytes(b"memory-dump")
+
+    analysis = MemoryAnalysis(
+        binary_path=str(dump_path),
+        analysis_timestamp="2026-03-13T00:00:00Z",
+        total_processes=1,
+        total_memory_regions=2,
+        total_artifacts=1,
+        processes=[
+            ProcessInfo(
+                process_id=101,
+                process_name="malware.exe",
+                parent_id=1,
+                command_line="malware.exe --stealth",
+                working_directory="C:/tmp",
+            )
+        ],
+        artifacts=[
+            MemoryArtifact(
+                artifact_type="shellcode",
+                address=4096,
+                size=32,
+                data=b"\x90" * 8,
+                hash_md5="md5",
+                hash_sha1="sha1",
+                hash_sha256="sha256",
+                description="Injected shellcode",
+                confidence=0.95,
+                threat_level="HIGH",
+                anomaly_score=0.91,
+                anomaly_threshold=0.68,
+                is_anomalous=True,
+                anomaly_reasons=["Injected code detected"],
+            )
+        ],
+        risk_score=87.5,
+        threat_level="HIGH",
+        anomaly_score=0.88,
+        anomaly_threshold=0.68,
+        anomaly_flags=["Injected code detected"],
+    )
+
+    engine_instance = Mock()
+    engine_instance.analyze_memory.return_value = analysis
+
+    with patch(
+        "reveng.malware.memory_forensics.MemoryForensics", return_value=engine_instance
+    ):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 22,
+                "method": "tools/call",
+                "params": {
+                    "name": "analyze_memory_dump",
+                    "arguments": {"path": str(dump_path), "output_dir": str(temp_dir / "out")},
+                },
+            }
+        )
+
+    assert "result" in response
+    assert response["result"]["analysis"]["threat_level"] == "HIGH"
+    assert response["result"]["analysis"]["risk_score"] == 87.5
+    assert response["result"]["analysis"]["processes"][0]["process_name"] == "malware.exe"
+    assert response["result"]["analysis"]["artifacts"][0]["artifact_type"] == "shellcode"
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_diff_binaries_tool_returns_structured_diff(mcp_server, temp_dir):
+    """Test binary diffing executes backend logic and returns structured JSON."""
+    binary1 = temp_dir / "v1.bin"
+    binary2 = temp_dir / "v2.bin"
+    binary1.write_bytes(b"AAAA")
+    binary2.write_bytes(b"AAAB")
+
+    diff_result = DiffResult(
+        binary_v1=str(binary1),
+        binary_v2=str(binary2),
+        similarity_score=0.75,
+        unchanged_functions=["main"],
+        modified_functions=[
+            FunctionMatch(
+                func_v1_name="parse_config",
+                func_v2_name="parse_config",
+                similarity=0.83,
+                match_type="name_match",
+                changes=["string constant updated"],
+            )
+        ],
+        new_functions=["handle_forensics"],
+        deleted_functions=[],
+        total_functions_v1=2,
+        total_functions_v2=3,
+        match_count=2,
+        instruction_changes={"parse_config": {"changed_blocks": 1}},
+        string_changes={"added": ["forensics"]},
+    )
+
+    differ_instance = Mock()
+    differ_instance.diff.return_value = diff_result
+
+    with patch(
+        "reveng.tools.diffing.binary_differ.BinaryDiffer", return_value=differ_instance
+    ):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 23,
+                "method": "tools/call",
+                "params": {
+                    "name": "diff_binaries",
+                    "arguments": {"binary1": str(binary1), "binary2": str(binary2)},
+                },
+            }
+        )
+
+    assert "result" in response
+    assert response["result"]["diff"]["similarity_score"] == 0.75
+    assert response["result"]["diff"]["modified_functions"][0]["func_v1_name"] == "parse_config"
+    assert response["result"]["diff"]["new_functions"] == ["handle_forensics"]
 
 
 @pytest.mark.poc
@@ -203,7 +395,7 @@ async def test_resources_list_message(mcp_server):
     assert "result" in response
     assert "resources" in response["result"]
 
-    print(f"\n✓ Resources list message handled correctly")
+    print("\n✓ Resources list message handled correctly")
     print(f"  Returned {len(response['result']['resources'])} resources")
 
 
@@ -220,7 +412,7 @@ async def test_prompts_list_message(mcp_server):
     assert "result" in response
     assert "prompts" in response["result"]
 
-    print(f"\n✓ Prompts list message handled correctly")
+    print("\n✓ Prompts list message handled correctly")
     print(f"  Returned {len(response['result']['prompts'])} prompts")
 
 
@@ -342,7 +534,7 @@ def test_audit_logger(audit_logger, temp_dir):
 
     print("\n✓ Audit logging works correctly")
     print(f"  • Log file created: {log_files[0]}")
-    print(f"  • Logged 2 events successfully")
+    print("  • Logged 2 events successfully")
 
 
 @pytest.mark.poc
@@ -387,7 +579,7 @@ async def test_read_resource(mcp_server):
     assert "contents" in response["result"]
 
     print("\n✓ Resource reading works correctly")
-    print(f"  • Read resource: reveng://analyses/recent")
+    print("  • Read resource: reveng://analyses/recent")
 
 
 # ==================================================================================
@@ -415,7 +607,7 @@ async def test_get_prompt(mcp_server):
     assert len(response["result"]["messages"]) > 0
 
     print("\n✓ Prompt template retrieval works correctly")
-    print(f"  • Retrieved prompt: analyze_malware")
+    print("  • Retrieved prompt: analyze_malware")
     print(f"  • Messages: {len(response['result']['messages'])}")
 
 

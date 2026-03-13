@@ -31,11 +31,11 @@ import asyncio
 import hashlib
 import json
 import logging
-import os
 import time
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional, cast
 
 from ..server import MCPPrompt, MCPResource, MCPServer, MCPTool
 
@@ -86,7 +86,7 @@ class RateLimiter:
     def __init__(self, tokens_per_second: float = 10.0, bucket_size: int = 20):
         self.tokens_per_second = tokens_per_second
         self.bucket_size = bucket_size
-        self.tokens = bucket_size
+        self.tokens: float = float(bucket_size)
         self.last_update = time.time()
 
     async def acquire(self) -> bool:
@@ -138,6 +138,7 @@ class REVENGEnterpriseServer(MCPServer):
 
         # Register all tools
         self._register_binary_tools()
+        self._register_forensics_tools()
         self._register_security_tools()
         self._register_javascript_tools()
         self._register_ai_tools()
@@ -243,7 +244,7 @@ class REVENGEnterpriseServer(MCPServer):
         self.register_tool(
             MCPTool(
                 name="diff_binaries",
-                description="Semantic binary diffing to find code changes between versions",
+                description="Compare two binaries and return structured diff results for forensic triage",
                 input_schema={
                     "type": "object",
                     "properties": {
@@ -257,6 +258,69 @@ class REVENGEnterpriseServer(MCPServer):
                     "required": ["binary1", "binary2"],
                 },
                 handler=self.diff_binaries,
+            )
+        )
+
+    # ==================================================================================
+    # FORENSICS TOOLS
+    # ==================================================================================
+
+    def _register_forensics_tools(self):
+        """Register forensic analysis tools."""
+
+        self.register_tool(
+            MCPTool(
+                name="scan_yara",
+                description="Scan a file with YARA rules and return structured match details",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Path to the file to scan with YARA",
+                        },
+                        "rules_path": {
+                            "type": "string",
+                            "description": "Path to a .yar file or directory containing YARA rules",
+                        },
+                        "include_string_data": {
+                            "type": "boolean",
+                            "description": "Include matched string payload previews in the response",
+                        },
+                    },
+                    "required": ["path", "rules_path"],
+                },
+                handler=self.scan_yara,
+            )
+        )
+
+        self.register_tool(
+            MCPTool(
+                name="analyze_memory_dump",
+                description="Run memory forensics analysis on a dump or target binary and return structured findings",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Path to the dump or binary to analyze",
+                        },
+                        "output_dir": {
+                            "type": "string",
+                            "description": "Optional directory for persisted memory analysis artifacts",
+                        },
+                        "memory_scan_batch_size": {
+                            "type": "integer",
+                            "description": "Optional GPU/CPU memory scan batch size override",
+                        },
+                        "memory_scan_max_wait_seconds": {
+                            "type": "number",
+                            "description": "Optional maximum queue wait before dispatching a batch",
+                        },
+                    },
+                    "required": ["path"],
+                },
+                handler=self.analyze_memory_dump,
             )
         )
 
@@ -533,7 +597,10 @@ class REVENGEnterpriseServer(MCPServer):
     # ==================================================================================
 
     async def _execute_with_audit(
-        self, tool_name: str, args: Dict[str, Any], handler_func
+        self,
+        tool_name: str,
+        args: Dict[str, Any],
+        handler_func: Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]],
     ) -> Dict[str, Any]:
         """Execute tool with rate limiting and audit logging"""
         # Rate limiting
@@ -658,9 +725,110 @@ class REVENGEnterpriseServer(MCPServer):
         """Recompile source to binary"""
         return {"content": [{"type": "text", "text": "Recompilation feature coming soon"}]}
 
+    async def scan_yara(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Scan a file using YARA rules."""
+        try:
+            from reveng.tools.threat_intel.yara_scanner import YARAScanner
+
+            path = self._require_existing_file(args, "path")
+            rules_path = self._require_existing_path(args, "rules_path")
+            include_string_data = args.get("include_string_data", True)
+
+            loop = asyncio.get_running_loop()
+            matches = await loop.run_in_executor(
+                None, lambda: YARAScanner(rules_path).scan_file(path)
+            )
+
+            structured_matches = [
+                self._serialize_yara_match(match, include_string_data) for match in matches
+            ]
+            text = self._format_yara_scan_results(path, rules_path, structured_matches)
+
+            return {
+                "content": [{"type": "text", "text": text}],
+                "path": path,
+                "rules_path": rules_path,
+                "match_count": len(structured_matches),
+                "matches": structured_matches,
+            }
+
+        except Exception as e:
+            logger.exception("Error in scan_yara")
+            return {
+                "content": [{"type": "text", "text": f"Error scanning with YARA: {str(e)}"}],
+                "error": str(e),
+            }
+
+    async def analyze_memory_dump(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze a memory dump or binary using the memory forensics engine."""
+        try:
+            from reveng.malware.memory_forensics import MemoryForensics
+
+            path = self._require_existing_file(args, "path")
+            output_dir = args.get("output_dir") or str(
+                self.cache_dir / f"memory_{Path(path).stem}_{int(time.time())}"
+            )
+            memory_scan_batch_size = args.get("memory_scan_batch_size")
+            memory_scan_max_wait_seconds = args.get("memory_scan_max_wait_seconds")
+
+            loop = asyncio.get_running_loop()
+            analysis = await loop.run_in_executor(
+                None,
+                lambda: MemoryForensics(
+                    memory_scan_batch_size=memory_scan_batch_size,
+                    memory_scan_max_wait_seconds=memory_scan_max_wait_seconds,
+                ).analyze_memory(path, output_dir),
+            )
+
+            structured_analysis = self._serialize_memory_analysis(analysis)
+            text = self._format_memory_analysis_results(structured_analysis)
+
+            return {
+                "content": [{"type": "text", "text": text}],
+                "analysis": structured_analysis,
+                "output_dir": output_dir,
+            }
+
+        except Exception as e:
+            logger.exception("Error in analyze_memory_dump")
+            return {
+                "content": [
+                    {"type": "text", "text": f"Error analyzing memory dump: {str(e)}"}
+                ],
+                "error": str(e),
+            }
+
     async def diff_binaries(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Semantic binary diffing"""
-        return {"content": [{"type": "text", "text": "Binary diffing feature coming soon"}]}
+        try:
+            from reveng.tools.diffing.binary_differ import BinaryDiffer
+
+            binary1 = self._require_existing_file(args, "binary1")
+            binary2 = self._require_existing_file(args, "binary2")
+            semantic_diff = args.get("semantic_diff", False)
+
+            loop = asyncio.get_running_loop()
+            diff_result = await loop.run_in_executor(
+                None,
+                lambda: BinaryDiffer().diff(
+                    binary1, binary2, deep_analysis=bool(semantic_diff)
+                ),
+            )
+
+            structured_diff = self._serialize_diff_result(diff_result)
+            text = self._format_binary_diff_results(structured_diff)
+
+            return {
+                "content": [{"type": "text", "text": text}],
+                "diff": structured_diff,
+            }
+
+        except Exception as e:
+            logger.exception("Error in diff_binaries")
+            return {
+                "content": [{"type": "text", "text": f"Error diffing binaries: {str(e)}"}],
+                "error": str(e),
+            }
 
     async def find_vulnerabilities(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Find vulnerabilities in binary"""
@@ -969,7 +1137,7 @@ class REVENGEnterpriseServer(MCPServer):
 
     def _format_analysis_results(self, result: Any, path: str, analysis_id: str) -> str:
         """Format analysis results as text"""
-        text = f"Binary Analysis Results\n"
+        text = "Binary Analysis Results\n"
         text += "=" * 70 + "\n\n"
         text += f"File: {path}\n"
         text += f"Analysis ID: {analysis_id}\n\n"
@@ -991,10 +1159,214 @@ class REVENGEnterpriseServer(MCPServer):
 
         return text
 
+    def _require_existing_file(self, args: Dict[str, Any], field_name: str) -> str:
+        """Require a file argument that exists."""
+        value = args.get(field_name)
+        if not value:
+            raise ValueError(f"Missing required argument: {field_name}")
+
+        path = Path(value)
+        if not path.is_file():
+            raise FileNotFoundError(f"File not found: {value}")
+
+        return str(path)
+
+    def _require_existing_path(self, args: Dict[str, Any], field_name: str) -> str:
+        """Require a path argument that exists."""
+        value = args.get(field_name)
+        if not value:
+            raise ValueError(f"Missing required argument: {field_name}")
+
+        path = Path(value)
+        if not path.exists():
+            raise FileNotFoundError(f"Path not found: {value}")
+
+        return str(path)
+
+    def _serialize_yara_match(
+        self, match: Any, include_string_data: bool = True
+    ) -> Dict[str, Any]:
+        """Convert a YARA match into JSON-safe data."""
+        serialized_strings = []
+        for offset, identifier, data in getattr(match, "strings", []):
+            string_result = {"offset": offset, "identifier": identifier}
+            if include_string_data:
+                decoded = data.decode("utf-8", errors="replace") if isinstance(data, bytes) else str(data)
+                string_result["data_text"] = decoded
+                string_result["data_hex"] = data.hex() if isinstance(data, bytes) else str(data)
+            serialized_strings.append(string_result)
+
+        return {
+            "rule": getattr(match, "rule_name", "unknown"),
+            "namespace": getattr(match, "namespace", "default"),
+            "tags": list(getattr(match, "tags", [])),
+            "meta": dict(getattr(match, "meta", {})),
+            "strings": serialized_strings,
+        }
+
+    def _serialize_memory_analysis(self, analysis: Any) -> Dict[str, Any]:
+        """Convert a memory analysis result into JSON-safe data."""
+        return {
+            "binary_path": analysis.binary_path,
+            "analysis_timestamp": analysis.analysis_timestamp,
+            "total_processes": analysis.total_processes,
+            "total_memory_regions": analysis.total_memory_regions,
+            "total_artifacts": analysis.total_artifacts,
+            "risk_score": analysis.risk_score,
+            "threat_level": analysis.threat_level,
+            "anomaly_score": analysis.anomaly_score,
+            "anomaly_threshold": analysis.anomaly_threshold,
+            "anomaly_flags": list(analysis.anomaly_flags),
+            "processes": [
+                {
+                    "process_id": process.process_id,
+                    "process_name": process.process_name,
+                    "parent_id": process.parent_id,
+                    "command_line": process.command_line,
+                    "working_directory": process.working_directory,
+                    "anomaly_score": process.anomaly_score,
+                    "anomaly_threshold": process.anomaly_threshold,
+                    "is_anomalous": process.is_anomalous,
+                    "anomaly_reasons": list(process.anomaly_reasons),
+                }
+                for process in analysis.processes
+            ],
+            "artifacts": [
+                {
+                    "artifact_type": artifact.artifact_type,
+                    "address": hex(artifact.address),
+                    "size": artifact.size,
+                    "hash_md5": artifact.hash_md5,
+                    "hash_sha1": artifact.hash_sha1,
+                    "hash_sha256": artifact.hash_sha256,
+                    "description": artifact.description,
+                    "confidence": artifact.confidence,
+                    "threat_level": artifact.threat_level,
+                    "anomaly_score": artifact.anomaly_score,
+                    "anomaly_threshold": artifact.anomaly_threshold,
+                    "is_anomalous": artifact.is_anomalous,
+                    "anomaly_reasons": list(artifact.anomaly_reasons),
+                }
+                for artifact in analysis.artifacts
+            ],
+            "suspicious_processes": [
+                {
+                    "process_id": process.process_id,
+                    "process_name": process.process_name,
+                    "parent_id": process.parent_id,
+                    "command_line": process.command_line,
+                    "anomaly_score": process.anomaly_score,
+                    "anomaly_threshold": process.anomaly_threshold,
+                    "is_anomalous": process.is_anomalous,
+                    "anomaly_reasons": list(process.anomaly_reasons),
+                }
+                for process in analysis.suspicious_processes
+            ],
+            "injected_code": [
+                {
+                    "artifact_type": artifact.artifact_type,
+                    "address": hex(artifact.address),
+                    "size": artifact.size,
+                    "hash_sha256": artifact.hash_sha256,
+                    "description": artifact.description,
+                    "threat_level": artifact.threat_level,
+                    "anomaly_score": artifact.anomaly_score,
+                    "anomaly_threshold": artifact.anomaly_threshold,
+                    "is_anomalous": artifact.is_anomalous,
+                    "anomaly_reasons": list(artifact.anomaly_reasons),
+                }
+                for artifact in analysis.injected_code
+            ],
+            "network_connections": list(analysis.network_connections),
+            "file_handles": list(analysis.file_handles),
+            "registry_handles": list(analysis.registry_handles),
+        }
+
+    def _serialize_diff_result(self, diff_result: Any) -> Dict[str, Any]:
+        """Convert a binary diff result into JSON-safe data."""
+        return {
+            "binary_v1": diff_result.binary_v1,
+            "binary_v2": diff_result.binary_v2,
+            "similarity_score": diff_result.similarity_score,
+            "unchanged_functions": list(diff_result.unchanged_functions),
+            "modified_functions": [asdict(match) for match in diff_result.modified_functions],
+            "new_functions": list(diff_result.new_functions),
+            "deleted_functions": list(diff_result.deleted_functions),
+            "total_functions_v1": diff_result.total_functions_v1,
+            "total_functions_v2": diff_result.total_functions_v2,
+            "match_count": diff_result.match_count,
+            "instruction_changes": diff_result.instruction_changes or {},
+            "string_changes": diff_result.string_changes or {},
+        }
+
+    def _format_yara_scan_results(
+        self, path: str, rules_path: str, matches: List[Dict[str, Any]]
+    ) -> str:
+        """Create a text summary for YARA scan results."""
+        text = "YARA Scan Results\n"
+        text += "=" * 70 + "\n\n"
+        text += f"Target: {path}\n"
+        text += f"Rules: {rules_path}\n"
+        text += f"Matches: {len(matches)}\n\n"
+
+        for match in matches[:10]:
+            text += f"• {match['rule']} ({match['namespace']})\n"
+            if match["tags"]:
+                text += f"  Tags: {', '.join(match['tags'])}\n"
+            if match["meta"]:
+                meta_preview = ", ".join(f"{key}={value}" for key, value in match["meta"].items())
+                text += f"  Meta: {meta_preview}\n"
+
+        if not matches:
+            text += "No YARA matches found.\n"
+
+        return text
+
+    def _format_memory_analysis_results(self, analysis: Dict[str, Any]) -> str:
+        """Create a text summary for memory forensics results."""
+        text = "Memory Forensics Analysis\n"
+        text += "=" * 70 + "\n\n"
+        text += f"Target: {analysis['binary_path']}\n"
+        text += f"Threat Level: {analysis['threat_level']}\n"
+        text += f"Risk Score: {analysis['risk_score']}\n"
+        text += f"Processes: {analysis['total_processes']}\n"
+        text += f"Memory Regions: {analysis['total_memory_regions']}\n"
+        text += f"Artifacts: {analysis['total_artifacts']}\n"
+
+        if analysis["anomaly_flags"]:
+            text += "\nAnomaly Flags:\n"
+            for flag in analysis["anomaly_flags"][:10]:
+                text += f"  • {flag}\n"
+
+        return text
+
+    def _format_binary_diff_results(self, diff_result: Dict[str, Any]) -> str:
+        """Create a text summary for binary diff results."""
+        text = "Binary Diff Results\n"
+        text += "=" * 70 + "\n\n"
+        text += f"Binary 1: {diff_result['binary_v1']}\n"
+        text += f"Binary 2: {diff_result['binary_v2']}\n"
+        text += f"Similarity Score: {diff_result['similarity_score']:.2%}\n"
+        text += f"Matched Functions: {diff_result['match_count']}\n"
+        text += f"Modified Functions: {len(diff_result['modified_functions'])}\n"
+        text += f"New Functions: {len(diff_result['new_functions'])}\n"
+        text += f"Deleted Functions: {len(diff_result['deleted_functions'])}\n"
+
+        if diff_result["modified_functions"]:
+            text += "\nModified Functions:\n"
+            for match in diff_result["modified_functions"][:10]:
+                text += (
+                    f"  • {match['func_v1_name']} -> {match['func_v2_name']} "
+                    f"({match['similarity']:.2%}, {match['match_type']})\n"
+                )
+
+        return text
+
     # Override handle_message to add enterprise features
     async def handle_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """Handle MCP message with enterprise features"""
         msg_type = message.get("method")
+        msg_id = cast(int, message.get("id"))
 
         # Tool calls go through audit logging
         if msg_type == "tools/call":
@@ -1003,11 +1375,20 @@ class REVENGEnterpriseServer(MCPServer):
 
             if tool_name in self.tools:
                 tool = self.tools[tool_name]
-                result = await self._execute_with_audit(tool_name, arguments, tool.handler)
-                return self._create_response(message.get("id"), result)
+                if tool.handler is None:
+                    return cast(
+                        Dict[str, Any],
+                        self._create_error(msg_id, -32603, f"No handler for tool: {tool_name}"),
+                    )
+
+                handler = cast(
+                    Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]], tool.handler
+                )
+                result = await self._execute_with_audit(tool_name, arguments, handler)
+                return cast(Dict[str, Any], self._create_response(msg_id, result))
 
         # Delegate to base class for other message types
-        return await super().handle_message(message)
+        return cast(Dict[str, Any], await super().handle_message(message))
 
 
 # ==================================================================================
