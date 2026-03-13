@@ -7,6 +7,8 @@ import sys
 import zipfile
 from pathlib import Path
 
+import pytest
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INSTALLER_PATH = REPO_ROOT / "scripts" / "install_ghidra.py"
@@ -61,6 +63,7 @@ def test_install_ghidra_extracts_downloaded_distribution(tmp_path: Path):
                 f"{installer.DEFAULT_DIST_NAME}/support/{installer.get_headless_script_name()}",
                 "echo ready\n",
             )
+        installer.EXPECTED_SHA256 = installer.calculate_sha256(destination)
         return destination
 
     installer.download_with_progress = _fake_download
@@ -73,6 +76,51 @@ def test_install_ghidra_extracts_downloaded_distribution(tmp_path: Path):
 
     assert result == dist_root / installer.DEFAULT_DIST_NAME
     assert (result / "support" / installer.get_headless_script_name()).exists()
+
+
+def test_verify_archive_checksum_accepts_expected_hash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    installer = _load_module("test_install_ghidra_checksum_ok", INSTALLER_PATH)
+    archive_path = tmp_path / "ghidra.zip"
+    archive_path.write_bytes(b"checksum ok")
+
+    updates: list[bytes] = []
+
+    class _FakeHash:
+        def update(self, chunk: bytes) -> None:
+            updates.append(chunk)
+
+        def hexdigest(self) -> str:
+            return installer.EXPECTED_SHA256
+
+    monkeypatch.setattr(installer.hashlib, "sha256", lambda: _FakeHash())
+
+    assert installer.verify_archive_checksum(archive_path) == archive_path
+    assert archive_path.exists()
+    assert updates == [b"checksum ok"]
+
+
+def test_verify_archive_checksum_removes_archive_on_mismatch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    installer = _load_module("test_install_ghidra_checksum_bad", INSTALLER_PATH)
+    archive_path = tmp_path / "ghidra.zip"
+    archive_path.write_bytes(b"checksum bad")
+
+    class _FakeHash:
+        def update(self, chunk: bytes) -> None:
+            return None
+
+        def hexdigest(self) -> str:
+            return "0" * 64
+
+    monkeypatch.setattr(installer.hashlib, "sha256", lambda: _FakeHash())
+
+    with pytest.raises(ValueError, match="Checksum verification failed"):
+        installer.verify_archive_checksum(archive_path)
+
+    assert not archive_path.exists()
 
 
 def test_resolve_ghidra_path_prefers_binary_distribution(tmp_path: Path):

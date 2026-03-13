@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import sys
 import urllib.parse
@@ -18,6 +19,7 @@ DEFAULT_DOWNLOAD_URL = (
     "https://github.com/NationalSecurityAgency/ghidra/releases/download/"
     "Ghidra_12.0.4_build/ghidra_12.0.4_PUBLIC_20260303.zip"
 )
+EXPECTED_SHA256 = "c3b458661d69e26e203d739c0c82d143cc8a4a29d9e571f099c2cf4bda62a120"
 DOWNLOAD_PROGRESS_STEP = 5
 EXTRACT_PROGRESS_STEP = 5
 CHUNK_SIZE = 1024 * 1024
@@ -67,6 +69,40 @@ def resolve_archive_path(url: str, dist_root: Path) -> Path:
     """Resolve the local archive path from a download URL."""
     filename = Path(urllib.parse.urlparse(url).path).name or f"{DEFAULT_DIST_NAME}.zip"
     return dist_root / filename
+
+
+def calculate_sha256(file_path: Path, chunk_size: int = CHUNK_SIZE) -> str:
+    """Calculate the SHA-256 checksum for a file."""
+    digest = hashlib.sha256()
+    with file_path.open("rb") as file_handle:
+        while True:
+            chunk = file_handle.read(chunk_size)
+            if not chunk:
+                break
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_archive_checksum(
+    archive_path: Path,
+    expected_sha256: str | None = None,
+) -> Path:
+    """Verify the archive checksum and delete corrupt downloads."""
+    expected_sha256 = (expected_sha256 or EXPECTED_SHA256).lower()
+    actual_sha256 = calculate_sha256(archive_path).lower()
+
+    if actual_sha256 != expected_sha256:
+        archive_name = archive_path.name
+        if archive_path.exists():
+            archive_path.unlink()
+        raise ValueError(
+            "Checksum verification failed for "
+            f"{archive_name}: expected {expected_sha256}, got {actual_sha256}. "
+            "Removed the corrupted archive; please retry the download."
+        )
+
+    print(f"Verified SHA-256 checksum for {archive_path.name}")
+    return archive_path
 
 
 def download_with_progress(url: str, destination: Path, chunk_size: int = CHUNK_SIZE) -> Path:
@@ -165,6 +201,7 @@ def install_ghidra(
     else:
         download_with_progress(url, archive_path)
 
+    verify_archive_checksum(archive_path)
     extract_archive(archive_path, dist_root)
     headless_path = verify_installation(install_root)
     print(f"Verified Ghidra headless launcher: {headless_path}")
