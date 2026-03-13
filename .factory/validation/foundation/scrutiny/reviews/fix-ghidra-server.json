@@ -1,0 +1,44 @@
+{
+  "featureId": "fix-ghidra-server",
+  "reviewedAt": "2026-03-13T23:20:00.000Z",
+  "commitId": "4d3206c978c6fef2a990f7bd071d7f27479bd27e",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "All five requirements are fully addressed. (1) `build_headless_command()` constructs a list of str arguments (shell=False), which correctly handles Windows paths with spaces. (2) `GHIDRA_HEADLESS_TIMEOUT = 120` is passed through to `subprocess.run(... timeout=timeout ...)`. (3) The old silent mock-data fallback is completely removed; `require_ghidra_available()` raises `GhidraUnavailableError`, caught in `_process_analysis_request()` to return HTTP 503 + `{\"error\": \"Ghidra unavailable\"}`. (4) Both `ExportAnalysisJSON.py` and the new `ExportAnalysisJSON.java` populate the `source` field from `getDecompiledFunction().getC()`, and `normalize_analysis_data()` in the server normalizes `source`/`decompiled` fields consistently. (5) `/health` endpoint returns `{\"ghidra_available\": true/false}` via `get_ghidra_status()`. The code is clean, well-structured, uses proper logging (%-style), and the four unit tests cover health, 503 behavior, Windows command construction, and 120s timeout with source normalization. End-to-end verification against `test_samples/sample.exe` confirmed 99 functions with real decompiled C (first function source length 4217 chars).",
+    "issues": [
+      {
+        "file": "external/ghidra-server/ghidra_http_server.py",
+        "line": 164,
+        "severity": "non_blocking",
+        "description": "Redundant call: `get_export_script_path(scripts_dir)` is called at line 164 for early validation but its return value is discarded; the same function is called again inside `build_headless_command()` at line 127. Minor inefficiency, not a bug."
+      },
+      {
+        "file": "external/ghidra-server/ghidra_http_server.py",
+        "line": 74,
+        "severity": "non_blocking",
+        "description": "`GHIDRA_MOCK` env var is used to force unavailability for testing but is not documented in AGENTS.md or environment.md. Future workers may not know about this testing mechanism."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The worker introduced a `GHIDRA_MOCK` environment variable to simulate Ghidra unavailability for testing. This is a useful testing mechanism but is not mentioned in AGENTS.md or `.factory/library/environment.md`. Other workers testing 503 behavior may spend time figuring out how to trigger it.",
+      "evidence": "external/ghidra-server/ghidra_http_server.py:74 — `mock_requested = _env_flag(\"GHIDRA_MOCK\")`. Handoff verification used `GHIDRA_MOCK=true` to confirm 503 behavior. Not documented in AGENTS.md or environment.md."
+    },
+    {
+      "area": "conventions",
+      "observation": "The worker added a Java GhidraScript (`ExportAnalysisJSON.java`) alongside the existing Python export script because Ghidra 12 headless cannot execute Python post-scripts without PyGhidra. This dual-script pattern (keep .java and .py in sync) was documented in `re-platform.md` but not in AGENTS.md.",
+      "evidence": "Handoff discoveredIssues: 'Ghidra 12 headless would not execute the Python post-script directly'. New file: external/ghidra-server/scripts/ExportAnalysisJSON.java. Documented in .factory/library/re-platform.md but not AGENTS.md."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker noted in skillFeedback that the skill procedure says 'Implement the feature in src/reveng/...' but this feature was entirely in `external/ghidra-server/`. The deviation was justified — the feature description explicitly targets external/ghidra-server/. No skill change needed, but the skill could mention that some features target external/ directories.",
+      "evidence": "Handoff skillFeedback.deviations[0]: step 5 says 'src/reveng/...' but implementation was in 'external/ghidra-server/'. Feature description explicitly names that path."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The fix-ghidra-server feature fully satisfies all five requirements: Windows-safe subprocess calls via list-based command construction, 120s timeout on headless execution, HTTP 503 with JSON error instead of silent mock data, `source` field populated with real decompiled C in both export scripts, and `/health` endpoint returning `ghidra_available` status. Four unit tests pass covering all contract points. End-to-end verification confirmed real decompilation of test_samples/sample.exe (99 functions, 4217-char first function source). Two non-blocking observations: a redundant early validation call and undocumented GHIDRA_MOCK env var."
+}

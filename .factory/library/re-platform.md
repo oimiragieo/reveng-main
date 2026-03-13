@@ -24,7 +24,7 @@ Key facts for workers implementing the REVENG production-grade RE platform.
 
 - **Location**: `src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py`
 - **5 stub tools** (return "coming soon"): `recompile_binary`, `generate_exploit`, `classify_malware`, `ask_ai_about_binary` / `query_ai`, `ai_code_reconstruction` / `reconstruct_code_with_ai`
-- **1 broken tool**: `decompile_binary` — calls `ghidra.decompile()` which doesn't exist → `AttributeError`
+- **`decompile_binary`**: Now working — calls `GhidraEngine.decompile()` which hits the HTTP server `/decompile` endpoint
 - **Tool count**: 15 total (must stay >= 15)
 
 ## YARA Integration
