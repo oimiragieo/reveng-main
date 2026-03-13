@@ -1,21 +1,92 @@
 """Tests for angr-based CFG preprocessing in the recompilation pipeline."""
 
 import json
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
-from reveng.ai.angr_cfg_preprocessor import AngrCFGPreprocessor
+from reveng.ai.angr_cfg_preprocessor import AngrCFGPreprocessor, CFGExtractionError
 from reveng.ai.gemini_engine import GeminiEngine
 from reveng.ai.recompilation_engine import BinaryRecompilationEngine
 
 
 @pytest.fixture
 def sample_pe_path() -> Path:
-    sample_path = Path("test_samples/sample.exe")
+    sample_path = Path(__file__).parent.parent.parent / "test_samples" / "sample.exe"
     if not sample_path.exists():
         pytest.skip("PE sample missing from test_samples/sample.exe")
     return sample_path
+
+
+def test_extract_cfg_payload_raises_for_missing_binary(tmp_path: Path):
+    preprocessor = AngrCFGPreprocessor()
+
+    with pytest.raises(CFGExtractionError, match="Binary not found"):
+        preprocessor.extract_cfg_payload(str(tmp_path / "missing.exe"))
+
+
+def test_extract_cfg_payload_wraps_angr_failures(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    binary_path = tmp_path / "sample.exe"
+    binary_path.write_bytes(b"MZ" + b"\x00" * 128)
+
+    class FakeProject:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("analysis boom")
+
+    monkeypatch.setitem(sys.modules, "angr", SimpleNamespace(Project=FakeProject))
+
+    preprocessor = AngrCFGPreprocessor()
+
+    with pytest.raises(CFGExtractionError, match="analysis boom"):
+        preprocessor.extract_cfg_payload(str(binary_path))
+
+
+def test_extract_cfg_payload_rejects_empty_cfg(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    binary_path = tmp_path / "sample.exe"
+    binary_path.write_bytes(b"MZ" + b"\x00" * 128)
+
+    class FakeGraph:
+        @staticmethod
+        def nodes():
+            return []
+
+        @staticmethod
+        def edges():
+            return []
+
+    class FakeFunctions:
+        @staticmethod
+        def items():
+            return []
+
+    class FakeKnowledgeBase:
+        functions = FakeFunctions()
+
+    class FakeCFG:
+        graph = FakeGraph()
+        kb = FakeKnowledgeBase()
+
+    class FakeAnalyses:
+        @staticmethod
+        def CFGFast(*args, **kwargs):
+            return FakeCFG()
+
+    class FakeProject:
+        def __init__(self, *args, **kwargs):
+            self.analyses = FakeAnalyses()
+
+    monkeypatch.setitem(sys.modules, "angr", SimpleNamespace(Project=FakeProject))
+
+    preprocessor = AngrCFGPreprocessor()
+
+    with pytest.raises(CFGExtractionError, match="empty CFG payload"):
+        preprocessor.extract_cfg_payload(str(binary_path))
 
 
 def test_extract_cfg_payload_from_sample_pe(sample_pe_path: Path):

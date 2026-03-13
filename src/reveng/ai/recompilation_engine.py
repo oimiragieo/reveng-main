@@ -303,6 +303,9 @@ class BinaryRecompilationEngine:
                     ghidra_data or {},
                 )
                 compilation_reports[target_key] = report
+                # Feed Clang the latest GCC-repaired source so both compilers validate
+                # the same reconstructed program instead of restarting from the stale
+                # original decompilation after GCC has already applied compiler-guided fixes.
                 current_source = Path(report["final_source_file"])
                 source_files["c"] = str(current_source)
 

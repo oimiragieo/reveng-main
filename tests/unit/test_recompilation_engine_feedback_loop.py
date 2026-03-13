@@ -132,6 +132,115 @@ async def test_compile_with_feedback_loop_stops_at_retry_limit(tmp_path: Path):
 
 
 @pytest.mark.asyncio
+async def test_compile_with_feedback_loop_zero_retries_stops_after_first_failure(
+    tmp_path: Path,
+):
+    gemini = DummyGemini(["```c\nint main(void) { return 0; }\n```"])
+    engine = BinaryRecompilationEngine(
+        gemini_engine=gemini,
+        work_dir=tmp_path,
+        max_compilation_retries=0,
+    )
+
+    source_file = tmp_path / "reconstructed.c"
+    source_file.write_text("int main(void) { return 0 }\n", encoding="utf-8")
+
+    async def fake_run_compiler_attempt(compiler_name: str, current_source: Path, output_binary: Path):
+        return {
+            "success": False,
+            "stdout": "",
+            "stderr": "error: expected ';' before '}' token",
+            "returncode": 1,
+            "command": [compiler_name, "-o", str(output_binary), str(current_source)],
+            "non_retryable": False,
+        }
+
+    engine._run_compiler_attempt = fake_run_compiler_attempt  # type: ignore[method-assign]
+
+    report = await engine._compile_with_feedback_loop("gcc", source_file, tmp_path, {})
+
+    assert report["status"] == "failed"
+    assert report["failure_reason"] == "max_retries_exceeded"
+    assert report["max_retries_exceeded"] is True
+    assert report["total_attempts"] == 1
+    assert report["attempts"][0]["feedback_applied"] is False
+    assert gemini.prompts == []
+
+
+@pytest.mark.asyncio
+async def test_compile_with_feedback_loop_handles_empty_llm_response(tmp_path: Path):
+    gemini = DummyGemini(["   "])
+    engine = BinaryRecompilationEngine(
+        gemini_engine=gemini,
+        work_dir=tmp_path,
+        max_compilation_retries=1,
+    )
+
+    source_file = tmp_path / "reconstructed.c"
+    source_file.write_text("int main(void) { return 0 }\n", encoding="utf-8")
+
+    async def fake_run_compiler_attempt(compiler_name: str, current_source: Path, output_binary: Path):
+        return {
+            "success": False,
+            "stdout": "",
+            "stderr": "error: expected ';' before '}' token",
+            "returncode": 1,
+            "command": [compiler_name, "-o", str(output_binary), str(current_source)],
+            "non_retryable": False,
+        }
+
+    engine._run_compiler_attempt = fake_run_compiler_attempt  # type: ignore[method-assign]
+
+    report = await engine._compile_with_feedback_loop(
+        "gcc",
+        source_file,
+        tmp_path,
+        {"cfg_context_text": "main has one block"},
+    )
+
+    assert report["status"] == "failed"
+    assert report["failure_reason"] == "llm_feedback_unavailable"
+    assert report["max_retries_exceeded"] is False
+    assert report["total_attempts"] == 1
+    assert report["attempts"][0]["feedback_applied"] is False
+    assert "expected ';' before '}' token" in gemini.prompts[0]
+
+
+@pytest.mark.asyncio
+async def test_compile_with_feedback_loop_stops_on_non_retryable_failure(tmp_path: Path):
+    gemini = DummyGemini(["```c\nint main(void) { return 0; }\n```"])
+    engine = BinaryRecompilationEngine(
+        gemini_engine=gemini,
+        work_dir=tmp_path,
+        max_compilation_retries=2,
+    )
+
+    source_file = tmp_path / "reconstructed.c"
+    source_file.write_text("int main(void) { return 0 }\n", encoding="utf-8")
+
+    async def fake_run_compiler_attempt(compiler_name: str, current_source: Path, output_binary: Path):
+        return {
+            "success": False,
+            "stdout": "",
+            "stderr": "GCC not found in PATH",
+            "returncode": None,
+            "command": [compiler_name, "-o", str(output_binary), str(current_source)],
+            "non_retryable": True,
+        }
+
+    engine._run_compiler_attempt = fake_run_compiler_attempt  # type: ignore[method-assign]
+
+    report = await engine._compile_with_feedback_loop("gcc", source_file, tmp_path, {})
+
+    assert report["status"] == "failed"
+    assert report["failure_reason"] == "compiler_unavailable"
+    assert report["max_retries_exceeded"] is False
+    assert report["total_attempts"] == 1
+    assert report["attempts"][0]["returncode"] is None
+    assert gemini.prompts == []
+
+
+@pytest.mark.asyncio
 async def test_full_pipeline_returns_graceful_failure_report_when_compilation_fails(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
