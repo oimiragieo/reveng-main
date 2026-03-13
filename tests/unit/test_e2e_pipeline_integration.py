@@ -7,10 +7,14 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from reveng import cli
+from reveng.pipeline.e2e_integration import EndToEndPipelineRunner
 from reveng.pipeline.pipeline_engine import (
     AnalysisPipeline,
+    PipelineResult,
     PipelineStatus,
     PipelineStage,
+    StageResult,
+    StageStatus,
     StageType,
 )
 
@@ -31,6 +35,47 @@ def _make_stage(
         timeout=5,
         retry_count=0,
         required=True,
+    )
+
+
+def _make_stage_result(
+    stage_name: str,
+    *,
+    status: StageStatus = StageStatus.COMPLETED,
+    output: dict | None = None,
+    error: str | None = None,
+    retry_count: int = 0,
+) -> StageResult:
+    return StageResult(
+        stage_name=stage_name,
+        status=status,
+        output=output or {},
+        error=error,
+        execution_time=0.01,
+        retry_count=retry_count,
+    )
+
+
+def _make_pipeline_result(
+    *,
+    binary_path: str,
+    stage_results: list[StageResult],
+    output: dict,
+    status: PipelineStatus = PipelineStatus.COMPLETED,
+) -> PipelineResult:
+    return PipelineResult(
+        pipeline_name="cli_end_to_end",
+        binary_path=binary_path,
+        status=status,
+        stage_results=stage_results,
+        total_execution_time=0.05,
+        success_count=sum(
+            1 for result in stage_results if result.status == StageStatus.COMPLETED
+        ),
+        failure_count=sum(
+            1 for result in stage_results if result.status == StageStatus.FAILED
+        ),
+        output=output,
     )
 
 
@@ -219,3 +264,191 @@ def test_handle_analyze_command_reports_unified_pipeline_result(
     assert exit_code == 0
     assert "partial_success" in captured.out.lower()
     assert str(report_path) in captured.out
+
+
+def test_runner_marks_all_stages_failing_as_failed(monkeypatch, tmp_path: Path):
+    runner = EndToEndPipelineRunner(output_dir=str(tmp_path / "analysis_sample"))
+    binary_path = tmp_path / "sample.exe"
+    binary_path.write_bytes(b"MZ\x90\x00" + b"\x00" * 64)
+    report_path = runner.output_dir / "reports" / "unified_analysis_report.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+
+    stage_outputs = {
+        "ghidra_analysis": {"status": "failed", "error": "disassembly unavailable"},
+        "recompilation": {"status": "failed", "error": "no source available"},
+        "behavioral_forensics": {"status": "failed", "error": "monitoring failed"},
+        "memory_forensics": {"status": "failed", "error": "scan failed"},
+    }
+    report = {
+        "summary": {
+            "overall_status": "failed",
+            "stage_statuses": {
+                name: output["status"] for name, output in stage_outputs.items()
+            },
+            "compiled_binaries": [],
+            "behavioral_anomaly_score": None,
+            "memory_anomaly_score": None,
+        },
+        "stages": stage_outputs,
+    }
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+
+    def fake_execute_pipeline(pipeline: PipelineStage, resolved_binary_path: str):
+        return _make_pipeline_result(
+            binary_path=resolved_binary_path,
+            stage_results=[
+                _make_stage_result("ghidra_analysis", output=stage_outputs["ghidra_analysis"]),
+                _make_stage_result("recompilation", output=stage_outputs["recompilation"]),
+                _make_stage_result(
+                    "behavioral_forensics", output=stage_outputs["behavioral_forensics"]
+                ),
+                _make_stage_result("memory_forensics", output=stage_outputs["memory_forensics"]),
+                _make_stage_result(
+                    "unified_report",
+                    output={
+                        "status": "failed",
+                        "report_path": str(report_path),
+                        "summary": report["summary"],
+                    },
+                ),
+            ],
+            output={
+                "unified_report": {
+                    "status": "failed",
+                    "report_path": str(report_path),
+                    "summary": report["summary"],
+                }
+            },
+        )
+
+    monkeypatch.setattr(runner.pipeline_engine, "execute_pipeline", fake_execute_pipeline)
+
+    result = runner.run(str(binary_path))
+
+    assert result["status"] == "failed"
+    assert result["summary"]["overall_status"] == "failed"
+    assert result["unified_report"]["stages"]["recompilation"]["status"] == "failed"
+    assert Path(result["pipeline_execution_path"]).exists()
+
+
+def test_runner_build_pipeline_skips_forensics_when_disabled(tmp_path: Path):
+    runner = EndToEndPipelineRunner(
+        output_dir=str(tmp_path / "analysis_sample"),
+        enable_forensics=False,
+    )
+
+    pipeline = runner.build_pipeline()
+    stage_names = [stage.name for stage in pipeline.stages]
+    unified_report_stage = next(
+        stage for stage in pipeline.stages if stage.name == "unified_report"
+    )
+
+    assert stage_names == ["ghidra_analysis", "recompilation", "unified_report"]
+    assert "behavioral_forensics" not in stage_names
+    assert "memory_forensics" not in stage_names
+    assert unified_report_stage.dependencies == ["ghidra_analysis", "recompilation"]
+
+
+def test_runner_resolves_invalid_binary_path_before_execution(
+    monkeypatch,
+    tmp_path: Path,
+):
+    runner = EndToEndPipelineRunner(output_dir=str(tmp_path / "analysis_sample"))
+    missing_binary = tmp_path / "missing.exe"
+    captured: dict[str, str] = {}
+
+    def fake_execute_pipeline(pipeline: PipelineStage, resolved_binary_path: str):
+        captured["binary_path"] = resolved_binary_path
+        return _make_pipeline_result(
+            binary_path=resolved_binary_path,
+            stage_results=[
+                _make_stage_result(
+                    "ghidra_analysis",
+                    status=StageStatus.FAILED,
+                    error="Binary not found",
+                )
+            ],
+            output={},
+            status=PipelineStatus.FAILED,
+        )
+
+    monkeypatch.setattr(runner.pipeline_engine, "execute_pipeline", fake_execute_pipeline)
+
+    result = runner.run(str(missing_binary))
+
+    assert captured["binary_path"] == str(missing_binary.resolve())
+    assert result["status"] == "failed"
+    assert result["report_path"] is None
+    assert result["summary"] == {}
+    assert result["unified_report"] == {}
+
+
+def test_runner_preserves_graceful_recompilation_failure(monkeypatch, tmp_path: Path):
+    runner = EndToEndPipelineRunner(output_dir=str(tmp_path / "analysis_sample"))
+    binary_path = tmp_path / "sample.exe"
+    binary_path.write_bytes(b"MZ\x90\x00" + b"\x00" * 64)
+    report_path = runner.output_dir / "reports" / "unified_analysis_report.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+
+    stage_outputs = {
+        "ghidra_analysis": {"status": "success", "backend": "mock_ghidra"},
+        "recompilation": {
+            "status": "failed",
+            "error": "compiler feedback loop exhausted",
+            "compiled_binaries": {},
+        },
+        "behavioral_forensics": {"status": "success", "anomaly_score": 0.41},
+        "memory_forensics": {"status": "success", "anomaly_score": 0.58},
+    }
+    report = {
+        "summary": {
+            "overall_status": "partial_success",
+            "stage_statuses": {
+                name: output["status"] for name, output in stage_outputs.items()
+            },
+            "compiled_binaries": [],
+            "behavioral_anomaly_score": 0.41,
+            "memory_anomaly_score": 0.58,
+        },
+        "stages": stage_outputs,
+    }
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+
+    def fake_execute_pipeline(pipeline: PipelineStage, resolved_binary_path: str):
+        return _make_pipeline_result(
+            binary_path=resolved_binary_path,
+            stage_results=[
+                _make_stage_result("ghidra_analysis", output=stage_outputs["ghidra_analysis"]),
+                _make_stage_result("recompilation", output=stage_outputs["recompilation"]),
+                _make_stage_result(
+                    "behavioral_forensics", output=stage_outputs["behavioral_forensics"]
+                ),
+                _make_stage_result("memory_forensics", output=stage_outputs["memory_forensics"]),
+                _make_stage_result(
+                    "unified_report",
+                    output={
+                        "status": "partial_success",
+                        "report_path": str(report_path),
+                        "summary": report["summary"],
+                    },
+                ),
+            ],
+            output={
+                "unified_report": {
+                    "status": "partial_success",
+                    "report_path": str(report_path),
+                    "summary": report["summary"],
+                }
+            },
+        )
+
+    monkeypatch.setattr(runner.pipeline_engine, "execute_pipeline", fake_execute_pipeline)
+
+    result = runner.run(str(binary_path))
+
+    assert result["status"] == "partial_success"
+    assert result["summary"]["stage_statuses"]["recompilation"] == "failed"
+    assert result["summary"]["compiled_binaries"] == []
+    assert result["unified_report"]["stages"]["recompilation"]["error"] == (
+        "compiler feedback loop exhausted"
+    )
