@@ -1,0 +1,39 @@
+{
+  "featureId": "mcp-server-tools",
+  "reviewedAt": "2026-03-13T18:30:00Z",
+  "commitId": "9f0fd9ccc96f2ba55c44319041debfa60ad4fa3b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation of three forensic MCP tools (scan_yara, analyze_memory_dump, diff_binaries). All three tools are correctly registered with well-defined JSON schemas, delegate to existing backend modules via run_in_executor for async safety, and return structured JSON-safe payloads with human-readable text summaries. Helper methods for path validation, serialization, and formatting are clean and follow the existing codebase patterns. Tests cover tool discovery, schema validation, and full MCP message-handling invocation with properly mocked backends. The diff_binaries tool was upgraded from a placeholder to a real implementation. Minor type-safety improvements (RateLimiter.tokens float annotation, cast() wrappers on handle_message, null handler guard) are welcome quality enhancements.",
+    "issues": [
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 1168,
+        "severity": "non_blocking",
+        "description": "Path validation helpers (_require_existing_file, _require_existing_path) only check existence, not directory confinement. A client could reference any file on the system. However, this is consistent with all pre-existing tool handlers (analyze_binary, decompile_binary, etc.) which also accept unconstrained paths, so this is not a regression — just a pre-existing architectural note."
+      },
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 757,
+        "severity": "non_blocking",
+        "description": "analyze_memory_dump passes memory_scan_batch_size and memory_scan_max_wait_seconds from args.get() which may return None. This is fine because MemoryForensics.__init__ accepts Optional values for these parameters, but the schema declares them as integer/number types — if a client sends a non-numeric value, it would propagate unchecked. Low risk since MCP clients typically validate against the schema."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The worker introduced a pattern of lazy-importing backend modules inside tool handlers (e.g., `from reveng.tools.threat_intel.yara_scanner import YARAScanner` inside `scan_yara()`). This is consistent with the pre-existing pattern in the same file (e.g., find_vulnerabilities, deobfuscate_javascript) and is appropriate for optional heavy dependencies, but AGENTS.md doesn't explicitly document this as a convention.",
+      "evidence": "reveng_enterprise_server.py lines 731, 766, 808 — all new handlers use local imports, matching pre-existing handlers at lines 848, 885, 920."
+    },
+    {
+      "area": "conventions",
+      "observation": "The worker used `asyncio.get_running_loop()` in the new handlers while the pre-existing `find_vulnerabilities` handler used `asyncio.get_event_loop()`. Both work in practice since the code runs inside an async function, but get_running_loop() is the modern/recommended approach. This minor inconsistency within the same file is not documented.",
+      "evidence": "New handlers at lines 739, 780, 815 use get_running_loop(); pre-existing find_vulnerabilities at line 856 uses get_event_loop()."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The feature fully implements the required forensic MCP tools (YARA scanning, memory dump analysis, binary diffing) with correct tool registration, schema definitions, backend delegation, and structured JSON responses. Tests validate tool discovery via tools/list and end-to-end invocation through the MCP message handler. No blocking issues found. Two non-blocking observations: pre-existing lack of path confinement in validation helpers, and unchecked argument types for optional memory scan parameters. Code quality is good — flake8 and mypy pass, the worker followed TDD, and the implementation is consistent with established patterns in the codebase."
+}
