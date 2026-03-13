@@ -8,3 +8,4 @@
 - `pytest tests/security/test_advanced_malware_classifier.py` now collects 4 tests and reports them as skipped on missing optional deps.
 - Full baseline `pytest tests/ -n 4` now gets past collection; the remaining failures are unrelated pre-existing test failures across CLI, automated pipeline, ML workflow, input validation, and POC suites.
 - Targeted validation for this feature passes with `pytest tests/unit/test_pipeline_engine_async.py -n 4`.
+- `tests/unit/test_pipeline_engine_async.py::test_execute_pipeline_async_runs_stages_concurrently` now verifies concurrency using recorded per-stage start/end windows instead of a wall-clock elapsed-time threshold, making the async overlap assertion more reliable on slower CI workers.

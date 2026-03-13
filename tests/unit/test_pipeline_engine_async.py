@@ -64,34 +64,43 @@ async def test_execute_pipeline_async_runs_stages_concurrently(
         ),
     )
 
-    start_times: dict[str, float] = {}
+    execution_windows: dict[str, dict[str, float]] = {}
 
     def slow_static(
         self: AnalysisPipeline,
         stage: PipelineStage,
         binary_path: str,
     ):
-        start_times[stage.name] = time.perf_counter()
-        time.sleep(0.75)
-        return {"stage": stage.name, "binary": binary_path}
+        execution_windows[stage.name] = {"start": time.perf_counter()}
+        try:
+            time.sleep(0.75)
+            return {"stage": stage.name, "binary": binary_path}
+        finally:
+            execution_windows[stage.name]["end"] = time.perf_counter()
 
     def slow_pe(
         self: AnalysisPipeline,
         stage: PipelineStage,
         binary_path: str,
     ):
-        start_times[stage.name] = time.perf_counter()
-        time.sleep(0.75)
-        return {"stage": stage.name, "binary": binary_path}
+        execution_windows[stage.name] = {"start": time.perf_counter()}
+        try:
+            time.sleep(0.75)
+            return {"stage": stage.name, "binary": binary_path}
+        finally:
+            execution_windows[stage.name]["end"] = time.perf_counter()
 
     def fast_report(
         self: AnalysisPipeline,
         stage: PipelineStage,
         binary_path: str,
     ):
-        start_times[stage.name] = time.perf_counter()
-        time.sleep(0.05)
-        return {"report": binary_path}
+        execution_windows[stage.name] = {"start": time.perf_counter()}
+        try:
+            time.sleep(0.05)
+            return {"report": binary_path}
+        finally:
+            execution_windows[stage.name]["end"] = time.perf_counter()
 
     monkeypatch.setattr(
         AnalysisPipeline,
@@ -105,21 +114,18 @@ async def test_execute_pipeline_async_runs_stages_concurrently(
         fast_report,
     )
 
-    started_at = time.perf_counter()
     result = await engine.execute_pipeline_async(pipeline, test_binary)
-    elapsed = time.perf_counter() - started_at
-    expected_sequential_duration = 0.75 + 0.75 + 0.05
+    branch_a_window = execution_windows["branch_a"]
+    branch_b_window = execution_windows["branch_b"]
+    report_window = execution_windows["report"]
 
     assert result.status == PipelineStatus.COMPLETED
     assert result.success_count == 3
-    assert elapsed < expected_sequential_duration - 0.1
-    assert (
-        abs(start_times["branch_a"] - start_times["branch_b"])
-        < 0.1
-    )
-    assert start_times["report"] >= max(
-        start_times["branch_a"],
-        start_times["branch_b"],
+    assert branch_a_window["start"] < branch_b_window["end"]
+    assert branch_b_window["start"] < branch_a_window["end"]
+    assert report_window["start"] >= max(
+        branch_a_window["end"],
+        branch_b_window["end"],
     )
 
 
