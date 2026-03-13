@@ -1,0 +1,56 @@
+{
+  "featureId": "angr-cfg-preprocessing",
+  "reviewedAt": "2026-03-13T17:30:00.000Z",
+  "commitId": "ba67841447215b88e242c864bd83dfd18be941f1",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Clean, well-structured implementation of angr-based CFG preprocessing. The AngrCFGPreprocessor class provides full CFG extraction, serialization, and LLM context generation with good error handling and graceful degradation. Integration into BinaryRecompilationEngine and GeminiEngine is minimal and correct. Tests cover the happy path with a real PE sample. The implementation satisfies VAL-RECOMP-001: it extracts a complete CFG (214 functions, 689 nodes, 1041 edges on sample.exe), serializes it into a structured JSON payload, builds a condensed LLM context summary, persists artifacts to disk, and injects CFG data into reconstruction prompts — all without fatal exceptions.",
+    "issues": [
+      {
+        "file": "src/reveng/ai/angr_cfg_preprocessor.py",
+        "line": 40,
+        "severity": "non_blocking",
+        "description": "Redundant parameter: `auto_load_libs=False` is passed both as a direct kwarg to `angr.Project()` and inside `load_options`. Only the `load_options` form is needed. Cosmetic only — no behavioral impact."
+      },
+      {
+        "file": "tests/unit/test_angr_cfg_preprocessor.py",
+        "line": 12,
+        "severity": "non_blocking",
+        "description": "No negative/error-path tests. The AngrCFGPreprocessor has error handling for missing binaries, empty CFG output, and angr failures, but none of these paths are tested. The recompilation engine's graceful degradation (catch-all in _phase1_decompilation) is also untested. Consider adding: (1) test for non-existent binary raising CFGExtractionError, (2) test for build_llm_context with a failed-status payload, (3) test verifying phase 1 continues when CFG extraction fails."
+      },
+      {
+        "file": "tests/unit/test_angr_cfg_preprocessor.py",
+        "line": 13,
+        "severity": "non_blocking",
+        "description": "The `sample_pe_path` fixture uses a relative path `Path('test_samples/sample.exe')` which is working-directory-dependent. If pytest is invoked from a different directory, this test will skip. Consider using `Path(__file__).resolve().parents[2] / 'test_samples' / 'sample.exe'` for robustness."
+      },
+      {
+        "file": "src/reveng/ai/recompilation_engine.py",
+        "line": 174,
+        "severity": "non_blocking",
+        "description": "The catch-all `except Exception` around CFG extraction in _phase1_decompilation is appropriate for graceful degradation but could be narrowed to `except (CFGExtractionError, ImportError)` to avoid silently swallowing unexpected errors (e.g., PermissionError, MemoryError). Low priority since angr operations are inherently unpredictable."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "Worker created .factory/library/recompilation-engine.md documenting the CFG integration, which is good practice and helps follow-on workers. The content is accurate and actionable.",
+      "evidence": ".factory/library/recompilation-engine.md — documents angr_cfg_preprocessor.py, phase 1 integration, Gemini prompt injection, and validation commands."
+    },
+    {
+      "area": "conventions",
+      "observation": "Worker removed unused imports (`subprocess`, `Tuple` from typing) as part of the change, which is good housekeeping. This aligns with the project's flake8 linting convention but isn't explicitly documented as a convention in AGENTS.md.",
+      "evidence": "git diff shows removal of `import subprocess` and `Tuple` from typing import in recompilation_engine.py. Flake8 passed cleanly."
+    },
+    {
+      "area": "skills",
+      "observation": "The python-developer skill mandates strict TDD (write tests first, confirm they fail). The transcript skeleton shows research and exploration before test/implementation, but it's unclear from the skeleton alone whether tests were written before implementation. The worker's handoff reports followedProcedure=true with no deviations. Since the feature is new code (not pre-existing), strict TDD would apply. Minor procedural concern — outcome is correct.",
+      "evidence": "Transcript skeleton shows multiple Grep/Read/Glob calls for research, then implementation. Skill SKILL.md line 'Write tests first (red)' vs transcript tool call ordering."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The angr-cfg-preprocessing feature is well-implemented and satisfies VAL-RECOMP-001. The AngrCFGPreprocessor extracts a complete structured CFG from binaries using angr CFGFast, serializes it to JSON, and produces a condensed LLM context summary. Integration into the recompilation engine (phase 1 with async offloading and graceful degradation) and Gemini prompt injection are clean and minimal. All 3 focused tests pass against a real PE sample. Non-blocking issues: redundant angr parameter, missing error-path test coverage, relative test fixture path, and broad exception catch. No blocking issues found."
+}

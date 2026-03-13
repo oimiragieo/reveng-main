@@ -1,0 +1,51 @@
+{
+  "featureId": "compiler-feedback-loop",
+  "reviewedAt": "2026-03-13T18:05:00.000Z",
+  "commitId": "d422b553a482d7583a10b4d4ff4b5ee5b2663e9a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation of an iterative compiler-in-the-loop feedback mechanism in BinaryRecompilationEngine. The `_compile_with_feedback_loop` method correctly iterates up to `max_compilation_retries + 1` total attempts, captures compiler stderr via the extracted `_run_compiler_attempt` helper, constructs a rich LLM feedback prompt including stderr, attempt history, and CFG context, writes the repaired source, and produces structured per-compiler reports. The pipeline integration properly short-circuits later phases (4-6) when all compilers fail. Three unit tests cover the success-after-retry path, the retry-limit exhaustion path, and the pipeline-level graceful failure propagation. Code is clean and lint-free.",
+    "issues": [
+      {
+        "file": "src/reveng/ai/recompilation_engine.py",
+        "line": 305,
+        "severity": "non_blocking",
+        "description": "In `_phase3_compilation`, after each compiler finishes, `current_source` is updated to `report['final_source_file']`, so Clang receives the GCC-modified source. This is a reasonable default but is implicit—could confuse future maintainers. Consider adding a comment explaining the design decision that later compilers benefit from earlier LLM repairs."
+      },
+      {
+        "file": "src/reveng/ai/recompilation_engine.py",
+        "line": 483,
+        "severity": "non_blocking",
+        "description": "The fallback `return` after the for-loop (lines 483-489) is dead code—every path inside the loop either returns or continues. This is defensively fine but could be annotated with a comment like `# Defensive: unreachable under normal conditions` for clarity."
+      },
+      {
+        "file": "tests/unit/test_recompilation_engine_feedback_loop.py",
+        "line": 88,
+        "severity": "non_blocking",
+        "description": "The DummyGemini response at line 92 has a malformed closing fence (``') instead of (```). This happens to exercise the `_extract_code_block` fallback path, but if it's intentional it should have a comment explaining the deliberate typo; otherwise it's a copy-paste mistake that works by accident."
+      },
+      {
+        "file": "tests/unit/test_recompilation_engine_feedback_loop.py",
+        "line": 0,
+        "severity": "non_blocking",
+        "description": "Missing edge-case coverage: (1) `non_retryable` failure when compiler is absent, (2) `llm_feedback_unavailable` when Gemini returns empty/None, (3) `max_compilation_retries=0` to verify single-attempt-only behavior. None are blocking since the core logic is well-tested, but these would strengthen confidence."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "The `.factory/library/recompilation-engine.md` file documents CFG integration but does not mention the newly added compiler feedback loop, the `max_compilation_retries` constructor parameter, the structured `compilation_reports` dict returned by `_phase3_compilation`, or the `_compile_with_feedback_loop` method. Future workers touching this module will miss key context.",
+      "evidence": "Library file at `.factory/library/recompilation-engine.md` only covers angr CFG preprocessing and Gemini prompt context. The handoff documents the feedback loop thoroughly but that knowledge did not propagate to the library."
+    },
+    {
+      "area": "conventions",
+      "observation": "The `architecture.md` library file already notes the compiler-in-the-loop pattern at a high level ('Uses an iterative feedback loop where stderr from gcc/clang is fed back to the LLM agent'), which is accurate. No convention gap here.",
+      "evidence": "`.factory/library/architecture.md` line 4."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The compiler feedback loop is correctly implemented and well-tested. `_compile_with_feedback_loop` captures stderr, feeds it with CFG context and attempt history into the LLM, applies repaired source, and respects a configurable retry limit. When retries are exhausted, the engine returns a structured failure report preserving all attempt details—and the pipeline properly short-circuits phases 4-6 on total compilation failure. Three focused unit tests verify the retry-success path, retry-limit enforcement, and pipeline graceful failure. All non-blocking issues are cosmetic (dead code annotation, implicit source-sharing across compilers, missing edge-case tests, possible typo in test fixture). The only shared-state gap is that `recompilation-engine.md` in `.factory/library/` should be updated to document the feedback loop parameters and output structure."
+}
