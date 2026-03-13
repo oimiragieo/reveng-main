@@ -1,31 +1,34 @@
 #!/usr/bin/env python3
-"""
-Ghidra HTTP Analysis Server - WORKING VERSION
-Provides REST API for binary analysis using Ghidra headless
-"""
+"""REST API for running Ghidra headless analysis."""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
 import subprocess
 import sys
-import os
-import json
 import tempfile
-import logging
 from pathlib import Path
 
-# Import Flask with error handling
 try:
-    from flask import Flask, request, jsonify
+    from flask import Flask, jsonify, request
     from flask_cors import CORS
-except ImportError as e:
-    print(f"ERROR: Missing dependencies: {e}")
+except ImportError as exc:
+    print(f"ERROR: Missing dependencies: {exc}")
     print("Install with: pip install flask flask-cors")
     sys.exit(1)
 
-# Initialize Flask app
-app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
 
-# Ghidra installation path
+app = Flask(__name__)
+CORS(app)
+
 DEFAULT_GHIDRA_DIST_NAME = "ghidra_12.0.4_PUBLIC"
+GHIDRA_HEADLESS_TIMEOUT = 120
+
+
+class GhidraUnavailableError(RuntimeError):
+    """Raised when Ghidra headless analysis is unavailable."""
 
 
 def get_headless_script_name() -> str:
@@ -55,165 +58,220 @@ def resolve_ghidra_path(external_root: Path | None = None) -> Path:
 
 GHIDRA_PATH = resolve_ghidra_path()
 
-# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-@app.route('/', methods=['GET'])
-def index():
-    """Root endpoint - server info"""
-    return jsonify({
+def _env_flag(name: str) -> bool:
+    """Return whether an environment variable is set to a truthy value."""
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def get_ghidra_status(ghidra_path: Path | None = None) -> dict[str, object]:
+    """Return current Ghidra availability details for the health endpoint."""
+    resolved_path = ghidra_path or GHIDRA_PATH
+    headless_path = get_headless_script_path(resolved_path)
+    mock_requested = _env_flag("GHIDRA_MOCK")
+    ghidra_available = headless_path.exists() and not mock_requested
+
+    return {
         "service": "ghidra-analysis-server",
-        "version": "1.0.0",
-        "status": "running",
-        "endpoints": {
-            "/health": "GET - Health check",
-            "/analyze": "POST - Analyze binary"
-        }
-    })
-
-
-@app.route('/health', methods=['GET'])
-def health():
-    """Health check endpoint"""
-    logger.info("Health check requested")
-
-    # Check if Ghidra exists
-    ghidra_exists = GHIDRA_PATH.exists()
-    ghidra_headless = get_headless_script_path(GHIDRA_PATH)
-    ghidra_ready = ghidra_headless.exists()
-
-    response = {
-        "status": "healthy",
-        "service": "ghidra-analysis-server",
-        "ghidra_installed": ghidra_exists,
-        "ghidra_ready": ghidra_ready,
-        "ghidra_path": str(GHIDRA_PATH),
-        "method": "real" if ghidra_ready else "mock"
+        "status": "healthy" if ghidra_available else "unavailable",
+        "ghidra_available": ghidra_available,
+        "ghidra_path": str(resolved_path),
+        "headless_path": str(headless_path),
+        "mock_requested": mock_requested,
     }
 
-    logger.info(f"Health check: {response}")
+
+def require_ghidra_available(ghidra_path: Path | None = None) -> dict[str, object]:
+    """Ensure Ghidra headless execution is available before starting analysis."""
+    status = get_ghidra_status(ghidra_path)
+    if not status["ghidra_available"]:
+        raise GhidraUnavailableError("Ghidra unavailable")
+    return status
+
+
+def normalize_analysis_data(analysis_data: dict[str, object]) -> dict[str, object]:
+    """Normalize exported analysis JSON for API consumers."""
+    normalized = dict(analysis_data)
+    functions = []
+
+    for function in normalized.get("functions", []):
+        if not isinstance(function, dict):
+            continue
+
+        normalized_function = dict(function)
+        source = normalized_function.get("source") or normalized_function.get("decompiled") or ""
+        normalized_function["source"] = source
+        if source and not normalized_function.get("decompiled"):
+            normalized_function["decompiled"] = source
+        functions.append(normalized_function)
+
+    functions.sort(key=lambda item: len(item.get("source", "")), reverse=True)
+    normalized["functions"] = functions
+    normalized.pop("mock", None)
+    return normalized
+
+
+def build_headless_command(
+    *,
+    ghidra_path: Path,
+    binary_path: Path,
+    project_dir: Path,
+    project_name: str,
+    scripts_dir: Path,
+    output_json: Path,
+) -> list[str]:
+    """Build a Windows-safe analyzeHeadless invocation."""
+    export_script = get_export_script_path(scripts_dir)
+    return [
+        str(get_headless_script_path(ghidra_path)),
+        str(project_dir),
+        project_name,
+        "-import",
+        str(binary_path),
+        "-scriptPath",
+        str(scripts_dir),
+        "-postScript",
+        export_script.name,
+        str(output_json),
+        "-deleteProject",
+    ]
+
+
+def get_export_script_path(scripts_dir: Path) -> Path:
+    """Resolve the best available export script for headless analysis."""
+    for script_name in ("ExportAnalysisJSON.java", "ExportAnalysisJSON.py"):
+        candidate = scripts_dir / script_name
+        if candidate.exists():
+            return candidate
+    raise RuntimeError(f"Export script not found in {scripts_dir}")
+
+
+def load_analysis_json(output_json: Path) -> dict[str, object]:
+    """Load and normalize the Ghidra analysis JSON output."""
+    with output_json.open("r", encoding="utf-8") as handle:
+        return normalize_analysis_data(json.load(handle))
+
+
+def run_ghidra_analysis(
+    binary_path: Path | str,
+    ghidra_path: Path | None = None,
+    timeout: int = GHIDRA_HEADLESS_TIMEOUT,
+) -> dict[str, object]:
+    """Run Ghidra headless analysis and return normalized JSON results."""
+    resolved_ghidra_path = ghidra_path or GHIDRA_PATH
+    require_ghidra_available(resolved_ghidra_path)
+
+    resolved_binary_path = Path(binary_path).expanduser().resolve()
+    scripts_dir = (Path(__file__).parent / "scripts").resolve()
+    get_export_script_path(scripts_dir)
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        workspace_dir = Path(temp_dir)
+        project_dir = workspace_dir / "ghidra project"
+        project_dir.mkdir(parents=True, exist_ok=True)
+        output_json = workspace_dir / "analysis.json"
+
+        command = build_headless_command(
+            ghidra_path=resolved_ghidra_path,
+            binary_path=resolved_binary_path,
+            project_dir=project_dir,
+            project_name="temp_project",
+            scripts_dir=scripts_dir,
+            output_json=output_json,
+        )
+
+        logger.info("Running Ghidra command: %s", command)
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=str(resolved_ghidra_path),
+        )
+
+        logger.info("Ghidra exit code: %s", result.returncode)
+        if result.returncode != 0 and not output_json.exists():
+            logger.error("Ghidra STDERR: %s", result.stderr[:2000])
+            logger.error("Ghidra STDOUT: %s", result.stdout[:2000])
+            raise RuntimeError("Ghidra analysis failed")
+
+        if not output_json.exists():
+            raise RuntimeError("Ghidra analysis did not produce JSON output")
+
+        return load_analysis_json(output_json)
+
+
+def _process_analysis_request() -> tuple[object, int]:
+    """Handle both /analyze and /decompile requests."""
+    payload = request.get_json(silent=True)
+    if payload is None:
+        return jsonify({"error": "No JSON data provided"}), 400
+
+    binary_path = payload.get("binary_path")
+    if not binary_path:
+        return jsonify({"error": "binary_path not specified"}), 400
+
+    binary_file = Path(binary_path)
+    if not binary_file.exists():
+        return jsonify({"error": f"Binary not found: {binary_path}"}), 404
+
+    logger.info("Analyzing binary: %s", binary_file)
+
+    try:
+        analysis_data = run_ghidra_analysis(binary_file)
+        return jsonify(analysis_data), 200
+    except GhidraUnavailableError:
+        logger.warning("Ghidra unavailable for analysis request")
+        return jsonify({"error": "Ghidra unavailable"}), 503
+    except subprocess.TimeoutExpired:
+        logger.error("Ghidra analysis timeout after %ss", GHIDRA_HEADLESS_TIMEOUT)
+        return jsonify({"error": f"Analysis timeout ({GHIDRA_HEADLESS_TIMEOUT}s)"}), 504
+    except Exception as exc:
+        logger.error("Ghidra execution error: %s", exc, exc_info=True)
+        return jsonify({"error": f"Ghidra error: {exc}"}), 500
+
+
+@app.route("/", methods=["GET"])
+def index():
+    """Root endpoint - server info."""
+    return jsonify(
+        {
+            "service": "ghidra-analysis-server",
+            "version": "1.0.0",
+            "status": "running",
+            "endpoints": {
+                "/health": "GET - Health check",
+                "/analyze": "POST - Analyze binary (legacy alias)",
+                "/decompile": "POST - Decompile binary",
+            },
+        }
+    )
+
+
+@app.route("/health", methods=["GET"])
+def health():
+    """Health check endpoint."""
+    logger.info("Health check requested")
+    response = get_ghidra_status()
+    logger.info("Health check: %s", response)
     return jsonify(response), 200
 
 
-@app.route('/analyze', methods=['POST'])
+@app.route("/analyze", methods=["POST"])
 def analyze():
-    """Analyze a binary using Ghidra headless analyzer"""
+    """Legacy analysis endpoint kept for compatibility."""
     logger.info("Analysis requested")
+    return _process_analysis_request()
 
-    try:
-        # Get request data
-        if not request.json:
-            return jsonify({"error": "No JSON data provided"}), 400
 
-        binary_path = request.json.get('binary_path')
-
-        if not binary_path:
-            return jsonify({"error": "binary_path not specified"}), 400
-
-        binary_file = Path(binary_path)
-        if not binary_file.exists():
-            return jsonify({"error": f"Binary not found: {binary_path}"}), 404
-
-        logger.info(f"Analyzing binary: {binary_path}")
-
-        # Check if Ghidra is available
-        ghidra_headless = get_headless_script_path(GHIDRA_PATH)
-
-        if not ghidra_headless.exists():
-            # Return mock data if Ghidra not available
-            logger.warning("Ghidra not found, returning mock data")
-            return jsonify({
-                "status": "success",
-                "analysis_complete": True,
-                "mock": True,
-                "message": "Ghidra not available - mock analysis",
-                "functions": [
-                    {"name": "main", "address": "0x401000", "size": 256},
-                    {"name": "WinMain", "address": "0x401100", "size": 512},
-                    {"name": "sub_401300", "address": "0x401300", "size": 128}
-                ],
-                "strings": ["Hello World", "Error", "Success"],
-                "imports": [
-                    {"name": "ExitProcess", "library": "kernel32.dll"},
-                    {"name": "printf", "library": "msvcrt.dll"}
-                ]
-            }), 200
-
-        # Real Ghidra analysis
-        with tempfile.TemporaryDirectory() as tmpdir:
-            project_path = Path(tmpdir) / "ghidra_project"
-            project_path.mkdir(exist_ok=True)  # Create the project directory
-            output_json = Path(tmpdir) / "analysis.json"
-
-            # Build Ghidra command
-            cmd = [
-                str(ghidra_headless),
-                str(project_path),
-                "temp_project",
-                "-import", str(binary_file),
-                "-scriptPath", str(Path(__file__).parent / "scripts"),
-                "-deleteProject"
-            ]
-
-            # Check if export script exists
-            export_script = Path(__file__).parent / "scripts" / "ExportAnalysisJSON.py"
-            if export_script.exists():
-                cmd.extend(["-postScript", "ExportAnalysisJSON.py", str(output_json)])
-
-            logger.info(f"Running Ghidra: {' '.join(cmd)}")
-
-            try:
-                # Run Ghidra headless (increased timeout for decompilation)
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=300,  # 5 minutes for large binaries with decompilation
-                    cwd=str(GHIDRA_PATH)
-                )
-
-                logger.info(f"Ghidra exit code: {result.returncode}")
-                if result.returncode != 0:
-                    logger.error(f"Ghidra STDERR: {result.stderr[:2000]}")
-                    logger.error(f"Ghidra STDOUT: {result.stdout[:2000]}")
-
-                # Try to read JSON output if script ran
-                if output_json.exists():
-                    with open(output_json, 'r') as f:
-                        analysis_data = json.load(f)
-                    logger.info("Successfully loaded analysis JSON")
-                    return jsonify(analysis_data), 200
-
-                # Parse basic info from stdout
-                functions = []
-                strings_found = []
-
-                for line in result.stdout.split('\n'):
-                    if 'Function' in line or 'FUN_' in line:
-                        # Try to extract function info
-                        pass
-
-                return jsonify({
-                    "status": "success",
-                    "analysis_complete": True,
-                    "functions": functions,
-                    "strings": strings_found,
-                    "imports": [],
-                    "raw_output": result.stdout[:5000]  # First 5000 chars
-                }), 200
-
-            except subprocess.TimeoutExpired:
-                logger.error("Ghidra analysis timeout")
-                return jsonify({"error": "Analysis timeout (120s)"}), 504
-            except Exception as e:
-                logger.error(f"Ghidra execution error: {e}")
-                return jsonify({"error": f"Ghidra error: {str(e)}"}), 500
-
-    except Exception as e:
-        logger.error(f"Unexpected error: {e}", exc_info=True)
-        return jsonify({"error": f"Server error: {str(e)}"}), 500
+@app.route("/decompile", methods=["POST"])
+def decompile():
+    """Decompile a binary using Ghidra headless analysis."""
+    logger.info("Decompile requested")
+    return _process_analysis_request()
 
 
 @app.errorhandler(404)
@@ -227,25 +285,26 @@ def internal_error(error):
 
 
 def main():
-    """Main entry point"""
-    port = int(os.environ.get("PORT", 13370))  # Changed from 1337 to avoid Razer SDK conflict
+    """Main entry point."""
+    port = int(os.environ.get("PORT", 13370))
     host = os.environ.get("HOST", "0.0.0.0")
     debug = os.environ.get("DEBUG", "false").lower() == "true"
+    status = get_ghidra_status()
 
     logger.info("=" * 60)
     logger.info("Ghidra HTTP Analysis Server")
     logger.info("=" * 60)
-    logger.info(f"Server: http://{host}:{port}")
-    logger.info(f"Ghidra: {GHIDRA_PATH}")
-    logger.info(f"Ghidra installed: {GHIDRA_PATH.exists()}")
+    logger.info("Server: http://%s:%s", host, port)
+    logger.info("Ghidra: %s", GHIDRA_PATH)
+    logger.info("Ghidra available: %s", status["ghidra_available"])
     logger.info("=" * 60)
 
     try:
         app.run(host=host, port=port, debug=debug, threaded=True)
-    except Exception as e:
-        logger.error(f"Failed to start server: {e}")
+    except Exception as exc:
+        logger.error("Failed to start server: %s", exc)
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

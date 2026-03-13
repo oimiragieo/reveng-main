@@ -3,8 +3,6 @@
 # @author REVENG Team
 
 import json
-import sys
-from ghidra.program.model.listing import CodeUnit
 from ghidra.app.decompiler import DecompInterface
 from ghidra.util.task import ConsoleTaskMonitor
 
@@ -40,8 +38,10 @@ def export_analysis(output_file):
         func_data = {
             "name": func.getName(),
             "entry_point": str(func.getEntryPoint()),
+            "address": str(func.getEntryPoint()),
             "body": [],
-            "decompiled": None,
+            "source": "",
+            "decompiled": "",
             "signature": str(func.getSignature()),
             "calling_convention": str(func.getCallingConventionName())
         }
@@ -59,7 +59,10 @@ def export_analysis(output_file):
         try:
             decompile_results = decompiler.decompileFunction(func, 30, ConsoleTaskMonitor())
             if decompile_results and decompile_results.decompileCompleted():
-                func_data["decompiled"] = str(decompile_results.getDecompiledFunction().getC())
+                decompiled_function = decompile_results.getDecompiledFunction()
+                source = str(decompiled_function.getC()) if decompiled_function else ""
+                func_data["source"] = source
+                func_data["decompiled"] = source
             elif decompile_results:
                 # Decompilation started but didn't complete - log error message
                 error_msg = str(decompile_results.getErrorMessage()) if decompile_results.getErrorMessage() else "Unknown decompilation error"
@@ -69,6 +72,12 @@ def export_analysis(output_file):
             func_data["decompile_error"] = str(e)
 
         result["functions"].append(func_data)
+
+    result["functions"] = sorted(
+        result["functions"],
+        key=lambda func_data: len(func_data.get("source", "")),
+        reverse=True,
+    )
 
     # Extract strings
     defined_data = listing.getDefinedData(True)

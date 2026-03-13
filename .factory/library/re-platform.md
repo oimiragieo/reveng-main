@@ -6,7 +6,7 @@ Key facts for workers implementing the REVENG production-grade RE platform.
 
 - **Binary location**: `external/ghidra-dist/ghidra_12.0.4_PUBLIC/support/analyzeHeadless.bat` (Windows)
 - **HTTP server**: `external/ghidra-server/ghidra_http_server.py` runs on port **13370**
-- **Jython export script**: `external/ghidra-server/scripts/ExportAnalysisJSON.py`
+- **Export scripts**: keep `external/ghidra-server/scripts/ExportAnalysisJSON.py` aligned with `ExportAnalysisJSON.java`; Ghidra 12 headless rejected the `.py` post-script with `Ghidra was not started with PyGhidra. Python is not available`, so the HTTP server now executes the `.java` post-script first and falls back to `.py` only if needed
 - **GhidraEngine client**: `src/reveng/integrations/ghidra/ghidra_engine.py` — has `analyze_binary()`, needs `decompile()` added
 - **IMPORTANT**: When Ghidra unavailable, raise `GhidraUnavailableError` — NEVER return mock data silently
 
