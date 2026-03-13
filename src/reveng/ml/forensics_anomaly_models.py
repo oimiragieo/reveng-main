@@ -1,8 +1,9 @@
 """Lightweight ML anomaly models for malware forensics workflows."""
 
 import math
+import threading
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Mapping, Sequence
+from typing import Any, ClassVar, Dict, Iterable, List, Mapping, Sequence
 
 from sklearn.ensemble import IsolationForest
 from sklearn.pipeline import Pipeline
@@ -28,6 +29,29 @@ class MLAnomalyAssessment:
 class _IsolationForestFeatureModel:
     """Shared feature-vector anomaly model backed by Isolation Forest."""
 
+    _instances: ClassVar[
+        Dict[type["_IsolationForestFeatureModel"], "_IsolationForestFeatureModel"]
+    ] = {}
+    _instance_lock: ClassVar[threading.Lock] = threading.Lock()
+
+    def __new__(cls, *args, **kwargs):
+        """Reuse one trained model instance per concrete model class."""
+        if cls is _IsolationForestFeatureModel:
+            return super().__new__(cls)
+
+        cached_instance = cls._instances.get(cls)
+        if cached_instance is not None:
+            return cached_instance
+
+        with cls._instance_lock:
+            cached_instance = cls._instances.get(cls)
+            if cached_instance is None:
+                cached_instance = super().__new__(cls)
+                cached_instance._initialized = False
+                cls._instances[cls] = cached_instance
+
+        return cached_instance
+
     def __init__(
         self,
         feature_names: Sequence[str],
@@ -35,33 +59,42 @@ class _IsolationForestFeatureModel:
         threshold: float,
         reason_labels: Mapping[str, str],
     ):
-        self.feature_names = list(feature_names)
-        self.threshold = threshold
-        self.reason_labels = dict(reason_labels)
-        self.pipeline: Pipeline = Pipeline(
-            [
-                ("scaler", StandardScaler()),
-                (
-                    "detector",
-                    IsolationForest(
-                        contamination=0.15,
-                        n_estimators=200,
-                        random_state=42,
+        if getattr(self, "_initialized", False):
+            return
+
+        with self.__class__._instance_lock:
+            if getattr(self, "_initialized", False):
+                return
+
+            self.feature_names = list(feature_names)
+            self.threshold = threshold
+            self.reason_labels = dict(reason_labels)
+            self.pipeline = Pipeline(
+                [
+                    ("scaler", StandardScaler()),
+                    (
+                        "detector",
+                        IsolationForest(
+                            contamination=0.15,
+                            n_estimators=200,
+                            random_state=42,
+                        ),
                     ),
-                ),
+                ]
+            )
+            training_samples = list(benign_samples)
+            self.pipeline.fit(training_samples)
+            self._feature_stats = self._build_feature_stats(training_samples)
+            decision_scores = [
+                float(score)
+                for score in self.pipeline.decision_function(training_samples)
             ]
-        )
-        self.pipeline.fit(list(benign_samples))
-        self._feature_stats = self._build_feature_stats(benign_samples)
-        decision_scores = [
-            float(score)
-            for score in self.pipeline.decision_function(list(benign_samples))
-        ]
-        self._decision_mean = sum(decision_scores) / len(decision_scores)
-        decision_variance = sum(
-            (score - self._decision_mean) ** 2 for score in decision_scores
-        ) / len(decision_scores)
-        self._decision_std = max(math.sqrt(decision_variance), 0.15)
+            self._decision_mean = sum(decision_scores) / len(decision_scores)
+            decision_variance = sum(
+                (score - self._decision_mean) ** 2 for score in decision_scores
+            ) / len(decision_scores)
+            self._decision_std = max(math.sqrt(decision_variance), 0.15)
+            self._initialized = True
 
     def assess(self, features: Mapping[str, float]) -> MLAnomalyAssessment:
         """Score a feature mapping and return a normalized anomaly assessment."""
