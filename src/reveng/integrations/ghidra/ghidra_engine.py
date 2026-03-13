@@ -15,7 +15,7 @@ Version: 3.0.0
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import requests
 
@@ -140,39 +140,76 @@ class GhidraEngine:
         """
         logger.info(f"Requesting analysis of {binary_path}...")
 
+        data = self._request_binary_endpoint(
+            endpoint="/analyze",
+            binary_path=binary_path,
+            action="analysis",
+        )
+
+        logger.info(f"✅ Analysis complete for {binary_path}")
+        logger.info(f"   Functions: {len(data.get('functions', []))}")
+        logger.info(f"   Decompiled: {len(data.get('decompiled_code', {}))}")
+        logger.info(f"   Strings: {len(data.get('strings', []))}")
+        logger.info(f"   Imports: {len(data.get('imports', []))}")
+        return data
+
+    def decompile(self, binary_path: str) -> Dict[str, Any]:
+        """
+        Decompile a binary via the Ghidra HTTP server.
+
+        Args:
+            binary_path: Path to the binary file
+
+        Returns:
+            dict: Structured decompilation output from the /decompile endpoint
+
+        Raises:
+            GhidraConnectionError: If server is not available
+            FileNotFoundError: If binary file doesn't exist
+        """
+        logger.info(f"Requesting decompilation of {binary_path}...")
+
+        data = self._request_binary_endpoint(
+            endpoint="/decompile",
+            binary_path=binary_path,
+            action="decompilation",
+        )
+
+        logger.info(f"✅ Decompilation complete for {binary_path}")
+        logger.info(f"   Functions: {len(data.get('functions', []))}")
+        return data
+
+    def _request_binary_endpoint(
+        self,
+        *,
+        endpoint: str,
+        binary_path: str,
+        action: str,
+    ) -> Dict[str, Any]:
+        """Call a binary-analysis HTTP endpoint and normalize the response."""
+
         try:
             response = self.session.post(
-                f"{self.server_url}/analyze",
+                f"{self.server_url}{endpoint}",
                 json={"binary_path": binary_path},
                 timeout=self.timeout,
             )
 
             if response.status_code == 200:
-                data = response.json()
-
-                # Post-process: Extract decompiled code from functions into separate dict
-                # This creates the expected decompiled_code format: {address: code}
-                decompiled_code = {}
-                for func in data.get("functions", []):
-                    if func.get("decompiled"):
-                        entry_point = func.get("entry_point", "")
-                        decompiled_code[entry_point] = func["decompiled"]
-                data["decompiled_code"] = decompiled_code
-
-                logger.info(f"✅ Analysis complete for {binary_path}")
-                logger.info(f"   Functions: {len(data.get('functions', []))}")
-                logger.info(f"   Decompiled: {len(data.get('decompiled_code', {}))}")
-                logger.info(f"   Strings: {len(data.get('strings', []))}")
-                logger.info(f"   Imports: {len(data.get('imports', []))}")
-                return data
+                return self._normalize_analysis_response(response.json())
 
             elif response.status_code == 404:
                 raise FileNotFoundError(f"Binary not found: {binary_path}")
 
             else:
-                error_data = response.json()
-                error_msg = error_data.get("error", "Unknown error")
-                raise GhidraConnectionError(f"Analysis failed: {error_msg}")
+                try:
+                    error_data = response.json()
+                    error_msg = error_data.get("error", "Unknown error")
+                except ValueError:
+                    error_msg = response.text.strip() or "Unknown error"
+                raise GhidraConnectionError(
+                    f"{action.capitalize()} failed: {error_msg}"
+                )
 
         except requests.exceptions.ConnectionError:
             raise GhidraConnectionError(
@@ -180,8 +217,25 @@ class GhidraEngine:
             )
         except requests.exceptions.Timeout:
             raise GhidraConnectionError(
-                f"Analysis timed out after {self.timeout} seconds"
+                f"{action.capitalize()} timed out after {self.timeout} seconds"
             )
+
+    def _normalize_analysis_response(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract decompiled code into a consistent address-keyed mapping."""
+        decompiled_code: Dict[str, str] = {}
+
+        for func in data.get("functions", []):
+            if not isinstance(func, dict):
+                continue
+
+            source = func.get("decompiled") or func.get("source")
+            entry_point = func.get("entry_point") or func.get("address") or func.get("name")
+
+            if source and entry_point:
+                decompiled_code[str(entry_point)] = source
+
+        data["decompiled_code"] = decompiled_code
+        return data
 
     def get_function_details(self, function_address: str) -> Dict[str, Any]:
         """
@@ -206,11 +260,11 @@ class GhidraEngine:
             )
 
             if response.status_code == 200:
-                data = response.json()
+                data = cast(Dict[str, Any], response.json())
                 logger.info(f"✅ Got details for function at {function_address}")
                 return data
             else:
-                error_data = response.json()
+                error_data = cast(Dict[str, Any], response.json())
                 error_msg = error_data.get("error", "Unknown error")
                 raise GhidraConnectionError(
                     f"Failed to get function details: {error_msg}"
@@ -235,10 +289,10 @@ class GhidraEngine:
         try:
             response = self.session.get(f"{self.server_url}/health", timeout=2)
             if response.status_code == 200:
-                data = response.json()
+                data = cast(Dict[str, Any], response.json())
                 return data.get("status") == "healthy"
             return False
-        except:
+        except (requests.exceptions.RequestException, ValueError):
             return False
 
 
@@ -261,11 +315,12 @@ class GhidraDataExtractor:
 
     def get_all_decompiled_code(self) -> Dict[str, str]:
         """Get all decompiled code indexed by address."""
-        return self.data.get("decompiled_code", {})
+        decompiled_code = self.data.get("decompiled_code", {})
+        return cast(Dict[str, str], decompiled_code)
 
     def get_decompiled_function(self, address: str) -> Optional[str]:
         """Get decompiled code for a specific function."""
-        return self.data.get("decompiled_code", {}).get(address)
+        return self.get_all_decompiled_code().get(address)
 
     def get_functions_with_string(self, search_string: str) -> List[Dict[str, Any]]:
         """

@@ -16,7 +16,7 @@ import time
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
-from reveng.integrations.ghidra.ghidra_http_client import GhidraHTTPClient
+from .ghidra_http_client import GhidraHTTPClient
 
 logger = logging.getLogger(__name__)
 

@@ -7,14 +7,16 @@ Key facts for workers implementing the REVENG production-grade RE platform.
 - **Binary location**: `external/ghidra-dist/ghidra_12.0.4_PUBLIC/support/analyzeHeadless.bat` (Windows)
 - **HTTP server**: `external/ghidra-server/ghidra_http_server.py` runs on port **13370**
 - **Export scripts**: keep `external/ghidra-server/scripts/ExportAnalysisJSON.py` aligned with `ExportAnalysisJSON.java`; Ghidra 12 headless rejected the `.py` post-script with `Ghidra was not started with PyGhidra. Python is not available`, so the HTTP server now executes the `.java` post-script first and falls back to `.py` only if needed
-- **GhidraEngine client**: `src/reveng/integrations/ghidra/ghidra_engine.py` — has `analyze_binary()`, needs `decompile()` added
+- **GhidraEngine client**: `src/reveng/integrations/ghidra/ghidra_engine.py` exposes both `analyze_binary()` and `decompile()`; `decompile()` calls the HTTP server `/decompile` endpoint and normalizes `decompiled_code` from `source` / `decompiled` fields
 - **IMPORTANT**: When Ghidra unavailable, raise `GhidraUnavailableError` — NEVER return mock data silently
+- **Ghidra 12 headless**: Does NOT execute `.py` post-scripts (requires PyGhidra). Use `ExportAnalysisJSON.java` (GhidraScript) instead. Both `ExportAnalysisJSON.py` and `ExportAnalysisJSON.java` exist — keep them in sync if modifying export logic.
+- **Import gotcha**: `src.reveng.integrations.ghidra...` imports should avoid absolute `from reveng...` references inside the Ghidra package, otherwise the repo-root `reveng.py` shim can shadow the package during validation commands
 
 ## Ollama Integration
 
 - **Running**: `http://localhost:11434` — always running
 - **Best model for code**: `qwen2.5-coder:32b-instruct`
-- **Python package**: `pip install ollama` (NOT installed yet at mission start)
+- **Python package**: `pip install ollama` and keep `ollama` in `requirements.txt` / `.factory/init.sh`
 - **Fallback**: Use HTTP API directly: `POST http://localhost:11434/api/chat`
 - **Timeout**: 90 seconds for code queries, 30 seconds for classification
 
@@ -27,7 +29,7 @@ Key facts for workers implementing the REVENG production-grade RE platform.
 
 ## YARA Integration
 
-- **Package**: `yara-python` (NOT installed at mission start) — install via `pip install yara-python`
+- **Package**: `yara-python` — keep it in `requirements.txt` / `.factory/init.sh`; import with `import yara`
 - **Import name**: `import yara` (NOT `import yara_python`)
 - **Built-in rules**: Store in `src/reveng/security/yara_rules/*.yar`
 - **Scanner class**: Create `src/reveng/security/yara_scanner.py`
