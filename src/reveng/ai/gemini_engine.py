@@ -14,7 +14,7 @@ Version: 3.0.0
 import asyncio
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -255,6 +255,11 @@ class GeminiEngine:
             if "strings" in context:
                 context_str += (
                     f"\n\nString constants:\n{', '.join(context['strings'][:20])}"
+                )
+            if context.get("cfg_context_text"):
+                context_str += (
+                    "\n\nControl-flow graph (angr summary):\n"
+                    f"{context['cfg_context_text']}"
                 )
 
         return f"""You are an expert reverse engineer. Reconstruct the following decompiled function into clean, readable source code.

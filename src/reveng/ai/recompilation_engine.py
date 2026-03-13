@@ -11,12 +11,14 @@ Version: 3.0.0
 """
 
 import asyncio
+import json
 import logging
 import os
-import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
+
+from reveng.ai.angr_cfg_preprocessor import AngrCFGPreprocessor
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,7 @@ class BinaryRecompilationEngine:
         ghidra_engine=None,
         gemini_engine=None,
         work_dir: Optional[Path] = None,
+        cfg_preprocessor: Optional[AngrCFGPreprocessor] = None,
     ):
         """
         Initialize recompilation engine.
@@ -51,6 +54,7 @@ class BinaryRecompilationEngine:
         """
         self.ghidra = ghidra_engine
         self.gemini = gemini_engine
+        self.cfg_preprocessor = cfg_preprocessor or AngrCFGPreprocessor()
         self.work_dir = work_dir or Path(tempfile.mkdtemp(prefix="reveng_recomp_"))
         self.work_dir.mkdir(parents=True, exist_ok=True)
 
@@ -88,6 +92,8 @@ class BinaryRecompilationEngine:
         results = {
             "binary_path": binary_path,
             "output_dir": str(output_dir),
+            "cfg_artifacts": {},
+            "cfg_summary": {},
             "source_files": {},
             "compiled_binaries": {},
             "validation_results": {},
@@ -100,8 +106,10 @@ class BinaryRecompilationEngine:
         try:
             # Phase 1: Ghidra Decompilation
             logger.info("\n[Phase 1/6] Ghidra Decompilation")
-            ghidra_data = await self._phase1_decompilation(binary_path)
+            ghidra_data = await self._phase1_decompilation(binary_path, output_dir)
             results["ghidra_data"] = ghidra_data
+            results["cfg_artifacts"] = ghidra_data.get("cfg_artifacts", {})
+            results["cfg_summary"] = ghidra_data.get("cfg_summary", {})
 
             # Phase 2: AI-Enhanced Reconstruction
             logger.info("\n[Phase 2/6] AI-Enhanced Code Reconstruction")
@@ -151,7 +159,9 @@ class BinaryRecompilationEngine:
 
         return results
 
-    async def _phase1_decompilation(self, binary_path: str) -> Dict[str, Any]:
+    async def _phase1_decompilation(
+        self, binary_path: str, output_dir: Path
+    ) -> Dict[str, Any]:
         """Phase 1: Decompile binary using Ghidra."""
         if not self.ghidra:
             raise ValueError("GhidraEngine not configured")
@@ -164,7 +174,62 @@ class BinaryRecompilationEngine:
         logger.info(f"  ✅ Strings: {len(ghidra_data.get('strings', []))}")
         logger.info(f"  ✅ Imports: {len(ghidra_data.get('imports', []))}")
 
+        try:
+            cfg_bundle = await asyncio.to_thread(
+                self._extract_cfg_artifacts,
+                binary_path,
+                output_dir,
+            )
+            ghidra_data["cfg_payload"] = cfg_bundle["payload"]
+            ghidra_data["cfg_context_text"] = cfg_bundle["context_text"]
+            ghidra_data["cfg_artifacts"] = cfg_bundle["artifacts"]
+            ghidra_data["cfg_summary"] = {
+                "node_count": cfg_bundle["payload"]["graph_metrics"]["node_count"],
+                "edge_count": cfg_bundle["payload"]["graph_metrics"]["edge_count"],
+                "function_count": cfg_bundle["payload"]["function_count"],
+            }
+            logger.info(
+                "  ✅ angr CFG: %d nodes, %d edges, %d functions",
+                ghidra_data["cfg_summary"]["node_count"],
+                ghidra_data["cfg_summary"]["edge_count"],
+                ghidra_data["cfg_summary"]["function_count"],
+            )
+            logger.info(
+                "  ✅ CFG payload saved: %s",
+                ghidra_data["cfg_artifacts"].get("json"),
+            )
+        except Exception as exc:
+            logger.warning("  ⚠️ angr CFG preprocessing failed: %s", exc)
+            ghidra_data["cfg_payload"] = {
+                "status": "failed",
+                "source": "angr",
+                "binary_name": Path(binary_path).name,
+                "error": str(exc),
+            }
+            ghidra_data["cfg_context_text"] = ""
+            ghidra_data["cfg_artifacts"] = {}
+            ghidra_data["cfg_summary"] = {}
+
         return ghidra_data
+
+    def _extract_cfg_artifacts(self, binary_path: str, output_dir: Path) -> Dict[str, Any]:
+        """Extract CFG data and persist JSON/text artifacts for inspection."""
+        payload = self.cfg_preprocessor.extract_cfg_payload(binary_path)
+        context_text = self.cfg_preprocessor.build_llm_context(payload)
+
+        cfg_json_path = output_dir / "cfg_payload.json"
+        cfg_text_path = output_dir / "cfg_context.txt"
+        cfg_json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        cfg_text_path.write_text(context_text, encoding="utf-8")
+
+        return {
+            "payload": payload,
+            "context_text": context_text,
+            "artifacts": {
+                "json": str(cfg_json_path),
+                "text": str(cfg_text_path),
+            },
+        }
 
     async def _phase2_reconstruction(
         self, ghidra_data: Dict[str, Any], output_dir: Path
@@ -523,6 +588,8 @@ Output only the Python code, no explanations.
         clean_results = {
             "binary_path": results["binary_path"],
             "status": results["status"],
+            "cfg_artifacts": results.get("cfg_artifacts", {}),
+            "cfg_summary": results.get("cfg_summary", {}),
             "source_files": results["source_files"],
             "compiled_binaries": results["compiled_binaries"],
             "validation_results": results["validation_results"],
