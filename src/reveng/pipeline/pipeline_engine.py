@@ -23,6 +23,7 @@ from ..core.logger import get_logger
 
 
 TResult = TypeVar("TResult")
+SYNC_COROUTINE_THREAD_TIMEOUT_SECONDS = 30
 
 
 class PipelineStatus(Enum):
@@ -357,7 +358,17 @@ class AnalysisPipeline:
 
         thread = threading.Thread(target=_runner, daemon=True)
         thread.start()
-        thread.join()
+        thread.join(timeout=SYNC_COROUTINE_THREAD_TIMEOUT_SECONDS)
+
+        if thread.is_alive():
+            self.logger.warning(
+                "Timed out after %d seconds waiting for pipeline coroutine thread to finish.",
+                SYNC_COROUTINE_THREAD_TIMEOUT_SECONDS,
+            )
+            raise TimeoutError(
+                "Timed out after "
+                f"{SYNC_COROUTINE_THREAD_TIMEOUT_SECONDS} seconds waiting for pipeline coroutine thread to finish."
+            )
 
         if "error" in error_holder:
             raise error_holder["error"]

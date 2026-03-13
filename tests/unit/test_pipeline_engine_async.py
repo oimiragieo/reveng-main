@@ -1,10 +1,12 @@
 """Tests for asynchronous pipeline execution and failure isolation."""
 
+import asyncio
 import time
 from pathlib import Path
 
 import pytest
 
+import reveng.pipeline.pipeline_engine as pipeline_engine_module
 from reveng.pipeline.pipeline_engine import (
     AnalysisPipeline,
     PipelineStatus,
@@ -227,3 +229,80 @@ def test_execute_pipeline_isolates_failed_branch(
     )
     assert executed[-1] == "summary_report"
     assert set(result.output) == {"healthy_branch", "summary_report"}
+
+
+def test_execute_pipeline_supports_dynamic_analysis_stage(
+    test_binary: str,
+):
+    engine = AnalysisPipeline()
+    pipeline = engine.create_pipeline("dynamic_stage")
+    engine.add_stage(
+        pipeline,
+        _make_stage("dynamic_branch", StageType.DYNAMIC_ANALYSIS),
+    )
+
+    result = engine.execute_pipeline(pipeline, test_binary)
+
+    assert result.status == PipelineStatus.COMPLETED
+    assert result.success_count == 1
+    assert result.failure_count == 0
+    assert result.stage_results[0].status == StageStatus.COMPLETED
+    assert result.stage_results[0].output == {
+        "status": "skipped",
+        "message": (
+            "Dynamic analysis stage is not implemented for this "
+            "pipeline configuration."
+        ),
+        "binary_path": test_binary,
+    }
+
+
+def test_run_coroutine_sync_times_out_when_thread_hangs(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    engine = AnalysisPipeline()
+
+    class FakeThread:
+        latest_instance = None
+
+        def __init__(self, target=None, daemon=None):
+            self.target = target
+            self.daemon = daemon
+            self.join_timeout = None
+            FakeThread.latest_instance = self
+
+        def start(self):
+            return None
+
+        def join(self, timeout=None):
+            self.join_timeout = timeout
+
+        def is_alive(self):
+            return True
+
+    warnings: list[str] = []
+
+    monkeypatch.setattr(
+        pipeline_engine_module.asyncio,
+        "get_running_loop",
+        lambda: object(),
+    )
+    monkeypatch.setattr(
+        pipeline_engine_module.threading,
+        "Thread",
+        FakeThread,
+    )
+    monkeypatch.setattr(
+        engine.logger,
+        "warning",
+        lambda message, *args: warnings.append(message % args),
+    )
+
+    with pytest.raises(TimeoutError, match="30"):
+        engine._run_coroutine_sync(lambda: asyncio.sleep(0))
+
+    assert FakeThread.latest_instance is not None
+    assert FakeThread.latest_instance.join_timeout == 30
+    assert warnings == [
+        "Timed out after 30 seconds waiting for pipeline coroutine thread to finish."
+    ]
