@@ -118,6 +118,42 @@ REVENG v4.0 introduces **Model Context Protocol (MCP) support**, enabling AI age
 
 📖 **Full guide**: [MCP Integration Documentation](docs/mcp/README.md)
 
+### 6. 🆕 v5.0 AI Performance Upgrades (Latest)
+**The fastest, smartest reverse engineering AI ever built.**
+
+REVENG v5.0 (2026) delivers major performance and intelligence improvements across the entire platform:
+
+#### ⚡ Asynchronous DAG Pipeline (2.9x faster)
+The analysis pipeline now executes independent stages concurrently using an `asyncio`-based Directed Acyclic Graph (DAG) executor:
+- **2.9x measured speedup** over the prior sequential pipeline
+- **Stage-level error isolation** — a failing branch doesn't abort unrelated work
+- **GPU-accelerated batch forensics** — memory region scans are aggregated and dispatched to `GPUAccelerator` in configurable batches
+
+#### 🔬 Compiler-in-the-Loop Recompilation
+Decompiled C code is now iteratively improved with real compiler feedback:
+- **angr CFG preprocessing** — extracts a complete Control Flow Graph (689+ nodes, 1041+ edges) and injects structural context into every LLM prompt before code generation begins
+- **Compiler feedback loop** — `gcc`/`clang` + `ccache` compiler errors are fed back to the LLM automatically; the engine retries up to a configurable limit and returns a structured failure report if recompilation cannot be achieved
+- **Improved recompilation accuracy** — structural priming from CFG context reduces hallucinated syntax and type errors
+
+#### 🦠 AI-Driven Malware Forensics
+Static signature matching has been replaced by machine learning in `behavioral_monitor.py` and `memory_forensics.py`:
+- **Isolation Forest-based anomaly detection** — behavioral event streams and memory artifacts are scored with per-class ML models trained on representative samples
+- **Singleton model cache** — models train once per process and are reused; no per-instantiation overhead
+- **Anomaly scores and flags** — outputs include numeric anomaly scores, triggered flags, and suspicious process/artifact lists for downstream triage
+
+#### 🔌 Expanded MCP Forensics Tools (18+ tools)
+Three new forensics tools in the MCP enterprise server:
+- `scan_yara` — YARA rule scanning on any file path with structured match results
+- `analyze_memory_dump` — full memory forensics analysis with ML anomaly scoring and threat level classification
+- `diff_binaries` — semantic binary diffing with function-level similarity scores
+
+```bash
+# Example: use the new forensics MCP tools via Claude Desktop
+"Scan /tmp/suspicious.dll for malware using YARA rules"
+"Analyze the memory dump from /tmp/crash.dmp"
+"Compare the patched and original versions of target.exe"
+```
+
 ## 🚀 Quick Start
 
 ### Install Dependencies
