@@ -430,12 +430,30 @@ def create_enhanced_features(args) -> EnhancedAnalysisFeatures:
     return features
 
 
+def run_end_to_end_analysis(
+    *,
+    binary_path: str,
+    output_dir: str,
+    enhanced_features: EnhancedAnalysisFeatures,
+) -> dict:
+    """Run the integrated async CLI analysis lifecycle."""
+    from .pipeline.e2e_integration import EndToEndPipelineRunner
+
+    runner = EndToEndPipelineRunner(
+        output_dir=output_dir,
+        use_gemini=enhanced_features.enable_enhanced_analysis,
+        enable_recompilation=enhanced_features.enable_enhanced_reconstruction,
+        enable_forensics=enhanced_features.enable_threat_intelligence,
+    )
+    return runner.run(binary_path)
+
+
 def handle_analyze_command(args):
     """Handle the analyze command."""
     # Create enhanced analysis features
     enhanced_features = create_enhanced_features(args)
 
-    # Create and run REVENG analyzer
+    # Create analyzer for path resolution, validation, and consistent output-folder handling.
     analyzer = REVENGAnalyzer(
         binary_path=args.binary_path,
         check_ollama=not args.no_ollama_check,
@@ -458,25 +476,41 @@ def handle_analyze_command(args):
         print("  --config FILE       Load configuration from JSON file")
         return 1
 
-    # Run analysis
-    analysis = analyzer.analyze_binary()
+    try:
+        analysis = run_end_to_end_analysis(
+            binary_path=analyzer.binary_path,
+            output_dir=str(analyzer.analysis_folder),
+            enhanced_features=enhanced_features,
+        )
+    except Exception as exc:
+        print("\n[ERROR] REVENG analysis failed!")
+        print(f"Reason: {exc}")
+        return 1
 
-    if isinstance(analysis, dict) and analysis.get("status") == "success":
+    status = analysis.get("status", "failed")
+    report_path = analysis.get("report_path")
+    summary = analysis.get("summary", {})
+
+    if status in {"success", "partial_success"}:
         print("\n[SUCCESS] REVENG analysis completed successfully!")
-        analysis_folder = analysis.get("analysis_folder")
-        if analysis_folder:
-            print(f"Results stored in: {analysis_folder}")
-        if enhanced_features.is_any_enhanced_enabled():
-            print(f"Enhanced modules executed: {analyzer._count_enabled_modules()}")
+        print(f"Pipeline status: {status}")
+        print(f"Results stored in: {analysis.get('output_dir', analyzer.analysis_folder)}")
+        if report_path:
+            print(f"Unified report: {report_path}")
+
+        behavioral_score = summary.get("behavioral_anomaly_score")
+        memory_score = summary.get("memory_anomaly_score")
+        if behavioral_score is not None:
+            print(f"Behavioral anomaly score: {behavioral_score}")
+        if memory_score is not None:
+            print(f"Memory anomaly score: {memory_score}")
+
         return 0
 
-    error_message = None
-    if isinstance(analysis, dict):
-        error_message = analysis.get("error") or analysis.get("message")
-
     print("\n[ERROR] REVENG analysis failed!")
-    if error_message:
-        print(f"Reason: {error_message}")
+    if report_path:
+        print(f"Partial report: {report_path}")
+    print(f"Pipeline status: {status}")
     return 1
 
 

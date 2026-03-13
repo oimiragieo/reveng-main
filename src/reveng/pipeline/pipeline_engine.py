@@ -5,12 +5,13 @@ and result aggregation.
 """
 
 import asyncio
+import json
 import threading
 import time
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Dict, List, Optional
+from typing import Any, Callable, Coroutine, Dict, List, Optional, TypeVar, cast
 
 import yaml
 
@@ -19,6 +20,9 @@ from ..core.errors import (
     create_error_context,
 )
 from ..core.logger import get_logger
+
+
+TResult = TypeVar("TResult")
 
 
 class PipelineStatus(Enum):
@@ -46,6 +50,7 @@ class StageType(Enum):
 
     STATIC_ANALYSIS = "static_analysis"
     DYNAMIC_ANALYSIS = "dynamic_analysis"
+    RECOMPILATION = "recompilation"
     PE_ANALYSIS = "pe_analysis"
     GHIDRA_ANALYSIS = "ghidra_analysis"
     HEX_ANALYSIS = "hex_analysis"
@@ -112,7 +117,8 @@ class AnalysisPipeline:
         self.logger = get_logger("pipeline_engine")
         self.templates_dir = Path(__file__).parent / "templates"
         self.templates_dir.mkdir(exist_ok=True)
-        self.pipelines = {}
+        self.pipelines: Dict[str, Pipeline] = {}
+        self._stage_context_local = threading.local()
         self._load_prebuilt_pipelines()
 
     def create_pipeline(self, name: str, description: str = "") -> Pipeline:
@@ -217,6 +223,14 @@ class AnalysisPipeline:
                     executable_stages.append(stage)
 
                 if executable_stages:
+                    stage_dependency_outputs = {
+                        stage.name: {
+                            dependency: stage_results_by_name[dependency].output
+                            for dependency in stage.dependencies
+                            if dependency in stage_results_by_name
+                        }
+                        for stage in executable_stages
+                    }
                     self.logger.info(
                         "Executing %d ready stage(s) concurrently: %s"
                         % (
@@ -226,16 +240,20 @@ class AnalysisPipeline:
                             ),
                         )
                     )
-                    stage_results = await asyncio.gather(
+                    raw_stage_results = await asyncio.gather(
                         *(
-                            self._execute_stage_async(stage, binary_path)
+                            self._execute_stage_async(
+                                stage,
+                                binary_path,
+                                stage_dependency_outputs.get(stage.name, {}),
+                            )
                             for stage in executable_stages
                         ),
                         return_exceptions=True,
                     )
 
                     for stage, stage_result in zip(
-                        executable_stages, stage_results
+                        executable_stages, raw_stage_results
                     ):
                         if isinstance(stage_result, Exception):
                             self.logger.error(
@@ -256,9 +274,9 @@ class AnalysisPipeline:
                             )
                             continue
 
-                        stage_results_by_name[stage.name] = stage_result
+                        stage_results_by_name[stage.name] = cast(StageResult, stage_result)
 
-            stage_results = [
+            stage_results: List[StageResult] = [
                 stage_results_by_name[stage.name]
                 for stage in pipeline.stages
                 if stage.name in stage_results_by_name
@@ -320,15 +338,15 @@ class AnalysisPipeline:
 
     def _run_coroutine_sync(
         self,
-        coroutine_factory: Callable[[], Awaitable[PipelineResult]],
-    ) -> PipelineResult:
+        coroutine_factory: Callable[[], Coroutine[Any, Any, TResult]],
+    ) -> TResult:
         """Run an async pipeline coroutine from synchronous callers."""
         try:
             asyncio.get_running_loop()
         except RuntimeError:
             return asyncio.run(coroutine_factory())
 
-        result_holder: Dict[str, PipelineResult] = {}
+        result_holder: Dict[str, TResult] = {}
         error_holder: Dict[str, Exception] = {}
 
         def _runner():
@@ -481,7 +499,10 @@ class AnalysisPipeline:
         )
 
     async def _execute_stage_async(
-        self, stage: PipelineStage, binary_path: str
+        self,
+        stage: PipelineStage,
+        binary_path: str,
+        dependency_outputs: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> StageResult:
         """Execute one pipeline stage asynchronously with retry support."""
         try:
@@ -497,6 +518,7 @@ class AnalysisPipeline:
                             self._dispatch_stage_execution,
                             stage,
                             binary_path,
+                            dependency_outputs or {},
                         ),
                         timeout=stage.timeout,
                     )
@@ -561,26 +583,201 @@ class AnalysisPipeline:
                 retry_count=0,
             )
 
+        return StageResult(
+            stage_name=stage.name,
+            status=StageStatus.FAILED,
+            output={},
+            error="Stage execution exited without a result",
+            execution_time=0.0,
+            retry_count=0,
+        )
+
     def _dispatch_stage_execution(
-        self, stage: PipelineStage, binary_path: str
+        self,
+        stage: PipelineStage,
+        binary_path: str,
+        dependency_outputs: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Dispatch stage execution to the appropriate synchronous executor."""
-        if stage.stage_type == StageType.STATIC_ANALYSIS:
-            return self._execute_static_analysis(stage, binary_path)
-        if stage.stage_type == StageType.PE_ANALYSIS:
-            return self._execute_pe_analysis(stage, binary_path)
-        if stage.stage_type == StageType.GHIDRA_ANALYSIS:
-            return self._execute_ghidra_analysis(stage, binary_path)
-        if stage.stage_type == StageType.HEX_ANALYSIS:
-            return self._execute_hex_analysis(stage, binary_path)
-        if stage.stage_type == StageType.MALWARE_ANALYSIS:
-            return self._execute_malware_analysis(stage, binary_path)
-        if stage.stage_type == StageType.ML_ANALYSIS:
-            return self._execute_ml_analysis(stage, binary_path)
-        if stage.stage_type == StageType.REPORT_GENERATION:
-            return self._execute_report_generation(stage, binary_path)
+        stage_context = {
+            "binary_path": binary_path,
+            "stage_name": stage.name,
+            "stage_type": stage.stage_type.value,
+            "stage_config": dict(stage.config),
+            "dependencies": dependency_outputs or {},
+        }
+        self._stage_context_local.current = stage_context
 
-        raise ValueError(f"Unknown stage type: {stage.stage_type}")
+        try:
+            if stage.stage_type == StageType.STATIC_ANALYSIS:
+                return self._execute_static_analysis(stage, binary_path)
+            if stage.stage_type == StageType.DYNAMIC_ANALYSIS:
+                return self._execute_dynamic_analysis(stage, binary_path)
+            if stage.stage_type == StageType.RECOMPILATION:
+                return self._execute_recompilation(stage, binary_path)
+            if stage.stage_type == StageType.PE_ANALYSIS:
+                return self._execute_pe_analysis(stage, binary_path)
+            if stage.stage_type == StageType.GHIDRA_ANALYSIS:
+                return self._execute_ghidra_analysis(stage, binary_path)
+            if stage.stage_type == StageType.HEX_ANALYSIS:
+                return self._execute_hex_analysis(stage, binary_path)
+            if stage.stage_type == StageType.MALWARE_ANALYSIS:
+                return self._execute_malware_analysis(stage, binary_path)
+            if stage.stage_type == StageType.ML_ANALYSIS:
+                return self._execute_ml_analysis(stage, binary_path)
+            if stage.stage_type == StageType.REPORT_GENERATION:
+                return self._execute_report_generation(stage, binary_path)
+
+            raise ValueError(f"Unknown stage type: {stage.stage_type}")
+        finally:
+            self._stage_context_local.current = {}
+
+    def _get_stage_context(self) -> Dict[str, Any]:
+        """Return the current stage execution context."""
+        return getattr(self._stage_context_local, "current", {})
+
+    def _resolve_output_dir(
+        self,
+        stage: PipelineStage,
+        binary_path: str,
+        default_name: str = "analysis_output",
+    ) -> Path:
+        """Resolve the output directory for a stage."""
+        configured_output = stage.config.get("output_dir")
+        if configured_output:
+            output_dir = Path(configured_output)
+        else:
+            output_dir = Path(binary_path).parent / f"analysis_{Path(binary_path).stem}"
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        stage_output_dir = output_dir / default_name
+        stage_output_dir.mkdir(parents=True, exist_ok=True)
+        return stage_output_dir
+
+    def _candidate_ghidra_urls(self, preferred_url: Optional[str] = None) -> List[str]:
+        """Return candidate Ghidra server URLs in priority order."""
+        candidates = [
+            preferred_url,
+            "http://127.0.0.1:5000",
+            "http://127.0.0.1:13370",
+        ]
+        ordered_candidates: List[str] = []
+        for candidate in candidates:
+            if candidate and candidate not in ordered_candidates:
+                ordered_candidates.append(candidate)
+        return ordered_candidates
+
+    def _select_analysis_target(self, binary_path: str) -> str:
+        """Select the most useful artifact for downstream forensics stages."""
+        stage_context = self._get_stage_context()
+        recompilation_output = stage_context.get("dependencies", {}).get("recompilation", {})
+        compiled_binaries = recompilation_output.get("compiled_binaries", {})
+
+        if isinstance(compiled_binaries, dict):
+            for compiled_binary in compiled_binaries.values():
+                if compiled_binary:
+                    return str(compiled_binary)
+
+        return binary_path
+
+    def _build_stage_report(self, report: Dict[str, Any], report_path: Path) -> Dict[str, Any]:
+        """Persist a report and return a standard report payload."""
+        with open(report_path, "w", encoding="utf-8") as report_file:
+            json.dump(report, report_file, indent=2, default=str)
+
+        return {
+            "status": report["summary"]["overall_status"],
+            "report_path": str(report_path),
+            "summary": report["summary"],
+        }
+
+    def _execute_dynamic_analysis(
+        self, stage: PipelineStage, binary_path: str
+    ) -> Dict[str, Any]:
+        """Execute dynamic analysis stage."""
+        return {
+            "status": "skipped",
+            "message": "Dynamic analysis stage is not implemented for this pipeline configuration.",
+            "binary_path": binary_path,
+        }
+
+    def _execute_recompilation(
+        self, stage: PipelineStage, binary_path: str
+    ) -> Dict[str, Any]:
+        """Execute the binary recompilation engine for end-to-end CLI flows."""
+        output_dir = self._resolve_output_dir(stage, binary_path, "recompilation")
+        stage_context = self._get_stage_context()
+        ghidra_output = stage_context.get("dependencies", {}).get("ghidra_analysis", {})
+        cached_analysis = ghidra_output.get("analysis_data")
+
+        class _CachedGhidraEngine:
+            def __init__(self, analysis_data: Dict[str, Any]):
+                self.analysis_data = analysis_data
+
+            def analyze_binary(self, target_binary_path: str) -> Dict[str, Any]:
+                return self.analysis_data
+
+        try:
+            from ..ai.recompilation_engine import BinaryRecompilationEngine
+        except ImportError as exc:
+            return {
+                "status": "failed",
+                "error": str(exc),
+                "output_dir": str(output_dir),
+                "compiled_binaries": {},
+                "compilation_reports": {},
+                "source_files": {},
+            }
+
+        ghidra_engine = _CachedGhidraEngine(cached_analysis) if cached_analysis else None
+
+        gemini_engine = None
+        if stage.config.get("use_gemini", False):
+            try:
+                from ..ai.gemini_engine import GeminiEngine
+
+                gemini_engine = GeminiEngine()
+            except Exception as exc:  # pragma: no cover - defensive path
+                self.logger.warning("Gemini engine unavailable for recompilation stage: %s", exc)
+
+        try:
+            recompilation_engine = BinaryRecompilationEngine(
+                ghidra_engine=ghidra_engine,
+                gemini_engine=gemini_engine,
+                work_dir=output_dir,
+                max_compilation_retries=int(stage.config.get("max_compilation_retries", 2)),
+            )
+            recompilation_result = asyncio.run(
+                recompilation_engine.full_reconstruction_pipeline(
+                    binary_path,
+                    output_dir=output_dir,
+                )
+            )
+        except Exception as exc:
+            return {
+                "status": "failed",
+                "error": str(exc),
+                "output_dir": str(output_dir),
+                "compiled_binaries": {},
+                "compilation_reports": {},
+                "source_files": {},
+                "cfg_summary": (cached_analysis or {}).get("cfg_summary", {}),
+            }
+
+        return {
+            "status": recompilation_result.get("status", "failed"),
+            "output_dir": str(output_dir),
+            "source_files": recompilation_result.get("source_files", {}),
+            "compiled_binaries": recompilation_result.get("compiled_binaries", {}),
+            "compilation_reports": recompilation_result.get("compilation_reports", {}),
+            "cfg_summary": recompilation_result.get(
+                "cfg_summary", (cached_analysis or {}).get("cfg_summary", {})
+            ),
+            "validation_results": recompilation_result.get("validation_results", {}),
+            "vulnerabilities": recompilation_result.get("vulnerabilities", []),
+            "exploits": recompilation_result.get("exploits", []),
+            "error": recompilation_result.get("error"),
+        }
 
     def _execute_static_analysis(
         self, stage: PipelineStage, binary_path: str
@@ -652,6 +849,79 @@ class AnalysisPipeline:
         self, stage: PipelineStage, binary_path: str
     ) -> Dict[str, Any]:
         """Execute Ghidra analysis stage"""
+        if stage.config.get("mode") == "e2e_disassembly":
+            output_dir = self._resolve_output_dir(stage, binary_path, "ghidra_analysis")
+            analysis_path = output_dir / "ghidra_analysis.json"
+
+            try:
+                from ..integrations.ghidra.ghidra_engine import GhidraEngine
+            except ImportError:
+                GhidraEngine = None  # type: ignore[assignment]
+
+            ghidra_errors: List[str] = []
+            if GhidraEngine is not None:
+                for ghidra_url in self._candidate_ghidra_urls(stage.config.get("ghidra_url")):
+                    try:
+                        ghidra_engine = GhidraEngine(
+                            server_url=ghidra_url,
+                            timeout=stage.timeout,
+                            fail_fast=True,
+                        )
+                        analysis_data = ghidra_engine.analyze_binary(binary_path)
+                        with open(analysis_path, "w", encoding="utf-8") as analysis_file:
+                            json.dump(analysis_data, analysis_file, indent=2, default=str)
+
+                        return {
+                            "status": "success",
+                            "backend": "ghidra_server",
+                            "ghidra_url": ghidra_url,
+                            "analysis_data": analysis_data,
+                            "summary": {
+                                "functions": len(analysis_data.get("functions", [])),
+                                "imports": len(analysis_data.get("imports", [])),
+                                "strings": len(analysis_data.get("strings", [])),
+                            },
+                            "report_path": str(analysis_path),
+                        }
+                    except Exception as exc:
+                        ghidra_errors.append(f"{ghidra_url}: {exc}")
+
+            try:
+                from ..integrations.local_disassembler import get_local_disassembler
+
+                local_disassembler = get_local_disassembler()
+                if local_disassembler is not None:
+                    local_result = local_disassembler.analyze_binary(binary_path)
+                    if local_result.success:
+                        analysis_data = local_disassembler.to_ghidra_format(local_result)
+                        with open(analysis_path, "w", encoding="utf-8") as analysis_file:
+                            json.dump(analysis_data, analysis_file, indent=2, default=str)
+
+                        return {
+                            "status": "partial_success",
+                            "backend": "local_capstone",
+                            "analysis_data": analysis_data,
+                            "summary": {
+                                "functions": len(analysis_data.get("functions", [])),
+                                "imports": len(analysis_data.get("imports", [])),
+                                "strings": len(analysis_data.get("strings", [])),
+                            },
+                            "warning": analysis_data.get("warning"),
+                            "report_path": str(analysis_path),
+                            "errors": ghidra_errors,
+                        }
+            except Exception as exc:
+                ghidra_errors.append(f"local_disassembler: {exc}")
+
+            return {
+                "status": "failed",
+                "backend": "unavailable",
+                "analysis_data": {},
+                "summary": {"functions": 0, "imports": 0, "strings": 0},
+                "report_path": str(analysis_path),
+                "errors": ghidra_errors,
+            }
+
         try:
             from ..ghidra.scripting_engine import GhidraScriptingEngine
 
@@ -684,6 +954,56 @@ class AnalysisPipeline:
         self, stage: PipelineStage, binary_path: str
     ) -> Dict[str, Any]:
         """Execute malware analysis stage"""
+        if stage.config.get("mode") == "behavioral_forensics":
+            output_dir = self._resolve_output_dir(stage, binary_path, "behavioral_forensics")
+            report_path = output_dir / "behavioral_profile.json"
+            analysis_target = self._select_analysis_target(binary_path)
+
+            try:
+                from ..malware.behavioral_monitor import BehavioralMonitor
+
+                behavioral_monitor = BehavioralMonitor()
+                monitor_duration = max(1, int(stage.config.get("duration_seconds", 1)))
+
+                if not behavioral_monitor.start_monitoring(analysis_target, duration=monitor_duration):
+                    return {
+                        "status": "failed",
+                        "analyzed_binary": analysis_target,
+                        "report_path": str(report_path),
+                        "error": "Behavioral monitoring could not be started.",
+                    }
+
+                time.sleep(max(1.1, float(monitor_duration)))
+                profile = behavioral_monitor.stop_monitoring()
+                if profile is None:
+                    return {
+                        "status": "failed",
+                        "analyzed_binary": analysis_target,
+                        "report_path": str(report_path),
+                        "error": "Behavioral monitoring did not produce a profile.",
+                    }
+
+                profile.binary_path = analysis_target
+                behavioral_monitor.save_behavioral_profile(profile, str(report_path))
+
+                return {
+                    "status": "success",
+                    "analyzed_binary": analysis_target,
+                    "risk_score": profile.risk_score,
+                    "threat_level": profile.threat_level.value,
+                    "anomaly_score": profile.anomaly_score,
+                    "anomaly_threshold": profile.anomaly_threshold,
+                    "anomaly_flags": profile.anomaly_flags,
+                    "report_path": str(report_path),
+                }
+            except Exception as exc:
+                return {
+                    "status": "failed",
+                    "analyzed_binary": analysis_target,
+                    "report_path": str(report_path),
+                    "error": str(exc),
+                }
+
         try:
             # This would implement malware analysis
             # For now, return placeholder
@@ -700,6 +1020,38 @@ class AnalysisPipeline:
         self, stage: PipelineStage, binary_path: str
     ) -> Dict[str, Any]:
         """Execute ML analysis stage"""
+        if stage.config.get("mode") == "memory_forensics":
+            output_dir = self._resolve_output_dir(stage, binary_path, "memory_forensics")
+            report_path = output_dir / "memory_analysis.json"
+            analysis_target = self._select_analysis_target(binary_path)
+
+            try:
+                from ..malware.memory_forensics import MemoryForensics
+
+                memory_forensics = MemoryForensics()
+                analysis = memory_forensics.analyze_memory(analysis_target, str(output_dir))
+
+                return {
+                    "status": "success",
+                    "analyzed_binary": analysis_target,
+                    "total_processes": analysis.total_processes,
+                    "total_memory_regions": analysis.total_memory_regions,
+                    "total_artifacts": analysis.total_artifacts,
+                    "risk_score": analysis.risk_score,
+                    "threat_level": analysis.threat_level,
+                    "anomaly_score": analysis.anomaly_score,
+                    "anomaly_threshold": analysis.anomaly_threshold,
+                    "anomaly_flags": analysis.anomaly_flags,
+                    "report_path": str(report_path),
+                }
+            except Exception as exc:
+                return {
+                    "status": "failed",
+                    "analyzed_binary": analysis_target,
+                    "report_path": str(report_path),
+                    "error": str(exc),
+                }
+
         try:
             # This would implement ML analysis
             # For now, return placeholder
@@ -713,6 +1065,52 @@ class AnalysisPipeline:
         self, stage: PipelineStage, binary_path: str
     ) -> Dict[str, Any]:
         """Execute report generation stage"""
+        if stage.config.get("mode") == "unified_e2e_report":
+            output_dir = self._resolve_output_dir(stage, binary_path, "reports")
+            report_path = output_dir / "unified_analysis_report.json"
+            stage_context = self._get_stage_context()
+            dependency_outputs = stage_context.get("dependencies", {})
+
+            ghidra_output = dependency_outputs.get("ghidra_analysis", {})
+            recompilation_output = dependency_outputs.get("recompilation", {})
+            behavioral_output = dependency_outputs.get("behavioral_forensics", {})
+            memory_output = dependency_outputs.get("memory_forensics", {})
+
+            compiled_binaries = list((recompilation_output.get("compiled_binaries") or {}).values())
+            stage_statuses = {
+                stage_name: stage_output.get("status", "unknown")
+                for stage_name, stage_output in dependency_outputs.items()
+            }
+            overall_status = (
+                "success"
+                if all(status == "success" for status in stage_statuses.values())
+                else "partial_success"
+            )
+            if not dependency_outputs:
+                overall_status = "failed"
+
+            report = {
+                "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+                "binary_path": binary_path,
+                "analysis_folder": str(output_dir.parent),
+                "summary": {
+                    "overall_status": overall_status,
+                    "stage_statuses": stage_statuses,
+                    "ghidra_backend": ghidra_output.get("backend"),
+                    "functions_detected": len(
+                        (ghidra_output.get("analysis_data") or {}).get("functions", [])
+                    ),
+                    "compiled_binaries": compiled_binaries,
+                    "behavioral_anomaly_score": behavioral_output.get("anomaly_score"),
+                    "behavioral_threat_level": behavioral_output.get("threat_level"),
+                    "memory_anomaly_score": memory_output.get("anomaly_score"),
+                    "memory_threat_level": memory_output.get("threat_level"),
+                },
+                "stages": dependency_outputs,
+            }
+
+            return self._build_stage_report(report, report_path)
+
         try:
             # This would implement report generation
             # For now, return placeholder
