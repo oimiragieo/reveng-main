@@ -1,0 +1,17 @@
+{
+  "milestone": "misc-1",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "notes": "No testable assertions for milestone misc-1. All 5 completed features (fix-pipeline-robustness, fix-dispatch-history-bounds, fix-flaky-timing-test, fix-e2e-test-coverage, fix-recompilation-test-coverage) have empty fulfills arrays. One feature (fix-entropy-float-bitlength) was cancelled. All 10 validation contract assertions were already validated and passed in prior milestones (pipeline-upgrade, recompilation-engine, ai-forensics).",
+  "previousRound": null
+}
