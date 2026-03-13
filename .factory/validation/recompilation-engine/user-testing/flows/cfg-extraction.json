@@ -1,0 +1,73 @@
+{
+  "groupId": "cfg-extraction",
+  "testedAt": "2026-03-13T00:00:00Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "testFile": "tests/unit/test_angr_cfg_preprocessor.py",
+    "testSample": "test_samples/sample.exe",
+    "externalServices": "none",
+    "environment": "PYTHONIOENCODING=utf8"
+  },
+  "toolsUsed": ["pytest"],
+  "assertions": [
+    {
+      "id": "VAL-RECOMP-001",
+      "title": "angr-based CFG Extraction Correctness",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run pytest tests/unit/test_angr_cfg_preprocessor.py -v --tb=long",
+          "expected": "All 3 tests collected and executed without fatal exceptions",
+          "observed": "3 tests collected, 3 passed in 3.97s (6 warnings, non-fatal)"
+        },
+        {
+          "action": "test_extract_cfg_payload_from_sample_pe: AngrCFGPreprocessor initializes angr, loads test_samples/sample.exe, and extracts CFG",
+          "expected": "payload['status'] == 'success', node_count > 0, edge_count > 0, function_count > 0, functions list non-empty, basic_blocks structured, JSON serializable, LLM context generated",
+          "observed": "PASSED. status=success, source=angr, binary_name=sample.exe, node_count=689, edge_count=1041, function_count=214. Functions include main@0x14000177b with 8 basic blocks, callers/callees resolved. LLM context includes 'Graph metrics: 689 nodes, 1041 edges, 214 functions'. JSON serializable (164648 chars)."
+        },
+        {
+          "action": "test_gemini_prompt_includes_cfg_context: Verify Gemini engine prompt includes CFG context text",
+          "expected": "Prompt string contains 'Control-flow graph (angr summary)' and the provided cfg_context_text",
+          "observed": "PASSED. GeminiEngine._create_reconstruction_prompt correctly injects CFG context into LLM prompt."
+        },
+        {
+          "action": "test_phase1_decompilation_writes_cfg_artifacts: Verify CFG JSON and text artifacts are persisted to disk during phase1 decompilation",
+          "expected": "cfg_artifacts['json'] and cfg_artifacts['text'] files exist on disk with correct content",
+          "observed": "PASSED. BinaryRecompilationEngine._phase1_decompilation writes cfg_payload.json and cfg_context.txt to output_dir. Text artifact content matches expected LLM context string."
+        },
+        {
+          "action": "Independent evidence collection: Run AngrCFGPreprocessor.extract_cfg_payload directly against sample.exe and inspect output",
+          "expected": "Structured CFG representation covering reachable functions and basic blocks, without fatal exceptions",
+          "observed": "689 CFG nodes, 1041 edges, 214 functions discovered. Functions include __mingw_invalidParameterHandler, WinMainCRTStartup, mainCRTStartup, __tmainCRTStartup, check_managed_app, main, vulnerable_function. Each function has address (hex), size, block_count, callers, callees, and basic_blocks with successors/predecessors. LLM context text successfully generated with architecture (AMD64), entry point (0x140001046), and per-function summaries including call relationships."
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "logs": [
+          "recompilation-engine/cfg-extraction/pytest-output.log",
+          "recompilation-engine/cfg-extraction/cfg-extraction-evidence.log"
+        ],
+        "consoleErrors": "none (6 deprecation warnings from pytest plugins, non-fatal)",
+        "network": "none (no external services used)",
+        "cfgMetrics": {
+          "nodeCount": 689,
+          "edgeCount": 1041,
+          "functionCount": 214,
+          "jsonPayloadSize": "164648 chars",
+          "sampleFunctions": [
+            "__mingw_invalidParameterHandler @ 0x140001000 - 1 blocks",
+            "WinMainCRTStartup @ 0x140001017 - 3 blocks",
+            "mainCRTStartup @ 0x140001046 - 3 blocks",
+            "__tmainCRTStartup @ 0x140001075 - 74 blocks",
+            "main @ 0x14000177b - 8 blocks"
+          ],
+          "llmContextSnippet": "Binary: sample.exe\nArchitecture: AMD64\nEntry point: 0x140001046\nGraph metrics: 689 nodes, 1041 edges, 214 functions\nFunction main @ 0x14000177b: 8 basic blocks\n  Calls: vulnerable_function, __main, puts\n  Called by: __tmainCRTStartup"
+        }
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 1 assertion (VAL-RECOMP-001): 1 passed. All 3 unit tests in test_angr_cfg_preprocessor.py passed successfully. angr initialized correctly, extracted a complete CFG (689 nodes, 1041 edges, 214 functions) from sample.exe without fatal exceptions, and the structured payload was JSON-serializable and suitable for LLM consumption. Gemini prompt injection and artifact persistence also verified."
+}

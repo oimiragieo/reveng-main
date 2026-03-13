@@ -36,3 +36,30 @@ The Python test suite (`pytest`) is the primary user-facing surface for verifyin
 ### Constraints
 - Do not exceed pytest-xdist concurrency of 4 workers.
 - Do not run tests from `tests/performance` or `tests/poc` — those are out of scope.
+
+## Flow Validator Guidance: Recompilation Engine (Pytest)
+
+### Surface Description
+The recompilation engine is validated through unit tests that exercise `AngrCFGPreprocessor` and `BinaryRecompilationEngine` (compiler-in-the-loop feedback). Tests live in:
+- `tests/unit/test_angr_cfg_preprocessor.py` — CFG extraction and artifact persistence
+- `tests/unit/test_recompilation_engine_feedback_loop.py` — compiler retry, stderr feedback, max retry limit
+
+### Isolation Rules
+- Each test uses its own `tmp_path` fixture and monkeypatched internals. Tests are fully isolated.
+- `test_extract_cfg_payload_from_sample_pe` requires `test_samples/sample.exe` (pre-existing in the repo). It reads the file but does not modify it.
+- Feedback loop tests use `DummyGemini` stubs and fake compiler functions — no real compiler or LLM calls.
+- No external services (Ghidra, Ollama, etc.) are needed for these tests.
+
+### Testing Approach
+- **VAL-RECOMP-001** (angr CFG Extraction): Run all 3 tests in `test_angr_cfg_preprocessor.py`. The key test `test_extract_cfg_payload_from_sample_pe` verifies real angr CFG extraction against `sample.exe`, checking node/edge counts, function serialization, and LLM context generation. The other tests verify Gemini prompt injection and artifact persistence.
+- **VAL-RECOMP-002** (Compiler Retry Behavior): Run `test_compile_with_feedback_loop_retries_and_includes_stderr`. Verifies that after initial compilation failure, stderr is captured, fed to LLM, and a second compilation succeeds.
+- **VAL-RECOMP-003** (Max Retries Exceeded): Run `test_compile_with_feedback_loop_stops_at_retry_limit` and `test_full_pipeline_returns_graceful_failure_report_when_compilation_fails`. Verifies the engine stops at max retries, generates a structured failure report, and does not proceed to later pipeline phases.
+
+### Environment Variables
+- Set `PYTHONIOENCODING=utf8` on Windows.
+- No API keys or external services needed.
+
+### Constraints
+- Run tests from the repo root (`C:\dev\projects\reveng-main`).
+- Use `--tb=long` for detailed traceback output.
+- Do not modify source or test files during validation.

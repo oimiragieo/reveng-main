@@ -1,0 +1,74 @@
+{
+  "groupId": "compiler-feedback",
+  "testedAt": "2026-03-13T00:00:00Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "testFile": "tests/unit/test_recompilation_engine_feedback_loop.py",
+    "externalServices": "none (DummyGemini stubs and fake compiler functions)",
+    "envVars": {
+      "PYTHONIOENCODING": "utf8"
+    }
+  },
+  "toolsUsed": ["pytest"],
+  "assertions": [
+    {
+      "id": "VAL-RECOMP-002",
+      "title": "Compiler-in-the-Loop Successful Recompilation (Retry Behavior)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run test_compile_with_feedback_loop_retries_and_includes_stderr via pytest",
+          "expected": "Test creates DummyGemini stub, BinaryRecompilationEngine with max_compilation_retries=2, writes a source file with missing semicolon, sets up fake compiler returning failure then success",
+          "observed": "Engine setup completed successfully with monkeypatched _run_compiler_attempt"
+        },
+        {
+          "action": "Engine executes _compile_with_feedback_loop with gcc",
+          "expected": "First compilation attempt fails with stderr 'expected ; before } token', stderr is captured and fed back to Gemini LLM, second attempt succeeds",
+          "observed": "First attempt failed as expected, stderr captured correctly, Gemini prompt contained the error message ('expected ; before } token'), second attempt succeeded"
+        },
+        {
+          "action": "Verify report structure and source file update",
+          "expected": "report['status']='success', report['total_attempts']=2, attempts[0]['stderr'] starts with error message, attempts[0]['feedback_applied']=True, source file updated with corrected code",
+          "observed": "All assertions passed: status=success, total_attempts=2, stderr captured correctly, feedback_applied=True, source file updated to 'int main(void) { return 0; }\\n'"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "recompilation-engine/compiler-feedback/pytest-output.txt",
+        "consoleErrors": "none",
+        "testResult": "PASSED in 0.71s (3 tests total, all passed)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-RECOMP-003",
+      "title": "Unrecoverable Compilation Failure Handling (Max Retries Exceeded)",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run test_compile_with_feedback_loop_stops_at_retry_limit via pytest",
+          "expected": "Engine with max_compilation_retries=2 runs 3 total attempts (1 initial + 2 retries), all fail, loop terminates at retry limit",
+          "observed": "Engine correctly executed 3 total attempts, all failed, loop terminated exactly at the configured retry threshold"
+        },
+        {
+          "action": "Verify failure report structure for retry limit test",
+          "expected": "report['status']='failed', report['failure_reason']='max_retries_exceeded', report['max_retries_exceeded']=True, report['binary_path']=None, report['total_attempts']=3, len(attempts)=3, 2 feedback_applied entries",
+          "observed": "All assertions passed: status=failed, failure_reason=max_retries_exceeded, max_retries_exceeded=True, binary_path=None, total_attempts=3, 3 attempts recorded, exactly 2 feedback_applied entries"
+        },
+        {
+          "action": "Run test_full_pipeline_returns_graceful_failure_report_when_compilation_fails via pytest",
+          "expected": "Full pipeline returns status=failed with error message when all compilers fail, compilation_reports contain failure_reason=max_retries_exceeded, later pipeline phases (validation, security, exploit gen) are NOT invoked",
+          "observed": "Pipeline returned status=failed with error='Compilation failed for all configured compilers', compiled_binaries={}, compilation_reports['c_gcc']['failure_reason']='max_retries_exceeded'. Monkeypatched _phase4_validation, _phase5_security_analysis, _phase6_exploit_generation were NOT called (would have raised AssertionError)"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "recompilation-engine/compiler-feedback/pytest-output.txt",
+        "consoleErrors": "none",
+        "testResult": "PASSED in 0.71s (3 tests total, all passed)"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 2 assertions (VAL-RECOMP-002, VAL-RECOMP-003) across 3 test functions: all 3 tests passed. VAL-RECOMP-002 confirms the compiler-in-the-loop correctly captures stderr from failed compilations and feeds it back to the LLM for iterative refinement, resulting in successful recompilation on the second attempt. VAL-RECOMP-003 confirms the engine gracefully terminates at the configured max retry limit, produces a structured failure report with full attempt history, and does not invoke later pipeline phases when compilation fails for all compilers."
+}
