@@ -1,0 +1,21 @@
+{
+  "featureId": "fix-flaky-timing-test",
+  "reviewedAt": "2026-03-13T19:36:00.000Z",
+  "commitId": "aabc39cef13a20f5c23b9af35c3bbdf20984b544",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Clean, correct replacement of the flaky wall-clock timing assertion with overlap-based concurrency detection. The new logic records per-stage start/end execution windows via try/finally blocks and asserts that branch_a and branch_b overlapped (a.start < b.end AND b.start < a.end), which is the mathematically correct interval-overlap test. The report-ordering assertion now checks against branch end times rather than start times, which is strictly more correct. The elapsed-time threshold that caused CI flakiness has been fully removed. The worker ran the targeted test 5 consecutive times to confirm stability, ran flake8 lint, and documented the change in .factory/library/pipeline-upgrade.md.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Worker deviated from skill step 3 (write tests first / red) because the feature was about stabilizing an existing flaky test, not adding new production code. The skill already documents a TDD exception for pre-existing implementations, but the worker suggests an explicit carve-out for test-stabilization features. This seems reasonable — the existing exception says 'if the feature's implementation already exists, skip straight to verification', which could be read more broadly to cover test-fix features, but an explicit note would remove ambiguity.",
+      "evidence": "Handoff skillFeedback.deviations[0]: 'The production async pipeline behavior already existed; this feature only replaced a fragile test assertion, so manufacturing a separate red state would not have added meaningful signal.' Skill SKILL.md step 3 TDD exception: 'if the feature's implementation already exists (e.g., landed in a prior session), skip straight to verification and lint cleanup'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The flaky wall-clock elapsed-time assertion in test_execute_pipeline_async_runs_stages_concurrently has been correctly replaced with overlap-based detection using per-stage execution windows (start/end timestamps). The overlap logic is mathematically sound, the try/finally pattern ensures end times are always recorded, and the report-ordering check is improved by comparing against branch end times. Five consecutive test runs confirmed stability. No blocking issues found."
+}

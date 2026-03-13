@@ -15,4 +15,7 @@
 - `_build_compile_command(compiler, source_file, output_file)` detects ccache/sccache availability and prepends the cache wrapper automatically.
 - `_create_compilation_feedback_prompt(source_code, stderr, attempt, max_retries)` builds the LLM repair prompt including cfg_context when available.
 - When all compilers exhaust retries, `_phase3_compilation` returns `compilation_success=False` and phases 4-6 of `full_reconstruction_pipeline` are skipped, producing a structured failure report.
+- Edge case: `max_compilation_retries=0` means a single compilation attempt with no repair loop; if it fails, the report shows `max_retries_exceeded` immediately.
+- Edge case: Non-retryable failures (e.g., subprocess crashes, non-compilation errors) terminate the loop immediately regardless of remaining retries, producing a `non_retryable_failure` report.
+- Edge case: If the LLM returns an empty response during the repair loop, the engine treats it as a failed attempt and continues to the next retry.
 - Focused validation: `pytest tests/unit/test_recompilation_engine_feedback_loop.py -q`.
