@@ -1,7 +1,7 @@
 #!/bin/bash
 # REVENG environment initialization — idempotent
 # NOTE: On Windows, run these commands directly in PowerShell/cmd instead of this script.
-# Windows workers: run `pip install -r requirements.txt && pip install yara-python ollama volatility3 pytest-xdist`
+# Windows workers: run `pip install -r requirements.txt && pip install yara-python ollama volatility3 pytest-xdist && python scripts/install_ghidra.py`
 
 set -e
 

@@ -230,6 +230,7 @@ secrets.json
 
 # External dependencies (download separately - see docs/getting-started/installation.md)
 external/ghidra/
+external/ghidra-dist/
 
 # Windows reserved filename artifact
 nul
