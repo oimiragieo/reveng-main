@@ -1,0 +1,67 @@
+{
+  "milestone": "misc-fixes",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc",
+      "exitCode": 1,
+      "note": "58 failed (all pre-existing per AGENTS.md baseline), 195 passed (up from 179 baseline), 132 skipped, 1 error (pre-existing import error in test_pipeline.py). No regressions introduced by misc-fixes features."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "note": "14 pre-existing errors: 13 missing types-requests stubs, 1 angr pattern matching syntax issue. No new errors from misc-fixes features."
+    },
+    "lint": {
+      "passed": true,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203",
+      "exitCode": 1,
+      "note": "All lint issues are pre-existing (F401 unused imports, F403/F405 star imports, E722 bare excepts, E128 indentation, F841 unused variables). None in files modified by misc-fixes features."
+    }
+  },
+  "reviewsSummary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "nonBlockingIssues": [
+    {
+      "featureId": "add-ghidra-checksum",
+      "severity": "non_blocking",
+      "description": "verify_archive_checksum() has a defensive archive_path.exists() guard before unlink() that is technically redundant since the file was just read by calculate_sha256(). Harmless but unnecessary."
+    },
+    {
+      "featureId": "add-ghidra-checksum",
+      "severity": "non_blocking",
+      "description": "test_install_ghidra_extracts_downloaded_distribution patches installer.EXPECTED_SHA256 at module level rather than parameterizing via function argument. Slightly fragile if module is later made immutable."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Add Windows exception note to mission-worker-base skill step 1.2 (Initialize Environment): 'On Windows, do NOT run .factory/init.sh directly. See AGENTS.md for manual setup commands.'",
+      "evidence": "Feature remove-ghidra-from-git: worker deviated from skill step 1.2 because init.sh is a bash script that doesn't run on Windows. AGENTS.md already documents this, but the skill procedure doesn't reference it.",
+      "isSystemic": true
+    },
+    {
+      "target": "skills",
+      "suggestion": "Modify python-developer skill step 9 (end-to-end verification) to allow targeted verification for infrastructure/installer-only features instead of requiring 'exercise with test_samples/sample.exe'.",
+      "evidence": "Feature add-ghidra-checksum: worker correctly deviated from skill step 9 because the feature only changes installer archive integrity checks, not binary analysis. Running sample.exe analysis would not verify the feature.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add note about stashed local modification to .factory/library/user-testing.md (stash@{0}). Should be reviewed and either committed or discarded to prevent stash loss.",
+      "evidence": "Feature remove-ghidra-from-git handoff noted pre-existing unrelated local modification to .factory/library/user-testing.md that was stashed to get a clean working tree.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": null
+}
