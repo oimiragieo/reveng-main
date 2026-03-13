@@ -12,6 +12,7 @@ Environment variables, external dependencies, and setup notes.
 ## External Services
 - **Ghidra HTTP server**: port 13370 (was 5000, changed to avoid Razer SDK conflict)
 - **Ghidra binary**: `external/ghidra-dist/ghidra_12.0.4_PUBLIC/` (installed by ghidra-binary-install feature)
+- **Ghidra installer helper**: `python scripts/install_ghidra.py` downloads the pinned GitHub release, extracts into `external/ghidra-dist/`, verifies `support/analyzeHeadless.bat`, and is safe to rerun when the dist already exists
 - **Ollama**: port 11434 — ALWAYS RUNNING; model `qwen2.5-coder:32b-instruct` available
 - **Docker**: 29.2.1 available; used for sandbox execution
 

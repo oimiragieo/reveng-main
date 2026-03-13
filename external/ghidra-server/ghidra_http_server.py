@@ -8,6 +8,7 @@ import sys
 import os
 import json
 import tempfile
+import logging
 from pathlib import Path
 
 # Import Flask with error handling
@@ -24,10 +25,37 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Ghidra installation path
-GHIDRA_PATH = Path(__file__).parent.parent / "ghidra"
+DEFAULT_GHIDRA_DIST_NAME = "ghidra_12.0.4_PUBLIC"
+
+
+def get_headless_script_name() -> str:
+    """Return the platform-specific headless launcher name."""
+    return "analyzeHeadless.bat" if os.name == "nt" else "analyzeHeadless"
+
+
+def get_headless_script_path(ghidra_path: Path) -> Path:
+    """Return the expected Ghidra headless launcher path."""
+    return ghidra_path / "support" / get_headless_script_name()
+
+
+def resolve_ghidra_path(external_root: Path | None = None) -> Path:
+    """Prefer the binary distribution, then fall back to the source checkout."""
+    external_root = external_root or Path(__file__).resolve().parents[1]
+    preferred_path = external_root / "ghidra-dist" / DEFAULT_GHIDRA_DIST_NAME
+    fallback_path = external_root / "ghidra"
+
+    for candidate in (preferred_path, fallback_path):
+        if get_headless_script_path(candidate).exists():
+            return candidate
+
+    if preferred_path.exists():
+        return preferred_path
+    return fallback_path
+
+
+GHIDRA_PATH = resolve_ghidra_path()
 
 # Logging
-import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -53,7 +81,7 @@ def health():
 
     # Check if Ghidra exists
     ghidra_exists = GHIDRA_PATH.exists()
-    ghidra_headless = GHIDRA_PATH / "support" / "analyzeHeadless.bat" if os.name == 'nt' else GHIDRA_PATH / "support" / "analyzeHeadless"
+    ghidra_headless = get_headless_script_path(GHIDRA_PATH)
     ghidra_ready = ghidra_headless.exists()
 
     response = {
@@ -91,7 +119,7 @@ def analyze():
         logger.info(f"Analyzing binary: {binary_path}")
 
         # Check if Ghidra is available
-        ghidra_headless = GHIDRA_PATH / "support" / "analyzeHeadless.bat" if os.name == 'nt' else GHIDRA_PATH / "support" / "analyzeHeadless"
+        ghidra_headless = get_headless_script_path(GHIDRA_PATH)
 
         if not ghidra_headless.exists():
             # Return mock data if Ghidra not available
