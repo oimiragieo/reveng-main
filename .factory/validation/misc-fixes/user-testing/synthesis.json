@@ -1,0 +1,17 @@
+{
+  "milestone": "misc-fixes",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "notes": "Both features in milestone misc-fixes (remove-ghidra-from-git, add-ghidra-checksum) have empty fulfills arrays — no validation contract assertions are mapped to this milestone. Nothing to test.",
+  "previousRound": null
+}
