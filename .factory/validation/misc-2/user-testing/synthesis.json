@@ -1,0 +1,17 @@
+{
+  "milestone": "misc-2",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "notes": "No testable assertions for milestone misc-2. Both implementation features (fix-gpu-accelerator-typing, fix-ml-model-eager-init) have empty fulfills arrays, meaning no validation contract assertions are mapped to this milestone. All prior assertions from earlier milestones remain passed in validation-state.json.",
+  "previousRound": null
+}
