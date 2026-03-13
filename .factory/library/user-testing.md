@@ -63,3 +63,59 @@ The recompilation engine is validated through unit tests that exercise `AngrCFGP
 - Run tests from the repo root (`C:\dev\projects\reveng-main`).
 - Use `--tb=long` for detailed traceback output.
 - Do not modify source or test files during validation.
+
+## Flow Validator Guidance: AI Forensics ML Anomaly + MCP (Pytest)
+
+### Surface Description
+ML anomaly detection and MCP forensic tool discovery/invocation are validated through dedicated test suites:
+- `tests/unit/test_malware_forensics_anomaly_detection.py` — ML anomaly scoring for behavioral profiles, memory artifacts, and end-to-end memory analysis
+- `tests/poc/test_mcp_integration.py` — MCP tool discovery (tools/list), schema validation, and tool invocation for YARA scanning, memory dump analysis, and binary diffing
+
+### Isolation Rules
+- All tests use monkeypatched internals and temporary directories (`tmp_path` fixture). No shared mutable state.
+- MCP tests instantiate `REVENGEnterpriseServer` in-process with rate limiting and audit logging disabled. No network ports are opened.
+- ML anomaly tests create `BehavioralMonitor` and `MemoryForensics` instances with monkeypatched time and internal methods.
+- Tests can run concurrently without interference.
+
+### Testing Approach
+- **VAL-FORENSICS-001** (ML Anomaly Detection): Run all 4 tests in `test_malware_forensics_anomaly_detection.py`. Key behaviors: high-anomaly behavioral profiles exceed threshold with flags, benign activity stays below threshold, memory artifacts get ML anomaly scores, end-to-end memory analysis aggregates ML scores.
+- **VAL-FORENSICS-002** (MCP Tool Discovery): Run `test_tools_list_includes_forensic_tools` in `test_mcp_integration.py`. Verifies `scan_yara`, `analyze_memory_dump`, `diff_binaries` appear in tools/list response with correct schemas.
+- **VAL-FORENSICS-003** (MCP Tool Invocation): Run `test_scan_yara_tool_returns_structured_matches`, `test_analyze_memory_dump_tool_returns_structured_analysis`, `test_diff_binaries_tool_returns_structured_diff` in `test_mcp_integration.py`. Verifies each tool executes backend logic and returns structured JSON.
+
+### Environment Variables
+- Set `PYTHONIOENCODING=utf8` on Windows.
+- No API keys or external services needed.
+
+### Constraints
+- Run tests from the repo root (`C:\dev\projects\reveng-main`).
+- Use `--tb=long` for detailed traceback output.
+- Do not modify source or test files during validation.
+
+## Flow Validator Guidance: E2E Pipeline Integration (Pytest + CLI)
+
+### Surface Description
+End-to-end pipeline integration is validated through:
+- `tests/unit/test_e2e_pipeline_integration.py` — Pipeline generates unified report with dependency context propagation
+- `tests/unit/test_unified_cli.py` — CLI handler reports pipeline results correctly
+- CLI invocation: `python src/reveng/cli/reveng.py analyze test_samples/sample.exe` — Real CLI execution with graceful fallbacks
+
+### Isolation Rules
+- Unit tests use monkeypatched pipeline executors and `tmp_path`. Fully isolated.
+- CLI invocation creates output in `analysis_sample/` directory. Does not require external services; falls back to local Capstone disassembly.
+- No Ghidra server needed — pipeline gracefully degrades.
+
+### Testing Approach
+- **VAL-CROSS-001** (End-to-End Pipeline): 
+  1. Run `test_e2e_pipeline_integration.py` — verifies unified report generation with stage dependency propagation and anomaly scores
+  2. Run `test_unified_cli.py` — verifies CLI handler correctly routes through `run_end_to_end_analysis`
+  3. Run actual CLI: `set PYTHONIOENCODING=utf8 && python src/reveng/cli/reveng.py analyze test_samples/sample.exe` — verifies real pipeline orchestration with graceful degradation
+
+### Environment Variables
+- Set `PYTHONIOENCODING=utf8` on Windows.
+- No API keys or external services needed for unit tests.
+- CLI invocation may try Ghidra (port 5000) then fallback to local analysis.
+
+### Constraints
+- Run tests from the repo root (`C:\dev\projects\reveng-main`).
+- Use `--tb=long` for detailed traceback output.
+- Do not modify source or test files during validation.

@@ -1,0 +1,60 @@
+{
+  "groupId": "e2e-pipeline",
+  "testedAt": "2026-03-13T14:38:00Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "envVars": {"PYTHONIOENCODING": "utf8"},
+    "externalServices": "none required (Ghidra fallback to local Capstone)"
+  },
+  "toolsUsed": ["pytest", "CLI subprocess"],
+  "assertions": [
+    {
+      "id": "VAL-CROSS-001",
+      "title": "End-to-End Pipeline Execution",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run unit tests: python -m pytest tests/unit/test_e2e_pipeline_integration.py -v --tb=long",
+          "expected": "All tests pass — unified report generation with stage dependency propagation and anomaly scores verified",
+          "observed": "2/2 tests passed in 0.54s: test_analysis_pipeline_generates_unified_report PASSED, test_handle_analyze_command_reports_unified_pipeline_result PASSED"
+        },
+        {
+          "action": "Run unit tests: python -m pytest tests/unit/test_unified_cli.py -v --tb=long",
+          "expected": "All tests pass — CLI handler correctly routes through run_end_to_end_analysis",
+          "observed": "3/3 tests passed in 0.28s: test_create_parser_includes_core_commands PASSED, test_main_without_command_shows_help PASSED, test_main_routes_to_command_handler PASSED"
+        },
+        {
+          "action": "Run actual CLI: python src/reveng/cli/reveng.py analyze test_samples/sample.exe",
+          "expected": "Pipeline completes with partial_success or success status, unified report generated at analysis_sample/reports/unified_analysis_report.json with anomaly scores",
+          "observed": "Pipeline completed with partial_success status. Stages executed: ghidra_analysis (partial_success, local Capstone fallback), recompilation (failed — expected, no Gemini API), behavioral_forensics (success), memory_forensics (success). Unified report generated at analysis_sample\\reports\\unified_analysis_report.json (987,744 bytes). Behavioral anomaly score: 0.5553, Memory anomaly score: 0.35."
+        },
+        {
+          "action": "Verify unified report artifact exists and contains stage data",
+          "expected": "Report file exists with stage_statuses, anomaly scores, and analysis data",
+          "observed": "Report confirmed at analysis_sample\\reports\\unified_analysis_report.json containing: summary.overall_status='partial_success', summary.stage_statuses with all 4 stages, 143 functions detected, behavioral_anomaly_score=0.5553, memory_anomaly_score=0.35, full disassembly data, imports, exports, sections, strings, and metadata."
+        }
+      ],
+      "evidence": {
+        "testOutputs": [
+          "ai-forensics/e2e-pipeline/step1-e2e-pipeline-unit-tests.txt",
+          "ai-forensics/e2e-pipeline/step2-unified-cli-unit-tests.txt",
+          "ai-forensics/e2e-pipeline/step3-cli-execution-output.txt",
+          "ai-forensics/e2e-pipeline/step3-unified-report-summary.json"
+        ],
+        "reportArtifact": "analysis_sample\\reports\\unified_analysis_report.json (987,744 bytes)",
+        "consoleErrors": "Expected warnings only: Ghidra not installed (fell back to local Capstone), Gemini not installed (recompilation skipped), Ollama analyzer module import warning. No unexpected errors."
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "PowerShell $env:PYTHONIOENCODING='utf8' syntax fails when combined with cd && chaining. Must use cmd /c with set PYTHONIOENCODING=utf8 instead.",
+      "resolved": true,
+      "resolution": "Used cmd /c \"cd /d ... && set PYTHONIOENCODING=utf8 && python ...\" pattern for all commands",
+      "affectedAssertions": ["VAL-CROSS-001"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 1 assertion (VAL-CROSS-001): PASSED. All 3 test steps succeeded: (1) E2E pipeline unit tests 2/2 passed, (2) unified CLI unit tests 3/3 passed, (3) real CLI execution completed with partial_success status producing a 987KB unified report with anomaly scores. The pipeline orchestrated async disassembly (Capstone fallback), recompilation (graceful failure without Gemini), and ML-driven malware forensics (behavioral + memory anomaly scoring) into a unified final report without any pipeline stalls or data-passing failures."
+}
