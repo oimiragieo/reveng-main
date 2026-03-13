@@ -1,0 +1,58 @@
+{
+  "milestone": "misc-2",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc",
+      "exitCode": 1,
+      "note": "58 failures are all pre-existing (CLI, automated pipeline, documentation UnicodeDecodeError, ML workflow) as documented in AGENTS.md. All 12 misc-2-specific tests pass (5 GPU batching + 7 forensics anomaly detection). 173 passed, 132 skipped overall."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "note": "16 errors in 14 files - all pre-existing (missing types-requests stubs, angr Python version issue). Focused check on misc-2 files: mypy reports 0 errors on gpu_accelerator.py and forensics_anomaly_models.py."
+    },
+    "lint": {
+      "passed": true,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203",
+      "exitCode": 1,
+      "note": "All lint warnings are pre-existing across the codebase (bare excepts, unused imports, F403/F405 star imports). No new lint issues introduced by misc-2 features."
+    }
+  },
+  "reviewsSummary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Created .factory/library/misc-2.md documenting the PEP 562 lazy import pattern in __init__.py files and the singleton model cache pattern in forensics_anomaly_models.py",
+      "sourceFeature": "fix-gpu-accelerator-typing, fix-ml-model-eager-init"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add note about PEP 562 lazy imports: 'When adding new public exports to src/reveng/__init__.py or src/reveng/ml/__init__.py, add entries to the _LAZY_IMPORTS dict rather than adding direct import statements. These files use PEP 562 __getattr__ for lazy loading.'",
+      "evidence": "Feature fix-gpu-accelerator-typing converted these files from eager to lazy imports to enable focused mypy checking. Future workers modifying package exports need to know this.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "The services.yaml typecheck command checks the whole package, but workers use focused single-file mypy checks for verification",
+      "reason": "This is already standard practice - workers verify their specific files while the full-package check is a broader baseline. No actionable change needed."
+    },
+    {
+      "observation": "Singleton caching pattern (_instances dict) should be documented as preferred approach in AGENTS.md",
+      "reason": "Already documented in .factory/library/misc-2.md as factual codebase knowledge. Not normative enough for AGENTS.md - only one usage so far, not yet a systemic pattern."
+    }
+  ],
+  "previousRound": null
+}
