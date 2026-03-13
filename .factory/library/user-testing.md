@@ -83,3 +83,4 @@ Machine: 128 GB RAM, 8 cores / 16 logical (AMD Ryzen 7 5800XT)
 - Ollama qwen2.5-coder:32b-instruct takes 10-60 seconds for typical code queries
 - `SKIP_SANDBOX=true` and `SKIP_VOLATILITY=true` should be set in CI to avoid Docker/dump requirements
 - Windows path separators: use `pathlib.Path` everywhere, convert to string only at subprocess call boundaries
+- **PowerShell + .bat files**: PowerShell cannot pass `--help` directly to `.bat` files (ParserError). When invoking `analyzeHeadless.bat` from Python/PowerShell, use `subprocess.run(['cmd', '/c', str(bat_path), ...])` or use shell=True with a quoted command string.
