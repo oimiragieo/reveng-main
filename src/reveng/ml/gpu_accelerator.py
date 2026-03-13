@@ -111,6 +111,7 @@ class GPUAccelerator:
         enable_mixed_precision: bool = True,
         memory_scan_batch_size: int = 8,
         memory_scan_max_wait_seconds: float = 0.05,
+        max_history: int = 1000,
     ):
         """
         Initialize GPU accelerator
@@ -126,6 +127,7 @@ class GPUAccelerator:
         self.torch = None
         self.memory_scan_batch_size = max(1, memory_scan_batch_size)
         self.memory_scan_max_wait_seconds = max(0.0, memory_scan_max_wait_seconds)
+        self.max_history = max(0, max_history)
         self._memory_forensics_queue: List[QueuedMemoryForensicsTask] = []
         self._memory_forensics_lock = threading.Lock()
         self._memory_forensics_batch_id = 0
@@ -548,8 +550,23 @@ class GPUAccelerator:
             failed_items=sum(result is None for result in batch_results),
             error=error,
         )
-        self.memory_forensics_dispatch_history.append(dispatch)
+        self._record_memory_forensics_dispatch(dispatch)
         return dispatch
+
+    def _record_memory_forensics_dispatch(
+        self,
+        dispatch: MemoryForensicsBatchDispatch,
+    ) -> None:
+        """Append memory forensics dispatch telemetry while enforcing history bounds."""
+        with self._memory_forensics_lock:
+            self.memory_forensics_dispatch_history.append(dispatch)
+            if self.max_history == 0:
+                self.memory_forensics_dispatch_history.clear()
+                return
+
+            overflow = len(self.memory_forensics_dispatch_history) - self.max_history
+            if overflow > 0:
+                del self.memory_forensics_dispatch_history[:overflow]
 
     def _next_memory_forensics_batch_id(self) -> int:
         """Return the next memory forensics batch id."""

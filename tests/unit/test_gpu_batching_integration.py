@@ -111,3 +111,23 @@ def test_memory_forensics_extract_artifacts_uses_batched_gpu_dispatch():
         dispatch.batch_size
         for dispatch in accelerator.memory_forensics_dispatch_history
     ] == [2, 1]
+
+
+def test_memory_forensics_dispatch_history_is_capped():
+    accelerator = GPUAccelerator(
+        device="cpu",
+        enable_mixed_precision=False,
+        max_history=2,
+    )
+
+    accelerator.process_memory_forensics_tasks(
+        ["region-1", "region-2", "region-3"],
+        lambda batch: [f"processed:{item}" for item in batch],
+        batch_size=1,
+        max_wait_seconds=60.0,
+    )
+
+    assert len(accelerator.memory_forensics_dispatch_history) == 2
+    assert [
+        dispatch.results for dispatch in accelerator.memory_forensics_dispatch_history
+    ] == [["processed:region-2"], ["processed:region-3"]]
