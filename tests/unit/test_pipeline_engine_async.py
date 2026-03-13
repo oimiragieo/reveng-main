@@ -91,7 +91,11 @@ async def test_execute_pipeline_async_runs_stages_concurrently(
         time.sleep(0.05)
         return {"report": binary_path}
 
-    monkeypatch.setattr(AnalysisPipeline, "_execute_static_analysis", slow_static)
+    monkeypatch.setattr(
+        AnalysisPipeline,
+        "_execute_static_analysis",
+        slow_static,
+    )
     monkeypatch.setattr(AnalysisPipeline, "_execute_pe_analysis", slow_pe)
     monkeypatch.setattr(
         AnalysisPipeline,
@@ -183,9 +187,21 @@ def test_execute_pipeline_isolates_failed_branch(
         executed.append(stage.name)
         return {"summary": binary_path}
 
-    monkeypatch.setattr(AnalysisPipeline, "_execute_static_analysis", healthy_stage)
-    monkeypatch.setattr(AnalysisPipeline, "_execute_pe_analysis", failing_stage)
-    monkeypatch.setattr(AnalysisPipeline, "_execute_hex_analysis", skipped_stage)
+    monkeypatch.setattr(
+        AnalysisPipeline,
+        "_execute_static_analysis",
+        healthy_stage,
+    )
+    monkeypatch.setattr(
+        AnalysisPipeline,
+        "_execute_pe_analysis",
+        failing_stage,
+    )
+    monkeypatch.setattr(
+        AnalysisPipeline,
+        "_execute_hex_analysis",
+        skipped_stage,
+    )
     monkeypatch.setattr(
         AnalysisPipeline,
         "_execute_report_generation",

@@ -137,14 +137,18 @@ class AnalysisPipeline:
         """Add analysis stage to pipeline"""
         try:
             pipeline.stages.append(stage)
-            self.logger.info(f"Added stage {stage.name} to pipeline {pipeline.name}")
+            self.logger.info(
+                f"Added stage {stage.name} to pipeline {pipeline.name}"
+            )
             return pipeline
 
         except Exception as e:
             self.logger.error(f"Failed to add stage: {e}")
             raise
 
-    def execute_pipeline(self, pipeline: Pipeline, binary_path: str) -> PipelineResult:
+    def execute_pipeline(
+        self, pipeline: Pipeline, binary_path: str
+    ) -> PipelineResult:
         """Execute complete pipeline synchronously."""
         return self._run_coroutine_sync(
             lambda: self.execute_pipeline_async(pipeline, binary_path)
@@ -156,7 +160,10 @@ class AnalysisPipeline:
         """Execute complete pipeline asynchronously."""
         try:
             self.logger.info(
-                f"Starting pipeline execution: {pipeline.name} on {binary_path}"
+                (
+                    f"Starting pipeline execution: {pipeline.name} "
+                    f"on {binary_path}"
+                )
             )
 
             start_time = time.time()
@@ -188,7 +195,10 @@ class AnalysisPipeline:
                     )
                     if blocked_dependencies:
                         error_message = (
-                            "Skipped because dependencies did not complete successfully: "
+                            (
+                                "Skipped because dependencies did not "
+                                "complete successfully: "
+                            )
                             + ", ".join(blocked_dependencies)
                         )
                         self.logger.warning(
@@ -211,7 +221,9 @@ class AnalysisPipeline:
                         "Executing %d ready stage(s) concurrently: %s"
                         % (
                             len(executable_stages),
-                            ", ".join(stage.name for stage in executable_stages),
+                            ", ".join(
+                                stage.name for stage in executable_stages
+                            ),
                         )
                     )
                     stage_results = await asyncio.gather(
@@ -222,10 +234,16 @@ class AnalysisPipeline:
                         return_exceptions=True,
                     )
 
-                    for stage, stage_result in zip(executable_stages, stage_results):
+                    for stage, stage_result in zip(
+                        executable_stages, stage_results
+                    ):
                         if isinstance(stage_result, Exception):
                             self.logger.error(
-                                "Stage %s raised an unexpected exception but the pipeline will continue: %s"
+                                (
+                                    "Stage %s raised an unexpected "
+                                    "exception but the pipeline will "
+                                    "continue: %s"
+                                )
                                 % (stage.name, stage_result)
                             )
                             stage_results_by_name[stage.name] = StageResult(
@@ -252,7 +270,9 @@ class AnalysisPipeline:
                 if result.status == StageStatus.COMPLETED
             )
             failure_count = sum(
-                1 for result in stage_results if result.status == StageStatus.FAILED
+                1
+                for result in stage_results
+                if result.status == StageStatus.FAILED
             )
 
             total_execution_time = time.time() - start_time
@@ -280,7 +300,10 @@ class AnalysisPipeline:
             )
 
             self.logger.info(
-                f"Completed pipeline execution: {pipeline.name} in {total_execution_time:.2f} seconds"
+                (
+                    f"Completed pipeline execution: {pipeline.name} in "
+                    f"{total_execution_time:.2f} seconds"
+                )
             )
             return result
 
@@ -340,11 +363,14 @@ class AnalysisPipeline:
         pending_stages: Dict[str, PipelineStage],
         stage_results: Dict[str, StageResult],
     ) -> List[PipelineStage]:
-        """Return stages whose dependencies have all reached a terminal state."""
+        """Return stages whose dependencies have reached a terminal state."""
         return [
             stage
             for stage in pending_stages.values()
-            if all(dependency in stage_results for dependency in stage.dependencies)
+            if all(
+                dependency in stage_results
+                for dependency in stage.dependencies
+            )
         ]
 
     def _get_blocked_dependencies(
@@ -367,7 +393,10 @@ class AnalysisPipeline:
         """Fail remaining stages when the DAG can no longer make progress."""
         unresolved_stage_names = ", ".join(pending_stages.keys())
         self.logger.error(
-            "Pipeline DAG stalled because remaining stages could not be resolved: %s"
+            (
+                "Pipeline DAG stalled because remaining stages could not "
+                "be resolved: %s"
+            )
             % unresolved_stage_names
         )
 
@@ -377,10 +406,13 @@ class AnalysisPipeline:
                 for dependency in stage.dependencies
                 if dependency not in stage_results
             ]
-            error_message = "Unresolved dependencies or circular dependency detected"
+            error_message = (
+                "Unresolved dependencies or circular dependency detected"
+            )
             if missing_dependencies:
                 error_message = (
-                    f"{error_message}: missing {', '.join(missing_dependencies)}"
+                    f"{error_message}: missing "
+                    f"{', '.join(missing_dependencies)}"
                 )
 
             stage_results[stage_name] = StageResult(
@@ -417,7 +449,10 @@ class AnalysisPipeline:
             pipeline = Pipeline(
                 name=pipeline_data["name"],
                 description=pipeline_data["description"],
-                stages=[PipelineStage(**stage) for stage in pipeline_data["stages"]],
+                stages=[
+                    PipelineStage(**stage)
+                    for stage in pipeline_data["stages"]
+                ],
                 created=pipeline_data["created"],
                 version=pipeline_data.get("version", "1.0"),
             )
@@ -437,7 +472,9 @@ class AnalysisPipeline:
         """List available pipelines"""
         return list(self.pipelines.keys())
 
-    def _execute_stage(self, stage: PipelineStage, binary_path: str) -> StageResult:
+    def _execute_stage(
+        self, stage: PipelineStage, binary_path: str
+    ) -> StageResult:
         """Execute a single pipeline stage synchronously."""
         return self._run_coroutine_sync(
             lambda: self._execute_stage_async(stage, binary_path)
@@ -446,7 +483,7 @@ class AnalysisPipeline:
     async def _execute_stage_async(
         self, stage: PipelineStage, binary_path: str
     ) -> StageResult:
-        """Execute a single pipeline stage asynchronously with retry support."""
+        """Execute one pipeline stage asynchronously with retry support."""
         try:
             self.logger.info(f"Executing stage: {stage.name}")
 
@@ -551,7 +588,9 @@ class AnalysisPipeline:
         """Execute static analysis stage"""
         try:
             # Import analyzers
-            from ..analyzers.business_logic_extractor import BusinessLogicExtractor
+            from ..analyzers.business_logic_extractor import (
+                BusinessLogicExtractor,
+            )
             from ..analyzers.dotnet_analyzer import DotNetAnalyzer
 
             results = {}
@@ -565,8 +604,10 @@ class AnalysisPipeline:
             # Business logic analysis
             if stage.config.get("business_logic_analysis", True):
                 business_extractor = BusinessLogicExtractor()
-                business_result = business_extractor.analyze_application_domain(
-                    binary_path
+                business_result = (
+                    business_extractor.analyze_application_domain(
+                        binary_path
+                    )
                 )
                 results["business_logic"] = asdict(business_result)
 
@@ -590,7 +631,9 @@ class AnalysisPipeline:
             # Resource extraction
             if stage.config.get("resource_extraction", True):
                 resource_extractor = PEResourceExtractor()
-                resources = resource_extractor.extract_all_resources(binary_path)
+                resources = resource_extractor.extract_all_resources(
+                    binary_path
+                )
                 results["resources"] = asdict(resources)
 
             # Import analysis
@@ -644,7 +687,10 @@ class AnalysisPipeline:
         try:
             # This would implement malware analysis
             # For now, return placeholder
-            return {"malware_analysis": "Not implemented yet", "confidence": 0.0}
+            return {
+                "malware_analysis": "Not implemented yet",
+                "confidence": 0.0,
+            }
 
         except Exception as e:
             self.logger.error(f"Malware analysis failed: {e}")
@@ -719,7 +765,10 @@ class AnalysisPipeline:
                         name="pe_analysis",
                         stage_type=StageType.PE_ANALYSIS,
                         tool="reveng",
-                        config={"resource_extraction": True, "import_analysis": True},
+                        config={
+                            "resource_extraction": True,
+                            "import_analysis": True,
+                        },
                         dependencies=["static_analysis"],
                         timeout=300,
                     ),
@@ -727,7 +776,10 @@ class AnalysisPipeline:
                         name="hex_analysis",
                         stage_type=StageType.HEX_ANALYSIS,
                         tool="reveng",
-                        config={"entropy_analysis": True, "pattern_matching": True},
+                        config={
+                            "entropy_analysis": True,
+                            "pattern_matching": True,
+                        },
                         dependencies=["pe_analysis"],
                         timeout=300,
                     ),
@@ -743,7 +795,10 @@ class AnalysisPipeline:
                         name="malware_analysis",
                         stage_type=StageType.MALWARE_ANALYSIS,
                         tool="reveng",
-                        config={"packer_detection": True, "behavioral_analysis": True},
+                        config={
+                            "packer_detection": True,
+                            "behavioral_analysis": True,
+                        },
                         dependencies=["ghidra_analysis"],
                         timeout=300,
                     ),
@@ -768,7 +823,10 @@ class AnalysisPipeline:
                         name="dotnet_analysis",
                         stage_type=StageType.STATIC_ANALYSIS,
                         tool="reveng",
-                        config={"dotnet_analysis": True, "gui_detection": True},
+                        config={
+                            "dotnet_analysis": True,
+                            "gui_detection": True,
+                        },
                         dependencies=[],
                         timeout=300,
                     ),
@@ -776,7 +834,10 @@ class AnalysisPipeline:
                         name="pe_resources",
                         stage_type=StageType.PE_ANALYSIS,
                         tool="reveng",
-                        config={"resource_extraction": True, "icon_extraction": True},
+                        config={
+                            "resource_extraction": True,
+                            "icon_extraction": True,
+                        },
                         dependencies=["dotnet_analysis"],
                         timeout=300,
                     ),
@@ -823,7 +884,10 @@ class AnalysisPipeline:
                         name="pe_analysis",
                         stage_type=StageType.PE_ANALYSIS,
                         tool="reveng",
-                        config={"import_analysis": True, "resource_extraction": True},
+                        config={
+                            "import_analysis": True,
+                            "resource_extraction": True,
+                        },
                         dependencies=["static_analysis"],
                         timeout=120,
                     ),
@@ -831,7 +895,10 @@ class AnalysisPipeline:
                         name="hex_analysis",
                         stage_type=StageType.HEX_ANALYSIS,
                         tool="reveng",
-                        config={"entropy_analysis": True, "string_extraction": True},
+                        config={
+                            "entropy_analysis": True,
+                            "string_extraction": True,
+                        },
                         dependencies=["pe_analysis"],
                         timeout=120,
                     ),
@@ -895,7 +962,10 @@ class AnalysisPipeline:
                         name="ml_analysis",
                         stage_type=StageType.ML_ANALYSIS,
                         tool="reveng",
-                        config={"code_reconstruction": True, "anomaly_detection": True},
+                        config={
+                            "code_reconstruction": True,
+                            "anomaly_detection": True,
+                        },
                         dependencies=["ghidra_analysis"],
                         timeout=600,
                     ),
@@ -923,7 +993,9 @@ class AnalysisPipeline:
                 "deep_analysis": deep_pipeline,
             }
 
-            self.logger.info(f"Loaded {len(self.pipelines)} prebuilt pipelines")
+            self.logger.info(
+                f"Loaded {len(self.pipelines)} prebuilt pipelines"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to load prebuilt pipelines: {e}")
