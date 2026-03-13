@@ -14,6 +14,7 @@ import asyncio
 import json
 import logging
 import os
+import shutil
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -43,6 +44,7 @@ class BinaryRecompilationEngine:
         gemini_engine=None,
         work_dir: Optional[Path] = None,
         cfg_preprocessor: Optional[AngrCFGPreprocessor] = None,
+        max_compilation_retries: int = 2,
     ):
         """
         Initialize recompilation engine.
@@ -55,10 +57,14 @@ class BinaryRecompilationEngine:
         self.ghidra = ghidra_engine
         self.gemini = gemini_engine
         self.cfg_preprocessor = cfg_preprocessor or AngrCFGPreprocessor()
+        self.max_compilation_retries = max(0, max_compilation_retries)
+        self.compiler_cache = self._detect_compiler_cache()
         self.work_dir = work_dir or Path(tempfile.mkdtemp(prefix="reveng_recomp_"))
         self.work_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Recompilation engine initialized (work dir: {self.work_dir})")
+        if self.compiler_cache:
+            logger.info("Compiler cache enabled: %s", self.compiler_cache)
 
     async def full_reconstruction_pipeline(
         self, binary_path: str, output_dir: Optional[Path] = None
@@ -96,6 +102,7 @@ class BinaryRecompilationEngine:
             "cfg_summary": {},
             "source_files": {},
             "compiled_binaries": {},
+            "compilation_reports": {},
             "validation_results": {},
             "vulnerabilities": [],
             "exploits": [],
@@ -120,27 +127,42 @@ class BinaryRecompilationEngine:
 
             # Phase 3: Compilation
             logger.info("\n[Phase 3/6] Source Code Compilation")
-            compiled_binaries = await self._phase3_compilation(
-                reconstructed_code, output_dir
+            compilation_result = await self._phase3_compilation(
+                reconstructed_code, output_dir, ghidra_data
             )
-            results["compiled_binaries"] = compiled_binaries
+            results["source_files"] = compilation_result.get(
+                "source_files", reconstructed_code
+            )
+            results["compiled_binaries"] = compilation_result["compiled_binaries"]
+            results["compilation_reports"] = compilation_result["reports"]
+
+            if not results["compiled_binaries"]:
+                logger.error("❌ Compilation failed for all configured compilers")
+                results["status"] = "failed"
+                results["error"] = "Compilation failed for all configured compilers"
+                self._save_results(results, output_dir)
+                return results
 
             # Phase 4: Behavioral Validation
             logger.info("\n[Phase 4/6] Behavioral Validation")
             validation = await self._phase4_validation(
-                binary_path, compiled_binaries, ghidra_data
+                binary_path, results["compiled_binaries"], ghidra_data
             )
             results["validation_results"] = validation
 
             # Phase 5: Security Analysis
             logger.info("\n[Phase 5/6] Security Vulnerability Analysis")
-            vulnerabilities = await self._phase5_security_analysis(reconstructed_code)
+            vulnerabilities = await self._phase5_security_analysis(
+                results["source_files"]
+            )
             results["vulnerabilities"] = vulnerabilities
 
             # Phase 6: Exploit Generation
             logger.info("\n[Phase 6/6] Proof-of-Concept Exploit Generation")
             exploits = await self._phase6_exploit_generation(
-                vulnerabilities, reconstructed_code, compiled_binaries
+                vulnerabilities,
+                results["source_files"],
+                results["compiled_binaries"],
             )
             results["exploits"] = exploits
 
@@ -257,33 +279,323 @@ class BinaryRecompilationEngine:
         return source_files
 
     async def _phase3_compilation(
-        self, source_files: Dict[str, str], output_dir: Path
-    ) -> Dict[str, str]:
+        self,
+        source_files: Dict[str, str],
+        output_dir: Path,
+        ghidra_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """Phase 3: Compile source code to binary."""
-        compiled_binaries = {}
+        compiled_binaries: Dict[str, str] = {}
+        compilation_reports: Dict[str, Dict[str, Any]] = {}
 
         # Compile C code
         if "c" in source_files:
-            try:
-                logger.info("  Compiling C code with GCC...")
-                c_binary = await self._compile_c(source_files["c"], output_dir)
-                compiled_binaries["c_gcc"] = c_binary
-                logger.info(f"  ✅ GCC binary: {c_binary}")
-            except CompilationError as e:
-                logger.warning(f"  ⚠️ GCC compilation failed: {e}")
-
-            # Try with Clang
-            try:
-                logger.info("  Compiling C code with Clang...")
-                clang_binary = await self._compile_c_clang(
-                    source_files["c"], output_dir
+            current_source = Path(source_files["c"])
+            for compiler_name, target_key, label in (
+                ("gcc", "c_gcc", "GCC"),
+                ("clang", "c_clang", "Clang"),
+            ):
+                logger.info("  Compiling C code with %s...", label)
+                report = await self._compile_with_feedback_loop(
+                    compiler_name,
+                    current_source,
+                    output_dir,
+                    ghidra_data or {},
                 )
-                compiled_binaries["c_clang"] = clang_binary
-                logger.info(f"  ✅ Clang binary: {clang_binary}")
-            except CompilationError as e:
-                logger.warning(f"  ⚠️ Clang compilation failed: {e}")
+                compilation_reports[target_key] = report
+                current_source = Path(report["final_source_file"])
+                source_files["c"] = str(current_source)
 
-        return compiled_binaries
+                if report["status"] == "success" and report.get("binary_path"):
+                    compiled_binaries[target_key] = report["binary_path"]
+                    logger.info("  ✅ %s binary: %s", label, report["binary_path"])
+                else:
+                    logger.warning(
+                        "  ⚠️ %s compilation failed after %d attempt(s): %s",
+                        label,
+                        report["total_attempts"],
+                        report.get("failure_reason", "compilation_failed"),
+                    )
+
+        return {
+            "compiled_binaries": compiled_binaries,
+            "reports": compilation_reports,
+            "source_files": source_files,
+        }
+
+    def _detect_compiler_cache(self) -> Optional[str]:
+        """Detect a compiler cache wrapper if one is available."""
+        for cache_tool in ("ccache", "sccache"):
+            if shutil.which(cache_tool):
+                return cache_tool
+        return None
+
+    def _build_compile_command(
+        self, compiler_name: str, source_file: Path, output_binary: Path
+    ) -> List[str]:
+        """Build the compile command for a single C source file."""
+        cmd = [
+            compiler_name,
+            "-o",
+            str(output_binary),
+            str(source_file),
+            "-w",
+            "-O0",
+        ]
+        if self.compiler_cache:
+            return [self.compiler_cache, *cmd]
+        return cmd
+
+    async def _run_compiler_attempt(
+        self, compiler_name: str, source_file: Path, output_binary: Path
+    ) -> Dict[str, Any]:
+        """Run a single compiler attempt and capture stdout/stderr."""
+        cmd = self._build_compile_command(compiler_name, source_file, output_binary)
+
+        try:
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await process.communicate()
+        except FileNotFoundError:
+            return {
+                "success": False,
+                "stdout": "",
+                "stderr": f"{compiler_name.upper()} not found in PATH",
+                "returncode": None,
+                "command": cmd,
+                "non_retryable": True,
+            }
+
+        return {
+            "success": process.returncode == 0,
+            "stdout": stdout.decode("utf-8", errors="replace"),
+            "stderr": stderr.decode("utf-8", errors="replace"),
+            "returncode": process.returncode,
+            "command": cmd,
+            "non_retryable": False,
+        }
+
+    async def _compile_with_feedback_loop(
+        self,
+        compiler_name: str,
+        source_file: Path,
+        output_dir: Path,
+        ghidra_data: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Compile C code, feeding compiler stderr back into the LLM on failure."""
+        output_binary = output_dir / f"reconstructed_{compiler_name}"
+        if os.name == "nt":
+            output_binary = output_binary.with_suffix(".exe")
+
+        current_source = Path(source_file)
+        attempts: List[Dict[str, Any]] = []
+
+        for attempt_index in range(self.max_compilation_retries + 1):
+            compile_result = await self._run_compiler_attempt(
+                compiler_name, current_source, output_binary
+            )
+            attempt_record = {
+                "attempt": attempt_index + 1,
+                "command": compile_result["command"],
+                "returncode": compile_result["returncode"],
+                "stdout": compile_result["stdout"],
+                "stderr": compile_result["stderr"],
+                "source_file": str(current_source),
+                "feedback_applied": False,
+            }
+            attempts.append(attempt_record)
+
+            if compile_result["success"]:
+                return {
+                    "compiler": compiler_name,
+                    "status": "success",
+                    "binary_path": str(output_binary),
+                    "attempts": attempts,
+                    "total_attempts": len(attempts),
+                    "max_retries": self.max_compilation_retries,
+                    "max_retries_exceeded": False,
+                    "failure_reason": None,
+                    "final_source_file": str(current_source),
+                    "cache_backend": self.compiler_cache,
+                }
+
+            if compile_result.get("non_retryable"):
+                return {
+                    "compiler": compiler_name,
+                    "status": "failed",
+                    "binary_path": None,
+                    "attempts": attempts,
+                    "total_attempts": len(attempts),
+                    "max_retries": self.max_compilation_retries,
+                    "max_retries_exceeded": False,
+                    "failure_reason": "compiler_unavailable",
+                    "final_source_file": str(current_source),
+                    "cache_backend": self.compiler_cache,
+                }
+
+            if attempt_index >= self.max_compilation_retries:
+                return {
+                    "compiler": compiler_name,
+                    "status": "failed",
+                    "binary_path": None,
+                    "attempts": attempts,
+                    "total_attempts": len(attempts),
+                    "max_retries": self.max_compilation_retries,
+                    "max_retries_exceeded": True,
+                    "failure_reason": "max_retries_exceeded",
+                    "final_source_file": str(current_source),
+                    "cache_backend": self.compiler_cache,
+                }
+
+            source_code = current_source.read_text(encoding="utf-8")
+            prompt = self._create_compilation_feedback_prompt(
+                source_code,
+                compiler_name,
+                compile_result["stderr"],
+                attempt_index + 1,
+                attempts,
+                ghidra_data or {},
+            )
+            attempt_record["feedback_prompt_excerpt"] = prompt[:500]
+
+            repaired_source = await self._repair_source_from_compiler_error(prompt)
+            if not repaired_source:
+                return {
+                    "compiler": compiler_name,
+                    "status": "failed",
+                    "binary_path": None,
+                    "attempts": attempts,
+                    "total_attempts": len(attempts),
+                    "max_retries": self.max_compilation_retries,
+                    "max_retries_exceeded": False,
+                    "failure_reason": "llm_feedback_unavailable",
+                    "final_source_file": str(current_source),
+                    "cache_backend": self.compiler_cache,
+                }
+
+            current_source.write_text(repaired_source, encoding="utf-8")
+            attempt_record["feedback_applied"] = True
+
+        return {
+            "compiler": compiler_name,
+            "status": "failed",
+            "binary_path": None,
+            "attempts": attempts,
+            "total_attempts": len(attempts),
+            "max_retries": self.max_compilation_retries,
+            "max_retries_exceeded": True,
+            "failure_reason": "max_retries_exceeded",
+            "final_source_file": str(current_source),
+            "cache_backend": self.compiler_cache,
+        }
+
+    def _create_compilation_feedback_prompt(
+        self,
+        source_code: str,
+        compiler_name: str,
+        compiler_stderr: str,
+        attempt_number: int,
+        attempt_history: List[Dict[str, Any]],
+        ghidra_data: Optional[Dict[str, Any]],
+    ) -> str:
+        """Build an LLM prompt that asks for a compilable C source revision."""
+        context_sections: List[str] = []
+        if ghidra_data:
+            imports = ghidra_data.get("imports", [])[:20]
+            strings = ghidra_data.get("strings", [])[:20]
+            if imports:
+                context_sections.append(
+                    "Imported functions: " + ", ".join(str(item) for item in imports)
+                )
+            if strings:
+                context_sections.append(
+                    "Observed strings: " + ", ".join(str(item) for item in strings)
+                )
+            if ghidra_data.get("cfg_context_text"):
+                context_sections.append(
+                    "CFG summary:\n" + str(ghidra_data["cfg_context_text"])
+                )
+
+        history_lines = []
+        for previous_attempt in attempt_history[:-1][-2:]:
+            stderr = previous_attempt.get("stderr", "").strip() or "<no stderr>"
+            history_lines.append(
+                f"Attempt {previous_attempt['attempt']} stderr:\n{stderr[:1200]}"
+            )
+
+        history_text = (
+            "\n\nPrevious failed attempts:\n" + "\n\n".join(history_lines)
+            if history_lines
+            else ""
+        )
+        context_text = (
+            "\n\nBinary analysis context:\n" + "\n\n".join(context_sections)
+            if context_sections
+            else ""
+        )
+
+        return f"""You are repairing reconstructed C source code so it compiles successfully.
+
+Compiler: {compiler_name}
+Retry attempt: {attempt_number} of {self.max_compilation_retries}
+
+Current source:
+```c
+{source_code}
+```
+
+Compiler stderr:
+```text
+{compiler_stderr}
+```
+{history_text}{context_text}
+
+Instructions:
+1. Fix the compilation errors reported above.
+2. Preserve the reconstructed program behavior and structure.
+3. Return the full corrected C source file.
+4. Output only the corrected code in a ```c fenced block (or raw C with no explanation).
+"""
+
+    async def _repair_source_from_compiler_error(self, prompt: str) -> Optional[str]:
+        """Request a corrected source file from the active LLM."""
+        if not self.gemini or not self.gemini.is_available():
+            logger.warning("Gemini not available for compilation feedback loop")
+            return None
+
+        try:
+            response = await self.gemini._generate_async(prompt)
+        except Exception as exc:
+            logger.error("Compilation feedback loop failed: %s", exc)
+            return None
+
+        extracted_code = self._extract_code_block(response)
+        if extracted_code and extracted_code.strip():
+            return extracted_code.rstrip() + "\n"
+
+        stripped_response = response.strip()
+        if not stripped_response:
+            return None
+        return stripped_response + "\n"
+
+    def _extract_code_block(self, response: str) -> str:
+        """Extract the first fenced code block from an LLM response."""
+        if "```" not in response:
+            return response.strip()
+
+        first_fence = response.find("```")
+        line_break = response.find("\n", first_fence)
+        if line_break == -1:
+            return response.strip()
+
+        closing_fence = response.find("```", line_break + 1)
+        if closing_fence == -1:
+            return response[line_break + 1 :].strip()
+
+        return response[line_break + 1 : closing_fence].strip()
 
     async def _phase4_validation(
         self,
@@ -473,28 +785,12 @@ Output only the Python code, no explanations.
         if os.name == "nt":
             output_binary = output_binary.with_suffix(".exe")
 
-        cmd = [
-            "gcc",
-            "-o",
-            str(output_binary),
-            source_file,
-            "-w",  # Suppress warnings
-            "-O0",  # No optimization
-        ]
-
-        try:
-            result = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-            )
-            stdout, stderr = await result.communicate()
-
-            if result.returncode != 0:
-                raise CompilationError(f"GCC failed: {stderr.decode()}")
-
+        result = await self._run_compiler_attempt(
+            "gcc", Path(source_file), output_binary
+        )
+        if result["success"]:
             return str(output_binary)
-
-        except FileNotFoundError:
-            raise CompilationError("GCC not found in PATH")
+        raise CompilationError(f"GCC failed: {result['stderr']}")
 
     async def _compile_c_clang(self, source_file: str, output_dir: Path) -> str:
         """Compile C code with Clang."""
@@ -503,28 +799,12 @@ Output only the Python code, no explanations.
         if os.name == "nt":
             output_binary = output_binary.with_suffix(".exe")
 
-        cmd = [
-            "clang",
-            "-o",
-            str(output_binary),
-            source_file,
-            "-w",  # Suppress warnings
-            "-O0",  # No optimization
-        ]
-
-        try:
-            result = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
-            )
-            stdout, stderr = await result.communicate()
-
-            if result.returncode != 0:
-                raise CompilationError(f"Clang failed: {stderr.decode()}")
-
+        result = await self._run_compiler_attempt(
+            "clang", Path(source_file), output_binary
+        )
+        if result["success"]:
             return str(output_binary)
-
-        except FileNotFoundError:
-            raise CompilationError("Clang not found in PATH")
+        raise CompilationError(f"Clang failed: {result['stderr']}")
 
     def _static_vulnerability_scan(self, code: str) -> List[Dict[str, Any]]:
         """Perform static pattern-based vulnerability detection."""
@@ -592,6 +872,7 @@ Output only the Python code, no explanations.
             "cfg_summary": results.get("cfg_summary", {}),
             "source_files": results["source_files"],
             "compiled_binaries": results["compiled_binaries"],
+            "compilation_reports": results.get("compilation_reports", {}),
             "validation_results": results["validation_results"],
             "vulnerabilities": results["vulnerabilities"],
             "exploits": results["exploits"],
