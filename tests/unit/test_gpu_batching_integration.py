@@ -131,3 +131,23 @@ def test_memory_forensics_dispatch_history_is_capped():
     assert [
         dispatch.results for dispatch in accelerator.memory_forensics_dispatch_history
     ] == [["processed:region-2"], ["processed:region-3"]]
+
+
+def test_gpu_accelerator_defaults_to_cpu_without_device_metadata(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
+    monkeypatch.setattr(GPUAccelerator, "_initialize", lambda self: None)
+
+    accelerator = GPUAccelerator(device="cpu", enable_mixed_precision=False)
+
+    assert accelerator.is_available() is False
+    assert accelerator._estimate_batch_size() == 1
+    assert accelerator.get_memory_stats() == {}
+
+    accelerator.clear_memory()
+    accelerator.print_device_info()
+
+    captured = capsys.readouterr()
+    assert "Device type:    cpu" in captured.out
+    assert "Device name:    CPU" in captured.out
