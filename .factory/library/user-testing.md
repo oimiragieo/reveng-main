@@ -43,6 +43,40 @@ Machine: 128 GB RAM, 8 cores / 16 logical (AMD Ryzen 7 5800XT)
 | Ollama LLM inference | 2 | 32B model uses ~20GB VRAM/RAM |
 | Docker sandbox | 3 | Each container lightweight |
 
+## Flow Validator Guidance: Python Direct Invocation
+
+**Surface**: Python scripts/imports run directly via `python -c "..."` or `python -m pytest ...`
+**Testing tool**: Direct subprocess execution (no browser or TUI needed)
+
+**Isolation rules**:
+- Each validator runs independent Python commands; no shared state
+- No file mutations that could interfere with other validators
+- Use `sys.path.insert(0, 'src')` if needed to import `reveng` modules
+- Always use absolute paths for binary references (e.g., `test_samples/sample.exe`)
+- On Windows, always set `PYTHONIOENCODING=utf8` environment variable
+
+**Boundaries**:
+- Do NOT start/stop the Ghidra HTTP server (managed by the parent validator)
+- Do NOT modify any source files
+- Write evidence files only to the assigned evidence directory
+
+## Flow Validator Guidance: Ghidra HTTP API
+
+**Surface**: HTTP API at `http://localhost:13370` served by the Ghidra HTTP server
+**Testing tool**: `curl` or Python `requests` library
+
+**Isolation rules**:
+- The Ghidra HTTP server is shared; validators may send requests in parallel
+- Each request is independent (no session state on the server)
+- Ghidra headless analysis takes 30-120 seconds — set timeouts to 180s minimum
+- Do NOT call `/shutdown` endpoint during testing
+
+**Boundaries**:
+- Server is already running on port 13370; do not restart it
+- Test binary: `test_samples/sample.exe` (relative to repo root)
+- Mock mode: controlled via `GHIDRA_MOCK=true` env var or mock_mode parameter
+- Write evidence files only to the assigned evidence directory
+
 ## Known Gotchas
 
 - Ghidra headless takes 30-120 seconds to analyze a binary — tests must have generous timeouts
