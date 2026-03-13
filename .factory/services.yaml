@@ -1,0 +1,12 @@
+commands:
+  install: pip install -r requirements.txt
+  test: pytest tests/ -n 4
+  lint: flake8 src/reveng/
+
+services:
+  ghidra:
+    start: cd external/ghidra-server && python ghidra_http_server.py
+    stop: taskkill /F /IM python.exe /T  # Windows specific, or gracefully shut down if possible
+    healthcheck: curl -sf http://localhost:5000/ || exit 0
+    port: 5000
+    depends_on: []
