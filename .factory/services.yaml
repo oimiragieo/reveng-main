@@ -1,7 +1,8 @@
 commands:
   install: pip install -r requirements.txt
   test: pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc
-  lint: flake8 src/reveng/
+  lint: flake8 src/reveng/ --extend-ignore=E501,F811,E203
+  typecheck: python -m mypy src/reveng/ --ignore-missing-imports
 
 services:
   ghidra:
