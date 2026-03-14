@@ -1,0 +1,45 @@
+{
+  "featureId": "delete-claude-md-files",
+  "milestone": "junk-removal",
+  "reviewedAt": "2026-03-14T23:24:00.000Z",
+  "commitId": "edf8c3cef719bd54392ea029393775766457ac7b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "All 113 claude.md files were correctly identified and removed via `git rm`. The commit contains exclusively claude.md deletions — no other files were modified, added, or accidentally removed. The root-level claude.md (the 65KB index file) was included in the removal. AGENTS.md and all non-claude.md markdown files were preserved. The worker ran the test suite before and after deletion, confirming 306 passed / 0 failed in both cases. An import smoke test verified no ImportError was introduced. The working tree was clean after commit.",
+    "issues": [
+      {
+        "file": null,
+        "line": null,
+        "severity": "non_blocking",
+        "description": "The expected test baseline in the feature spec says '≥ 307' passing tests, but the actual suite reports 306 passed. The worker correctly flagged this as a pre-existing discrepancy (not caused by the claude.md deletion). The validation contract baseline count may need updating."
+      }
+    ]
+  },
+  "issues": [
+    {
+      "severity": "non_blocking",
+      "description": "Minor baseline discrepancy: feature expectedBehavior says '≥ 307, 0 failures' but the actual suite yields 306 passed. This is pre-existing and not caused by this feature. The validation baseline should be reconciled."
+    }
+  ],
+  "sharedStateObservations": [
+    {
+      "target": "skills/codebase-cleaner",
+      "description": "The skill's procedure step 1 references `rg` for filtering git ls-files output, but in the Windows Execute shell environment, `rg` was not available on PATH. The worker correctly used PowerShell `Select-String` as a fallback. The skill could document platform-specific alternatives (e.g., Select-String on Windows) or note that `rg` availability depends on shell context.",
+      "evidence": "Transcript shows the worker's first attempt with `rg` failed, then switched to `Select-String -Pattern '(^|/)claude\\.md$'`. Handoff skillFeedback.deviations confirms this."
+    },
+    {
+      "target": "skills/codebase-cleaner",
+      "description": "The skill's example handoff shows '307 passed' but the actual test suite baseline is 306 passed. The example should be updated to match reality or use a placeholder like 'N passed'.",
+      "evidence": "SKILL.md example handoff section shows '307 passed, 0 failed' but actual runs consistently show 306 passed."
+    },
+    {
+      "target": "skills/codebase-cleaner",
+      "description": "Worker skipped `.factory/init.sh` initialization for this deletion-only feature. The skill procedure (inherited from worker-base) treats init as mandatory, but for pure-deletion tasks the existing environment was sufficient. The skill could note that init is optional when no dependencies are needed for the cleanup work.",
+      "evidence": "Handoff skillFeedback.deviations: 'Skipped running .factory/init.sh... This feature only removed tracked markdown files, and the existing environment already had the required dependencies.'"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. All 113 claude.md files were successfully removed via git rm in commit edf8c3ce. The commit is clean — only claude.md deletions, no collateral changes. Post-deletion test suite passed with 0 failures (306 passed, 94 skipped). No AGENTS.md or non-claude.md files were affected. VAL-JUNK-001 is satisfied: `git ls-files | rg 'claude\\.md'` returns 0 results. One non-blocking observation: the expected baseline count (307) differs from actual (306), which is pre-existing."
+}
