@@ -31,6 +31,8 @@ import asyncio
 import hashlib
 import json
 import logging
+import re
+import shutil
 import time
 from dataclasses import asdict
 from datetime import datetime
@@ -101,6 +103,94 @@ class RateLimiter:
             self.tokens -= 1.0
             return True
         return False
+
+
+class OllamaRepairEngine:
+    """Minimal LLM adapter that matches the recompilation engine's expectations."""
+
+    def __init__(
+        self,
+        model: str = "qwen2.5-coder:32b-instruct",
+        host: str = "http://localhost:11434",
+        timeout: int = 90,
+        temperature: float = 0.1,
+    ):
+        self.model = model
+        self.host = host
+        self.timeout = timeout
+        self.temperature = temperature
+
+        try:
+            import ollama as ollama_module
+        except ImportError:
+            self.ollama = None
+            self.client = None
+        else:
+            self.ollama = ollama_module
+            self.client = (
+                ollama_module.Client(host=host)
+                if hasattr(ollama_module, "Client")
+                else None
+            )
+
+    def is_available(self) -> bool:
+        """Return True when the Ollama Python package is available."""
+        return self.ollama is not None
+
+    async def _generate_async(self, prompt: str) -> str:
+        """Generate text using the configured Ollama model."""
+        if not self.is_available():
+            raise RuntimeError("ollama Python package is not available")
+
+        response = await asyncio.wait_for(
+            asyncio.to_thread(self._chat, prompt),
+            timeout=self.timeout,
+        )
+        content = self._extract_message_content(response)
+        if not content.strip():
+            raise RuntimeError("Ollama returned an empty response")
+        return content
+
+    def _chat(self, prompt: str) -> Any:
+        """Send a single prompt to Ollama."""
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an expert reverse engineer repairing C code so it becomes "
+                    "valid, compilable, and faithful to the original binary structure."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ]
+        options = {"temperature": self.temperature}
+
+        if self.client is not None:
+            return self.client.chat(model=self.model, messages=messages, options=options)
+
+        ollama_module = self.ollama
+        if ollama_module is None:
+            raise RuntimeError("ollama Python package is not available")
+
+        return ollama_module.chat(model=self.model, messages=messages, options=options)
+
+    def _extract_message_content(self, response: Any) -> str:
+        """Extract a text message from Ollama's response object."""
+        if isinstance(response, dict):
+            message = response.get("message", {})
+            if isinstance(message, dict):
+                return str(message.get("content", ""))
+            return str(response.get("response", ""))
+
+        message = getattr(response, "message", None)
+        if isinstance(message, dict):
+            return str(message.get("content", ""))
+
+        content = getattr(message, "content", None)
+        if content is not None:
+            return str(content)
+
+        return str(getattr(response, "response", ""))
 
 
 class REVENGEnterpriseServer(MCPServer):
@@ -224,23 +314,24 @@ class REVENGEnterpriseServer(MCPServer):
         self.register_tool(
             MCPTool(
                 name="recompile_binary",
-                description="Recompile decompiled source back to binary (95%+ success rate)",
+                description="Recompile a binary using decompiled or provided source code with Ollama-assisted repair",
                 input_schema={
                     "type": "object",
                     "properties": {
-                        "source_path": {"type": "string", "description": "Path to source code"},
-                        "output_path": {"type": "string", "description": "Output binary path"},
-                        "optimization_level": {
+                        "binary_path": {
                             "type": "string",
-                            "enum": ["O0", "O1", "O2", "O3", "Os"],
-                            "description": "Compiler optimization level",
+                            "description": "Path to the original binary to reconstruct",
                         },
-                        "use_llvm_optimization": {
-                            "type": "boolean",
-                            "description": "Apply LLVM optimization pipeline",
+                        "source_code": {
+                            "type": "string",
+                            "description": "Optional C source override to compile instead of re-decompiling",
+                        },
+                        "output_path": {
+                            "type": "string",
+                            "description": "Optional output path for the rebuilt binary",
                         },
                     },
-                    "required": ["source_path", "output_path"],
+                    "required": ["binary_path"],
                 },
                 handler=self.recompile_binary,
             )
@@ -691,12 +782,14 @@ class REVENGEnterpriseServer(MCPServer):
         try:
             path = self._resolve_binary_argument(args, field_name="binary_path")
             output_path = args.get("output_path")
+            ghidra_timeout = self._coerce_optional_int(args.get("_ghidra_timeout"))
             # TODO: Implement AI enhancement when supported
             _use_ai = args.get("use_ai_enhancement", True)  # noqa: F841
+            ghidra_engine = self._get_ghidra_engine(timeout_override=ghidra_timeout)
 
             # Decompile with Ghidra
             loop = asyncio.get_running_loop()
-            result = await loop.run_in_executor(None, self.ghidra_engine.decompile, path)
+            result = await loop.run_in_executor(None, ghidra_engine.decompile, path)
 
             structured_result = self._build_decompile_response(path, result)
 
@@ -719,7 +812,145 @@ class REVENGEnterpriseServer(MCPServer):
 
     async def recompile_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Recompile source to binary"""
-        return {"content": [{"type": "text", "text": "Recompilation feature coming soon"}]}
+        try:
+            from reveng.ai.recompilation_engine import BinaryRecompilationEngine
+
+            binary_path = self._resolve_binary_argument(args, field_name="binary_path")
+            provided_source = args.get("source_code")
+            requested_output_path = args.get("output_path")
+            ghidra_timeout = max(180, self._coerce_optional_int(args.get("_ghidra_timeout")) or 0)
+            recompilation_ghidra = self._get_ghidra_engine(timeout_override=ghidra_timeout)
+
+            output_dir = self.cache_dir / f"recompile_{Path(binary_path).stem}_{int(time.time())}"
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            decompile_result: Optional[Dict[str, Any]] = None
+            source_text = str(provided_source or "")
+            if not source_text.strip():
+                decompile_result = await self.decompile_binary(
+                    {
+                        "binary_path": binary_path,
+                        "_ghidra_timeout": ghidra_timeout,
+                    }
+                )
+                if decompile_result.get("error"):
+                    raise RuntimeError(str(decompile_result["error"]))
+
+                source_text = self._build_recompilation_translation_unit(decompile_result)
+                if not source_text.strip():
+                    raise RuntimeError("No decompiled source was available for recompilation")
+
+            llm_backend = OllamaRepairEngine()
+            if not llm_backend.is_available():
+                raise RuntimeError("ollama Python package is not available")
+
+            engine = BinaryRecompilationEngine(
+                ghidra_engine=recompilation_ghidra,
+                gemini_engine=llm_backend,
+                work_dir=output_dir,
+                max_compilation_retries=3,
+            )
+
+            ghidra_data = await engine._phase1_decompilation(binary_path, output_dir)
+
+            if decompile_result is not None:
+                ghidra_data["functions"] = decompile_result.get("decompiled_functions", [])
+                ghidra_data["decompiled_code"] = self._build_decompiled_code_map(
+                    ghidra_data.get("functions", [])
+                )
+
+            source_file = output_dir / "reconstructed.c"
+            source_file.write_text(source_text, encoding="utf-8")
+
+            compile_report = await engine._compile_with_feedback_loop(
+                "gcc",
+                source_file,
+                output_dir,
+                ghidra_data,
+            )
+
+            if compile_report.get("status") == "success" and compile_report.get("binary_path"):
+                compiled_binary = self._finalize_recompiled_binary(
+                    compile_report["binary_path"], requested_output_path
+                )
+                artifact_details = self._inspect_binary_artifact(compiled_binary)
+                function_overlap = await self._calculate_function_overlap(
+                    binary_path,
+                    compiled_binary,
+                    ghidra_engine=recompilation_ghidra,
+                )
+
+                text = (
+                    "Binary recompilation complete\n"
+                    + "=" * 70
+                    + "\n\n"
+                    + f"Input: {binary_path}\n"
+                    + f"Output: {compiled_binary}\n"
+                    + f"Size: {artifact_details['size_bytes']} bytes\n"
+                    + f"Magic: {artifact_details['magic']}\n"
+                    + f"Function overlap: {function_overlap:.2f}%\n"
+                    + f"Compilation attempts: {compile_report.get('total_attempts', 0)}\n"
+                )
+
+                return {
+                    "content": [{"type": "text", "text": text}],
+                    "status_code": 200,
+                    "binary_path": binary_path,
+                    "output_path": compiled_binary,
+                    "success": True,
+                    "function_overlap": function_overlap,
+                    "binary_size": artifact_details["size_bytes"],
+                    "magic_bytes": artifact_details["magic"],
+                    "source_path": compile_report.get("final_source_file", str(source_file)),
+                    "compilation_attempts": compile_report.get("attempts", []),
+                    "model": llm_backend.model,
+                }
+
+            final_source_path = Path(str(compile_report.get("final_source_file", source_file)))
+            partial_source = (
+                final_source_path.read_text(encoding="utf-8", errors="replace")
+                if final_source_path.exists()
+                else source_text
+            )
+            compilation_errors = [
+                attempt.get("stderr", "")
+                for attempt in compile_report.get("attempts", [])
+                if str(attempt.get("stderr", "")).strip()
+            ]
+            if not compilation_errors and compile_report.get("failure_reason"):
+                compilation_errors = [str(compile_report["failure_reason"])]
+
+            text = (
+                "Binary recompilation failed\n"
+                + "=" * 70
+                + "\n\n"
+                + f"Input: {binary_path}\n"
+                + f"Compilation attempts: {compile_report.get('total_attempts', 0)}\n"
+                + f"Failure reason: {compile_report.get('failure_reason', 'compilation_failed')}\n"
+            )
+
+            return {
+                "content": [{"type": "text", "text": text}],
+                "status_code": 200,
+                "binary_path": binary_path,
+                "success": False,
+                "compilation_errors": compilation_errors,
+                "partial_source": partial_source,
+                "source_path": str(final_source_path),
+                "compilation_attempts": compile_report.get("attempts", []),
+                "failure_reason": compile_report.get("failure_reason"),
+                "model": llm_backend.model,
+            }
+
+        except Exception as e:
+            logger.exception("Error in recompile_binary")
+            return {
+                "content": [{"type": "text", "text": f"Error recompiling binary: {str(e)}"}],
+                "status_code": 500,
+                "success": False,
+                "compilation_errors": [str(e)],
+                "error": str(e),
+            }
 
     async def scan_yara(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Scan a file using YARA rules."""
@@ -1243,6 +1474,343 @@ class REVENGEnterpriseServer(MCPServer):
             "imports": list(result.get("imports", [])) if isinstance(result.get("imports"), list) else [],
             "decompiled_source": decompiled_source,
         }
+
+    def _build_decompiled_code_map(self, functions: List[Dict[str, Any]]) -> Dict[str, str]:
+        """Create an address/name keyed decompiled-code mapping from normalized functions."""
+        decompiled_code: Dict[str, str] = {}
+        for index, function in enumerate(functions):
+            if not isinstance(function, dict):
+                continue
+
+            source = str(function.get("source") or function.get("decompiled") or "").strip()
+            if not source:
+                continue
+
+            key = str(
+                function.get("entry_point")
+                or function.get("address")
+                or function.get("name")
+                or f"func_{index}"
+            )
+            decompiled_code[key] = source
+
+        return decompiled_code
+
+    def _build_recompilation_translation_unit(self, decompile_result: Dict[str, Any]) -> str:
+        """Combine decompiled functions into a compilable C translation unit."""
+        functions = decompile_result.get("decompiled_functions", [])
+        if not isinstance(functions, list):
+            functions = []
+        imports = decompile_result.get("imports", [])
+        if not isinstance(imports, list):
+            imports = []
+
+        imported_names = {
+            self._normalize_function_name(
+                import_name.get("name") if isinstance(import_name, dict) else import_name
+            )
+            for import_name in imports
+            if str(import_name).strip()
+        }
+
+        translation_unit = [
+            "/* Reconstructed by REVENG MCP recompilation tool */",
+            "/*",
+            " * The original Ghidra pseudocode is preserved in comments above each stub.",
+            " * Stubs keep function names stable so the rebuilt artifact retains overlap",
+            " * with the original symbol layout while remaining easy for GCC to compile.",
+            " */",
+            "",
+        ]
+
+        bodies: List[str] = []
+        seen_names = set()
+        has_entry_point = False
+
+        for index, function in enumerate(functions):
+            if not isinstance(function, dict):
+                continue
+
+            source = str(function.get("source") or function.get("decompiled") or "").strip()
+            function_name = self._sanitize_c_identifier(
+                function.get("name") or self._extract_function_name(source),
+                fallback=f"func_{index}",
+            )
+            if self._normalize_function_name(function_name) in imported_names:
+                continue
+            if function_name in seen_names:
+                continue
+
+            seen_names.add(function_name)
+            has_entry_point = has_entry_point or function_name.lower() in {
+                "main",
+                "wmain",
+                "winmain",
+                "dllmain",
+            }
+            bodies.append(
+                self._generate_stub_function_definition(
+                    function_name=function_name,
+                    source=source,
+                    entry_point=function.get("entry_point") or function.get("address"),
+                )
+            )
+
+        if not has_entry_point:
+            bodies.append(
+                "int main(void)\n{\n    return 0;\n}\n"
+            )
+
+        if not bodies:
+            fallback = str(decompile_result.get("decompiled_source") or "").strip()
+            bodies.append(
+                self._generate_stub_function_definition(
+                    function_name="main",
+                    source=fallback,
+                    entry_point=None,
+                )
+            )
+
+        translation_unit.extend(bodies)
+
+        return "\n".join(translation_unit).strip() + "\n"
+
+    def _extract_function_signature(self, source: str) -> Optional[str]:
+        """Extract the signature line from a C-like function body."""
+        header, separator, _body = source.partition("{")
+        candidate = header.strip()
+        if not separator or "(" not in candidate or ")" not in candidate:
+            return None
+        if candidate.startswith("if ") or candidate.startswith("while ") or candidate.startswith("switch "):
+            return None
+        return candidate
+
+    def _extract_function_name(self, source: str) -> Optional[str]:
+        """Extract a function name from a C-like source snippet."""
+        signature = self._extract_function_signature(source)
+        if not signature:
+            return None
+
+        before_paren = signature.split("(", 1)[0].strip()
+        if not before_paren:
+            return None
+
+        return before_paren.split()[-1]
+
+    def _sanitize_c_identifier(self, name: Any, fallback: str) -> str:
+        """Convert arbitrary names into valid C identifiers."""
+        candidate = str(name or "").strip()
+        if not candidate:
+            candidate = fallback
+
+        candidate = re.sub(r"[^0-9A-Za-z_]", "_", candidate)
+        if not candidate:
+            candidate = fallback
+        if candidate[0].isdigit():
+            candidate = f"func_{candidate}"
+
+        if candidate in {
+            "auto",
+            "break",
+            "case",
+            "char",
+            "const",
+            "continue",
+            "default",
+            "do",
+            "double",
+            "else",
+            "enum",
+            "extern",
+            "float",
+            "for",
+            "goto",
+            "if",
+            "inline",
+            "int",
+            "long",
+            "register",
+            "restrict",
+            "return",
+            "short",
+            "signed",
+            "sizeof",
+            "static",
+            "struct",
+            "switch",
+            "typedef",
+            "union",
+            "unsigned",
+            "void",
+            "volatile",
+            "while",
+        }:
+            candidate = f"func_{candidate}"
+
+        return candidate
+
+    def _generate_stub_function_definition(
+        self,
+        *,
+        function_name: str,
+        source: str,
+        entry_point: Optional[Any],
+    ) -> str:
+        """Generate a compilable stub function that preserves the original name."""
+        return_type = self._infer_stub_return_type(function_name, source)
+        definition = [
+            f"/* Original entry: {entry_point or 'unknown'}",
+            self._truncate_comment_text(source) if source else "No decompiled source available.",
+            "*/",
+            f"{return_type} {function_name}(void)",
+            "{",
+        ]
+
+        if return_type == "void":
+            definition.append("    return;")
+        elif return_type in {"float", "double"}:
+            definition.append("    return 0.0;")
+        elif return_type.endswith("*"):
+            definition.append("    return (void *)0;")
+        else:
+            definition.append("    return 0;")
+
+        definition.append("}")
+        return "\n".join(definition) + "\n"
+
+    def _infer_stub_return_type(self, function_name: str, source: str) -> str:
+        """Infer a safe return type for a generated stub."""
+        lowered_name = function_name.lower()
+        if lowered_name in {"main", "wmain", "winmain", "dllmain"}:
+            return "int"
+
+        signature = self._extract_function_signature(source)
+        if not signature:
+            return "int"
+
+        before_paren = signature.split("(", 1)[0].strip()
+        tokens = before_paren.split()
+        if len(tokens) < 2:
+            return "int"
+
+        return self._sanitize_stub_return_type(" ".join(tokens[:-1]))
+
+    def _sanitize_stub_return_type(self, return_type: str) -> str:
+        """Map Ghidra-style return types to simple GCC-friendly equivalents."""
+        cleaned = re.sub(
+            r"\b(__cdecl|__stdcall|__fastcall|__thiscall|__noreturn|static|extern|inline|register|volatile|const)\b",
+            "",
+            return_type,
+        )
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
+        if not cleaned:
+            return "int"
+        if "*" in cleaned or cleaned == "pointer":
+            return "void *"
+        if cleaned == "void":
+            return "void"
+        if cleaned in {"float", "double"}:
+            return cleaned
+        return "int"
+
+    def _truncate_comment_text(self, source: str, limit: int = 400) -> str:
+        """Collapse and truncate decompiled source so it fits safely in a comment."""
+        sanitized = source.replace("*/", "* /")
+        compact = re.sub(r"\s+", " ", sanitized).strip()
+        if len(compact) <= limit:
+            return compact
+        return compact[: limit - 3] + "..."
+
+    def _finalize_recompiled_binary(
+        self, compiled_binary_path: str, requested_output_path: Optional[str]
+    ) -> str:
+        """Copy the rebuilt binary to a requested output path when provided."""
+        compiled_binary = Path(compiled_binary_path)
+        if not requested_output_path:
+            return str(compiled_binary)
+
+        output_path = Path(requested_output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(compiled_binary, output_path)
+        return str(output_path)
+
+    def _inspect_binary_artifact(self, binary_path: str) -> Dict[str, Any]:
+        """Return size and magic bytes for a rebuilt binary artifact."""
+        path = Path(binary_path)
+        header = path.read_bytes()[:4] if path.exists() else b""
+        if header.startswith(b"MZ"):
+            magic = "MZ"
+        elif header.startswith(b"\x7fELF"):
+            magic = "7f454c46"
+        else:
+            magic = header.hex()
+
+        return {
+            "size_bytes": path.stat().st_size if path.exists() else 0,
+            "magic": magic,
+        }
+
+    async def _calculate_function_overlap(
+        self,
+        original_binary: str,
+        rebuilt_binary: str,
+        ghidra_engine: Optional[GhidraEngine] = None,
+    ) -> float:
+        """Calculate function-name overlap between the original and rebuilt binaries."""
+        ghidra_engine = ghidra_engine or self.ghidra_engine
+        loop = asyncio.get_running_loop()
+        original_result = await loop.run_in_executor(None, ghidra_engine.decompile, original_binary)
+        rebuilt_result = await loop.run_in_executor(None, ghidra_engine.decompile, rebuilt_binary)
+
+        original_names = self._extract_function_names(original_result)
+        rebuilt_names = self._extract_function_names(rebuilt_result)
+
+        if not original_names or not rebuilt_names:
+            return 0.0
+
+        overlap = len(original_names & rebuilt_names)
+        return round((overlap / len(original_names)) * 100, 2)
+
+    def _get_ghidra_engine(self, timeout_override: Optional[int] = None) -> GhidraEngine:
+        """Return the shared Ghidra client or a cloned one with a custom timeout."""
+        if timeout_override is None or timeout_override == self.ghidra_engine.timeout:
+            return self.ghidra_engine
+
+        return GhidraEngine(
+            server_url=self.ghidra_engine.server_url,
+            timeout=timeout_override,
+            fail_fast=self.ghidra_engine.fail_fast,
+        )
+
+    def _coerce_optional_int(self, value: Any) -> Optional[int]:
+        """Convert an optional input value to int when possible."""
+        if value is None or value == "":
+            return None
+
+        return int(value)
+
+    def _extract_function_names(self, result: Dict[str, Any]) -> set[str]:
+        """Collect normalized function names from a decompile/analyze response."""
+        names = set()
+        for function in result.get("functions", []):
+            if not isinstance(function, dict):
+                continue
+
+            normalized = self._normalize_function_name(function.get("name"))
+            if normalized:
+                names.add(normalized)
+
+        return names
+
+    def _normalize_function_name(self, name: Any) -> str:
+        """Normalize function names before overlap comparison."""
+        if name is None:
+            return ""
+
+        normalized = str(name).strip().lower()
+        normalized = re.sub(r"^_+", "", normalized)
+        normalized = re.sub(r"@\d+$", "", normalized)
+        return normalized
 
     def _require_existing_path(self, args: Dict[str, Any], field_name: str) -> str:
         """Require a path argument that exists."""

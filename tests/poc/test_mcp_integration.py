@@ -20,7 +20,7 @@ License: MIT
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -237,6 +237,23 @@ async def test_tools_list_includes_decompile_binary_schema_and_descriptions(mcp_
 
 @pytest.mark.poc
 @pytest.mark.asyncio
+async def test_tools_list_includes_recompile_binary_schema(mcp_server):
+    """Test recompile_binary exposes the new binary_path/source_code schema."""
+    response = await mcp_server.handle_message(
+        {"jsonrpc": "2.0", "id": 25, "method": "tools/list", "params": {}}
+    )
+
+    recompile_tool = {tool["name"]: tool for tool in response["result"]["tools"]}[
+        "recompile_binary"
+    ]
+
+    assert recompile_tool["inputSchema"]["required"] == ["binary_path"]
+    assert recompile_tool["inputSchema"]["properties"]["binary_path"]["type"] == "string"
+    assert recompile_tool["inputSchema"]["properties"]["source_code"]["type"] == "string"
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
 async def test_decompile_binary_tool_returns_structured_json(mcp_server, temp_dir):
     """Test decompile_binary returns structured decompilation details."""
     binary_path = temp_dir / "sample.exe"
@@ -321,6 +338,218 @@ async def test_decompile_binary_tool_returns_descriptive_error(mcp_server, temp_
     assert result["status_code"] == 500
     assert "Ghidra backend exploded" in result["error"]
     assert "Ghidra backend exploded" in result["content"][0]["text"]
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_recompile_binary_tool_returns_structured_success(mcp_server, temp_dir):
+    """Test recompile_binary returns a real binary artifact path and overlap score."""
+    binary_path = temp_dir / "sample.exe"
+    rebuilt_binary = temp_dir / "rebuilt.exe"
+    source_file = temp_dir / "reconstructed.c"
+    binary_path.write_bytes(b"MZ" + (b"\x00" * 2048))
+    rebuilt_binary.write_bytes(b"MZ" + (b"\x90" * 2048))
+    source_file.write_text("int main(void) { return 0; }\n", encoding="utf-8")
+
+    decompile_result = {
+        "decompiled_functions": [
+            {
+                "name": "main",
+                "entry_point": "0x401000",
+                "source": "int main(void) { return 0; }",
+            }
+        ],
+        "decompiled_source": "int main(void) { return 0; }\n",
+        "strings": [],
+        "imports": [],
+    }
+    compile_report = {
+        "status": "success",
+        "binary_path": str(rebuilt_binary),
+        "final_source_file": str(source_file),
+        "attempts": [{"attempt": 1, "stderr": "", "returncode": 0}],
+        "total_attempts": 1,
+    }
+    mock_backend = Mock()
+    mock_backend.is_available.return_value = True
+    mock_backend.model = "qwen2.5-coder:32b-instruct"
+
+    with patch(
+        "reveng.agent_sdk.mcp.servers.reveng_enterprise_server.OllamaRepairEngine",
+        return_value=mock_backend,
+    ), patch(
+        "reveng.ai.recompilation_engine.BinaryRecompilationEngine._phase1_decompilation",
+        new=AsyncMock(return_value={"functions": [], "imports": [], "strings": []}),
+    ), patch(
+        "reveng.ai.recompilation_engine.BinaryRecompilationEngine._compile_with_feedback_loop",
+        new=AsyncMock(return_value=compile_report),
+    ), patch.object(
+        mcp_server,
+        "decompile_binary",
+        new=AsyncMock(return_value=decompile_result),
+    ) as mock_decompile, patch.object(
+        mcp_server,
+        "_calculate_function_overlap",
+        new=AsyncMock(return_value=62.5),
+    ):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 26,
+                "method": "tools/call",
+                "params": {
+                    "name": "recompile_binary",
+                    "arguments": {"binary_path": str(binary_path)},
+                },
+            }
+        )
+
+    result = response["result"]
+    mock_decompile.assert_awaited_once_with(
+        {"binary_path": str(binary_path), "_ghidra_timeout": 180}
+    )
+    assert result["success"] is True
+    assert result["output_path"] == str(rebuilt_binary)
+    assert Path(result["output_path"]).exists()
+    assert result["binary_size"] > 1024
+    assert result["magic_bytes"] == "MZ"
+    assert result["function_overlap"] == 62.5
+    assert result["model"] == "qwen2.5-coder:32b-instruct"
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_recompile_binary_tool_returns_structured_failure(mcp_server, temp_dir):
+    """Test recompile_binary returns structured compiler errors when retries are exhausted."""
+    binary_path = temp_dir / "sample.exe"
+    source_file = temp_dir / "reconstructed.c"
+    binary_path.write_bytes(b"MZ" + (b"\x00" * 2048))
+    source_file.write_text("int main(void) { broken }\n", encoding="utf-8")
+
+    decompile_result = {
+        "decompiled_functions": [
+            {
+                "name": "main",
+                "entry_point": "0x401000",
+                "source": "int main(void) { broken }",
+            }
+        ],
+        "decompiled_source": "int main(void) { broken }\n",
+        "strings": [],
+        "imports": [],
+    }
+    compile_report = {
+        "status": "failed",
+        "binary_path": None,
+        "final_source_file": str(source_file),
+        "attempts": [
+            {"attempt": 1, "stderr": "error: expected ';' before '}' token", "returncode": 1},
+            {"attempt": 2, "stderr": "error: unknown type name 'broken'", "returncode": 1},
+        ],
+        "total_attempts": 2,
+        "failure_reason": "max_retries_exceeded",
+    }
+    mock_backend = Mock()
+    mock_backend.is_available.return_value = True
+    mock_backend.model = "qwen2.5-coder:32b-instruct"
+
+    with patch(
+        "reveng.agent_sdk.mcp.servers.reveng_enterprise_server.OllamaRepairEngine",
+        return_value=mock_backend,
+    ), patch(
+        "reveng.ai.recompilation_engine.BinaryRecompilationEngine._phase1_decompilation",
+        new=AsyncMock(return_value={"functions": [], "imports": [], "strings": []}),
+    ), patch(
+        "reveng.ai.recompilation_engine.BinaryRecompilationEngine._compile_with_feedback_loop",
+        new=AsyncMock(return_value=compile_report),
+    ), patch.object(
+        mcp_server,
+        "decompile_binary",
+        new=AsyncMock(return_value=decompile_result),
+    ):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 27,
+                "method": "tools/call",
+                "params": {
+                    "name": "recompile_binary",
+                    "arguments": {"binary_path": str(binary_path)},
+                },
+            }
+        )
+
+    result = response["result"]
+    assert result["success"] is False
+    assert result["failure_reason"] == "max_retries_exceeded"
+    assert len(result["compilation_errors"]) == 2
+    assert "expected ';'" in result["compilation_errors"][0]
+    assert result["partial_source"] == "int main(void) { broken }\n"
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_recompile_binary_tool_skips_decompile_when_source_is_provided(
+    mcp_server, temp_dir
+):
+    """Test recompile_binary does not re-decompile when explicit source_code is supplied."""
+    binary_path = temp_dir / "sample.exe"
+    rebuilt_binary = temp_dir / "rebuilt.exe"
+    source_file = temp_dir / "provided.c"
+    provided_source = "int helper(void) { return 7; }\nint main(void) { return helper(); }\n"
+    binary_path.write_bytes(b"MZ" + (b"\x00" * 2048))
+    rebuilt_binary.write_bytes(b"MZ" + (b"\x90" * 2048))
+    source_file.write_text(provided_source, encoding="utf-8")
+
+    compile_report = {
+        "status": "success",
+        "binary_path": str(rebuilt_binary),
+        "final_source_file": str(source_file),
+        "attempts": [{"attempt": 1, "stderr": "", "returncode": 0}],
+        "total_attempts": 1,
+    }
+    mock_backend = Mock()
+    mock_backend.is_available.return_value = True
+    mock_backend.model = "qwen2.5-coder:32b-instruct"
+
+    with patch(
+        "reveng.agent_sdk.mcp.servers.reveng_enterprise_server.OllamaRepairEngine",
+        return_value=mock_backend,
+    ), patch(
+        "reveng.ai.recompilation_engine.BinaryRecompilationEngine._phase1_decompilation",
+        new=AsyncMock(return_value={"functions": [], "imports": [], "strings": []}),
+    ), patch(
+        "reveng.ai.recompilation_engine.BinaryRecompilationEngine._compile_with_feedback_loop",
+        new=AsyncMock(return_value=compile_report),
+    ), patch.object(
+        mcp_server,
+        "decompile_binary",
+        new=AsyncMock(),
+    ) as mock_decompile, patch.object(
+        mcp_server,
+        "_calculate_function_overlap",
+        new=AsyncMock(return_value=50.0),
+    ):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 28,
+                "method": "tools/call",
+                "params": {
+                    "name": "recompile_binary",
+                    "arguments": {
+                        "binary_path": str(binary_path),
+                        "source_code": provided_source,
+                    },
+                },
+            }
+        )
+
+    result = response["result"]
+    mock_decompile.assert_not_awaited()
+    assert result["success"] is True
+    assert result["output_path"] == str(rebuilt_binary)
+    assert result["function_overlap"] == 50.0
 
 
 @pytest.mark.poc

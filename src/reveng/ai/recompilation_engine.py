@@ -344,6 +344,9 @@ class BinaryRecompilationEngine:
             str(source_file),
             "-w",
             "-O0",
+            "-g",
+            "-fno-builtin",
+            "-Wl,--allow-multiple-definition",
         ]
         if self.compiler_cache:
             return [self.compiler_cache, *cmd]
