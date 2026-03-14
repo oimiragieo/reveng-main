@@ -1,0 +1,39 @@
+{
+  "featureId": "cleanup-advanced-analysis",
+  "reviewedAt": "2026-03-14T18:30:00Z",
+  "commitId": "2cc9edd9e905211371eda5a69be24bf17a291c76",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "All three cleanup items were correctly implemented. (1) 313 lines of dead `_monitor_*` methods using subprocess/powershell/wmic/tasklist/netstat/reg/sc calls were removed from behavioral_monitor.py; the `import subprocess` was also cleaned up. No remaining references to these methods exist anywhere in the codebase. (2) `analysis_depth` was added to the `generate_exploit` MCP tool's `input_schema` with the correct enum values `[\"shallow\", \"medium\", \"deep\"]`, matching the existing handler code at line 1131 that reads `args.get(\"analysis_depth\")`. (3) Both `datetime.utcnow()` calls in volatility_analyzer.py (lines 91 and 222) were replaced with `datetime.now(dt.timezone.utc)`. Tests were appropriately updated: the Docker sandbox test removed the now-unnecessary subprocess.run mock/assertion, the exploit generation test asserts the schema includes analysis_depth, and a new timezone-aware timestamp test was added to test_volatility_integration.py.",
+    "issues": [
+      {
+        "file": "src/reveng/malware/volatility_analyzer.py",
+        "line": 91,
+        "severity": "non_blocking",
+        "description": "The timestamp format changed from 'Z' suffix (e.g. '2026-03-14T00:00:00Z') to '+00:00' suffix (e.g. '2026-03-14T00:00:00+00:00') because Python's isoformat() on a timezone-aware datetime emits '+00:00' rather than 'Z'. Both are valid ISO 8601 but any downstream consumer doing exact string matching on the 'Z' suffix would break. The new test correctly asserts endswith('+00:00'). This is a minor behavioral change but acceptable for an internal API."
+      },
+      {
+        "file": "tests/unit/test_volatility_integration.py",
+        "line": 27,
+        "severity": "non_blocking",
+        "description": "The mock data in test_memory_dump_uses_volatility_analyzer_instead_of_wmic still uses the old 'Z' format ('2026-03-14T00:00:00Z') for analysis_timestamp. This is harmless since that test monkeypatches the analyzer and never hits real code, but it is mildly inconsistent with the actual output format now produced by the real code."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "AGENTS.md Key Architecture Facts still lists behavioral_monitor.py as 'BROKEN: monitors host OS via PowerShell (needs Docker fix)'. This was fixed by the docker-sandbox feature and the dead code was now removed. The entry should be updated to reflect the current (fixed) state.",
+      "evidence": "AGENTS.md line ~86: 'src/reveng/malware/behavioral_monitor.py — BROKEN: monitors host OS via PowerShell (needs Docker fix)' — but the PowerShell code is now deleted in commit 2cc9edd9."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker deviated from skill step 9 (manual verification with test_samples/sample.exe) by using focused unit tests instead. The deviation was justified for a cleanup feature. The skill's procedure could explicitly note that cleanup/refactor features may substitute test-driven verification for manual end-to-end runs.",
+      "evidence": "Handoff skillFeedback.followedProcedure=false, deviations[0].step='9. Manual verification', deviations[0].why='This feature was a cleanup/alignment change; the updated tests already exercised the relevant MCP and Volatility code paths'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. All three non-blocking fixes from the advanced-analysis scrutiny were correctly implemented: (1) ~313 lines of dead legacy _monitor_* methods with subprocess/powershell/wmic calls removed from behavioral_monitor.py with zero remaining references; (2) analysis_depth added to generate_exploit MCP tool schema matching the existing handler code; (3) datetime.utcnow() replaced with datetime.now(timezone.utc) in volatility_analyzer.py. Tests were updated appropriately. Two non-blocking observations: the timestamp format changed from Z to +00:00 (valid but different), and AGENTS.md still marks behavioral_monitor.py as broken."
+}
