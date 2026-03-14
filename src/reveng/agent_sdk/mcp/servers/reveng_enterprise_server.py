@@ -506,6 +506,11 @@ class REVENGEnterpriseServer(MCPServer):
                             "type": "boolean",
                             "description": "Generate ROP chain for exploit",
                         },
+                        "analysis_depth": {
+                            "type": "string",
+                            "enum": ["shallow", "medium", "deep"],
+                            "description": "Symbolic execution depth to use for exploit analysis",
+                        },
                     },
                     "required": ["binary_path"],
                 },

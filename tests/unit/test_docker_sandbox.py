@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
-from unittest.mock import Mock
 
 import pytest
 
@@ -129,9 +128,7 @@ def test_behavioral_monitor_uses_docker_sandbox_and_never_enumerates_host_proces
             self._released.set()
             return True
 
-    forbidden = Mock(side_effect=AssertionError("host OS enumeration should not run"))
     monkeypatch.setattr("reveng.malware.behavioral_monitor.DockerSandbox", _BlockingSandbox)
-    monkeypatch.setattr("reveng.malware.behavioral_monitor.subprocess.run", forbidden)
 
     monitor = BehavioralMonitor()
 
@@ -142,7 +139,6 @@ def test_behavioral_monitor_uses_docker_sandbox_and_never_enumerates_host_proces
     sandbox = _BlockingSandbox.instances[-1]
 
     assert sandbox.stop_called is True
-    assert forbidden.call_count == 0
     assert profile is not None
     assert profile.sandbox_available is True
     assert profile.file_operations

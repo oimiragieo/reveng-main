@@ -1,5 +1,7 @@
 """Tests for Volatility3-backed memory dump analysis."""
 
+from datetime import UTC, datetime
+
 import pytest
 
 from reveng.agent_sdk.mcp.servers.reveng_enterprise_server import (
@@ -76,6 +78,7 @@ def test_volatility_analyzer_skip_env_returns_mock_results(
     analysis = VolatilityAnalyzer().analyze_dump(str(dump_path))
 
     assert analysis["mode"] == "mock"
+    assert analysis["analysis_timestamp"].endswith("+00:00")
     assert analysis["processes"]
     assert analysis["processes"][0]["process_name"]
 
@@ -106,3 +109,35 @@ def test_volatility_analyzer_requires_existing_dump(tmp_path):
 
     with pytest.raises(FileNotFoundError):
         VolatilityAnalyzer().analyze_dump(str(missing_dump))
+
+
+def test_volatility_analyzer_uses_timezone_aware_timestamp(monkeypatch: pytest.MonkeyPatch, tmp_path):
+    """Real analysis responses should emit timezone-aware UTC timestamps."""
+    dump_path = tmp_path / "sample.dmp"
+    dump_path.write_bytes(b"dump")
+
+    analyzer = VolatilityAnalyzer()
+
+    class _FixedDateTime:
+        @staticmethod
+        def now(tz=None):
+            assert tz is UTC
+            return datetime(2026, 3, 14, 12, 0, 0, tzinfo=UTC)
+
+    monkeypatch.setattr(
+        "reveng.malware.volatility_analyzer.dt.datetime",
+        _FixedDateTime,
+    )
+    monkeypatch.setattr(analyzer, "_ensure_plugins_loaded", lambda: None)
+    monkeypatch.setattr(
+        analyzer,
+        "_run_plugin",
+        lambda dump, plugin_class: [{"PID": 7, "PPID": 4, "ImageFileName": "sample.exe"}]
+        if plugin_class is analyzer.WINDOWS_PLUGINS["pslist"]
+        else [],
+    )
+
+    analysis = analyzer.analyze_dump(str(dump_path))
+
+    assert analysis["mode"] == "volatility3"
+    assert analysis["analysis_timestamp"] == "2026-03-14T12:00:00+00:00"
