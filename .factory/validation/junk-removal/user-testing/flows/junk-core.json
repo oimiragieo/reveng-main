@@ -1,0 +1,30 @@
+{
+  "groupId": "junk-core",
+  "testedAt": "2026-03-14T00:00:00Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "platform": "Windows 10 PowerShell",
+    "readOnly": true
+  },
+  "toolsUsed": ["git", "findstr", "Select-String"],
+  "assertions": {
+    "VAL-JUNK-001": {
+      "status": "pass",
+      "evidence": "git ls-files | Select-String -Pattern 'claude\\.md' returned zero matches. No claude.md files exist in the git index.",
+      "reason": "All claude.md files have been successfully removed from the repository."
+    },
+    "VAL-JUNK-002": {
+      "status": "pass",
+      "evidence": "git ls-files '*.log' returned empty output. .gitignore contains '*.log' at line 24 and '*.log.*' at line 27.",
+      "reason": "All .log files removed from git index and *.log is properly gitignored."
+    },
+    "VAL-JUNK-003": {
+      "status": "pass",
+      "evidence": "git ls-files src/reveng/jit/ src/reveng/ml_models/ src/reveng/types/ returned empty output. None of these directories exist in the git index.",
+      "reason": "All three empty stub module directories (jit, ml_models, types) have been deleted from the repository."
+    }
+  },
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 3 assertions: 3 passed, 0 failed, 0 blocked. All junk-removal core assertions verified."
+}
