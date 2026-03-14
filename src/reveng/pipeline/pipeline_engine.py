@@ -457,10 +457,24 @@ class AnalysisPipeline:
     def save_pipeline(self, pipeline: Pipeline, path: str):
         """Save pipeline definition for reuse"""
         try:
-            pipeline_data = asdict(pipeline)
+            pipeline_data = {
+                **asdict(pipeline),
+                "stages": [
+                    {
+                        **asdict(stage),
+                        "stage_type": stage.stage_type.value,
+                    }
+                    for stage in pipeline.stages
+                ],
+            }
 
-            with open(path, "w") as f:
-                yaml.dump(pipeline_data, f, default_flow_style=False)
+            with open(path, "w", encoding="utf-8") as f:
+                yaml.safe_dump(
+                    pipeline_data,
+                    f,
+                    default_flow_style=False,
+                    sort_keys=False,
+                )
 
             self.logger.info(f"Saved pipeline to {path}")
 
@@ -471,7 +485,7 @@ class AnalysisPipeline:
     def load_pipeline(self, path: str) -> Pipeline:
         """Load saved pipeline"""
         try:
-            with open(path, "r") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 pipeline_data = yaml.safe_load(f)
 
             # Convert dict back to Pipeline object
@@ -479,7 +493,12 @@ class AnalysisPipeline:
                 name=pipeline_data["name"],
                 description=pipeline_data["description"],
                 stages=[
-                    PipelineStage(**stage)
+                    PipelineStage(
+                        **{
+                            **stage,
+                            "stage_type": StageType(stage["stage_type"]),
+                        }
+                    )
                     for stage in pipeline_data["stages"]
                 ],
                 created=pipeline_data["created"],

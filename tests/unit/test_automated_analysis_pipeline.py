@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 import pytest
+import yaml
 
 import reveng.pipeline.pipeline_engine as pipeline_engine_module
 from reveng.pipeline.pipeline_engine import (
@@ -555,3 +556,50 @@ def test_build_stage_report_writes_utf8_json(
         "summary": report["summary"],
     }
     assert json.loads(report_path.read_text(encoding="utf-8")) == report
+
+
+def test_save_and_load_pipeline_roundtrip_preserves_stage_fields(
+    engine: AnalysisPipeline,
+    tmp_path: Path,
+):
+    pipeline_path = tmp_path / "pipeline.yaml"
+    original_pipeline = Pipeline(
+        name="yaml_round_trip",
+        description="Verify YAML stage enum serialization",
+        stages=[
+            PipelineStage(
+                name="static_stage",
+                stage_type=StageType.STATIC_ANALYSIS,
+                tool="reveng",
+                config={"enabled": True, "threshold": 3},
+                dependencies=[],
+                timeout=123,
+                retry_count=2,
+                required=True,
+            ),
+            PipelineStage(
+                name="report_stage",
+                stage_type=StageType.REPORT_GENERATION,
+                tool="reporter",
+                config={"formats": ["json", "html"]},
+                dependencies=["static_stage"],
+                timeout=45,
+                retry_count=1,
+                required=False,
+            ),
+        ],
+        created="2026-03-14 00:00:00",
+        version="2.0",
+    )
+
+    engine.save_pipeline(original_pipeline, str(pipeline_path))
+
+    serialized_pipeline = yaml.safe_load(
+        pipeline_path.read_text(encoding="utf-8")
+    )
+    assert serialized_pipeline["stages"][0]["stage_type"] == StageType.STATIC_ANALYSIS.value
+    assert serialized_pipeline["stages"][1]["stage_type"] == StageType.REPORT_GENERATION.value
+
+    loaded_pipeline = engine.load_pipeline(str(pipeline_path))
+
+    assert loaded_pipeline == original_pipeline
