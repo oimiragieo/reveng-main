@@ -67,12 +67,12 @@ KEY_DOCS = [
 ]
 
 CRITICAL_README_LINKS = [
-    "START_HERE.md",
-    "QUICK_START.md",
-    "GETTING_STARTED.md",
+    "INSTALLATION.md",
+    "docs/README.md",
     "docs/getting-started/installation.md",
     "CLI_REFERENCE.md",
     "docs/mcp/README.md",
+    "CONTRIBUTING.md",
 ]
 
 CORE_EXTERNAL_LINKS = [

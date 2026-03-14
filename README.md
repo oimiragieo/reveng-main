@@ -3,7 +3,7 @@
   <h1>REVENG – AI-Powered Binary Reconstruction Platform</h1>
   <p><strong>The World's First Binary-to-Source-to-Binary Reverse Engineering Tool</strong></p>
 
-  <p><strong>🆕 New User?</strong> → <a href="START_HERE.md">📖 START HERE</a> for navigation guide</p>
+  <p><strong>🆕 New User?</strong> → <a href="INSTALLATION.md">📖 Installation Guide</a> for setup instructions</p>
 </div>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -244,7 +244,7 @@ reveng ask "What does this binary do?" <binary>
 reveng serve --port 3000
 ```
 
-📖 **Guides**: [Getting Started](GETTING_STARTED.md) | [Quick Start](QUICK_START.md) | [Installation](docs/getting-started/installation.md) | [CLI Reference](CLI_REFERENCE.md)
+📖 **Guides**: [Installation](INSTALLATION.md) | [Documentation Index](docs/README.md) | [docs/getting-started/installation.md](docs/getting-started/installation.md) | [CLI Reference](CLI_REFERENCE.md)
 
 ## 🎓 Key Features
 
@@ -397,18 +397,14 @@ await loop.start(max_iterations=10)
 ## 📖 Documentation
 
 ### Getting Started
-- **[START_HERE.md](START_HERE.md)** - Navigation guide (start here!)
-- **[QUICK_START.md](QUICK_START.md)** - 2-minute setup guide
-- **[GETTING_STARTED.md](GETTING_STARTED.md)** - Step-by-step tutorial (10-15 min)
+- **[INSTALLATION.md](INSTALLATION.md)** - Root-level installation and setup guide
 - **[docs/getting-started/installation.md](docs/getting-started/installation.md)** - Complete installation guide
-- **[docs/](docs/)** - Complete documentation (303 files)
+- **[docs/README.md](docs/README.md)** - Documentation index
 
 ### MCP Integration (v4.0 NEW)
 - **[docs/mcp/README.md](docs/mcp/README.md)** - MCP integration guide (651 lines)
-- **[docs/mcp/claude.md](docs/mcp/claude.md)** - AI-specific MCP documentation
 - **[mcp-config.example.json](mcp-config.example.json)** - Claude Desktop configuration
 - **[tests/poc/test_mcp_integration.py](tests/poc/test_mcp_integration.py)** - 14 POC tests
-- **[validate-mcp.py](validate-mcp.py)** - Quick MCP validation script
 
 ### API & Examples
 - **[docs/api/API_REFERENCE.md](docs/api/API_REFERENCE.md)** - API documentation
@@ -567,8 +563,6 @@ pip install ollama>=0.1.0
 pip install -r requirements-optional.txt
 ```
 
-**Feature Status**: See [FEATURE_IMPLEMENTATION_STATUS_MATRIX.md](FEATURE_IMPLEMENTATION_STATUS_MATRIX.md) for detailed implementation status of all 69 tracked features. Current status: 88.4% fully implemented, 8.7% partial, 2.9% planned.
-
 ## 🤝 Contributing
 
 We welcome contributions in:
@@ -578,8 +572,6 @@ We welcome contributions in:
 4. **Languages** – Better C++, Java, .NET support
 5. **Documentation** – Tutorials, videos, research papers
 6. **Testing** – Help us maintain and improve our 91% test coverage
-
-See [FEATURE_IMPLEMENTATION_STATUS_MATRIX.md](FEATURE_IMPLEMENTATION_STATUS_MATRIX.md) for current implementation status (88.4% complete) and planned features.
 
 📖 **Guidelines**: [CONTRIBUTING.md](CONTRIBUTING.md)
 
