@@ -9,3 +9,4 @@
 - Full baseline `pytest tests/ -n 4` now gets past collection; the remaining failures are unrelated pre-existing test failures across CLI, automated pipeline, ML workflow, input validation, and POC suites.
 - Targeted validation for this feature passes with `pytest tests/unit/test_pipeline_engine_async.py -n 4`.
 - `tests/unit/test_pipeline_engine_async.py::test_execute_pipeline_async_runs_stages_concurrently` now verifies concurrency using recorded per-stage start/end windows instead of a wall-clock elapsed-time threshold, making the async overlap assertion more reliable on slower CI workers.
+- `save_pipeline()` serializes `StageType` enum as `.value` (plain string) for `yaml.safe_dump()` compatibility. `load_pipeline()` reconstructs the enum via `StageType(value)`. This convention must be preserved when modifying pipeline persistence — raw Python enum objects cannot survive a `safe_dump → safe_load` round-trip.
