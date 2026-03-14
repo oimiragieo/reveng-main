@@ -554,6 +554,262 @@ async def test_recompile_binary_tool_skips_decompile_when_source_is_provided(
 
 @pytest.mark.poc
 @pytest.mark.asyncio
+async def test_ask_ai_about_binary_returns_structured_ollama_answer(mcp_server, temp_dir):
+    """Test ask_ai_about_binary decompiles first and returns structured Ollama output."""
+    binary_path = temp_dir / "sample.exe"
+    binary_path.write_bytes(b"MZ" + (b"\x00" * 512))
+
+    mcp_server.ghidra_engine = Mock()
+    mcp_server.ghidra_engine.timeout = 180
+    mcp_server.ghidra_engine.fail_fast = False
+    mcp_server.ghidra_engine.decompile.return_value = {
+        "functions": [
+            {
+                "name": "main",
+                "entry_point": "0x401000",
+                "source": (
+                    "int main(void) {\n"
+                    "    initialize_network();\n"
+                    "    send_status();\n"
+                    "    return 0;\n"
+                    "}\n"
+                ),
+            }
+        ],
+        "imports": ["send", "connect"],
+        "strings": ["status=ok", "10.0.0.5"],
+    }
+
+    mock_query = AsyncMock(
+        return_value=(
+            "The binary appears to initialize a network routine, prepare a status payload, "
+            "and send it outbound before exiting. The imported networking APIs and status "
+            "string strongly suggest beaconing or telemetry behavior."
+        )
+    )
+
+    with patch.object(mcp_server, "_query_ollama_chat", new=mock_query):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 29,
+                "method": "tools/call",
+                "params": {
+                    "name": "ask_ai_about_binary",
+                    "arguments": {
+                        "binary_path": str(binary_path),
+                        "question": "What does this binary do?",
+                    },
+                },
+            }
+        )
+
+    result = response["result"]
+    assert result["status_code"] == 200
+    assert result["binary_path"] == str(binary_path)
+    assert result["model"] == "qwen2.5-coder:32b-instruct"
+    assert result["context_used"] is True
+    assert len(result["answer"]) >= 50
+    assert "network" in result["answer"].lower()
+
+    query_kwargs = mock_query.await_args.kwargs
+    assert "What does this binary do?" in query_kwargs["user_prompt"]
+    assert "initialize_network" in query_kwargs["user_prompt"]
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_ask_ai_about_binary_returns_timeout_error_json(mcp_server, temp_dir):
+    """Test ask_ai_about_binary turns Ollama timeouts into structured error JSON."""
+    binary_path = temp_dir / "sample.exe"
+    binary_path.write_bytes(b"MZ" + (b"\x00" * 512))
+
+    mcp_server.ghidra_engine = Mock()
+    mcp_server.ghidra_engine.timeout = 180
+    mcp_server.ghidra_engine.fail_fast = False
+    mcp_server.ghidra_engine.decompile.return_value = {
+        "functions": [
+            {"name": "main", "entry_point": "0x401000", "source": "int main(void) { return 0; }"}
+        ],
+        "imports": [],
+        "strings": [],
+    }
+
+    with patch.object(
+        mcp_server,
+        "_query_ollama_chat",
+        new=AsyncMock(side_effect=TimeoutError("Ollama request timed out after 90 seconds")),
+    ):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 30,
+                "method": "tools/call",
+                "params": {
+                    "name": "ask_ai_about_binary",
+                    "arguments": {
+                        "binary_path": str(binary_path),
+                        "question": "What does this binary do?",
+                    },
+                },
+            }
+        )
+
+    result = response["result"]
+    assert result["status_code"] == 504
+    assert "timed out" in result["error"].lower()
+    assert result["model"] == "qwen2.5-coder:32b-instruct"
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_ai_code_reconstruction_returns_cfg_aware_structured_code(mcp_server, temp_dir):
+    """Test ai_code_reconstruction uses CFG context and returns parsed reconstructed code."""
+    binary_path = temp_dir / "sample.exe"
+    binary_path.write_bytes(b"MZ" + (b"\x00" * 512))
+
+    mcp_server.ghidra_engine = Mock()
+    mcp_server.ghidra_engine.timeout = 180
+    mcp_server.ghidra_engine.fail_fast = False
+    mcp_server.ghidra_engine.decompile.return_value = {
+        "functions": [
+            {
+                "name": "main",
+                "entry_point": "0x401000",
+                "source": (
+                    "int main(void) {\n"
+                    "    int v1 = initialize();\n"
+                    "    if (v1 != 0) {\n"
+                    "        return process(v1);\n"
+                    "    }\n"
+                    "    return -1;\n"
+                    "}\n"
+                ),
+            }
+        ],
+        "imports": ["puts"],
+        "strings": ["processing"],
+    }
+
+    cfg_context = {
+        "payload": {"function_count": 1, "graph_metrics": {"node_count": 7, "edge_count": 8}},
+        "context_text": "Function main @ 0x401000: 3 basic blocks\n  Calls: initialize, process",
+        "function_count": 1,
+        "node_count": 7,
+        "edge_count": 8,
+    }
+    llm_json = json.dumps(
+        {
+            "reconstructed_code": (
+                "int initialize_context(void) {\n"
+                "    return 1;\n"
+                "}\n\n"
+                "int process_request(int initialization_status) {\n"
+                "    return initialization_status + 41;\n"
+                "}\n\n"
+                "int main(void) {\n"
+                "    int initialization_status = initialize_context();\n"
+                "    if (initialization_status != 0) {\n"
+                "        return process_request(initialization_status);\n"
+                "    }\n"
+                "    return -1;\n"
+                "}\n"
+            ),
+            "improvement_notes": "Renamed temporary variables, split helper logic into named functions, and preserved the original branch structure.",
+        }
+    )
+
+    mock_query = AsyncMock(return_value=llm_json)
+    with patch.object(
+        mcp_server,
+        "_extract_cfg_context",
+        new=AsyncMock(return_value=cfg_context),
+    ), patch.object(
+        mcp_server,
+        "_query_ollama_chat",
+        new=mock_query,
+    ):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 31,
+                "method": "tools/call",
+                "params": {
+                    "name": "ai_code_reconstruction",
+                    "arguments": {"binary_path": str(binary_path)},
+                },
+            }
+        )
+
+    result = response["result"]
+    assert result["status_code"] == 200
+    assert result["cfg_context_used"] is True
+    assert result["model"] == "qwen2.5-coder:32b-instruct"
+    assert len(result["reconstructed_code"]) >= 100
+    assert "int main(" in result["reconstructed_code"]
+    assert "Renamed temporary variables" in result["improvement_notes"]
+    assert result["cfg_summary"] == {"function_count": 1, "node_count": 7, "edge_count": 8}
+
+    query_kwargs = mock_query.await_args.kwargs
+    assert "CFG summary:" in query_kwargs["user_prompt"]
+    assert "Calls: initialize, process" in query_kwargs["user_prompt"]
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_ai_code_reconstruction_returns_timeout_error_json(mcp_server, temp_dir):
+    """Test ai_code_reconstruction returns structured timeout details instead of raising."""
+    binary_path = temp_dir / "sample.exe"
+    binary_path.write_bytes(b"MZ" + (b"\x00" * 512))
+
+    mcp_server.ghidra_engine = Mock()
+    mcp_server.ghidra_engine.timeout = 180
+    mcp_server.ghidra_engine.fail_fast = False
+    mcp_server.ghidra_engine.decompile.return_value = {
+        "functions": [
+            {"name": "main", "entry_point": "0x401000", "source": "int main(void) { return 0; }"}
+        ],
+        "imports": [],
+        "strings": [],
+    }
+
+    with patch.object(
+        mcp_server,
+        "_extract_cfg_context",
+        new=AsyncMock(
+            return_value={
+                "payload": {},
+                "context_text": "cfg",
+                "function_count": 1,
+                "node_count": 1,
+                "edge_count": 0,
+            }
+        ),
+    ), patch.object(
+        mcp_server,
+        "_query_ollama_chat",
+        new=AsyncMock(side_effect=TimeoutError("Ollama request timed out after 90 seconds")),
+    ):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 32,
+                "method": "tools/call",
+                "params": {
+                    "name": "ai_code_reconstruction",
+                    "arguments": {"binary_path": str(binary_path)},
+                },
+            }
+        )
+
+    result = response["result"]
+    assert result["status_code"] == 504
+    assert "timed out" in result["error"].lower()
+    assert result["cfg_context_used"] is False
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
 async def test_scan_yara_tool_returns_structured_matches(mcp_server, temp_dir):
     """Test YARA scanning executes backend logic and returns structured JSON."""
     binary_path = temp_dir / "sample.bin"

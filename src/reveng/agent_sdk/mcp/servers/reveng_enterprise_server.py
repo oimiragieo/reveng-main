@@ -39,6 +39,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional, cast
 
+import requests
+
+from ....ai.angr_cfg_preprocessor import AngrCFGPreprocessor, CFGExtractionError
 from ....integrations.ghidra.ghidra_engine import GhidraEngine
 from ..server import MCPPrompt, MCPResource, MCPServer, MCPTool
 
@@ -47,6 +50,11 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+OLLAMA_CHAT_HOST = "http://localhost:11434"
+OLLAMA_CHAT_ENDPOINT = f"{OLLAMA_CHAT_HOST}/api/chat"
+OLLAMA_CHAT_MODEL = "qwen2.5-coder:32b-instruct"
+OLLAMA_CHAT_TIMEOUT_SECONDS = 90
 
 
 class AuditLogger:
@@ -593,7 +601,7 @@ class REVENGEnterpriseServer(MCPServer):
         self.register_tool(
             MCPTool(
                 name="ask_ai_about_binary",
-                description="Ask natural language questions about a binary (powered by Gemini/Claude)",
+                description="Ask natural language questions about a binary using local Ollama-powered reverse-engineering context",
                 input_schema={
                     "type": "object",
                     "properties": {
@@ -616,13 +624,17 @@ class REVENGEnterpriseServer(MCPServer):
         self.register_tool(
             MCPTool(
                 name="ai_code_reconstruction",
-                description="AI-powered code reconstruction with type inference and documentation",
+                description="Reconstruct clean idiomatic C from a binary using CFG-aware Ollama prompts",
                 input_schema={
                     "type": "object",
                     "properties": {
+                        "binary_path": {
+                            "type": "string",
+                            "description": "Path to the binary file to reconstruct",
+                        },
                         "decompiled_code": {
                             "type": "string",
-                            "description": "Decompiled code to enhance",
+                            "description": "Optional pre-decompiled code to enhance alongside the binary context",
                         },
                         "add_documentation": {
                             "type": "boolean",
@@ -637,7 +649,7 @@ class REVENGEnterpriseServer(MCPServer):
                             "description": "Rename variables to meaningful names",
                         },
                     },
-                    "required": ["decompiled_code"],
+                    "required": ["binary_path"],
                 },
                 handler=self.ai_code_reconstruction,
             )
@@ -1219,11 +1231,221 @@ class REVENGEnterpriseServer(MCPServer):
 
     async def ask_ai_about_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """AI-powered Q&A about binaries"""
-        return {"content": [{"type": "text", "text": "AI query feature coming soon"}]}
+        binary_path = str(args.get("binary_path") or args.get("path") or "")
+        question = str(args.get("question") or "").strip()
+        decompile_result: Dict[str, Any] = {}
+        prompt_context = ""
+
+        try:
+            binary_path = self._resolve_binary_argument(args, field_name="binary_path")
+            if not question:
+                raise ValueError("Missing required argument: question")
+
+            ghidra_timeout = max(180, self._coerce_optional_int(args.get("_ghidra_timeout")) or 0)
+            decompile_result = await self.decompile_binary(
+                {"binary_path": binary_path, "_ghidra_timeout": ghidra_timeout}
+            )
+            if decompile_result.get("error"):
+                raise RuntimeError(str(decompile_result["error"]))
+
+            prompt_context = self._build_binary_question_context(
+                binary_path=binary_path,
+                question=question,
+                decompile_result=decompile_result,
+                additional_context=args.get("context"),
+            )
+            answer = await self._query_ollama_chat(
+                system_prompt=(
+                    "You are a senior reverse engineer answering questions about binaries. "
+                    "Use only the supplied decompiled code and program metadata. "
+                    "Be precise, explain uncertainty briefly, and avoid inventing facts."
+                ),
+                user_prompt=prompt_context,
+                num_predict=350,
+            )
+
+            text = (
+                "AI Binary Q&A\n"
+                + "=" * 70
+                + f"\n\nBinary: {binary_path}\n"
+                + f"Question: {question}\n"
+                + f"Model: {OLLAMA_CHAT_MODEL}\n\n"
+                + answer
+            )
+
+            return {
+                "content": [{"type": "text", "text": text}],
+                "status_code": 200,
+                "binary_path": binary_path,
+                "question": question,
+                "answer": answer,
+                "model": OLLAMA_CHAT_MODEL,
+                "context_used": bool(prompt_context.strip()),
+            }
+        except TimeoutError as exc:
+            message = str(exc) or (
+                f"Ollama request timed out after {OLLAMA_CHAT_TIMEOUT_SECONDS} seconds"
+            )
+            fallback_answer = self._build_timeout_question_fallback(
+                question=question,
+                decompile_result=decompile_result,
+            )
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            f"Error querying Ollama: {message}\n\n"
+                            "Fallback context-only answer:\n"
+                            f"{fallback_answer}"
+                        ),
+                    }
+                ],
+                "status_code": 504,
+                "binary_path": binary_path,
+                "question": question,
+                "model": OLLAMA_CHAT_MODEL,
+                "context_used": bool(prompt_context.strip()),
+                "fallback_used": True,
+                "answer": fallback_answer,
+                "error": message,
+            }
+        except Exception as exc:
+            logger.exception("Error in ask_ai_about_binary")
+            return {
+                "content": [{"type": "text", "text": f"Error querying binary with AI: {exc}"}],
+                "status_code": 500,
+                "binary_path": binary_path,
+                "question": question,
+                "model": OLLAMA_CHAT_MODEL,
+                "context_used": False,
+                "error": str(exc),
+            }
 
     async def ai_code_reconstruction(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """AI code reconstruction"""
-        return {"content": [{"type": "text", "text": "AI code reconstruction feature coming soon"}]}
+        binary_path = str(args.get("binary_path") or args.get("path") or "")
+        decompile_result: Dict[str, Any] = {}
+        cfg_context: Dict[str, Any] = {}
+
+        try:
+            binary_path = self._resolve_binary_argument(args, field_name="binary_path")
+            ghidra_timeout = max(180, self._coerce_optional_int(args.get("_ghidra_timeout")) or 0)
+            decompile_result = await self.decompile_binary(
+                {"binary_path": binary_path, "_ghidra_timeout": ghidra_timeout}
+            )
+            if decompile_result.get("error"):
+                raise RuntimeError(str(decompile_result["error"]))
+
+            decompiled_code = str(
+                args.get("decompiled_code") or decompile_result.get("decompiled_source") or ""
+            ).strip()
+            if not decompiled_code:
+                raise RuntimeError("No decompiled source was available for AI reconstruction")
+
+            prompt_source = self._build_llm_source_excerpt(
+                decompile_result.get("decompiled_functions", []),
+                decompiled_code,
+                max_functions=6,
+                max_source_chars=6000,
+            )
+
+            cfg_context = await self._extract_cfg_context(binary_path)
+            reconstruction_prompt = self._build_code_reconstruction_prompt(
+                binary_path=binary_path,
+                decompiled_code=prompt_source,
+                cfg_context_text=cfg_context["context_text"],
+                reconstruct_types=bool(args.get("reconstruct_types", True)),
+                rename_variables=bool(args.get("rename_variables", True)),
+                add_documentation=bool(args.get("add_documentation", True)),
+            )
+
+            raw_response = await self._query_ollama_chat(
+                system_prompt=(
+                    "You are an expert reverse engineer reconstructing readable, idiomatic C. "
+                    "Return strict JSON with keys reconstructed_code and improvement_notes. "
+                    "reconstructed_code must contain plain C source with meaningful variable names. "
+                    "improvement_notes must summarize the main cleanup decisions in concise prose."
+                ),
+                user_prompt=reconstruction_prompt,
+                num_predict=900,
+            )
+            reconstructed_code, improvement_notes = self._parse_reconstruction_response(
+                raw_response,
+                fallback_source=decompiled_code,
+            )
+
+            text = (
+                "AI Code Reconstruction\n"
+                + "=" * 70
+                + f"\n\nBinary: {binary_path}\n"
+                + f"Model: {OLLAMA_CHAT_MODEL}\n"
+                + (
+                    f"CFG summary: {cfg_context['function_count']} functions, "
+                    f"{cfg_context['node_count']} nodes, {cfg_context['edge_count']} edges\n\n"
+                )
+                + "Improvement notes:\n"
+                + improvement_notes
+                + "\n\nReconstructed code preview:\n"
+                + "-" * 70
+                + "\n"
+                + reconstructed_code[:4000]
+            )
+
+            return {
+                "content": [{"type": "text", "text": text}],
+                "status_code": 200,
+                "binary_path": binary_path,
+                "reconstructed_code": reconstructed_code,
+                "improvement_notes": improvement_notes,
+                "model": OLLAMA_CHAT_MODEL,
+                "context_used": True,
+                "cfg_context_used": True,
+                "cfg_summary": {
+                    "function_count": cfg_context["function_count"],
+                    "node_count": cfg_context["node_count"],
+                    "edge_count": cfg_context["edge_count"],
+                },
+            }
+        except TimeoutError as exc:
+            message = str(exc) or (
+                f"Ollama request timed out after {OLLAMA_CHAT_TIMEOUT_SECONDS} seconds"
+            )
+            fallback_code = self._build_timeout_reconstruction_fallback(decompile_result)
+            fallback_notes = self._build_timeout_reconstruction_notes(cfg_context)
+            return {
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            f"Error reconstructing code with AI: {message}\n\n"
+                            "Fallback reconstruction generated from decompiled context."
+                        ),
+                    }
+                ],
+                "status_code": 504,
+                "binary_path": binary_path,
+                "model": OLLAMA_CHAT_MODEL,
+                "context_used": False,
+                "cfg_context_used": False,
+                "fallback_used": True,
+                "reconstructed_code": fallback_code,
+                "improvement_notes": fallback_notes,
+                "error": message,
+            }
+        except Exception as exc:
+            logger.exception("Error in ai_code_reconstruction")
+            return {
+                "content": [
+                    {"type": "text", "text": f"Error reconstructing code with AI: {exc}"}
+                ],
+                "status_code": 500,
+                "binary_path": binary_path,
+                "model": OLLAMA_CHAT_MODEL,
+                "context_used": False,
+                "cfg_context_used": False,
+                "error": str(exc),
+            }
 
     async def get_analysis_report(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Get analysis report"""
@@ -1474,6 +1696,486 @@ class REVENGEnterpriseServer(MCPServer):
             "imports": list(result.get("imports", [])) if isinstance(result.get("imports"), list) else [],
             "decompiled_source": decompiled_source,
         }
+
+    def _build_binary_question_context(
+        self,
+        *,
+        binary_path: str,
+        question: str,
+        decompile_result: Dict[str, Any],
+        additional_context: Any = None,
+        max_functions: int = 10,
+        max_source_chars: int = 4000,
+    ) -> str:
+        """Build a focused prompt context for binary Q&A."""
+        functions = decompile_result.get("decompiled_functions", [])
+        if not isinstance(functions, list):
+            functions = []
+
+        imports = decompile_result.get("imports", [])
+        if not isinstance(imports, list):
+            imports = []
+
+        strings = decompile_result.get("strings", [])
+        if not isinstance(strings, list):
+            strings = []
+
+        function_summaries = []
+        for function in functions[:max_functions]:
+            if not isinstance(function, dict):
+                continue
+            function_summaries.append(
+                f"- {function.get('name', 'unknown')} @ {function.get('entry_point') or function.get('address') or 'unknown'}"
+            )
+
+        decompiled_source = self._build_llm_source_excerpt(
+            functions,
+            str(decompile_result.get("decompiled_source") or "").strip(),
+            max_functions=4,
+            max_source_chars=max_source_chars,
+        )
+
+        import_names = [
+            str(item.get("name") if isinstance(item, dict) else item)
+            for item in imports[:25]
+            if str(item).strip()
+        ]
+        string_values = [
+            str(item.get("value") if isinstance(item, dict) else item)
+            for item in strings[:25]
+            if str(item).strip()
+        ]
+
+        context_sections = [
+            f"Binary path: {binary_path}",
+            f"Question: {question}",
+            f"Decompiled functions available: {len(functions)}",
+        ]
+
+        if function_summaries:
+            context_sections.extend(["Function list:", *function_summaries])
+        if import_names:
+            context_sections.append("Imports: " + ", ".join(import_names))
+        if string_values:
+            context_sections.append("Interesting strings: " + ", ".join(string_values))
+        if additional_context:
+            context_sections.append(f"Additional user context: {additional_context}")
+        if decompiled_source:
+            context_sections.extend([
+                "Decompiled code:",
+                "```c",
+                decompiled_source,
+                "```",
+            ])
+
+        context_sections.append(
+            "Answer the question directly using the supplied binary context. "
+            "Call out uncertainty briefly if the evidence is incomplete. Keep the answer under 220 words."
+        )
+        return "\n".join(context_sections)
+
+    def _build_llm_source_excerpt(
+        self,
+        functions: Any,
+        fallback_source: str,
+        *,
+        max_functions: int,
+        max_source_chars: int,
+    ) -> str:
+        """Select the most relevant decompiled functions for an LLM prompt."""
+        excerpt_parts: List[str] = []
+        total_chars = 0
+
+        prioritized = self._prioritize_functions_for_llm(functions)
+        for function in prioritized[:max_functions]:
+            source = str(function.get("source") or function.get("decompiled") or "").strip()
+            if not source:
+                continue
+
+            header = (
+                f"/* {function.get('name', 'unknown')} @ "
+                f"{function.get('entry_point') or function.get('address') or 'unknown'} */\n"
+            )
+            block = header + source
+            if excerpt_parts and total_chars + len(block) > max_source_chars:
+                break
+
+            excerpt_parts.append(block)
+            total_chars += len(block)
+
+        excerpt = "\n\n".join(excerpt_parts).strip()
+        if not excerpt:
+            excerpt = fallback_source[:max_source_chars].strip()
+
+        if len(excerpt) > max_source_chars:
+            excerpt = excerpt[:max_source_chars].rstrip() + "\n/* Decompiled source truncated for prompt size. */"
+
+        return excerpt
+
+    def _build_timeout_question_fallback(
+        self,
+        *,
+        question: str,
+        decompile_result: Dict[str, Any],
+    ) -> str:
+        """Build a deterministic answer when Ollama times out after context was prepared."""
+        functions = self._prioritize_functions_for_llm(decompile_result.get("decompiled_functions", []))
+        function_names = [
+            str(function.get("name") or "unknown")
+            for function in functions[:4]
+            if str(function.get("name") or "").strip()
+        ]
+
+        imports = decompile_result.get("imports", [])
+        import_names = [
+            str(item.get("name") if isinstance(item, dict) else item)
+            for item in imports[:6]
+            if str(item).strip()
+        ]
+
+        strings = decompile_result.get("strings", [])
+        string_values = [
+            str(item.get("value") if isinstance(item, dict) else item)
+            for item in strings[:4]
+            if str(item).strip()
+        ]
+
+        source_excerpt = self._build_llm_source_excerpt(
+            functions,
+            str(decompile_result.get("decompiled_source") or ""),
+            max_functions=2,
+            max_source_chars=1200,
+        )
+        behavior_hint = self._infer_behavior_from_context(import_names, string_values, source_excerpt)
+
+        return (
+            f"Ollama timed out before it could answer the question '{question}'. "
+            f"From the recovered decompiled context, the binary most likely {behavior_hint}. "
+            f"The most relevant recovered functions are {', '.join(function_names) if function_names else 'unknown'}, "
+            f"with imports such as {', '.join(import_names) if import_names else 'none observed'}"
+            f" and notable strings like {', '.join(string_values) if string_values else 'none observed'}."
+        )
+
+    def _build_timeout_reconstruction_fallback(self, decompile_result: Dict[str, Any]) -> str:
+        """Return a readable reconstruction fallback when Ollama times out."""
+        excerpt = self._build_llm_source_excerpt(
+            decompile_result.get("decompiled_functions", []),
+            str(decompile_result.get("decompiled_source") or ""),
+            max_functions=4,
+            max_source_chars=5000,
+        )
+        normalized_excerpt = self._normalize_decompiled_variable_names(excerpt)
+        return (
+            "/* Fallback reconstruction generated after Ollama timed out. */\n"
+            "/* Source is derived from the highest-priority decompiled functions. */\n\n"
+            + normalized_excerpt
+        ).strip()
+
+    def _build_timeout_reconstruction_notes(self, cfg_context: Dict[str, Any]) -> str:
+        """Describe the deterministic fallback path used after an Ollama timeout."""
+        function_count = int(cfg_context.get("function_count", 0) or 0)
+        node_count = int(cfg_context.get("node_count", 0) or 0)
+        edge_count = int(cfg_context.get("edge_count", 0) or 0)
+        if function_count and node_count:
+            return (
+                "Ollama timed out after the CFG-aware prompt was prepared, so REVENG returned a "
+                f"cleaned fallback reconstruction derived from decompiled code plus CFG metrics "
+                f"({function_count} functions, {node_count} nodes, {edge_count} edges)."
+            )
+        return (
+            "Ollama timed out before reconstruction completed, so REVENG returned a cleaned "
+            "fallback reconstruction derived directly from the recovered decompiled functions."
+        )
+
+    def _infer_behavior_from_context(
+        self,
+        import_names: List[str],
+        string_values: List[str],
+        source_excerpt: str,
+    ) -> str:
+        """Infer a coarse behavior summary from decompiled context for timeout fallbacks."""
+        combined = " ".join(import_names + string_values + [source_excerpt]).lower()
+
+        behavior_map = [
+            (["socket", "connect", "send", "recv", "internet", "ws2_32"], "performs network communication or telemetry"),
+            (["createfile", "readfile", "writefile", "fopen", "fprintf", "puts"], "performs file or console I/O"),
+            (["regopenkey", "regsetvalue", "registry"], "interacts with the Windows registry"),
+            (["crypt", "bcrypt", "sha", "aes", "md5"], "performs cryptographic or hashing operations"),
+            (["loadlibrary", "getprocaddress", "virtualprotect"], "uses dynamic runtime loading or memory-management routines"),
+        ]
+
+        for keywords, description in behavior_map:
+            if any(keyword in combined for keyword in keywords):
+                return description
+
+        return "implements the recovered control flow exposed by its highest-priority functions"
+
+    def _normalize_decompiled_variable_names(self, source_text: str) -> str:
+        """Make common decompiler temporary names more readable in fallback reconstructions."""
+        replacements = [
+            (r"\biVar(\d+)\b", r"int_value_\1"),
+            (r"\buVar(\d+)\b", r"unsigned_value_\1"),
+            (r"\bcVar(\d+)\b", r"char_value_\1"),
+            (r"\bbVar(\d+)\b", r"bool_value_\1"),
+            (r"\blVar(\d+)\b", r"long_value_\1"),
+            (r"\bv(\d+)\b", r"value_\1"),
+            (r"\blocal_([0-9a-fA-F]+)\b", r"local_value_\1"),
+            (r"\bparam_([0-9a-fA-F]+)\b", r"param_value_\1"),
+        ]
+
+        normalized = source_text
+        for pattern, replacement in replacements:
+            normalized = re.sub(pattern, replacement, normalized)
+        return normalized
+
+    def _prioritize_functions_for_llm(self, functions: Any) -> List[Dict[str, Any]]:
+        """Order decompiled functions so user-authored logic is favored over boilerplate."""
+        if not isinstance(functions, list):
+            return []
+
+        normalized_functions = [function for function in functions if isinstance(function, dict)]
+
+        def sort_key(function: Dict[str, Any]) -> tuple[int, int, int, int, str]:
+            raw_name = str(function.get("name") or "")
+            normalized_name = self._normalize_function_name(raw_name)
+            source = str(function.get("source") or function.get("decompiled") or "")
+            is_primary = normalized_name in {"main", "winmain", "wmain", "start"}
+            is_runtime = raw_name.startswith("__") or "crt" in normalized_name or "mingw" in normalized_name
+            is_generic = raw_name.startswith(("FUN_", "sub_", "LAB_", "thunk_", "_"))
+            return (
+                0 if is_primary else 1,
+                0 if not is_runtime else 1,
+                0 if not is_generic else 1,
+                -len(source),
+                normalized_name,
+            )
+
+        return sorted(normalized_functions, key=sort_key)
+
+    async def _extract_cfg_context(self, binary_path: str) -> Dict[str, Any]:
+        """Extract CFG context for AI reconstruction prompts."""
+        preprocessor = AngrCFGPreprocessor()
+        loop = asyncio.get_running_loop()
+
+        try:
+            payload = await loop.run_in_executor(None, preprocessor.extract_cfg_payload, binary_path)
+            context_text = await loop.run_in_executor(
+                None,
+                lambda: preprocessor.build_llm_context(payload),
+            )
+        except CFGExtractionError as exc:
+            raise RuntimeError(f"CFG extraction failed: {exc}") from exc
+
+        metrics = payload.get("graph_metrics", {})
+        return {
+            "payload": payload,
+            "context_text": context_text,
+            "function_count": int(payload.get("function_count", 0) or 0),
+            "node_count": int(metrics.get("node_count", 0) or 0),
+            "edge_count": int(metrics.get("edge_count", 0) or 0),
+        }
+
+    def _build_code_reconstruction_prompt(
+        self,
+        *,
+        binary_path: str,
+        decompiled_code: str,
+        cfg_context_text: str,
+        reconstruct_types: bool,
+        rename_variables: bool,
+        add_documentation: bool,
+        max_source_chars: int = 6000,
+        max_cfg_chars: int = 2500,
+    ) -> str:
+        """Build a CFG-aware code reconstruction prompt for Ollama."""
+        trimmed_source = decompiled_code[:max_source_chars]
+        if len(decompiled_code) > max_source_chars:
+            trimmed_source += "\n/* Decompiled source truncated for prompt size. */"
+
+        trimmed_cfg = cfg_context_text[:max_cfg_chars]
+        if len(cfg_context_text) > max_cfg_chars:
+            trimmed_cfg += "\n... CFG summary truncated ..."
+
+        return "\n".join(
+            [
+                f"Binary path: {binary_path}",
+                "Task: reconstruct clean, idiomatic C code from the supplied decompiler output.",
+                f"Rename variables: {rename_variables}",
+                f"Reconstruct types: {reconstruct_types}",
+                f"Add documentation: {add_documentation}",
+                "Return strict JSON with keys reconstructed_code and improvement_notes.",
+                "reconstructed_code must be plain C source with function definitions and meaningful names.",
+                "Focus on the most important user-authored routines and omit CRT/runtime boilerplate unless it is semantically essential.",
+                "improvement_notes must explain the most important structural improvements and assumptions.",
+                "CFG summary:",
+                trimmed_cfg,
+                "Decompiler output:",
+                "```c",
+                trimmed_source,
+                "```",
+            ]
+        )
+
+    async def _query_ollama_chat(
+        self,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        timeout: int = OLLAMA_CHAT_TIMEOUT_SECONDS,
+        num_predict: Optional[int] = None,
+    ) -> str:
+        """Query the local Ollama chat endpoint and return message content."""
+        try:
+            response = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self._post_ollama_chat,
+                    system_prompt,
+                    user_prompt,
+                    timeout,
+                    num_predict,
+                ),
+                timeout=timeout,
+            )
+        except asyncio.TimeoutError as exc:
+            raise TimeoutError(f"Ollama request timed out after {timeout} seconds") from exc
+
+        content = self._extract_ollama_message_content(response)
+        if not content:
+            raise RuntimeError("Ollama returned an empty response")
+        return content
+
+    def _post_ollama_chat(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        timeout: int,
+        num_predict: Optional[int],
+    ) -> Dict[str, Any]:
+        """POST a chat request to the local Ollama HTTP API."""
+        options: Dict[str, Any] = {"temperature": 0.1}
+        if num_predict is not None:
+            options["num_predict"] = int(num_predict)
+
+        payload = {
+            "model": OLLAMA_CHAT_MODEL,
+            "stream": False,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "options": options,
+        }
+
+        try:
+            response = requests.post(
+                OLLAMA_CHAT_ENDPOINT,
+                json=payload,
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            return cast(Dict[str, Any], response.json())
+        except requests.Timeout as exc:
+            raise TimeoutError(f"Ollama request timed out after {timeout} seconds") from exc
+
+    def _extract_ollama_message_content(self, response: Any) -> str:
+        """Extract assistant content from an Ollama chat response."""
+        if isinstance(response, dict):
+            message = response.get("message", {})
+            if isinstance(message, dict):
+                return str(message.get("content", "")).strip()
+            return str(response.get("response", "")).strip()
+
+        return str(response).strip()
+
+    def _parse_reconstruction_response(
+        self,
+        response_text: str,
+        *,
+        fallback_source: str,
+    ) -> tuple[str, str]:
+        """Parse reconstructed code and notes from an LLM response."""
+        parsed_json = self._extract_json_dict(response_text)
+        reconstructed_code = ""
+        improvement_notes = ""
+
+        if parsed_json is not None:
+            reconstructed_code = str(
+                parsed_json.get("reconstructed_code")
+                or parsed_json.get("code")
+                or parsed_json.get("source")
+                or ""
+            ).strip()
+            improvement_notes = str(
+                parsed_json.get("improvement_notes")
+                or parsed_json.get("notes")
+                or parsed_json.get("summary")
+                or ""
+            ).strip()
+
+        if not reconstructed_code:
+            code_match = re.search(r"```(?:c|cpp)?\s*(.*?)```", response_text, re.DOTALL | re.IGNORECASE)
+            if code_match:
+                reconstructed_code = code_match.group(1).strip()
+                improvement_notes = improvement_notes or response_text.replace(code_match.group(0), "").strip()
+
+        if not reconstructed_code and self._contains_c_function_definition(response_text):
+            reconstructed_code = response_text.strip()
+
+        if not reconstructed_code:
+            reconstructed_code = fallback_source.strip()
+            if not improvement_notes:
+                improvement_notes = (
+                    "Model output could not be parsed cleanly, so the original decompiled source "
+                    "was returned as a fallback for further review."
+                )
+
+        if not improvement_notes:
+            improvement_notes = (
+                "Reconstructed the binary into cleaner C, preserving control flow while improving "
+                "naming and readability where possible."
+            )
+
+        return reconstructed_code, improvement_notes
+
+    def _extract_json_dict(self, text: str) -> Optional[Dict[str, Any]]:
+        """Extract the first JSON object from an LLM response."""
+        stripped = text.strip()
+        if not stripped:
+            return None
+
+        fenced_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", stripped, re.DOTALL | re.IGNORECASE)
+        candidates = [fenced_match.group(1)] if fenced_match else []
+        candidates.append(stripped)
+
+        for candidate in candidates:
+            try:
+                parsed = json.loads(candidate)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict):
+                return cast(Dict[str, Any], parsed)
+
+        decoder = json.JSONDecoder()
+        for index, char in enumerate(stripped):
+            if char != "{":
+                continue
+            try:
+                parsed, _ = decoder.raw_decode(stripped[index:])
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict):
+                return cast(Dict[str, Any], parsed)
+
+        return None
+
+    def _contains_c_function_definition(self, text: str) -> bool:
+        """Return True when the text appears to contain a C-style function definition."""
+        return bool(
+            re.search(
+                r"\b(?:void|int|char|bool|float|double|long|short|unsigned|signed)\s+\**\w+\s*\(",
+                text,
+            )
+        )
 
     def _build_decompiled_code_map(self, functions: List[Dict[str, Any]]) -> Dict[str, str]:
         """Create an address/name keyed decompiled-code mapping from normalized functions."""
