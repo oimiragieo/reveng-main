@@ -21,7 +21,7 @@ class TestDocumentationFiles:
         readme_path = Path("README.md")
         assert readme_path.exists(), "README.md not found"
 
-        content = readme_path.read_text()
+        content = readme_path.read_text(encoding="utf-8")
         assert len(content) > 1000, "README.md too short"
         assert "REVENG" in content, "README.md missing REVENG reference"
         assert "## Quick Start" in content, "README.md missing Quick Start section"
@@ -32,7 +32,7 @@ class TestDocumentationFiles:
         install_path = Path("INSTALLATION.md")
         assert install_path.exists(), "INSTALLATION.md not found"
 
-        content = install_path.read_text()
+        content = install_path.read_text(encoding="utf-8")
         assert len(content) > 500, "INSTALLATION.md too short"
         assert "## System Requirements" in content, "INSTALLATION.md missing System Requirements"
         assert "## Windows Installation" in content, "INSTALLATION.md missing Windows section"
@@ -43,7 +43,7 @@ class TestDocumentationFiles:
         arch_path = Path("ARCHITECTURE.md")
         assert arch_path.exists(), "ARCHITECTURE.md not found"
 
-        content = arch_path.read_text()
+        content = arch_path.read_text(encoding="utf-8")
         assert len(content) > 500, "ARCHITECTURE.md too short"
         assert "## System Overview" in content, "ARCHITECTURE.md missing System Overview"
         assert "## Core Components" in content, "ARCHITECTURE.md missing Core Components"
@@ -53,7 +53,7 @@ class TestDocumentationFiles:
         api_path = Path("API_REFERENCE.md")
         assert api_path.exists(), "API_REFERENCE.md not found"
 
-        content = api_path.read_text()
+        content = api_path.read_text(encoding="utf-8")
         assert len(content) > 500, "API_REFERENCE.md too short"
         assert "## Core API" in content, "API_REFERENCE.md missing Core API"
         assert "## Tool APIs" in content, "API_REFERENCE.md missing Tool APIs"
@@ -76,7 +76,7 @@ class TestDocumentationFiles:
             doc_path = docs_dir / doc
             assert doc_path.exists(), f"Documentation file missing: {doc}"
 
-            content = doc_path.read_text()
+            content = doc_path.read_text(encoding="utf-8")
             assert len(content) > 100, f"Documentation file too short: {doc}"
 
 
@@ -86,7 +86,7 @@ class TestDocumentationLinks:
     def test_internal_links(self):
         """Test internal documentation links"""
         readme_path = Path("README.md")
-        content = readme_path.read_text()
+        content = readme_path.read_text(encoding="utf-8")
 
         # Find markdown links
         link_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
@@ -109,7 +109,7 @@ class TestDocumentationLinks:
     def test_external_links(self):
         """Test external documentation links"""
         readme_path = Path("README.md")
-        content = readme_path.read_text()
+        content = readme_path.read_text(encoding="utf-8")
 
         # Find external links
         link_pattern = r"\[([^\]]+)\]\((https?://[^)]+)\)"
@@ -130,7 +130,7 @@ class TestDocumentationContent:
     def test_readme_sections(self):
         """Test README has required sections"""
         readme_path = Path("README.md")
-        content = readme_path.read_text()
+        content = readme_path.read_text(encoding="utf-8")
 
         required_sections = [
             "## Quick Start",
@@ -147,7 +147,7 @@ class TestDocumentationContent:
     def test_installation_sections(self):
         """Test INSTALLATION.md has required sections"""
         install_path = Path("INSTALLATION.md")
-        content = install_path.read_text()
+        content = install_path.read_text(encoding="utf-8")
 
         required_sections = [
             "## System Requirements",
@@ -162,7 +162,7 @@ class TestDocumentationContent:
     def test_architecture_sections(self):
         """Test ARCHITECTURE.md has required sections"""
         arch_path = Path("ARCHITECTURE.md")
-        content = arch_path.read_text()
+        content = arch_path.read_text(encoding="utf-8")
 
         required_sections = ["## System Overview", "## Core Components", "## Data Flow"]
 
@@ -172,7 +172,7 @@ class TestDocumentationContent:
     def test_api_sections(self):
         """Test API_REFERENCE.md has required sections"""
         api_path = Path("API_REFERENCE.md")
-        content = api_path.read_text()
+        content = api_path.read_text(encoding="utf-8")
 
         required_sections = ["## Core API", "## Tool APIs", "## Web Interface API"]
 
@@ -192,7 +192,7 @@ class TestDocumentationFormatting:
             if not file_path.exists():
                 continue
 
-            content = file_path.read_text()
+            content = file_path.read_text(encoding="utf-8")
 
             # Check for common markdown issues
             assert "## " in content, f"{md_file} missing section headers"
@@ -202,7 +202,7 @@ class TestDocumentationFormatting:
     def test_code_blocks(self):
         """Test code blocks are properly formatted"""
         readme_path = Path("README.md")
-        content = readme_path.read_text()
+        content = readme_path.read_text(encoding="utf-8")
 
         # Check for code blocks
         code_block_pattern = r"```[\s\S]*?```"
@@ -230,8 +230,8 @@ class TestDocumentationCompleteness:
         assert len(tool_files) > 0, "No tools found"
 
         # Check that tools are mentioned in documentation
-        readme_content = Path("README.md").read_text()
-        api_content = Path("API_REFERENCE.md").read_text()
+        readme_content = Path("README.md").read_text(encoding="utf-8")
+        api_content = Path("API_REFERENCE.md").read_text(encoding="utf-8")
 
         for tool_file in tool_files[:5]:  # Check first 5 tools
             tool_name = tool_file.stem
@@ -253,7 +253,7 @@ class TestDocumentationCompleteness:
         examples_readme = examples_dir / "README.md"
         assert examples_readme.exists(), "Examples README not found"
 
-        content = examples_readme.read_text()
+        content = examples_readme.read_text(encoding="utf-8")
         assert len(content) > 200, "Examples README too short"
         assert "## Basic Examples" in content or "## Getting Started" in content
 
