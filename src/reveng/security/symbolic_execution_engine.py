@@ -148,6 +148,13 @@ class SymbolicExecutionEngine:
         self.timeout = self._get_timeout()
 
         self.vulnerabilities: List[Vulnerability] = []
+        self._cfg = None
+
+    def run_cfg_fast(self):
+        """Build and cache the angr CFGFast analysis for reuse across checks."""
+        if self._cfg is None:
+            self._cfg = self.project.analyses.CFGFast()
+        return self._cfg
 
     def _get_max_paths(self) -> int:
         """Get maximum paths to explore based on analysis depth"""
@@ -208,11 +215,11 @@ class SymbolicExecutionEngine:
 
     def _find_dangerous_calls(self) -> List[Tuple[int, str]]:
         """Find calls to dangerous functions"""
-        dangerous_calls = []
+        dangerous_calls: List[Tuple[int, str]] = []
 
         # Get CFG (Control Flow Graph)
         try:
-            cfg = self.project.analyses.CFGFast()
+            cfg = self.run_cfg_fast()
         except Exception as e:
             logger.error(f"Failed to generate CFG: {e}")
             return dangerous_calls
@@ -351,10 +358,10 @@ class SymbolicExecutionEngine:
     def _get_containing_function(self, address: int) -> str:
         """Get name of function containing address"""
         try:
-            cfg = self.project.analyses.CFGFast()
+            cfg = self.run_cfg_fast()
             func = cfg.kb.functions.floor_func(address)
             if func:
-                return func.name
+                return str(func.name)
         except Exception:
             pass
 

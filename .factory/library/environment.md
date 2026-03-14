@@ -28,3 +28,6 @@ Environment variables, external dependencies, and setup notes.
 - `GHIDRA_MOCK=true` — force Ghidra mock mode (should raise exception)
 - `GEMINI_API_KEY` — optional, for Gemini API fallback
 - `ANTHROPIC_API_KEY` — optional, for Claude API fallback
+
+## Git Workspace Notes
+- A worker stashed pre-existing untracked validation helper files with `git stash push --include-untracked -m "pre-existing validation artifacts"` so the tree could be clean for feature handoff. If those helper scripts are needed again, inspect `git stash list` and restore that stash explicitly.

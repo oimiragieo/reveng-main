@@ -480,7 +480,7 @@ class REVENGEnterpriseServer(MCPServer):
         self.register_tool(
             MCPTool(
                 name="generate_exploit",
-                description="Generate working exploit code for discovered vulnerabilities",
+                description="Generate exploit PoC scaffolding for vulnerabilities discovered via angr CFGFast and symbolic execution",
                 input_schema={
                     "type": "object",
                     "properties": {
@@ -507,7 +507,7 @@ class REVENGEnterpriseServer(MCPServer):
                             "description": "Generate ROP chain for exploit",
                         },
                     },
-                    "required": ["binary_path", "vulnerability_type"],
+                    "required": ["binary_path"],
                 },
                 handler=self.generate_exploit,
             )
@@ -1114,7 +1114,111 @@ class REVENGEnterpriseServer(MCPServer):
 
     async def generate_exploit(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Generate exploit for vulnerability"""
-        return {"content": [{"type": "text", "text": "Exploit generation feature coming soon"}]}
+        try:
+            from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
+
+            binary_path = self._resolve_binary_argument(args, field_name="binary_path")
+            vulnerability_type = self._normalize_vulnerability_filter(
+                args.get("vulnerability_type")
+            )
+            target_address = self._parse_optional_address(args.get("target_address"))
+            generate_rop_chain = bool(args.get("generate_rop_chain", False))
+            analysis_depth = str(args.get("analysis_depth") or "shallow")
+            timeout_seconds = 60
+
+            engine = SymbolicExecutionEngine(binary_path, analysis_depth=analysis_depth)
+            loop = asyncio.get_running_loop()
+            analysis_start = time.time()
+            cfg = await loop.run_in_executor(None, engine.run_cfg_fast)
+            cfg_summary = self._summarize_cfg(cfg)
+
+            try:
+                discovered_vulnerabilities = await asyncio.wait_for(
+                    loop.run_in_executor(None, engine.find_vulnerabilities),
+                    timeout=timeout_seconds,
+                )
+            except TimeoutError:
+                note = "No vulnerabilities found within timeout"
+                text = self._format_generate_exploit_results(
+                    binary_path=binary_path,
+                    vulnerabilities=[],
+                    analysis_time=float(timeout_seconds),
+                    note=note,
+                    cfg_summary=cfg_summary,
+                )
+                return {
+                    "content": [{"type": "text", "text": text}],
+                    "status_code": 200,
+                    "binary_path": binary_path,
+                    "analysis_time": timeout_seconds,
+                    "cfg_summary": cfg_summary,
+                    "vulnerabilities": [],
+                    "note": note,
+                }
+
+            matching_vulnerabilities = [
+                vulnerability
+                for vulnerability in discovered_vulnerabilities
+                if self._vulnerability_matches_filters(
+                    vulnerability,
+                    vulnerability_type=vulnerability_type,
+                    target_address=target_address,
+                )
+            ]
+
+            serialized_vulnerabilities: List[Dict[str, Any]] = []
+            for vulnerability in matching_vulnerabilities:
+                exploit_template = await loop.run_in_executor(
+                    None, engine.generate_exploit, vulnerability
+                )
+                serialized_vulnerabilities.append(
+                    self._serialize_exploit_candidate(
+                        binary_path,
+                        vulnerability,
+                        exploit_template,
+                        generate_rop_chain=generate_rop_chain,
+                    )
+                )
+
+            analysis_time = round(time.time() - analysis_start, 2)
+            note_message: Optional[str] = None
+            if not serialized_vulnerabilities:
+                note_message = (
+                    "No vulnerabilities matched the requested filters"
+                    if matching_vulnerabilities != discovered_vulnerabilities
+                    else "No vulnerabilities found"
+                )
+
+            text = self._format_generate_exploit_results(
+                binary_path=binary_path,
+                vulnerabilities=serialized_vulnerabilities,
+                analysis_time=analysis_time,
+                note=note_message,
+                cfg_summary=cfg_summary,
+            )
+
+            response: Dict[str, Any] = {
+                "content": [{"type": "text", "text": text}],
+                "status_code": 200,
+                "binary_path": binary_path,
+                "analysis_time": analysis_time,
+                "cfg_summary": cfg_summary,
+                "vulnerabilities": serialized_vulnerabilities,
+            }
+            if note_message:
+                response["note"] = note_message
+            return response
+
+        except Exception as e:
+            logger.exception("Error in generate_exploit")
+            return {
+                "content": [{"type": "text", "text": f"Error generating exploit: {str(e)}"}],
+                "status_code": 500,
+                "binary_path": str(args.get("binary_path") or args.get("path") or ""),
+                "analysis_time": 0,
+                "vulnerabilities": [],
+                "error": str(e),
+            }
 
     async def classify_malware(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Classify malware family"""
@@ -2681,6 +2785,209 @@ class REVENGEnterpriseServer(MCPServer):
             serialized["exploit_payload"] = exploit_payload.hex()
 
         return serialized
+
+    def _normalize_vulnerability_filter(self, vulnerability_type: Any) -> Optional[str]:
+        """Normalize an optional vulnerability-type filter."""
+        if vulnerability_type is None:
+            return None
+
+        normalized = str(vulnerability_type).strip().lower()
+        return normalized or None
+
+    def _parse_optional_address(self, value: Any) -> Optional[int]:
+        """Parse an optional target address accepting hex or decimal strings."""
+        if value in (None, ""):
+            return None
+
+        try:
+            return int(str(value), 0)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid target_address: {value}") from exc
+
+    def _vulnerability_matches_filters(
+        self,
+        vulnerability: Any,
+        *,
+        vulnerability_type: Optional[str],
+        target_address: Optional[int],
+    ) -> bool:
+        """Check whether a discovered vulnerability matches requested filters."""
+        if vulnerability_type:
+            current_type = str(getattr(vulnerability.type, "value", vulnerability.type)).lower()
+            if current_type != vulnerability_type:
+                return False
+
+        if target_address is not None:
+            try:
+                current_address = int(getattr(vulnerability, "address", 0))
+            except (TypeError, ValueError):
+                return False
+            if current_address != target_address:
+                return False
+
+        return True
+
+    def _summarize_cfg(self, cfg: Any) -> Dict[str, int]:
+        """Return a compact CFGFast summary for MCP responses."""
+        graph = getattr(cfg, "graph", None)
+        function_count = len(getattr(getattr(cfg, "kb", None), "functions", {}) or {})
+
+        if graph is None:
+            return {
+                "function_count": function_count,
+                "node_count": 0,
+                "edge_count": 0,
+            }
+
+        node_count_callable = getattr(graph, "number_of_nodes", None)
+        edge_count_callable = getattr(graph, "number_of_edges", None)
+        nodes_attr = getattr(graph, "nodes", [])
+        edges_attr = getattr(graph, "edges", [])
+
+        node_count = (
+            int(node_count_callable())
+            if callable(node_count_callable)
+            else len(nodes_attr) if hasattr(nodes_attr, "__len__") else len(list(nodes_attr))
+        )
+        edge_count = (
+            int(edge_count_callable())
+            if callable(edge_count_callable)
+            else len(edges_attr) if hasattr(edges_attr, "__len__") else len(list(edges_attr))
+        )
+
+        return {
+            "function_count": function_count,
+            "node_count": node_count,
+            "edge_count": edge_count,
+        }
+
+    def _default_exploit_payload(self, vulnerability: Any) -> bytes:
+        """Create a deterministic payload when symbolic execution did not synthesize one."""
+        vulnerability_type = str(getattr(vulnerability.type, "value", vulnerability.type)).lower()
+        default_payloads = {
+            "buffer_overflow": b"A" * 256 + b"B" * 16,
+            "stack_overflow": b"A" * 256 + b"B" * 16,
+            "heap_overflow": b"H" * 256 + b"I" * 16,
+            "format_string": b"%p.%p.%p.%p.%n",
+            "use_after_free": b"FREE_ME_AGAIN",
+            "double_free": b"FREE_ME_TWICE",
+            "command_injection": b";id",
+            "null_pointer_dereference": b"\x00" * 8,
+        }
+        return default_payloads.get(vulnerability_type, b"TRIGGER")
+
+    def _serialize_exploit_candidate(
+        self,
+        binary_path: str,
+        vulnerability: Any,
+        exploit_template: Any,
+        *,
+        generate_rop_chain: bool,
+    ) -> Dict[str, Any]:
+        """Serialize a vulnerability together with a pwntools-style PoC script."""
+        serialized = self._serialize_vulnerability(vulnerability)
+        payload = getattr(exploit_template, "payload", None) or getattr(
+            vulnerability, "exploit_payload", None
+        )
+        if not isinstance(payload, bytes) or not payload:
+            payload = self._default_exploit_payload(vulnerability)
+
+        address = getattr(vulnerability, "address", 0)
+        try:
+            serialized["address"] = hex(int(address))
+        except (TypeError, ValueError):
+            serialized["address"] = str(address)
+
+        serialized["payload_hex"] = payload.hex()
+        serialized["poc_script"] = self._build_poc_script(
+            binary_path,
+            vulnerability,
+            payload,
+            generate_rop_chain=generate_rop_chain,
+        )
+        return serialized
+
+    def _build_poc_script(
+        self,
+        binary_path: str,
+        vulnerability: Any,
+        payload: bytes,
+        *,
+        generate_rop_chain: bool,
+    ) -> str:
+        """Build a minimal pwntools-style PoC that runs without pwntools installed."""
+        vulnerability_type = str(getattr(vulnerability.type, "value", vulnerability.type))
+        function_name = str(getattr(vulnerability, "function_name", "unknown"))
+        try:
+            address = hex(int(getattr(vulnerability, "address", 0)))
+        except (TypeError, ValueError):
+            address = str(getattr(vulnerability, "address", "unknown"))
+        rop_note = (
+            "# ROP chain generation was requested, but this PoC intentionally stays minimal\n"
+            if generate_rop_chain
+            else ""
+        )
+
+        return (
+            "#!/usr/bin/env python3\n"
+            f'"""Minimal pwntools-style PoC for {vulnerability_type} in {function_name}."""\n\n'
+            f"binary_path = {binary_path!r}\n"
+            f"target_address = {address!r}\n"
+            f"payload = {payload!r}\n\n"
+            "# Equivalent pwntools flow (kept as comments so the script works without pwntools):\n"
+            "# from pwn import *\n"
+            "# io = process(binary_path)\n"
+            "# io.sendline(payload)\n"
+            "# io.interactive()\n"
+            f"{rop_note}"
+            "import subprocess\n\n"
+            "proc = subprocess.Popen(\n"
+            "    [binary_path],\n"
+            "    stdin=subprocess.PIPE,\n"
+            "    stdout=subprocess.PIPE,\n"
+            "    stderr=subprocess.PIPE,\n"
+            ")\n"
+            "stdout, stderr = proc.communicate(payload + b'\\n')\n"
+            "print(stdout.decode('latin1', errors='replace'))\n"
+            "print(stderr.decode('latin1', errors='replace'))\n"
+        )
+
+    def _format_generate_exploit_results(
+        self,
+        *,
+        binary_path: str,
+        vulnerabilities: List[Dict[str, Any]],
+        analysis_time: float,
+        note: Optional[str],
+        cfg_summary: Dict[str, int],
+    ) -> str:
+        """Create a concise MCP text summary for exploit generation."""
+        text = "Exploit Generation\n"
+        text += "=" * 70 + "\n\n"
+        text += f"Binary: {binary_path}\n"
+        text += (
+            "CFGFast summary: "
+            f"{cfg_summary.get('function_count', 0)} functions, "
+            f"{cfg_summary.get('node_count', 0)} nodes, "
+            f"{cfg_summary.get('edge_count', 0)} edges\n"
+        )
+        text += f"Analysis time: {analysis_time:.2f}s\n"
+        text += f"Vulnerabilities: {len(vulnerabilities)}\n\n"
+
+        if vulnerabilities:
+            text += "Generated PoC candidates:\n"
+            for vulnerability in vulnerabilities[:10]:
+                text += (
+                    f"• {vulnerability.get('type', 'unknown')} at "
+                    f"{vulnerability.get('address', 'unknown')} "
+                    f"({vulnerability.get('function_name', 'unknown')})\n"
+                )
+        elif note:
+            text += note + "\n"
+        else:
+            text += "No vulnerabilities found.\n"
+
+        return text
 
     def _serialize_diff_result(self, diff_result: Any) -> Dict[str, Any]:
         """Convert a binary diff result into JSON-safe data."""
