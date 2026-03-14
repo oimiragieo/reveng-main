@@ -156,10 +156,14 @@ def test_analysis_pipeline_generates_unified_report(monkeypatch, tmp_path: Path)
     def fake_recompilation(self: AnalysisPipeline, stage: PipelineStage, binary: str):
         stage_context = self._get_stage_context()
         assert "ghidra_analysis" in stage_context["dependencies"]
+        recompilation_dir = output_dir / "recompilation"
+        recompilation_dir.mkdir(parents=True, exist_ok=True)
+        reconstructed_c = recompilation_dir / "reconstructed.c"
+        reconstructed_c.write_text("int main(void) { return 0; }\n", encoding="utf-8")
         return {
             "status": "success",
-            "source_files": {"c": str(output_dir / "reconstructed.c")},
-            "compiled_binaries": {"c_gcc": str(output_dir / "reconstructed.exe")},
+            "source_files": {"c": str(reconstructed_c)},
+            "compiled_binaries": {"c_gcc": str(recompilation_dir / "reconstructed.exe")},
             "compilation_reports": {
                 "c_gcc": {"status": "success", "total_attempts": 1}
             },
@@ -212,16 +216,25 @@ def test_analysis_pipeline_generates_unified_report(monkeypatch, tmp_path: Path)
 
     report = json.loads(report_path.read_text(encoding="utf-8"))
     assert report["summary"]["overall_status"] == "success"
-    assert report["summary"]["compiled_binaries"] == [str(output_dir / "reconstructed.exe")]
+    assert report["summary"]["compiled_binaries"] == [
+        str(output_dir / "recompilation" / "reconstructed.exe")
+    ]
     assert report["summary"]["behavioral_anomaly_score"] == 0.82
     assert report["summary"]["memory_anomaly_score"] == 0.91
+    assert len(report["decompiled_functions"]) == 1
+    assert report["decompiled_functions"][0]["source"].startswith("int main")
+    assert report["recompilation_result"]["status"] == "success"
+    assert Path(report["recompilation_result"]["source_files"]["c"]).exists()
     assert report["summary"]["yara_match_count"] >= 1
     assert report["yara_matches"]
+    assert report["vulnerabilities"] == []
     assert report["malware_classification"]["family"]
     assert report["stages"]["ghidra_analysis"]["backend"] == "mock_ghidra"
     assert report["stages"]["recompilation"]["compiled_binaries"]["c_gcc"].endswith(
         "reconstructed.exe"
     )
+    assert (output_dir / "source").exists()
+    assert list((output_dir / "source").glob("*.c"))
 
 
 def test_handle_analyze_command_reports_unified_pipeline_result(

@@ -6,6 +6,7 @@ and result aggregation.
 
 import asyncio
 import json
+import shutil
 import threading
 import time
 from dataclasses import asdict, dataclass
@@ -721,6 +722,86 @@ class AnalysisPipeline:
             "summary": report["summary"],
         }
 
+    def _extract_decompiled_functions(self, analysis_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Normalize decompiled functions into a report-friendly list."""
+        normalized_functions: List[Dict[str, Any]] = []
+
+        for function in analysis_data.get("functions", []):
+            if not isinstance(function, dict):
+                continue
+
+            source = function.get("source") or function.get("decompiled")
+            if not source:
+                continue
+
+            normalized_function = dict(function)
+            normalized_function["source"] = source
+            if not normalized_function.get("address") and function.get("entry_point"):
+                normalized_function["address"] = function.get("entry_point")
+            normalized_functions.append(normalized_function)
+
+        if normalized_functions:
+            return normalized_functions
+
+        decompiled_code = analysis_data.get("decompiled_code", {})
+        if not isinstance(decompiled_code, dict):
+            return []
+
+        for address, source in decompiled_code.items():
+            if not source:
+                continue
+            normalized_functions.append(
+                {
+                    "name": str(address),
+                    "address": str(address),
+                    "source": str(source),
+                }
+            )
+
+        return normalized_functions
+
+    def _materialize_source_outputs(
+        self,
+        analysis_folder: Path,
+        source_files: Dict[str, str],
+        decompiled_functions: List[Dict[str, Any]],
+    ) -> Dict[str, str]:
+        """Copy generated source artifacts into the top-level analysis/source directory."""
+        source_dir = analysis_folder / "source"
+        materialized_sources: Dict[str, str] = {}
+
+        for language, source_path in source_files.items():
+            if not source_path:
+                continue
+
+            path = Path(source_path)
+            if not path.exists():
+                continue
+
+            source_dir.mkdir(parents=True, exist_ok=True)
+            destination = source_dir / path.name
+            if path.resolve() != destination.resolve():
+                shutil.copy2(path, destination)
+            materialized_sources[language] = str(destination)
+
+        if "c" in materialized_sources:
+            return materialized_sources
+
+        combined_source = "\n\n".join(
+            str(function.get("source", "")).strip()
+            for function in decompiled_functions
+            if function.get("source")
+        ).strip()
+
+        if not combined_source:
+            return materialized_sources
+
+        source_dir.mkdir(parents=True, exist_ok=True)
+        fallback_c_file = source_dir / "decompiled_functions.c"
+        fallback_c_file.write_text(f"{combined_source}\n", encoding="utf-8")
+        materialized_sources["c"] = str(fallback_c_file)
+        return materialized_sources
+
     def _execute_dynamic_analysis(
         self, stage: PipelineStage, binary_path: str
     ) -> Dict[str, Any]:
@@ -1100,6 +1181,7 @@ class AnalysisPipeline:
         if stage.config.get("mode") == "unified_e2e_report":
             output_dir = self._resolve_output_dir(stage, binary_path, "reports")
             report_path = output_dir / "unified_analysis_report.json"
+            analysis_folder = output_dir.parent
             stage_context = self._get_stage_context()
             dependency_outputs = stage_context.get("dependencies", {})
 
@@ -1107,6 +1189,24 @@ class AnalysisPipeline:
             recompilation_output = dependency_outputs.get("recompilation", {})
             behavioral_output = dependency_outputs.get("behavioral_forensics", {})
             memory_output = dependency_outputs.get("memory_forensics", {})
+            analysis_data = ghidra_output.get("analysis_data") or {}
+            decompiled_functions = self._extract_decompiled_functions(analysis_data)
+            source_files = self._materialize_source_outputs(
+                analysis_folder,
+                recompilation_output.get("source_files") or {},
+                decompiled_functions,
+            )
+            recompilation_result = {
+                "status": recompilation_output.get("status", "skipped"),
+                "output_dir": recompilation_output.get("output_dir"),
+                "source_files": source_files,
+                "compiled_binaries": recompilation_output.get("compiled_binaries", {}),
+                "compilation_reports": recompilation_output.get("compilation_reports", {}),
+                "validation_results": recompilation_output.get("validation_results", {}),
+                "cfg_summary": recompilation_output.get("cfg_summary", {}),
+                "error": recompilation_output.get("error"),
+            }
+            vulnerabilities = recompilation_output.get("vulnerabilities", [])
 
             compiled_binaries = list((recompilation_output.get("compiled_binaries") or {}).values())
             stage_statuses = {
@@ -1141,14 +1241,12 @@ class AnalysisPipeline:
             report = {
                 "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "binary_path": binary_path,
-                "analysis_folder": str(output_dir.parent),
+                "analysis_folder": str(analysis_folder),
                 "summary": {
                     "overall_status": overall_status,
                     "stage_statuses": stage_statuses,
                     "ghidra_backend": ghidra_output.get("backend"),
-                    "functions_detected": len(
-                        (ghidra_output.get("analysis_data") or {}).get("functions", [])
-                    ),
+                    "functions_detected": len(decompiled_functions),
                     "compiled_binaries": compiled_binaries,
                     "behavioral_anomaly_score": behavioral_output.get("anomaly_score"),
                     "behavioral_threat_level": behavioral_output.get("threat_level"),
@@ -1158,7 +1256,10 @@ class AnalysisPipeline:
                     "malware_family": malware_classification.get("family"),
                     "malware_confidence": malware_classification.get("confidence"),
                 },
+                "decompiled_functions": decompiled_functions,
+                "recompilation_result": recompilation_result,
                 "yara_matches": yara_matches,
+                "vulnerabilities": vulnerabilities,
                 "malware_classification": malware_classification,
                 "stages": dependency_outputs,
             }
