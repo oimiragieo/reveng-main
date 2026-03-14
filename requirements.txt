@@ -104,6 +104,7 @@ pyelftools>=0.29,<1.0.0  # ELF binary parsing
 
 # Malware signature scanning
 yara-python>=4.5.4
+volatility3>=2.27.0
 
 # Semantic Binary Diffing
 scipy>=1.10.0,<2.0.0  # Already listed above, needed for Hungarian algorithm

@@ -32,3 +32,16 @@
   - `python -m mypy src/reveng/pipeline/pipeline_engine.py src/reveng/pipeline/e2e_integration.py src/reveng/cli.py src/reveng/cli/reveng.py --ignore-missing-imports --follow-imports=skip`
   - `PYTHONIOENCODING=utf8 python src/reveng/cli/reveng.py analyze test_samples/sample.exe`
 - Current manual behavior on Windows without a running Ghidra server is still useful: the pipeline falls back to local Capstone disassembly, generates `analysis_sample/reports/unified_analysis_report.json`, and reports `partial_success` if recompilation cannot recover from missing Gemini-assisted compiler fixes.
+
+## Volatility3 memory forensics notes
+
+- `src/reveng/malware/volatility_analyzer.py` is the new Volatility3 wrapper for Windows dump analysis. It imports the Volatility plugin namespace once, then runs `windows.pslist.PsList`, `windows.cmdline.CmdLine`, and `windows.netscan.NetScan` against the supplied `.dmp`/`.mem` path.
+- `src/reveng/malware/memory_forensics.py` now routes dump files through `VolatilityAnalyzer.analyze_dump(...)` instead of calling WMIC on the live host. Non-dump paths keep the legacy behavior, but `.dmp`/`.mem` analysis is now dump-backed.
+- `SKIP_VOLATILITY=1` provides a CI-safe mock path that returns one minimal process entry and no network connections; this keeps the `analyze_memory_dump` MCP tool testable without a real Windows dump or symbol downloads.
+- `requirements.txt` now explicitly pins `volatility3>=2.27.0`. `.factory/init.sh` already included `volatility3`, so no extra init-script change was required in this session.
+- Focused validation that passed for this feature:
+  - `python -c "import volatility3; print('OK')"`
+  - `pytest tests/unit/test_volatility_integration.py tests/unit/test_malware_forensics_anomaly_detection.py -v`
+  - `pytest tests/poc/test_mcp_integration.py -v -k analyze_memory_dump`
+  - `python -m flake8 src/reveng/malware/memory_forensics.py src/reveng/malware/volatility_analyzer.py tests/unit/test_volatility_integration.py --extend-ignore=E501,F811,E203`
+  - `python -m mypy src/reveng/malware/memory_forensics.py src/reveng/malware/volatility_analyzer.py --ignore-missing-imports --follow-imports=skip`
