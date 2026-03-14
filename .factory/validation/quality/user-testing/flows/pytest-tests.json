@@ -1,0 +1,30 @@
+{
+  "groupId": "pytest-tests",
+  "testedAt": "2026-03-14T00:00:00Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "environment": "Windows 10, Python 3.14.0",
+    "envVars": "PYTHONIOENCODING=utf8, SKIP_SANDBOX=true, SKIP_VOLATILITY=true"
+  },
+  "toolsUsed": ["pytest", "rg"],
+  "assertions": {
+    "VAL-QUAL-001": {
+      "status": "pass",
+      "evidence": "quality/pytest-tests/VAL-QUAL-001-pytest-output.txt",
+      "details": "23 tests collected, 23 passed, 0 skipped, 0 errors, 0 failures in 0.75s. No @pytest.mark.skip decorators found in the file (rg search returned no matches)."
+    },
+    "VAL-QUAL-002": {
+      "status": "pass",
+      "evidence": "quality/pytest-tests/VAL-QUAL-002-pytest-output.txt",
+      "details": "19 tests collected, 19 passed, 0 skipped, 0 errors, 0 failures in 1.55s. All four classes collected and passed: TestCLIParser (5 tests), TestCLIHandlers (6 tests), TestCLIMain (4 tests), TestCLIIntegration (4 tests). No @pytest.mark.skip decorators found in the file."
+    },
+    "VAL-QUAL-004": {
+      "status": "pass",
+      "evidence": "quality/pytest-tests/VAL-QUAL-004-pytest-output.txt",
+      "details": "2 tests collected, 2 passed, 0 skipped, 0 errors, 0 failures in 0.29s on Windows. No UnicodeDecodeError. File uses pathlib.Path.read_text(encoding='utf-8') for all file reads (3 occurrences) — no bare open() calls exist. All encoding parameters are explicit."
+    }
+  },
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 3 assertions: all 3 passed. VAL-QUAL-001: 23/23 tests pass with 0 skips. VAL-QUAL-002: 19/19 tests pass across all 4 CLI classes with 0 skips. VAL-QUAL-004: 2/2 tests pass on Windows with no UnicodeDecodeError, all file reads use explicit UTF-8 encoding."
+}

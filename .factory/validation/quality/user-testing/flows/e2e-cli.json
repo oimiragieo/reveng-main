@@ -1,0 +1,39 @@
+{
+  "groupId": "e2e-cli",
+  "testedAt": "2026-03-14T14:20:30Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "environment": "Windows, Python 3.14, PYTHONIOENCODING=utf8",
+    "testBinary": "test_samples/sample.exe",
+    "ghidraServer": "http://localhost:13370",
+    "ollamaServer": "http://localhost:11434"
+  },
+  "toolsUsed": ["python", "pytest"],
+  "assertions": {
+    "VAL-CROSS-001": {
+      "status": "pass",
+      "evidence": {
+        "cliOutput": "quality/e2e-cli/cli-stdout-stderr.txt",
+        "reportFirst80Lines": "quality/e2e-cli/report-first-80-lines.txt",
+        "sourceDirListing": "quality/e2e-cli/source-dir-listing.txt"
+      },
+      "details": "CLI command `python src/reveng/cli/reveng.py analyze test_samples/sample.exe` completed with exit code 0. The `analysis_sample/` directory was created with full structure. The unified report JSON at `analysis_sample/reports/unified_analysis_report.json` contains all required keys: `decompiled_functions` (99 entries, ≥1 required), `recompilation_result` (dict with 8 keys), and `yara_matches` (4 matches). No `ModuleNotFoundError` or yara import errors found in stdout/stderr. Source directory `analysis_sample/source/` contains `reconstructed.c` (55,959 bytes). Additionally, the existing pytest integration test `tests/integration/test_e2e_cli.py::test_analyze_sample_produces_yara_enriched_report` passed in 44.53s, confirming the same assertion via automated test."
+    }
+  },
+  "frictions": [
+    {
+      "description": "Recompilation stage reported 'failed' due to missing Gemini API key (LLM feedback loop unavailable), but the pipeline continued and completed as 'partial_success'. This is expected behavior since Gemini is optional.",
+      "resolved": true,
+      "resolution": "Pipeline correctly falls through to remaining stages; recompilation_result key is still present in report (with failure details).",
+      "affectedAssertions": ["VAL-CROSS-001"]
+    },
+    {
+      "description": "A UnicodeDecodeError occurred in a subprocess thread during behavioral monitoring, but it did not affect the overall pipeline exit code or report generation.",
+      "resolved": true,
+      "resolution": "Non-blocking error in behavioral forensics subprocess; pipeline continued successfully.",
+      "affectedAssertions": ["VAL-CROSS-001"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 1 assertion: 1 passed. VAL-CROSS-001 fully confirmed — CLI E2E analysis produces a YARA-enriched report with all required keys, at least one decompiled function (99 found), yara_matches present (4 matches), and at least one .c source file in analysis_sample/source/."
+}
