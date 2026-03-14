@@ -1,0 +1,67 @@
+{
+  "featureId": "mcp-recompile-binary",
+  "reviewedAt": "2026-03-14T04:30:00.000Z",
+  "commitId": "ee1532082072ef8691fc25048d7f4d07cf6e78be",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation of the recompile_binary MCP tool. The commit modifies 3 files (+813 lines): reveng_enterprise_server.py (OllamaRepairEngine adapter, recompile_binary handler, ~15 helper methods for translation-unit generation, stub creation, function-overlap calculation), recompilation_engine.py (+3 lines adding -g/-fno-builtin/-Wl,--allow-multiple-definition to GCC commands), and test_mcp_integration.py (4 new test cases). The implementation covers all feature requirements: (1) accepts binary_path + optional source_code; (2) falls back to decompile_binary when no source provided; (3) uses BinaryRecompilationEngine with an OllamaRepairEngine adapter backed by qwen2.5-coder:32b-instruct via the ollama Python package; (4) iterative GCC compilation with max 3 retries; (5) success returns {output_path, success, function_overlap}; (6) failure returns {success: false, compilation_errors, partial_source}. End-to-end verification showed a 43KB PE with MZ magic and 75.28% function overlap. Tests use proper mocking to exercise success, failure, schema, and source-code bypass paths.",
+    "issues": [
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 870,
+        "severity": "non_blocking",
+        "description": "The method calls engine._phase1_decompilation() — a private method — directly from outside the BinaryRecompilationEngine class. This couples the MCP handler to the engine's internal API surface. If the engine refactors its private methods, this will break silently. Consider adding a public method to BinaryRecompilationEngine for fetching Ghidra analysis data, or pass pre-decompiled data into the engine through a constructor/public setter."
+      },
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 859,
+        "severity": "non_blocking",
+        "description": "OllamaRepairEngine is instantiated with no arguments (default model/host), which is correct for the current deployment. However, the model name and host are not configurable through MCP tool arguments or server configuration. If the Ollama endpoint changes, the hardcoded defaults in the OllamaRepairEngine constructor would need updating. Low risk in current deployment but worth noting for future extensibility."
+      },
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 838,
+        "severity": "non_blocking",
+        "description": "The ghidra_timeout is computed as `max(180, ...)`, which means the minimum timeout for recompilation is always 180 seconds. This is reasonable but undocumented — callers have no way to set a lower timeout even if they wanted a quick failure."
+      },
+      {
+        "file": "src/reveng/ai/recompilation_engine.py",
+        "line": 346,
+        "severity": "non_blocking",
+        "description": "The added '-Wl,--allow-multiple-definition' linker flag suppresses duplicate symbol errors. This is pragmatic for reconstructed code from Ghidra stubs but could mask legitimate linking bugs. The flag is always applied, not just for MCP-originated compilations."
+      },
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 2500,
+        "severity": "non_blocking",
+        "description": "_calculate_function_overlap decompiles both the original and rebuilt binary via Ghidra. For large binaries, this doubles the Ghidra workload after compilation. The original decompile result is already available (from the earlier decompile_binary call) but is not reused here — instead the original binary is re-decompiled. This is wasteful but not incorrect."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Worker accesses BinaryRecompilationEngine private methods (_phase1_decompilation, _compile_with_feedback_loop) directly from the MCP server. AGENTS.md and the skill file don't mention whether cross-module private-method access is acceptable or discouraged. This pattern may lead to brittle coupling if other workers refactor the engine.",
+      "evidence": "reveng_enterprise_server.py:870 calls engine._phase1_decompilation(); line 882 calls engine._compile_with_feedback_loop(). These are underscore-prefixed private methods of BinaryRecompilationEngine."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The recompilation-engine.md library file was NOT updated to document the new MCP integration pattern (OllamaRepairEngine adapter, how the MCP tool wires decompile_binary → BinaryRecompilationEngine → GCC). Future workers implementing similar MCP tools won't find guidance on this integration pattern.",
+      "evidence": "recompilation-engine.md still only documents the standalone compiler feedback loop and angr CFG preprocessing. The handoff mentions no library updates."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The OllamaRepairEngine adapter class implements a duck-typed interface compatible with BinaryRecompilationEngine's gemini_engine parameter (_generate_async, is_available). This adapter pattern is not documented anywhere. Future workers adding new LLM backends would need to reverse-engineer which methods are required.",
+      "evidence": "OllamaRepairEngine at reveng_enterprise_server.py:117 implements _generate_async() and is_available() to match GeminiEngine's interface used by BinaryRecompilationEngine._repair_source_from_compiler_error()."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker followed the skill procedure correctly. Manual verification with test_samples/sample.exe was performed, all test commands were run, flake8 passed. The skill was followed faithfully per the handoff's skillFeedback.followedProcedure=true.",
+      "evidence": "Handoff verification section lists 8 commands covering baseline, Ghidra health, Ollama availability, MCP recompile tests, recompilation unit tests, flake8, and end-to-end manual verification."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The recompile_binary MCP tool is fully implemented and meets all 6 requirements from the feature description. OllamaRepairEngine adapter properly wraps the ollama Python package for qwen2.5-coder:32b-instruct. Decompile fallback, GCC iterative repair loop (max 3 retries), success/failure structured responses, and function-overlap reporting all work correctly. End-to-end verification produced a valid 43KB PE artifact with 75.28% function overlap. Four new test cases cover the critical paths. Non-blocking issues: private method coupling to BinaryRecompilationEngine internals, non-configurable model/host, redundant Ghidra decompilation in overlap calculation, and globally-applied --allow-multiple-definition linker flag. None of these are blocking for the feature's stated requirements."
+}

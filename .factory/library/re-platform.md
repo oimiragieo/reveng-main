@@ -23,8 +23,14 @@ Key facts for workers implementing the REVENG production-grade RE platform.
 ## MCP Server
 
 - **Location**: `src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py`
-- **5 stub tools** (return "coming soon"): `recompile_binary`, `generate_exploit`, `classify_malware`, `ask_ai_about_binary` / `query_ai`, `ai_code_reconstruction` / `reconstruct_code_with_ai`
-- **`decompile_binary`**: Now working — calls `GhidraEngine.decompile()` which hits the HTTP server `/decompile` endpoint
+- **Implemented tools** (mcp-tools milestone): `decompile_binary`, `recompile_binary`, `classify_malware`, `ask_ai_about_binary` / `query_ai`, `ai_code_reconstruction` / `reconstruct_code_with_ai` — all fully working with Ghidra/Ollama/YARA backends
+- **Remaining stub**: `generate_exploit` (tracked in advanced-analysis milestone)
+- **`decompile_binary`**: Calls `GhidraEngine.decompile()` which hits the HTTP server `/decompile` endpoint
+- **`recompile_binary`**: Uses `OllamaRepairEngine` adapter + `BinaryRecompilationEngine` with iterative GCC compilation (max 3 retries)
+- **`ask_ai_about_binary`**: Decompiles binary, sends context + question to Ollama HTTP API, returns structured answer
+- **`ai_code_reconstruction`**: Extracts CFG via AngrCFGPreprocessor + decompiles, sends to Ollama for clean C reconstruction
+- **`classify_malware`**: YARA scanning (24 built-in rules) + `ForensicsAnomalyModel` ML + optional Ollama family naming
+- **Dual-argument pattern**: All tools accept both `binary_path` (canonical) and `path` (legacy) via `_resolve_binary_argument()`
 - **Tool count**: 15 total (must stay >= 15)
 
 ## YARA Integration
