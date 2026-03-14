@@ -1,0 +1,78 @@
+{
+  "groupId": "adv-002",
+  "testedAt": "2026-03-14T01:27:10Z",
+  "isolation": {
+    "repoRoot": "C:\\dev\\projects\\reveng-main",
+    "testingTool": "Python direct invocation",
+    "testBinary": "C:\\dev\\projects\\reveng-main\\test_samples\\sample.exe",
+    "mcpServer": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py"
+  },
+  "toolsUsed": ["python -c"],
+  "assertions": [
+    {
+      "id": "VAL-ADV-002",
+      "title": "generate_exploit Returns angr-Derived PoC Code",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Verify angr import in symbolic_execution_engine.py",
+          "expected": "'import angr' present in the code path",
+          "observed": "'import angr' found at line 23 of src/reveng/security/symbolic_execution_engine.py"
+        },
+        {
+          "action": "Verify SymbolicExecutionEngine import in generate_exploit handler",
+          "expected": "generate_exploit handler imports from symbolic_execution_engine",
+          "observed": "SymbolicExecutionEngine imported at lines 1118/1129 of reveng_enterprise_server.py; AngrCFGPreprocessor imported at line 44"
+        },
+        {
+          "action": "Verify no 'coming soon' or 'feature coming' in source files",
+          "expected": "Zero matches for 'coming soon' or 'feature coming' (case-insensitive)",
+          "observed": "Zero matches in both symbolic_execution_engine.py and reveng_enterprise_server.py"
+        },
+        {
+          "action": "Instantiate REVENGEnterpriseServer and call generate_exploit with test_samples/sample.exe",
+          "expected": "Response contains exploit data, no 'coming soon', angr is invoked",
+          "observed": "Response returned with status_code 200, 2 vulnerabilities found (buffer_overflow at 0x140003168, format_string at 0x140002fe0), each with PoC scripts, payload hex, and memory addresses"
+        },
+        {
+          "action": "Check response text does not contain 'coming soon' or 'feature coming'",
+          "expected": "Neither phrase present",
+          "observed": "has_coming_soon: False, has_feature_coming: False"
+        },
+        {
+          "action": "Verify response text length and content",
+          "expected": "Response text >= 1 character, contains exploit scaffolding or memory addresses",
+          "observed": "Response text length: 359 chars. Contains CFGFast summary (214 functions, 689 nodes, 1066 edges), 2 PoC candidates with hex addresses (0x140003168, 0x140002fe0), payload_hex fields, and poc_script Python code"
+        },
+        {
+          "action": "Verify angr was actually invoked (logged in output)",
+          "expected": "angr project loading and CFGFast analysis visible in logs",
+          "observed": "Logs show: 'Loading binary sample.exe', CFGFast ran producing 214 functions/689 nodes/1066 edges, SimulationManager stepping logged for symbolic execution, 'Discovery complete: 2 vulnerabilities found'"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "N/A (direct Python invocation, no network calls)",
+        "files": [
+          "advanced-analysis/adv-002/VAL-ADV-002-full-mcp-response.json",
+          "advanced-analysis/adv-002/VAL-ADV-002-angr-verification.txt"
+        ],
+        "responseTextLength": 359,
+        "responseFirst300Chars": "Exploit Generation\n======================================================================\n\nBinary: C:\\dev\\projects\\reveng-main\\test_samples\\sample.exe\nCFGFast summary: 214 functions, 689 nodes, 1066 edges\nAnalysis time: 39.75s\nVulnerabilities: 2\n\nGenerated PoC candidates:\n\u2022 buffer_overflow at 0x1400",
+        "vulnerabilityCount": 2,
+        "cfgSummary": {
+          "function_count": 214,
+          "node_count": 689,
+          "edge_count": 1066
+        },
+        "angrLogged": true,
+        "comingSoonAbsent": true
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 1 assertion: 1 passed. VAL-ADV-002 PASS — generate_exploit successfully invoked angr symbolic execution on test_samples/sample.exe, found 2 vulnerabilities (buffer_overflow, format_string), generated PoC scripts with memory addresses and payloads, and returned no 'coming soon' text."
+}
