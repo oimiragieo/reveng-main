@@ -5,12 +5,12 @@ import re
 from pathlib import Path
 
 import pytest
-import requests
+import requests  # type: ignore[import-untyped]
 
 
 README_PATH = Path("README.md")
 INSTALLATION_PATH = Path("INSTALLATION.md")
-ARCHITECTURE_PATH = Path("docs/developer-guide/ARCHITECTURE.md")
+ARCHITECTURE_PATH = Path("docs/architecture/overview.md")
 API_REFERENCE_PATH = Path("docs/api/API_REFERENCE.md")
 DOCS_INDEX_PATH = Path("docs/README.md")
 EXAMPLES_README_PATH = Path("examples/README.md")
@@ -37,12 +37,12 @@ DOCUMENTS_UNDER_TEST = {
         ],
         "min_length": 500,
     },
-    "docs/developer-guide/ARCHITECTURE.md": {
+    "docs/architecture/overview.md": {
         "path": ARCHITECTURE_PATH,
         "required_sections": [
-            "## 🏗️ System Overview",
-            "## 🔧 Core Components",
-            "## 🔄 Data Flow",
+            "## Entry Points",
+            "## Runtime Flow",
+            "## Package Map",
         ],
         "min_length": 500,
     },
@@ -59,11 +59,12 @@ DOCUMENTS_UNDER_TEST = {
 
 KEY_DOCS = [
     DOCS_INDEX_PATH,
-    Path("docs/CHANGELOG.md"),
-    Path("docs/user-guide/USER_GUIDE.md"),
+    Path("docs/architecture/overview.md"),
     Path("docs/developer-guide/DEVELOPER_GUIDE.md"),
+    Path("docs/deployment/README.md"),
     API_REFERENCE_PATH,
     Path("docs/getting-started/installation.md"),
+    Path("docs/mcp/README.md"),
 ]
 
 CRITICAL_README_LINKS = [
@@ -87,7 +88,7 @@ def read_text(path: Path) -> str:
 
 
 class TestDocumentationFiles:
-    """Test that core documentation files exist and match the current structure."""
+    """Test that core docs exist and match the current structure."""
 
     @pytest.mark.parametrize("doc_name", list(DOCUMENTS_UNDER_TEST))
     def test_core_documents_exist_and_have_expected_sections(self, doc_name):
@@ -98,7 +99,9 @@ class TestDocumentationFiles:
         assert doc_path.exists(), f"{doc_path} not found"
 
         content = read_text(doc_path)
-        assert len(content) > document["min_length"], f"{doc_path} is unexpectedly short"
+        assert len(content) > document["min_length"], (
+            f"{doc_path} is unexpectedly short"
+        )
 
         for section in document["required_sections"]:
             assert section in content, f"{doc_path} missing section: {section}"
@@ -110,14 +113,16 @@ class TestDocumentationFiles:
 
         for doc_path in KEY_DOCS:
             assert doc_path.exists(), f"Documentation file missing: {doc_path}"
-            assert len(read_text(doc_path)) > 100, f"Documentation file too short: {doc_path}"
+            assert len(read_text(doc_path)) > 100, (
+                f"Documentation file too short: {doc_path}"
+            )
 
 
 class TestDocumentationLinks:
     """Test critical internal and external documentation links."""
 
     def test_readme_references_current_core_docs(self):
-        """README should reference the current top-level documentation entry points."""
+        """README should reference the current top-level docs entry points."""
         content = read_text(README_PATH)
 
         for link in CRITICAL_README_LINKS:
@@ -126,7 +131,7 @@ class TestDocumentationLinks:
 
     @pytest.mark.parametrize("url", CORE_EXTERNAL_LINKS)
     def test_core_external_links_resolve(self, url):
-        """Core GitHub links referenced by the project should resolve successfully."""
+        """Core GitHub links referenced by the project should resolve."""
         try:
             response = requests.get(url, timeout=10, allow_redirects=True)
         except requests.RequestException as exc:
@@ -139,7 +144,7 @@ class TestDocumentationContent:
     """Test documentation content quality against the current repo layout."""
 
     def test_docs_index_highlights_current_sections(self):
-        """The docs index should point readers to the major guide categories."""
+        """The docs index should point readers to major guide categories."""
         content = read_text(DOCS_INDEX_PATH)
 
         required_sections = [
@@ -151,7 +156,9 @@ class TestDocumentationContent:
         ]
 
         for section in required_sections:
-            assert section in content, f"docs/README.md missing section: {section}"
+            assert section in content, (
+                f"docs/README.md missing section: {section}"
+            )
 
     def test_examples_readme_matches_current_headings(self):
         """Examples docs should reflect the current example organization."""
@@ -172,8 +179,12 @@ class TestDocumentationFormatting:
             content = read_text(doc_path)
 
             assert "## " in content, f"{doc_path} missing section headers"
-            assert not content.startswith(" "), f"{doc_path} starts with whitespace"
-            assert content.endswith("\n"), f"{doc_path} does not end with newline"
+            assert not content.startswith(" "), (
+                f"{doc_path} starts with whitespace"
+            )
+            assert content.endswith("\n"), (
+                f"{doc_path} does not end with newline"
+            )
 
     def test_readme_has_code_blocks(self):
         """README should include formatted code examples."""
@@ -182,9 +193,13 @@ class TestDocumentationFormatting:
 
         assert code_blocks, "README missing code examples"
         for block in code_blocks:
-            if any(language in block for language in ("bash", "python", "cmd")):
-                assert block.startswith("```"), f"Malformed code block: {block[:50]}"
+            if any(
+                language in block for language in ("bash", "python", "cmd")
+            ):
+                assert block.startswith("```"), (
+                    f"Malformed code block: {block[:50]}"
+                )
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    raise SystemExit(pytest.main([__file__, "-v"]))
