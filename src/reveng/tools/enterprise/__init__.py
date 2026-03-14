@@ -1,17 +1,24 @@
-"""
-Enterprise Features
+"""Enterprise feature modules and canonical GPU accelerator exports."""
 
-Tools for enterprise-grade features like audit trails, plugins, and GPU acceleration.
-"""
+from reveng.ml import gpu_accelerator
+from reveng.ml.gpu_accelerator import (
+    BatchDecompiler,
+    BatchProcessingResult,
+    DeviceType,
+    GPUAccelerator,
+    GPUInfo,
+)
 
-from .audit_trail import *
-from .enhanced_health_monitor import *
-from .gpu_accelerator import *
-from .plugin_system import *
+from . import audit_trail, enhanced_health_monitor, plugin_system
 
 __all__ = [
     "audit_trail",
     "enhanced_health_monitor",
     "gpu_accelerator",
     "plugin_system",
+    "BatchDecompiler",
+    "BatchProcessingResult",
+    "DeviceType",
+    "GPUAccelerator",
+    "GPUInfo",
 ]

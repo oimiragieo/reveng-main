@@ -82,7 +82,7 @@ _MODULE_MAP = {
     "executive_reporting_engine": "reveng.reporting.visualization.executive_reporting_engine",
     "audit_trail": "reveng.tools.enterprise.audit_trail",
     "plugin_system": "reveng.tools.enterprise.plugin_system",
-    "gpu_accelerator": "reveng.tools.enterprise.gpu_accelerator",
+    "gpu_accelerator": "reveng.ml.gpu_accelerator",
     "config_manager": "reveng.tools.config.config_manager",
     "ghidra_mcp_connector": "reveng.tools.config.ghidra_mcp_connector",
     "demonstration_generator": "reveng.tools.utils.demonstration_generator",
