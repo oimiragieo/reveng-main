@@ -1,453 +1,278 @@
-"""
-Integration tests for ML workflow
-"""
+"""Integration tests for the current ML workflow API."""
 
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.reveng.ml.anomaly_detection import MLAnomalyDetection
-from src.reveng.ml.code_reconstruction import MLCodeReconstruction
-from src.reveng.ml.integration import MLIntegration, MLIntegrationConfig
+from reveng.ml.anomaly_detection import AnomalyType
+from reveng.ml.code_reconstruction import ModelType
+from reveng.ml.integration import MLIntegration, MLIntegrationConfig
+
+
+@pytest.fixture
+def sample_binary(tmp_path):
+    """Create a small PE-like binary for workflow tests."""
+    binary_path = tmp_path / "test.exe"
+    binary_path.write_bytes(b"MZ\x90\x00" + b"\x00" * 1024)
+    return binary_path
+
+
+@pytest.fixture
+def sample_analysis_data():
+    """Representative analysis payload consumed by MLIntegration."""
+    return {
+        "disassembly": {
+            "instructions": [
+                {
+                    "address": 0x401000,
+                    "size": 2,
+                    "mnemonic": "call eax",
+                    "bytes": "90ab",
+                    "function": "entry",
+                }
+            ]
+        },
+        "functions": [
+            {
+                "address": 0x401100,
+                "size": 16,
+                "disassembly": "int main(void) { return 0; }",
+                "name": "main",
+            }
+        ],
+        "imports": ["CreateFileA"],
+        "strings": ["hello"],
+    }
+
+
+@pytest.fixture
+def ml_integration(tmp_path):
+    """Construct MLIntegration with mocked heavy dependencies."""
+    with (
+        patch("reveng.ml.integration.MLCodeReconstruction") as mock_reconstruction_cls,
+        patch("reveng.ml.integration.MLAnomalyDetection") as mock_anomaly_cls,
+    ):
+        mock_reconstruction = MagicMock()
+        mock_reconstruction.models = {}
+        mock_anomaly = MagicMock()
+        mock_anomaly.models = {}
+
+        mock_reconstruction_cls.return_value = mock_reconstruction
+        mock_anomaly_cls.return_value = mock_anomaly
+
+        config = MLIntegrationConfig(output_directory=str(tmp_path / "ml_output"))
+        integration = MLIntegration(config)
+
+        yield integration, mock_reconstruction, mock_anomaly
 
 
 class TestMLWorkflow:
-    """Integration tests for ML workflow"""
+    """Integration tests for MLIntegration's current public behavior."""
 
-    def setup_method(self):
-        """Setup test environment"""
-        self.temp_dir = Path(tempfile.mkdtemp())
-        self.config = MLIntegrationConfig()
-        self.ml_integration = MLIntegration(self.config)
+    def test_full_ml_analysis_workflow(
+        self, ml_integration, sample_binary, sample_analysis_data
+    ):
+        """Enabled components should populate the structured ml_analysis payload."""
+        integration, _, _ = ml_integration
 
-    def teardown_method(self):
-        """Cleanup test environment"""
-        import shutil
+        reconstruction_result = {"summary": {"total_reconstructions": 1}}
+        anomaly_result = {"summary": {"total_anomalies": 1}}
+        threat_result = {"summary": {"total_threats": 1}}
 
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    def test_full_ml_analysis_workflow(self):
-        """Test complete ML analysis workflow"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock all ML components
         with (
-            patch.object(self.ml_integration, "code_reconstruction") as mock_reconstruction,
-            patch.object(self.ml_integration, "anomaly_detection") as mock_anomaly,
-            patch.object(self.ml_integration, "threat_intelligence") as mock_threat,
+            patch.object(
+                integration,
+                "_perform_code_reconstruction",
+                return_value=reconstruction_result,
+            ) as mock_reconstruction,
+            patch.object(
+                integration,
+                "_perform_anomaly_detection",
+                return_value=anomaly_result,
+            ) as mock_anomaly,
+            patch.object(
+                integration,
+                "_generate_threat_intelligence",
+                return_value=threat_result,
+            ) as mock_threat,
+            patch.object(integration, "_save_ml_results", return_value=True) as mock_save,
         ):
+            result = integration.analyze_binary(str(sample_binary), sample_analysis_data)
 
-            # Setup mocks for complete workflow
-            mock_reconstruction.analyze_binary.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="test code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
-            )
-            mock_anomaly.detect_anomalies.return_value = Mock(
-                anomalies=["anomaly1", "anomaly2"], confidence=0.8, risk_score=0.7
-            )
-            mock_threat.analyze_threats.return_value = Mock(
-                threats=["threat1", "threat2"], confidence=0.85, risk_level="High"
-            )
+        assert result["binary_path"] == str(sample_binary)
+        assert "analysis_timestamp" in result
+        assert result["ml_analysis"] == {
+            "code_reconstruction": reconstruction_result,
+            "anomaly_detection": anomaly_result,
+            "threat_intelligence": threat_result,
+        }
+        mock_reconstruction.assert_called_once_with(
+            str(sample_binary), sample_analysis_data
+        )
+        mock_anomaly.assert_called_once_with(sample_analysis_data)
+        mock_threat.assert_called_once_with(sample_analysis_data)
+        saved_results, saved_binary_path = mock_save.call_args[0]
+        assert saved_results == result
+        assert saved_binary_path == str(sample_binary)
 
-            # Run complete ML analysis workflow
-            result = self.ml_integration.analyze_binary(str(test_binary))
-
-            # Verify all components were called
-            mock_reconstruction.analyze_binary.assert_called_once()
-            mock_anomaly.detect_anomalies.assert_called_once()
-            mock_threat.analyze_threats.assert_called_once()
-
-            # Verify result structure
-            assert result is not None
-            assert hasattr(result, "framework")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "reconstructed_code")
-            assert hasattr(result, "vulnerabilities")
-            assert hasattr(result, "threat_level")
-            assert hasattr(result, "anomalies")
-            assert hasattr(result, "risk_score")
-            assert hasattr(result, "threats")
-            assert hasattr(result, "risk_level")
-
-    def test_ml_workflow_with_failures(self):
-        """Test ML workflow with component failures"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock ML components with mixed success/failure
+    def test_disabled_components_are_skipped(self, sample_binary, sample_analysis_data, tmp_path):
+        """Boolean config flags should disable optional ML stages cleanly."""
         with (
-            patch.object(self.ml_integration, "code_reconstruction") as mock_reconstruction,
-            patch.object(self.ml_integration, "anomaly_detection") as mock_anomaly,
-            patch.object(self.ml_integration, "threat_intelligence") as mock_threat,
+            patch("reveng.ml.integration.MLCodeReconstruction") as mock_reconstruction_cls,
+            patch("reveng.ml.integration.MLAnomalyDetection") as mock_anomaly_cls,
         ):
-
-            # Setup mocks - some succeed, some fail
-            mock_reconstruction.analyze_binary.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="test code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
+            config = MLIntegrationConfig(
+                enable_code_reconstruction=False,
+                enable_anomaly_detection=False,
+                enable_threat_intelligence=False,
+                output_directory=str(tmp_path / "disabled_output"),
+                save_intermediate_results=False,
             )
-            mock_anomaly.detect_anomalies.side_effect = Exception("Anomaly detection failed")
-            mock_threat.analyze_threats.return_value = Mock(
-                threats=["threat1", "threat2"], confidence=0.85, risk_level="High"
-            )
+            integration = MLIntegration(config)
 
-            # Run ML analysis workflow
-            with pytest.raises(Exception):
-                self.ml_integration.analyze_binary(str(test_binary))
+        result = integration.analyze_binary(str(sample_binary), sample_analysis_data)
 
-    def test_ml_workflow_with_large_binary(self):
-        """Test ML workflow with large binary"""
-        # Create large test binary
-        test_binary = self.temp_dir / "large.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000000)  # 1MB file
+        assert integration.code_reconstruction is None
+        assert integration.anomaly_detection is None
+        assert result["ml_analysis"] == {}
+        mock_reconstruction_cls.assert_not_called()
+        mock_anomaly_cls.assert_not_called()
 
-        # Mock all ML components
+    def test_analysis_can_skip_saving_results(
+        self, ml_integration, sample_binary, sample_analysis_data
+    ):
+        """save_intermediate_results=False should avoid the persistence step."""
+        integration, _, _ = ml_integration
+        integration.config.save_intermediate_results = False
+
         with (
-            patch.object(self.ml_integration, "code_reconstruction") as mock_reconstruction,
-            patch.object(self.ml_integration, "anomaly_detection") as mock_anomaly,
-            patch.object(self.ml_integration, "threat_intelligence") as mock_threat,
+            patch.object(
+                integration,
+                "_perform_code_reconstruction",
+                return_value={"summary": {"total_reconstructions": 1}},
+            ),
+            patch.object(
+                integration,
+                "_perform_anomaly_detection",
+                return_value={"summary": {"total_anomalies": 0}},
+            ),
+            patch.object(
+                integration,
+                "_generate_threat_intelligence",
+                return_value={"summary": {"total_threats": 0}},
+            ),
+            patch.object(integration, "_save_ml_results", return_value=True) as mock_save,
         ):
+            result = integration.analyze_binary(str(sample_binary), sample_analysis_data)
 
-            # Setup mocks for large binary
-            mock_reconstruction.analyze_binary.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="large binary code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
+        assert "code_reconstruction" in result["ml_analysis"]
+        mock_save.assert_not_called()
+
+    def test_extract_code_fragments_combines_disassembly_and_functions(
+        self, ml_integration, sample_analysis_data
+    ):
+        """Fragment extraction should preserve addresses, bytes, and function context."""
+        integration, _, _ = ml_integration
+
+        fragments = integration._extract_code_fragments(sample_analysis_data)
+
+        assert len(fragments) == 2
+        assert fragments[0].address == 0x401000
+        assert fragments[0].hex_data == bytes.fromhex("90ab")
+        assert fragments[0].context["function"] == "entry"
+        assert fragments[1].address == 0x401100
+        assert fragments[1].context["function_name"] == "main"
+
+    def test_get_model_status_reports_loaded_models(self, ml_integration):
+        """Model status output should match the current serialized shape."""
+        integration, mock_reconstruction, mock_anomaly = ml_integration
+
+        mock_reconstruction.models = {
+            ModelType.CODEBERT: {
+                "loaded": True,
+                "local": True,
+                "config": {"model_name": "microsoft/codebert-base"},
+            }
+        }
+        mock_anomaly.models = {
+            "behavioral": SimpleNamespace(
+                name="Behavioral Anomaly Detector",
+                type=AnomalyType.BEHAVIORAL,
+                features=["api_entropy"],
+                threshold=0.7,
+                performance={"accuracy": 0.85},
             )
-            mock_anomaly.detect_anomalies.return_value = Mock(
-                anomalies=["anomaly1", "anomaly2"], confidence=0.8, risk_score=0.7
-            )
-            mock_threat.analyze_threats.return_value = Mock(
-                threats=["threat1", "threat2"], confidence=0.85, risk_level="High"
-            )
+        }
 
-            # Run ML analysis workflow
-            result = self.ml_integration.analyze_binary(str(test_binary))
+        status = integration.get_model_status()
 
-            # Verify all components were called
-            mock_reconstruction.analyze_binary.assert_called_once()
-            mock_anomaly.detect_anomalies.assert_called_once()
-            mock_threat.analyze_threats.assert_called_once()
+        assert status["code_reconstruction"]["available"] is True
+        assert status["code_reconstruction"]["models"]["codebert"]["loaded"] is True
+        assert status["anomaly_detection"]["models"]["behavioral"]["type"] == "behavioral"
+        assert status["anomaly_detection"]["models"]["behavioral"]["threshold"] == 0.7
 
-            # Verify result structure
-            assert result is not None
-            assert hasattr(result, "framework")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "reconstructed_code")
-            assert hasattr(result, "vulnerabilities")
-            assert hasattr(result, "threat_level")
-            assert hasattr(result, "anomalies")
-            assert hasattr(result, "risk_score")
-            assert hasattr(result, "threats")
-            assert hasattr(result, "risk_level")
+    def test_get_model_status_returns_error_payload_on_failure(self, ml_integration):
+        """Unexpected model-status errors should be surfaced as an error dict."""
+        integration, _, _ = ml_integration
+        integration.code_reconstruction = SimpleNamespace()
 
-    def test_ml_workflow_with_multiple_binaries(self):
-        """Test ML workflow with multiple binaries"""
-        # Create multiple test binaries
-        test_binaries = []
-        for i in range(3):
-            binary_path = self.temp_dir / f"test_{i}.exe"
-            binary_path.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-            test_binaries.append(binary_path)
+        status = integration.get_model_status()
 
-        # Mock all ML components
+        assert "error" in status
+        assert "models" in status["error"]
+
+    def test_update_config_can_enable_components_after_startup(self, tmp_path):
+        """update_config should initialize newly-enabled components and output paths."""
         with (
-            patch.object(self.ml_integration, "code_reconstruction") as mock_reconstruction,
-            patch.object(self.ml_integration, "anomaly_detection") as mock_anomaly,
-            patch.object(self.ml_integration, "threat_intelligence") as mock_threat,
+            patch("reveng.ml.integration.MLCodeReconstruction") as mock_reconstruction_cls,
+            patch("reveng.ml.integration.MLAnomalyDetection") as mock_anomaly_cls,
         ):
+            mock_reconstruction = MagicMock()
+            mock_anomaly = MagicMock()
+            mock_reconstruction_cls.return_value = mock_reconstruction
+            mock_anomaly_cls.return_value = mock_anomaly
 
-            # Setup mocks for multiple binaries
-            mock_reconstruction.analyze_binary.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="test code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
+            initial_config = MLIntegrationConfig(
+                enable_code_reconstruction=False,
+                enable_anomaly_detection=False,
+                output_directory=str(tmp_path / "initial_output"),
             )
-            mock_anomaly.detect_anomalies.return_value = Mock(
-                anomalies=["anomaly1", "anomaly2"], confidence=0.8, risk_score=0.7
+            integration = MLIntegration(initial_config)
+
+            updated_config = MLIntegrationConfig(
+                enable_code_reconstruction=True,
+                enable_anomaly_detection=True,
+                output_directory=str(tmp_path / "updated_output"),
             )
-            mock_threat.analyze_threats.return_value = Mock(
-                threats=["threat1", "threat2"], confidence=0.85, risk_level="High"
-            )
 
-            # Run ML analysis workflow for each binary
-            results = []
-            for binary in test_binaries:
-                result = self.ml_integration.analyze_binary(str(binary))
-                results.append(result)
+            assert integration.update_config(updated_config) is True
 
-            # Verify all components were called for each binary
-            assert mock_reconstruction.analyze_binary.call_count == 3
-            assert mock_anomaly.detect_anomalies.call_count == 3
-            assert mock_threat.analyze_threats.call_count == 3
+        assert integration.code_reconstruction is mock_reconstruction
+        assert integration.anomaly_detection is mock_anomaly
+        assert (tmp_path / "updated_output").exists()
 
-            # Verify all results
-            assert len(results) == 3
-            for result in results:
-                assert result is not None
-                assert hasattr(result, "framework")
-                assert hasattr(result, "confidence")
-                assert hasattr(result, "reconstructed_code")
-                assert hasattr(result, "vulnerabilities")
-                assert hasattr(result, "threat_level")
-                assert hasattr(result, "anomalies")
-                assert hasattr(result, "risk_score")
-                assert hasattr(result, "threats")
-                assert hasattr(result, "risk_level")
-
-    def test_ml_workflow_with_custom_models(self):
-        """Test ML workflow with custom models"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock all ML components with custom models
+    def test_update_config_returns_false_when_component_init_fails(self, tmp_path):
+        """Initialization failures during config updates should return False, not raise."""
         with (
-            patch.object(self.ml_integration, "code_reconstruction") as mock_reconstruction,
-            patch.object(self.ml_integration, "anomaly_detection") as mock_anomaly,
-            patch.object(self.ml_integration, "threat_intelligence") as mock_threat,
+            patch(
+                "reveng.ml.integration.MLCodeReconstruction",
+                side_effect=RuntimeError("reconstruction init failed"),
+            ),
+            patch("reveng.ml.integration.MLAnomalyDetection") as mock_anomaly_cls,
         ):
+            initial_config = MLIntegrationConfig(
+                enable_code_reconstruction=False,
+                enable_anomaly_detection=False,
+                output_directory=str(tmp_path / "initial_output"),
+            )
+            integration = MLIntegration(initial_config)
 
-            # Setup mocks for custom models
-            mock_reconstruction.analyze_binary.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="custom model code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
-            )
-            mock_anomaly.detect_anomalies.return_value = Mock(
-                anomalies=["custom_anomaly1", "custom_anomaly2"], confidence=0.8, risk_score=0.7
-            )
-            mock_threat.analyze_threats.return_value = Mock(
-                threats=["custom_threat1", "custom_threat2"], confidence=0.85, risk_level="High"
+            updated_config = MLIntegrationConfig(
+                enable_code_reconstruction=True,
+                enable_anomaly_detection=False,
+                output_directory=str(tmp_path / "updated_output"),
             )
 
-            # Run ML analysis workflow with custom models
-            result = self.ml_integration.analyze_binary(str(test_binary), model="custom")
-
-            # Verify all components were called
-            mock_reconstruction.analyze_binary.assert_called_once()
-            mock_anomaly.detect_anomalies.assert_called_once()
-            mock_threat.analyze_threats.assert_called_once()
-
-            # Verify result structure
-            assert result is not None
-            assert hasattr(result, "framework")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "reconstructed_code")
-            assert hasattr(result, "vulnerabilities")
-            assert hasattr(result, "threat_level")
-            assert hasattr(result, "anomalies")
-            assert hasattr(result, "risk_score")
-            assert hasattr(result, "threats")
-            assert hasattr(result, "risk_level")
-
-    def test_ml_workflow_with_disabled_components(self):
-        """Test ML workflow with disabled components"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Create config with disabled components
-        disabled_config = MLIntegrationConfig()
-        disabled_config.code_reconstruction.enabled = False
-        disabled_config.anomaly_detection.enabled = False
-        disabled_config.threat_intelligence.enabled = False
-
-        ml_integration = MLIntegration(disabled_config)
-
-        # Mock all ML components
-        with (
-            patch.object(ml_integration, "code_reconstruction") as mock_reconstruction,
-            patch.object(ml_integration, "anomaly_detection") as mock_anomaly,
-            patch.object(ml_integration, "threat_intelligence") as mock_threat,
-        ):
-
-            # Setup mocks for disabled components
-            mock_reconstruction.analyze_binary.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="test code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
-            )
-            mock_anomaly.detect_anomalies.return_value = Mock(
-                anomalies=["anomaly1", "anomaly2"], confidence=0.8, risk_score=0.7
-            )
-            mock_threat.analyze_threats.return_value = Mock(
-                threats=["threat1", "threat2"], confidence=0.85, risk_level="High"
-            )
-
-            # Run ML analysis workflow with disabled components
-            result = ml_integration.analyze_binary(str(test_binary))
-
-            # Verify all components were called (even if disabled)
-            mock_reconstruction.analyze_binary.assert_called_once()
-            mock_anomaly.detect_anomalies.assert_called_once()
-            mock_threat.analyze_threats.assert_called_once()
-
-            # Verify result structure
-            assert result is not None
-            assert hasattr(result, "framework")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "reconstructed_code")
-            assert hasattr(result, "vulnerabilities")
-            assert hasattr(result, "threat_level")
-            assert hasattr(result, "anomalies")
-            assert hasattr(result, "risk_score")
-            assert hasattr(result, "threats")
-            assert hasattr(result, "risk_level")
-
-    def test_ml_workflow_with_model_status_check(self):
-        """Test ML workflow with model status check"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock all ML components
-        with (
-            patch.object(self.ml_integration, "code_reconstruction") as mock_reconstruction,
-            patch.object(self.ml_integration, "anomaly_detection") as mock_anomaly,
-            patch.object(self.ml_integration, "threat_intelligence") as mock_threat,
-        ):
-
-            # Setup mocks for model status
-            mock_reconstruction.get_model_status.return_value = {"status": "ready", "accuracy": 0.9}
-            mock_anomaly.get_model_status.return_value = {"status": "ready", "accuracy": 0.8}
-            mock_threat.get_model_status.return_value = {"status": "ready", "accuracy": 0.85}
-
-            # Check model status
-            status = self.ml_integration.get_model_status()
-
-            # Verify model status
-            assert isinstance(status, dict)
-            assert "code_reconstruction" in status
-            assert "anomaly_detection" in status
-            assert "threat_intelligence" in status
-            assert status["code_reconstruction"]["status"] == "ready"
-            assert status["anomaly_detection"]["status"] == "ready"
-            assert status["threat_intelligence"]["status"] == "ready"
-
-    def test_ml_workflow_with_model_status_failure(self):
-        """Test ML workflow with model status failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock all ML components with status failures
-        with (
-            patch.object(self.ml_integration, "code_reconstruction") as mock_reconstruction,
-            patch.object(self.ml_integration, "anomaly_detection") as mock_anomaly,
-            patch.object(self.ml_integration, "threat_intelligence") as mock_threat,
-        ):
-
-            # Setup mocks for model status failures
-            mock_reconstruction.get_model_status.side_effect = Exception("Status check failed")
-            mock_anomaly.get_model_status.side_effect = Exception("Status check failed")
-            mock_threat.get_model_status.side_effect = Exception("Status check failed")
-
-            # Check model status
-            with pytest.raises(Exception):
-                self.ml_integration.get_model_status()
-
-    def test_ml_workflow_with_partial_failures(self):
-        """Test ML workflow with partial failures"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock all ML components with partial failures
-        with (
-            patch.object(self.ml_integration, "code_reconstruction") as mock_reconstruction,
-            patch.object(self.ml_integration, "anomaly_detection") as mock_anomaly,
-            patch.object(self.ml_integration, "threat_intelligence") as mock_threat,
-        ):
-
-            # Setup mocks for partial failures
-            mock_reconstruction.analyze_binary.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="test code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
-            )
-            mock_anomaly.detect_anomalies.side_effect = Exception("Anomaly detection failed")
-            mock_threat.analyze_threats.return_value = Mock(
-                threats=["threat1", "threat2"], confidence=0.85, risk_level="High"
-            )
-
-            # Run ML analysis workflow with partial failures
-            with pytest.raises(Exception):
-                self.ml_integration.analyze_binary(str(test_binary))
-
-    def test_ml_workflow_with_custom_config(self):
-        """Test ML workflow with custom configuration"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Create custom config
-        custom_config = MLIntegrationConfig()
-        custom_config.code_reconstruction.enabled = True
-        custom_config.anomaly_detection.enabled = True
-        custom_config.threat_intelligence.enabled = True
-
-        ml_integration = MLIntegration(custom_config)
-
-        # Mock all ML components
-        with (
-            patch.object(ml_integration, "code_reconstruction") as mock_reconstruction,
-            patch.object(ml_integration, "anomaly_detection") as mock_anomaly,
-            patch.object(ml_integration, "threat_intelligence") as mock_threat,
-        ):
-
-            # Setup mocks for custom config
-            mock_reconstruction.analyze_binary.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="custom config code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
-            )
-            mock_anomaly.detect_anomalies.return_value = Mock(
-                anomalies=["custom_anomaly1", "custom_anomaly2"], confidence=0.8, risk_score=0.7
-            )
-            mock_threat.analyze_threats.return_value = Mock(
-                threats=["custom_threat1", "custom_threat2"], confidence=0.85, risk_level="High"
-            )
-
-            # Run ML analysis workflow with custom config
-            result = ml_integration.analyze_binary(str(test_binary))
-
-            # Verify all components were called
-            mock_reconstruction.analyze_binary.assert_called_once()
-            mock_anomaly.detect_anomalies.assert_called_once()
-            mock_threat.analyze_threats.assert_called_once()
-
-            # Verify result structure
-            assert result is not None
-            assert hasattr(result, "framework")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "reconstructed_code")
-            assert hasattr(result, "vulnerabilities")
-            assert hasattr(result, "threat_level")
-            assert hasattr(result, "anomalies")
-            assert hasattr(result, "risk_score")
-            assert hasattr(result, "threats")
-            assert hasattr(result, "risk_level")
+            assert integration.update_config(updated_config) is False
+            mock_anomaly_cls.assert_not_called()

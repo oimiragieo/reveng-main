@@ -129,6 +129,8 @@ class AutomatedAnalysisPipeline:
         """Run analysis pipeline with specified template"""
 
         context = create_error_context(
+            component="automated_analysis_pipeline",
+            operation="run_pipeline",
             tool_name="automated_analysis_pipeline",
             binary_path=binary_path,
             analysis_stage="pipeline_execution",
@@ -136,19 +138,19 @@ class AutomatedAnalysisPipeline:
 
         try:
             if template_name not in self.templates:
+                self.logger.error(f"Unknown template requested: {template_name}")
                 raise AnalysisFailureError(
                     "pipeline_execution",
                     binary_path,
                     context=context,
-                    details=f"Unknown template: {template_name}",
                 )
 
             if not Path(binary_path).exists():
+                self.logger.error(f"Binary file not found: {binary_path}")
                 raise AnalysisFailureError(
                     "pipeline_execution",
                     binary_path,
                     context=context,
-                    details="Binary file not found",
                 )
 
             self.logger.info(
@@ -209,9 +211,11 @@ class AutomatedAnalysisPipeline:
 
         except Exception as e:
             self.logger.error(f"Failed to run analysis pipeline: {e}")
+            if isinstance(e, AnalysisFailureError):
+                raise
             raise AnalysisFailureError(
-                "pipeline_execution", binary_path, context=context, original_error=e
-            )
+                "pipeline_execution", binary_path, context=context
+            ) from e
 
     def _execute_stage(
         self,
@@ -348,6 +352,11 @@ class AutomatedAnalysisPipeline:
         """Generate final analysis report"""
 
         try:
+            serialized_stage_results = {
+                stage.value if isinstance(stage, PipelineStage) else str(stage): data
+                for stage, data in result.stage_results.items()
+            }
+
             # Create comprehensive report
             report = {
                 "pipeline_name": result.pipeline_name,
@@ -356,7 +365,7 @@ class AutomatedAnalysisPipeline:
                 "success": result.success,
                 "errors": result.errors,
                 "warnings": result.warnings,
-                "stage_results": result.stage_results,
+                "stage_results": serialized_stage_results,
                 "summary": self._generate_summary(result),
             }
 
@@ -491,9 +500,10 @@ class AutomatedAnalysisPipeline:
 
         html = ""
         for stage, results in stage_results.items():
+            stage_name = stage.value if isinstance(stage, PipelineStage) else str(stage)
             html += f"""
             <div class="section">
-                <h3>{stage.value}</h3>
+                <h3>{stage_name}</h3>
                 <p><strong>Steps Executed:</strong> {results.get("steps_executed", 0)}</p>
                 <p><strong>Steps Failed:</strong> {results.get("steps_failed", 0)}</p>
                 <p><strong>Duration:</strong> {results.get("duration", 0):.2f} seconds</p>

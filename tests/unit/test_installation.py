@@ -103,7 +103,7 @@ class TestInstallation:
 
         # Test with binary path
         analyzer = REVENGAnalyzer("test_samples/HelloWorld.java")
-        assert analyzer.binary_path == "test_samples/HelloWorld.java"
+        assert Path(analyzer.binary_path) == Path("test_samples/HelloWorld.java").resolve()
 
     def test_tool_chain_check(self):
         """Test that toolchain check script works"""

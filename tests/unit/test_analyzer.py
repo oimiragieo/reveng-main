@@ -55,7 +55,7 @@ class TestREVENGAnalyzer:
         try:
             os.chdir(temp_analysis_dir)
             analyzer = REVENGAnalyzer(check_ollama=False)
-            assert analyzer.binary_path == "test.exe"
+            assert Path(analyzer.binary_path) == test_binary.resolve()
         finally:
             os.chdir(original_cwd)
 
