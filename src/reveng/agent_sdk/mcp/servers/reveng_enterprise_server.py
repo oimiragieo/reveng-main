@@ -37,6 +37,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional, cast
 
+from ....integrations.ghidra.ghidra_engine import GhidraEngine
 from ..server import MCPPrompt, MCPResource, MCPServer, MCPTool
 
 # Configure logging
@@ -135,6 +136,7 @@ class REVENGEnterpriseServer(MCPServer):
         self.results_cache: Dict[str, Any] = {}
         self.cache_dir = Path.home() / ".reveng" / "mcp_cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.ghidra_engine = GhidraEngine(fail_fast=False)
 
         # Register all tools
         self._register_binary_tools()
@@ -196,7 +198,10 @@ class REVENGEnterpriseServer(MCPServer):
                 input_schema={
                     "type": "object",
                     "properties": {
-                        "path": {"type": "string", "description": "Path to binary file"},
+                        "binary_path": {
+                            "type": "string",
+                            "description": "Path to binary file",
+                        },
                         "output_path": {
                             "type": "string",
                             "description": "Output path for decompiled code",
@@ -210,7 +215,7 @@ class REVENGEnterpriseServer(MCPServer):
                             "description": "Reconstruct type information (90%+ accuracy)",
                         },
                     },
-                    "required": ["path"],
+                    "required": ["binary_path"],
                 },
                 handler=self.decompile_binary,
             )
@@ -656,9 +661,9 @@ class REVENGEnterpriseServer(MCPServer):
             _find_vulns = args.get("find_vulnerabilities", False)  # noqa: F841
 
             # Run analysis
-            analyzer = REVENGAnalyzer()
-            loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(None, analyzer.analyze, path)
+            analyzer = REVENGAnalyzer(binary_path=path)
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, analyzer.analyze_binary)
 
             # Cache results
             analysis_id = hashlib.md5(f"{path}{time.time()}".encode()).hexdigest()[:16]
@@ -684,41 +689,32 @@ class REVENGEnterpriseServer(MCPServer):
     async def decompile_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Decompile binary to source code"""
         try:
-            from reveng.integrations.ghidra.ghidra_engine import GhidraEngine
-
-            path = args["path"]
+            path = self._resolve_binary_argument(args, field_name="binary_path")
             output_path = args.get("output_path")
             # TODO: Implement AI enhancement when supported
             _use_ai = args.get("use_ai_enhancement", True)  # noqa: F841
 
             # Decompile with Ghidra
-            ghidra = GhidraEngine()
-            loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(None, ghidra.decompile, path)
+            loop = asyncio.get_running_loop()
+            result = await loop.run_in_executor(None, self.ghidra_engine.decompile, path)
+
+            structured_result = self._build_decompile_response(path, result)
 
             # Save decompiled code
             if output_path:
-                with open(output_path, "w") as f:
-                    f.write(result.code)
+                output_file = Path(output_path)
+                output_file.parent.mkdir(parents=True, exist_ok=True)
+                output_file.write_text(structured_result["decompiled_source"], encoding="utf-8")
+                structured_result["output_path"] = str(output_file)
 
-            text = f"Decompilation Complete: {path}\n"
-            text += "=" * 70 + "\n\n"
-            text += f"Decompiled {result.function_count} functions\n\n"
-            text += "Preview:\n"
-            text += "-" * 70 + "\n"
-            text += result.code[:2000]
-
-            return {
-                "content": [{"type": "text", "text": text}],
-                "decompiled_code": result.code,
-                "function_count": result.function_count,
-            }
+            return structured_result
 
         except Exception as e:
             logger.exception("Error in decompile_binary")
             return {
                 "content": [{"type": "text", "text": f"Error decompiling binary: {str(e)}"}],
-                "error": str(e),
+                "error": f"Error decompiling binary: {str(e)}",
+                "status_code": 500,
             }
 
     async def recompile_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
@@ -835,26 +831,29 @@ class REVENGEnterpriseServer(MCPServer):
         try:
             from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
 
-            path = args["path"]
+            path = self._require_existing_file(args, "path")
             use_symbolic = args.get("use_symbolic_execution", True)
 
             if use_symbolic:
-                engine = SymbolicExecutionEngine()
-                loop = asyncio.get_event_loop()
-                result = await loop.run_in_executor(None, engine.find_vulnerabilities, path)
+                engine = SymbolicExecutionEngine(path)
+                loop = asyncio.get_running_loop()
+                vulnerabilities = await loop.run_in_executor(None, engine.find_vulnerabilities)
 
                 text = f"Vulnerability Analysis: {path}\n"
                 text += "=" * 70 + "\n\n"
-                text += f"Found {len(result.vulnerabilities)} vulnerabilities\n\n"
+                text += f"Found {len(vulnerabilities)} vulnerabilities\n\n"
 
-                for vuln in result.vulnerabilities[:10]:
+                for vuln in vulnerabilities[:10]:
                     text += f"• {vuln.type}: {vuln.description}\n"
                     text += f"  Location: {vuln.address}\n"
                     text += f"  Severity: {vuln.severity}\n\n"
 
                 return {
                     "content": [{"type": "text", "text": text}],
-                    "vulnerabilities": [v.to_dict() for v in result.vulnerabilities],
+                    "vulnerabilities": [
+                        self._serialize_vulnerability(vulnerability)
+                        for vulnerability in vulnerabilities
+                    ],
                 }
 
             return {"content": [{"type": "text", "text": "No vulnerabilities found"}]}
@@ -887,7 +886,7 @@ class REVENGEnterpriseServer(MCPServer):
 
             # Read from file if provided
             if file_path and not code:
-                with open(file_path, "r") as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     code = f.read()
 
             if not code:
@@ -903,7 +902,14 @@ class REVENGEnterpriseServer(MCPServer):
             text = "JavaScript Deobfuscation Complete\n"
             text += "=" * 70 + "\n\n"
             text += f"Confidence: {result.confidence}%\n"
-            text += f"Obfuscation Types: {', '.join(result.obfuscation_types)}\n\n"
+            text += "Obfuscation Types: "
+            text += ", ".join(
+                obfuscation_type.value
+                if hasattr(obfuscation_type, "value")
+                else str(obfuscation_type)
+                for obfuscation_type in result.obfuscation_types
+            )
+            text += "\n\n"
             text += "Deobfuscated Code:\n"
             text += "-" * 70 + "\n"
             text += result.deobfuscated_code[:2000]
@@ -945,8 +951,14 @@ class REVENGEnterpriseServer(MCPServer):
             file_path = args.get("file_path")
 
             if file_path and not code:
-                with open(file_path, "r") as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     code = f.read()
+
+            if not isinstance(code, str) or not code:
+                return {
+                    "content": [{"type": "text", "text": "Error: No code or file_path provided"}],
+                    "error": "missing_input",
+                }
 
             detector = MalwareDetector()
             result = detector.analyze(code)
@@ -1171,6 +1183,67 @@ class REVENGEnterpriseServer(MCPServer):
 
         return str(path)
 
+    def _resolve_binary_argument(self, args: Dict[str, Any], field_name: str = "binary_path") -> str:
+        """Resolve a binary path while accepting the legacy `path` argument as a fallback."""
+        value = args.get(field_name) or args.get("path")
+        if not value:
+            raise ValueError(f"Missing required argument: {field_name}")
+
+        return self._require_existing_file({field_name: value}, field_name)
+
+    def _build_decompile_response(
+        self, binary_path: str, result: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Normalize a Ghidra decompile response into MCP-friendly structured JSON."""
+        raw_functions = result.get("functions", [])
+        decompiled_functions: List[Dict[str, Any]] = []
+        source_parts: List[str] = []
+
+        for function in raw_functions if isinstance(raw_functions, list) else []:
+            if not isinstance(function, dict):
+                continue
+
+            normalized_function = dict(function)
+            source = str(
+                normalized_function.get("source")
+                or normalized_function.get("decompiled")
+                or ""
+            )
+            normalized_function["source"] = source
+            if source and not normalized_function.get("decompiled"):
+                normalized_function["decompiled"] = source
+            if source:
+                source_parts.append(source.strip())
+            decompiled_functions.append(normalized_function)
+
+        if not source_parts and isinstance(result.get("decompiled_code"), dict):
+            source_parts = [
+                str(code).strip()
+                for code in result["decompiled_code"].values()
+                if isinstance(code, str) and code.strip()
+            ]
+
+        decompiled_source = "\n\n".join(source_parts)
+        preview = decompiled_source[:4000] if decompiled_source else "No decompiled source returned."
+        text = (
+            f"Decompilation Complete: {binary_path}\n"
+            f"{'=' * 70}\n\n"
+            f"Decompiled {len(decompiled_functions)} functions\n\n"
+            f"Preview:\n{'-' * 70}\n{preview}"
+        )
+
+        return {
+            "content": [{"type": "text", "text": text}],
+            "status_code": 200,
+            "binary_path": binary_path,
+            "decompiled_functions": decompiled_functions,
+            "functions": decompiled_functions,
+            "function_count": len(decompiled_functions),
+            "strings": list(result.get("strings", [])) if isinstance(result.get("strings"), list) else [],
+            "imports": list(result.get("imports", [])) if isinstance(result.get("imports"), list) else [],
+            "decompiled_source": decompiled_source,
+        }
+
     def _require_existing_path(self, args: Dict[str, Any], field_name: str) -> str:
         """Require a path argument that exists."""
         value = args.get(field_name)
@@ -1281,6 +1354,18 @@ class REVENGEnterpriseServer(MCPServer):
             "file_handles": list(analysis.file_handles),
             "registry_handles": list(analysis.registry_handles),
         }
+
+    def _serialize_vulnerability(self, vulnerability: Any) -> Dict[str, Any]:
+        """Convert a symbolic-execution vulnerability into JSON-safe data."""
+        serialized = asdict(vulnerability)
+        serialized["type"] = getattr(vulnerability.type, "value", str(vulnerability.type))
+        serialized["severity"] = getattr(vulnerability.severity, "value", str(vulnerability.severity))
+
+        exploit_payload = serialized.get("exploit_payload")
+        if isinstance(exploit_payload, bytes):
+            serialized["exploit_payload"] = exploit_payload.hex()
+
+        return serialized
 
     def _serialize_diff_result(self, diff_result: Any) -> Dict[str, Any]:
         """Convert a binary diff result into JSON-safe data."""

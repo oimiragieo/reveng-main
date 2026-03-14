@@ -215,6 +215,116 @@ async def test_tools_list_includes_forensic_tools(mcp_server):
 
 @pytest.mark.poc
 @pytest.mark.asyncio
+async def test_tools_list_includes_decompile_binary_schema_and_descriptions(mcp_server):
+    """Test tools/list exposes complete schemas for all registered tools."""
+    response = await mcp_server.handle_message(
+        {"jsonrpc": "2.0", "id": 22, "method": "tools/list", "params": {}}
+    )
+
+    tools = response["result"]["tools"]
+    assert len(tools) >= 15
+
+    for tool in tools:
+        assert tool["name"]
+        assert tool["description"].strip()
+        assert tool["inputSchema"]["type"] == "object"
+        assert "properties" in tool["inputSchema"]
+
+    decompile_tool = {tool["name"]: tool for tool in tools}["decompile_binary"]
+    assert decompile_tool["inputSchema"]["required"] == ["binary_path"]
+    assert decompile_tool["inputSchema"]["properties"]["binary_path"]["type"] == "string"
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_decompile_binary_tool_returns_structured_json(mcp_server, temp_dir):
+    """Test decompile_binary returns structured decompilation details."""
+    binary_path = temp_dir / "sample.exe"
+    binary_path.write_bytes(b"MZ\x90\x00")
+
+    function_one = (
+        "int add(int a, int b) {\n"
+        "    int sum = a + b;\n"
+        "    if (sum > 10) {\n"
+        "        sum -= 1;\n"
+        "    }\n"
+        "    return sum;\n"
+        "}\n"
+    )
+    function_two = (
+        "int main(void) {\n"
+        "    int total = add(20, 22);\n"
+        "    if (total > 0) {\n"
+        "        puts(\"hello\");\n"
+        "    }\n"
+        "    return total;\n"
+        "}\n"
+    )
+
+    mcp_server.ghidra_engine = Mock()
+    mcp_server.ghidra_engine.decompile.return_value = {
+        "functions": [
+            {"name": "add", "entry_point": "0x401000", "source": function_one},
+            {"name": "main", "entry_point": "0x401080", "source": function_two},
+        ],
+        "strings": ["hello", "world"],
+        "imports": ["puts", "printf"],
+    }
+
+    response = await mcp_server.handle_message(
+        {
+            "jsonrpc": "2.0",
+            "id": 23,
+            "method": "tools/call",
+            "params": {
+                "name": "decompile_binary",
+                "arguments": {"binary_path": str(binary_path)},
+            },
+        }
+    )
+
+    result = response["result"]
+    assert result["binary_path"] == str(binary_path)
+    assert result["status_code"] == 200
+    assert len(result["decompiled_functions"]) == 2
+    assert result["decompiled_functions"][0]["name"] == "add"
+    assert result["strings"] == ["hello", "world"]
+    assert result["imports"] == ["puts", "printf"]
+    assert len(result["decompiled_source"]) >= 200
+    assert "int add(" in result["decompiled_source"]
+    assert result["content"][0]["text"].count("int ") >= 2
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
+async def test_decompile_binary_tool_returns_descriptive_error(mcp_server, temp_dir):
+    """Test decompile_binary returns a structured error instead of crashing."""
+    binary_path = temp_dir / "missing.exe"
+    binary_path.write_bytes(b"MZ\x90\x00")
+
+    mcp_server.ghidra_engine = Mock()
+    mcp_server.ghidra_engine.decompile.side_effect = RuntimeError("Ghidra backend exploded")
+
+    response = await mcp_server.handle_message(
+        {
+            "jsonrpc": "2.0",
+            "id": 24,
+            "method": "tools/call",
+            "params": {
+                "name": "decompile_binary",
+                "arguments": {"binary_path": str(binary_path)},
+            },
+        }
+    )
+
+    result = response["result"]
+    assert result["status_code"] == 500
+    assert "Ghidra backend exploded" in result["error"]
+    assert "Ghidra backend exploded" in result["content"][0]["text"]
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
 async def test_scan_yara_tool_returns_structured_matches(mcp_server, temp_dir):
     """Test YARA scanning executes backend logic and returns structured JSON."""
     binary_path = temp_dir / "sample.bin"
