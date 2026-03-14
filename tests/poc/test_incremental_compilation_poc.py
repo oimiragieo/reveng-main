@@ -57,7 +57,7 @@ int function_{i}(int x) {{
 @pytest.mark.poc
 def test_incremental_compiler_basic():
     """Test basic incremental compiler functionality"""
-    from reveng.tools.binary.incremental_compiler import IncrementalCompiler
+    from reveng.compilation.incremental_compiler import IncrementalCompiler
 
     compiler = IncrementalCompiler()
 
@@ -81,7 +81,7 @@ def test_incremental_compilation_speedup(large_source_file):
 
     Expected: 5-10x speedup on cached compilation
     """
-    from reveng.tools.binary.incremental_compiler import IncrementalCompiler
+    from reveng.compilation.incremental_compiler import IncrementalCompiler
 
     compiler = IncrementalCompiler()
 
@@ -163,7 +163,7 @@ def test_incremental_compilation_speedup(large_source_file):
 @pytest.mark.poc
 def test_cache_hit_rate_accumulation(large_source_file):
     """Test that cache hit rate improves with multiple compilations"""
-    from reveng.tools.binary.incremental_compiler import IncrementalCompiler
+    from reveng.compilation.incremental_compiler import IncrementalCompiler
 
     compiler = IncrementalCompiler()
 
@@ -212,7 +212,7 @@ def test_cache_hit_rate_accumulation(large_source_file):
 @pytest.mark.poc
 def test_multiple_optimization_levels(large_source_file):
     """Test caching works across different optimization levels"""
-    from reveng.tools.binary.incremental_compiler import IncrementalCompiler
+    from reveng.compilation.incremental_compiler import IncrementalCompiler
 
     compiler = IncrementalCompiler()
 
@@ -263,7 +263,7 @@ def test_multiple_optimization_levels(large_source_file):
 @pytest.mark.poc
 def test_cache_statistics():
     """Test cache statistics retrieval"""
-    from reveng.tools.binary.incremental_compiler import IncrementalCompiler
+    from reveng.compilation.incremental_compiler import IncrementalCompiler
 
     compiler = IncrementalCompiler()
 

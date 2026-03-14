@@ -13,6 +13,7 @@ import subprocess
 import hashlib
 import json
 import time
+import shutil
 from pathlib import Path
 from typing import List, Dict, Set, Optional
 from dataclasses import dataclass, asdict
@@ -73,6 +74,38 @@ class BuildManifest:
             return None
 
 
+@dataclass
+class CompilationResult:
+    """Compatibility result for the legacy single-file compilation API."""
+
+    success: bool
+    output_file: Optional[str] = None
+    stdout: str = ""
+    stderr: str = ""
+    cached: bool = False
+    compile_time: float = 0.0
+    cache_hit_rate: Optional[float] = None
+
+
+@dataclass
+class CacheStats:
+    """Compiler cache statistics for compatibility with legacy callers."""
+
+    hits: int = 0
+    misses: int = 0
+    cache_size: int = 0
+    max_size: int = 0
+    files_cached: int = 0
+    raw_output: str = ""
+
+    @property
+    def hit_rate(self) -> float:
+        total = self.hits + self.misses
+        if total == 0:
+            return 0.0
+        return self.hits / total
+
+
 class DependencyGraph:
     """
     Dependency graph for tracking file dependencies
@@ -127,32 +160,43 @@ class IncrementalCompiler:
     - distcc support for distributed builds
     """
 
-    def __init__(self, cache_dir: str = ".reveng_cache", use_ccache: bool = True):
+    def __init__(
+        self,
+        cache_dir: str = ".reveng_cache",
+        use_ccache: bool = True,
+        cache_backend: str = "auto",
+    ):
         self.cache_dir = Path(cache_dir)
-        self.cache_dir.mkdir(exist_ok=True)
-        self.use_ccache = use_ccache
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.dependency_graph = DependencyGraph()
+        self.cache_backend = self._detect_backend(cache_backend) if use_ccache else None
+        self.cache_enabled = self.cache_backend is not None
+        self.use_ccache = self.cache_backend == "ccache"
 
-        # Setup ccache if available
-        if use_ccache:
-            self._setup_ccache()
+        if use_ccache and self.cache_enabled:
+            self._setup_cache_backend()
+        elif use_ccache:
+            logger.warning("No compiler cache backend available, continuing without cache")
 
-    def _setup_ccache(self):
-        """Setup ccache environment"""
-        # Check if ccache is available
-        try:
-            result = subprocess.run(
-                ["ccache", "--version"], capture_output=True, timeout=5
-            )
-            if result.returncode == 0:
-                os.environ["CCACHE_DIR"] = str(self.cache_dir / "ccache")
-                logger.info("ccache enabled")
-            else:
-                logger.warning("ccache not available, continuing without cache")
-                self.use_ccache = False
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            logger.warning("ccache not found, continuing without cache")
-            self.use_ccache = False
+    def _detect_backend(self, preference: str) -> Optional[str]:
+        """Detect the requested compiler cache backend."""
+        if preference == "auto":
+            if shutil.which("ccache"):
+                return "ccache"
+            if shutil.which("sccache"):
+                return "sccache"
+            return None
+
+        return preference if shutil.which(preference) else None
+
+    def _setup_cache_backend(self):
+        """Setup the selected compiler cache backend."""
+        if self.cache_backend == "ccache":
+            os.environ["CCACHE_DIR"] = str(self.cache_dir / "ccache")
+            logger.info("ccache enabled")
+        elif self.cache_backend == "sccache":
+            os.environ["SCCACHE_DIR"] = str(self.cache_dir / "sccache")
+            logger.info("sccache enabled")
 
     def compile_incremental(
         self,
@@ -254,6 +298,63 @@ class IncrementalCompiler:
             error=error,
         )
 
+    def compile(
+        self,
+        source_file: str,
+        output_file: str,
+        compiler: str = "gcc",
+        flags: Optional[List[str]] = None,
+        timeout: int = 300,
+    ) -> CompilationResult:
+        """Compatibility single-file compile API kept after consolidation."""
+        start_time = time.time()
+        flags = flags or []
+
+        stats_before = self.get_cache_stats() if self.cache_enabled else None
+
+        if self.cache_backend:
+            cmd = [self.cache_backend, compiler] + flags + [source_file, "-o", output_file]
+        else:
+            cmd = [compiler] + flags + [source_file, "-o", output_file]
+
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+            compile_time = time.time() - start_time
+            stats_after = self.get_cache_stats() if self.cache_enabled else None
+            cached = False
+
+            if stats_before and stats_after:
+                cached = stats_after.hits > stats_before.hits
+
+            success = result.returncode == 0
+            if not success:
+                logger.error("Compilation failed:\n%s", result.stderr)
+
+            return CompilationResult(
+                success=success,
+                output_file=output_file if success else None,
+                stdout=result.stdout,
+                stderr=result.stderr,
+                cached=cached,
+                compile_time=compile_time,
+                cache_hit_rate=stats_after.hit_rate if stats_after else None,
+            )
+
+        except subprocess.TimeoutExpired:
+            logger.error("Compilation timed out after %ss", timeout)
+            return CompilationResult(
+                success=False,
+                stderr=f"Compilation timed out after {timeout}s",
+                compile_time=time.time() - start_time,
+            )
+        except Exception as e:
+            logger.error("Compilation error: %s", e)
+            return CompilationResult(
+                success=False,
+                stderr=str(e),
+                compile_time=time.time() - start_time,
+            )
+
     def _analyze_dependencies(self, source_files: List[str]):
         """
         Analyze #include dependencies between files
@@ -334,8 +435,10 @@ class IncrementalCompiler:
         output = source.replace(".c", ".o")
 
         # Build compile command
-        if self.use_ccache:
+        if self.cache_backend == "ccache":
             cmd = ["ccache", compiler, "-c", source, "-o", output] + flags
+        elif self.cache_backend == "sccache":
+            cmd = ["sccache", compiler, "-c", source, "-o", output] + flags
         else:
             cmd = [compiler, "-c", source, "-o", output] + flags
 
@@ -348,12 +451,7 @@ class IncrementalCompiler:
                 )
                 return None, False
 
-            # Check if this was a cache hit (ccache sets CCACHE_LOGFILE)
             was_cached = False
-            if self.use_ccache:
-                # We can't easily detect cache hits without parsing logs
-                # For now, assume it was cached if compile was very fast
-                was_cached = False  # Conservative estimate
 
             return output, was_cached
 
@@ -388,42 +486,119 @@ class IncrementalCompiler:
         """Compute checksums for all files"""
         return {f: self._hash_file(f) for f in files}
 
-    def get_cache_stats(self) -> Dict:
-        """Get ccache statistics"""
-        if not self.use_ccache:
-            return {"enabled": False}
+    def get_cache_stats(self) -> Optional[CacheStats]:
+        """Get compiler cache statistics for the configured backend."""
+        if not self.cache_enabled or not self.cache_backend:
+            return None
 
         try:
-            result = subprocess.run(
-                ["ccache", "-s"], capture_output=True, text=True, timeout=5
-            )
-
-            stats = {"enabled": True, "raw_output": result.stdout}
-
-            # Parse stats
-            for line in result.stdout.split("\n"):
-                line_lower = line.lower()
-                if "cache hit" in line_lower:
-                    stats["hit_rate"] = line.split()[-1] if line.split() else "unknown"
-                elif "cache size" in line_lower:
-                    stats["cache_size"] = (
-                        line.split()[-1] if line.split() else "unknown"
-                    )
-
-            return stats
-
+            if self.cache_backend == "ccache":
+                return self._get_ccache_stats()
+            if self.cache_backend == "sccache":
+                return self._get_sccache_stats()
         except Exception as e:
-            logger.warning(f"Failed to get ccache stats: {e}")
-            return {"enabled": True, "error": str(e)}
+            logger.warning("Failed to get %s stats: %s", self.cache_backend, e)
+
+        return None
+
+    def _get_ccache_stats(self) -> CacheStats:
+        """Parse ccache statistics output."""
+        result = subprocess.run(["ccache", "-s"], capture_output=True, text=True, timeout=5)
+        stats = CacheStats(raw_output=result.stdout, max_size=2 * 1024 * 1024 * 1024)
+
+        for line in result.stdout.splitlines():
+            lower_line = line.lower()
+            compact_line = " ".join(line.split())
+
+            if "cache hit" in lower_line:
+                parts = compact_line.split()
+                if parts and parts[-1].isdigit():
+                    stats.hits += int(parts[-1])
+            elif "cache miss" in lower_line:
+                parts = compact_line.split()
+                if parts and parts[-1].isdigit():
+                    stats.misses += int(parts[-1])
+            elif "cache size" in lower_line:
+                stats.cache_size = self._parse_size_from_line(compact_line)
+            elif "files in cache" in lower_line:
+                parts = compact_line.split()
+                if parts and parts[-1].isdigit():
+                    stats.files_cached = int(parts[-1])
+
+        return stats
+
+    def _get_sccache_stats(self) -> CacheStats:
+        """Parse sccache statistics output."""
+        result = subprocess.run(
+            ["sccache", "--show-stats"], capture_output=True, text=True, timeout=5
+        )
+        stats = CacheStats(raw_output=result.stdout, max_size=2 * 1024 * 1024 * 1024)
+
+        for line in result.stdout.splitlines():
+            lower_line = line.lower()
+            compact_line = " ".join(line.split())
+            parts = compact_line.split()
+
+            if "cache hits" in lower_line and parts and parts[-1].isdigit():
+                stats.hits = int(parts[-1])
+            elif "cache misses" in lower_line and parts and parts[-1].isdigit():
+                stats.misses = int(parts[-1])
+            elif "cache size" in lower_line:
+                stats.cache_size = self._parse_size_from_line(compact_line)
+
+        return stats
+
+    def _parse_size_from_line(self, line: str) -> int:
+        """Parse a human-readable size token from cache tool output."""
+        parts = line.split()
+        for idx, token in enumerate(parts[:-1]):
+            try:
+                value = float(token)
+            except ValueError:
+                continue
+
+            unit = parts[idx + 1].upper()
+            if unit == "GB":
+                return int(value * 1024 * 1024 * 1024)
+            if unit == "MB":
+                return int(value * 1024 * 1024)
+            if unit == "KB":
+                return int(value * 1024)
+        return 0
 
     def clear_cache(self):
         """Clear compilation cache"""
-        if self.use_ccache:
+        if self.cache_backend == "ccache":
             try:
                 subprocess.run(["ccache", "-C"], timeout=10)
                 logger.info("ccache cleared")
             except Exception as e:
                 logger.warning(f"Failed to clear ccache: {e}")
+        elif self.cache_backend == "sccache":
+            try:
+                subprocess.run(["sccache", "--zero-stats"], timeout=10)
+                logger.info("sccache stats cleared")
+            except Exception as e:
+                logger.warning(f"Failed to clear sccache stats: {e}")
+
+    def print_stats(self):
+        """Print cache statistics in the legacy POC-friendly format."""
+        stats = self.get_cache_stats()
+        if not stats:
+            print("Cache not available or no statistics")
+            return
+
+        print(f"\n{'=' * 60}")
+        print(f"Compiler Cache Statistics ({self.cache_backend})")
+        print(f"{'=' * 60}")
+        print(f"Cache directory: {self.cache_dir}")
+        print(f"Cache hits:      {stats.hits:,}")
+        print(f"Cache misses:    {stats.misses:,}")
+        print(f"Hit rate:        {stats.hit_rate:.1%}")
+        print(f"Cache size:      {stats.cache_size / (1024 ** 2):.1f} MB")
+        print(f"Max size:        {stats.max_size / (1024 ** 3):.1f} GB")
+        print(f"Files cached:    {stats.files_cached:,}")
+        print(f"{'=' * 60}\n")
 
 
 class DistributedCompiler(IncrementalCompiler):
@@ -453,13 +628,13 @@ class DistributedCompiler(IncrementalCompiler):
         """
         Compile using both ccache and distcc for maximum performance
         """
-        if not self.distcc_available:
+        if not self.distcc_available or self.cache_backend == "sccache":
             return super()._compile_with_cache(source, compiler, flags)
 
         output = source.replace(".c", ".o")
 
         # Use CCACHE_PREFIX to combine ccache and distcc
-        if self.use_ccache:
+        if self.cache_backend == "ccache":
             os.environ["CCACHE_PREFIX"] = "distcc"
             cmd = ["ccache", compiler, "-c", source, "-o", output] + flags
         else:
