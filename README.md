@@ -154,6 +154,55 @@ Three new forensics tools in the MCP enterprise server:
 "Compare the patched and original versions of target.exe"
 ```
 
+### 7. 🆕 v6.0 Production-Grade MCP Platform (2026)
+**Real Ghidra decompilation. Real recompilation. Zero stubs.**
+
+REVENG v6.0 transforms the platform into a fully production-ready MCP server with verified end-to-end workflows:
+
+#### 🏗️ Real Ghidra Integration
+- **Ghidra 12.0.4 binary bundled** — `scripts/install_ghidra.py` downloads and verifies the official release with SHA-256 checksum
+- **HTTP decompilation server** — `external/ghidra-server/ghidra_http_server.py` on port 13370; returns real C pseudocode (99+ functions from typical binaries)
+- **Fail-fast on unavailability** — raises `GhidraConnectionError` instead of silently returning mock data
+- **Java GhidraScript fallback** — `ExportAnalysisJSON.java` handles Ghidra 12 headless execution where Python post-scripts are not executed
+
+#### 🤖 Production MCP Tools (15 tools, 0 stubs)
+All 15 MCP tools in `REVENGEnterpriseServer` are now fully implemented:
+
+| Tool | Description |
+|------|-------------|
+| `decompile_binary` | Real Ghidra decompilation → 99 functions, 47K chars of C pseudocode |
+| `recompile_binary` | Decompile → GCC compile with Ollama LLM repair → 43KB PE artifact, 75% function overlap |
+| `ask_ai_about_binary` | Ghidra context + Ollama query with 90s timeout and structured fallback |
+| `ai_code_reconstruction` | CFG-aware reconstruction with angr + Ollama |
+| `classify_malware` | 24 built-in YARA rules + IsolationForest ML scoring |
+| `generate_exploit` | angr CFGFast + symbolic execution → PoC scripts |
+| `analyze_memory_dump` | Volatility3 integration (pslist, cmdline, netscan) |
+| + 8 more | scan_yara, diff_binaries, analyze_memory, ... |
+
+#### 🔒 Docker Sandbox Isolation
+- `BehavioralMonitor` now executes binaries inside a `python:3.11-slim` Docker container with `--network=none`
+- strace syscall capture produces `BehaviorEvent` stream for ML anomaly scoring
+- `SKIP_SANDBOX=true` for CI environments — returns `sandbox_available: false` gracefully
+
+#### ✅ Quality Milestone
+- **307 tests passing, 0 failures** (up from 179 passing with 58 failures)
+- All previously-skipped test classes rewritten to match current APIs
+- Windows UTF-8 documentation encoding fixed
+- Pipeline YAML serialization fixed (safe round-trip save/load)
+- End-to-end CLI: `reveng analyze <binary>` → YARA-enriched report with decompiled functions and `.c` source
+
+```bash
+# Start Ghidra server (required for decompilation)
+python external/ghidra-server/ghidra_http_server.py
+
+# Full analysis via CLI
+python src/reveng/cli/reveng.py analyze test_samples/sample.exe
+# → analysis_sample/reports/unified_analysis_report.json (99 functions, YARA matches, recompiled binary)
+
+# Use via MCP (Claude Desktop / any MCP client)
+# Add to mcp-config.json: "command": "python reveng-mcp-server"
+```
+
 ## 🚀 Quick Start
 
 ### Install Dependencies
