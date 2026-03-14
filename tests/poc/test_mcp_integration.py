@@ -851,6 +851,61 @@ async def test_scan_yara_tool_returns_structured_matches(mcp_server, temp_dir):
 
 @pytest.mark.poc
 @pytest.mark.asyncio
+async def test_classify_malware_tool_returns_structured_result(mcp_server, temp_dir):
+    """Test malware classification executes backend logic and returns structured JSON."""
+    binary_path = temp_dir / "sample.exe"
+    binary_path.write_bytes(b"MZ\x90\x00" + b"\x00" * 128)
+
+    scanner_instance = Mock()
+    scanner_instance.classify_file.return_value = {
+        "family": "Generic Trojan",
+        "confidence": 0.82,
+        "matched_rules": ["trojan_process_injection_apis"],
+        "indicators": ["Process injection API cluster detected"],
+        "yara_matches": [
+            {
+                "rule": "trojan_process_injection_apis",
+                "namespace": "trojan_indicators",
+                "tags": ["trojan", "injection"],
+                "meta": {"family": "Injection Trojan"},
+                "strings": [],
+            }
+        ],
+        "ml_assessment": {
+            "score": 0.71,
+            "threshold": 0.64,
+            "exceeded": True,
+            "reasons": ["import table contains many suspicious APIs"],
+            "features": {"entropy": 7.1},
+        },
+        "feature_summary": {"entropy": 7.1, "import_count": 12.0},
+    }
+
+    with patch("reveng.security.yara_scanner.YARAScanner", return_value=scanner_instance):
+        response = await mcp_server.handle_message(
+            {
+                "jsonrpc": "2.0",
+                "id": 22,
+                "method": "tools/call",
+                "params": {
+                    "name": "classify_malware",
+                    "arguments": {
+                        "path": str(binary_path),
+                        "use_ollama_family_naming": False,
+                    },
+                },
+            }
+        )
+
+    assert "result" in response
+    assert response["result"]["family"] == "Generic Trojan"
+    assert response["result"]["confidence"] == 0.82
+    assert response["result"]["matched_rules"] == ["trojan_process_injection_apis"]
+    assert response["result"]["indicators"] == ["Process injection API cluster detected"]
+
+
+@pytest.mark.poc
+@pytest.mark.asyncio
 async def test_analyze_memory_dump_tool_returns_structured_analysis(mcp_server, temp_dir):
     """Test memory dump analysis executes backend logic and returns structured JSON."""
     dump_path = temp_dir / "sample.dmp"

@@ -23,6 +23,7 @@ __all__ = [
     "AnomalyType",
     "AnomalySeverity",
     "AnomalyModel",
+    "ForensicsAnomalyModel",
     # Integration
     "MLIntegration",
     "MLIntegrationConfig",
@@ -43,6 +44,10 @@ _LAZY_IMPORTS = {
     "AnomalyType": ("reveng.ml.anomaly_detection", "AnomalyType"),
     "AnomalySeverity": ("reveng.ml.anomaly_detection", "AnomalySeverity"),
     "AnomalyModel": ("reveng.ml.anomaly_detection", "AnomalyModel"),
+    "ForensicsAnomalyModel": (
+        "reveng.ml.forensics_anomaly_models",
+        "ForensicsAnomalyModel",
+    ),
     # Integration
     "MLIntegration": ("reveng.ml.integration", "MLIntegration"),
     "MLIntegrationConfig": ("reveng.ml.integration", "MLIntegrationConfig"),

@@ -521,6 +521,10 @@ class REVENGEnterpriseServer(MCPServer):
                     "type": "object",
                     "properties": {
                         "path": {"type": "string", "description": "Path to potential malware"},
+                        "use_ollama_family_naming": {
+                            "type": "boolean",
+                            "description": "Use Ollama to refine the malware family label when available",
+                        },
                         "include_threat_intel": {
                             "type": "boolean",
                             "description": "Include threat intelligence correlation",
@@ -1114,7 +1118,48 @@ class REVENGEnterpriseServer(MCPServer):
 
     async def classify_malware(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Classify malware family"""
-        return {"content": [{"type": "text", "text": "Malware classification feature coming soon"}]}
+        try:
+            from reveng.security.yara_scanner import YARAScanner
+
+            path = self._require_existing_file(args, "path")
+            use_ollama_family_naming = args.get("use_ollama_family_naming", True)
+
+            loop = asyncio.get_running_loop()
+            classification = await loop.run_in_executor(
+                None,
+                lambda: YARAScanner().classify_file(
+                    path,
+                    use_ollama_family_naming=False,
+                ),
+            )
+
+            if use_ollama_family_naming:
+                refined_family = await self._refine_malware_family_name(path, classification)
+                if refined_family:
+                    classification["family"] = refined_family
+
+            text = self._format_malware_classification_results(path, classification)
+
+            return {
+                "content": [{"type": "text", "text": text}],
+                "path": path,
+                "family": classification["family"],
+                "confidence": classification["confidence"],
+                "matched_rules": classification["matched_rules"],
+                "indicators": classification["indicators"],
+                "yara_matches": classification["yara_matches"],
+                "ml_assessment": classification["ml_assessment"],
+                "feature_summary": classification["feature_summary"],
+            }
+
+        except Exception as e:
+            logger.exception("Error in classify_malware")
+            return {
+                "content": [
+                    {"type": "text", "text": f"Error classifying malware: {str(e)}"}
+                ],
+                "error": str(e),
+            }
 
     async def deobfuscate_javascript(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Deobfuscate JavaScript code"""
@@ -2653,6 +2698,79 @@ class REVENGEnterpriseServer(MCPServer):
             "instruction_changes": diff_result.instruction_changes or {},
             "string_changes": diff_result.string_changes or {},
         }
+
+    async def _refine_malware_family_name(
+        self, path: str, classification: Dict[str, Any]
+    ) -> Optional[str]:
+        """Use Ollama to refine the malware family label when enough context exists."""
+        matched_rules = classification.get("matched_rules", [])
+        indicators = classification.get("indicators", [])
+        if not matched_rules and not indicators:
+            return None
+
+        try:
+            response = await self._query_ollama_chat(
+                system_prompt=(
+                    "You are a malware analyst. Return exactly one short human-readable "
+                    "family label such as 'Generic Ransomware' or 'Downloader Trojan'. "
+                    "Do not add explanations, punctuation, or markdown."
+                ),
+                user_prompt=(
+                    f"Binary path: {path}\n"
+                    f"Current family: {classification.get('family', 'Unknown')}\n"
+                    f"Confidence: {classification.get('confidence', 0.0)}\n"
+                    f"Matched rules: {matched_rules}\n"
+                    f"Indicators: {indicators}\n"
+                    f"ML assessment: {classification.get('ml_assessment', {})}\n"
+                    "Return the best concise family label."
+                ),
+                timeout=20,
+            )
+        except Exception as exc:
+            logger.warning("Ollama family refinement unavailable: %s", exc)
+            return None
+
+        refined = response.strip().splitlines()[0].strip()
+        if not refined:
+            return None
+        refined = refined.strip("` ")
+        if len(refined) > 80:
+            refined = refined[:80].rsplit(" ", 1)[0].strip()
+        return refined or None
+
+    def _format_malware_classification_results(
+        self, path: str, classification: Dict[str, Any]
+    ) -> str:
+        """Create a text summary for malware classification results."""
+        text = "Malware Classification\n"
+        text += "=" * 70 + "\n\n"
+        text += f"Target: {path}\n"
+        text += f"Family: {classification.get('family', 'Unknown')}\n"
+        text += f"Confidence: {classification.get('confidence', 0.0):.3f}\n"
+        text += f"Matched Rules: {len(classification.get('matched_rules', []))}\n"
+
+        ml_assessment = classification.get("ml_assessment", {})
+        if ml_assessment:
+            text += (
+                f"ML Anomaly Score: {ml_assessment.get('score', 0.0):.3f} "
+                f"(threshold {ml_assessment.get('threshold', 0.0):.3f})\n"
+            )
+
+        indicators = classification.get("indicators", [])
+        if indicators:
+            text += "\nIndicators:\n"
+            for indicator in indicators[:10]:
+                text += f"  • {indicator}\n"
+
+        matched_rules = classification.get("matched_rules", [])
+        if matched_rules:
+            text += "\nMatched Rule Names:\n"
+            for rule_name in matched_rules[:10]:
+                text += f"  • {rule_name}\n"
+        else:
+            text += "\nNo YARA rule matches were produced by the active ruleset.\n"
+
+        return text
 
     def _format_yara_scan_results(
         self, path: str, rules_path: str, matches: List[Dict[str, Any]]

@@ -402,6 +402,53 @@ class MemoryProcessAnomalyModel(_IsolationForestFeatureModel):
         return self.assess(features)
 
 
+class ForensicsAnomalyModel(_IsolationForestFeatureModel):
+    """ML anomaly model for static malware triage on binary file features."""
+
+    def __init__(self):
+        super().__init__(
+            feature_names=[
+                "file_size_kb",
+                "entropy",
+                "is_pe",
+                "import_count",
+                "suspicious_import_ratio",
+                "section_count",
+                "executable_section_count",
+                "writable_executable_section_count",
+                "average_section_entropy",
+                "max_section_entropy",
+                "string_indicator_density",
+            ],
+            benign_samples=[
+                [24.0, 5.10, 1.0, 48.0, 0.04, 5.0, 2.0, 0.0, 4.80, 5.20, 0.02],
+                [56.0, 5.60, 1.0, 62.0, 0.06, 6.0, 2.0, 0.0, 5.10, 5.80, 0.03],
+                [180.0, 6.20, 1.0, 125.0, 0.08, 7.0, 3.0, 0.0, 5.60, 6.10, 0.05],
+                [420.0, 6.70, 1.0, 170.0, 0.10, 8.0, 3.0, 0.0, 5.90, 6.40, 0.06],
+                [14.0, 4.80, 0.0, 0.0, 0.00, 0.0, 0.0, 0.0, 0.00, 0.00, 0.01],
+                [72.0, 5.90, 1.0, 74.0, 0.07, 5.0, 2.0, 0.0, 5.20, 6.00, 0.04],
+            ],
+            threshold=0.64,
+            reason_labels={
+                "entropy": "file entropy deviated from benign executables",
+                "suspicious_import_ratio": "import table contains many suspicious APIs",
+                "writable_executable_section_count": "writable and executable sections are unusual",
+                "average_section_entropy": "section entropy profile looks packed or encrypted",
+                "max_section_entropy": "one PE section has unusually high entropy",
+                "string_indicator_density": "embedded strings contain malware execution tokens",
+            },
+        )
+
+    def assess_binary_features(
+        self, features: Mapping[str, float]
+    ) -> MLAnomalyAssessment:
+        """Score static binary features and return a normalized anomaly assessment."""
+        normalized = {
+            name: float(features.get(name, 0.0)) for name in self.feature_names
+        }
+        return self.assess(normalized)
+
+
 def _calculate_entropy(data: bytes) -> float:
     """Calculate Shannon entropy for a byte string."""
     if len(data) < 2:

@@ -215,6 +215,9 @@ def test_analysis_pipeline_generates_unified_report(monkeypatch, tmp_path: Path)
     assert report["summary"]["compiled_binaries"] == [str(output_dir / "reconstructed.exe")]
     assert report["summary"]["behavioral_anomaly_score"] == 0.82
     assert report["summary"]["memory_anomaly_score"] == 0.91
+    assert report["summary"]["yara_match_count"] >= 1
+    assert report["yara_matches"]
+    assert report["malware_classification"]["family"]
     assert report["stages"]["ghidra_analysis"]["backend"] == "mock_ghidra"
     assert report["stages"]["recompilation"]["compiled_binaries"]["c_gcc"].endswith(
         "reconstructed.exe"

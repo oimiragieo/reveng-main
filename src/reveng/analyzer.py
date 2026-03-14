@@ -1080,7 +1080,6 @@ class REVENGAnalyzer:
 
                 try:
                     from reveng.integrations.local_disassembler import (
-                        LocalDisassembler,
                         get_local_disassembler,
                     )
 
@@ -1854,6 +1853,23 @@ class REVENGAnalyzer:
                 ),
             },
         }
+
+        try:
+            from reveng.security.yara_scanner import YARAScanner
+
+            yara_enrichment = YARAScanner().enrich_analysis({}, file_path=self.binary_path)
+            report["yara_matches"] = yara_enrichment.get("yara_matches", [])
+            report["malware_classification"] = yara_enrichment.get(
+                "malware_classification", {}
+            )
+        except Exception as exc:
+            report["yara_matches"] = []
+            report["malware_classification"] = {
+                "family": "YARA unavailable",
+                "confidence": 0.0,
+                "matched_rules": [],
+                "indicators": [str(exc)],
+            }
 
         # Save report
         report_file = self.analysis_folder / "universal_analysis_report.json"

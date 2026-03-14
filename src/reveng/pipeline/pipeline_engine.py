@@ -1100,6 +1100,23 @@ class AnalysisPipeline:
             if not dependency_outputs:
                 overall_status = "failed"
 
+            yara_matches = []
+            malware_classification = {}
+            try:
+                from reveng.security.yara_scanner import YARAScanner
+
+                yara_enrichment = YARAScanner().enrich_analysis({}, file_path=binary_path)
+                yara_matches = yara_enrichment.get("yara_matches", [])
+                malware_classification = yara_enrichment.get("malware_classification", {})
+            except Exception as exc:
+                yara_matches = []
+                malware_classification = {
+                    "family": "YARA unavailable",
+                    "confidence": 0.0,
+                    "matched_rules": [],
+                    "indicators": [str(exc)],
+                }
+
             report = {
                 "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
                 "binary_path": binary_path,
@@ -1116,7 +1133,12 @@ class AnalysisPipeline:
                     "behavioral_threat_level": behavioral_output.get("threat_level"),
                     "memory_anomaly_score": memory_output.get("anomaly_score"),
                     "memory_threat_level": memory_output.get("threat_level"),
+                    "yara_match_count": len(yara_matches),
+                    "malware_family": malware_classification.get("family"),
+                    "malware_confidence": malware_classification.get("confidence"),
                 },
+                "yara_matches": yara_matches,
+                "malware_classification": malware_classification,
                 "stages": dependency_outputs,
             }
 
