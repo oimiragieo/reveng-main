@@ -1005,6 +1005,8 @@ class AnalysisPipeline:
                     "anomaly_score": profile.anomaly_score,
                     "anomaly_threshold": profile.anomaly_threshold,
                     "anomaly_flags": profile.anomaly_flags,
+                    "sandbox_available": profile.sandbox_available,
+                    "analysis_mode": profile.analysis_mode,
                     "report_path": str(report_path),
                 }
             except Exception as exc:

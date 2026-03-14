@@ -43,9 +43,9 @@ Key facts for workers implementing the REVENG production-grade RE platform.
 ## Docker Sandbox
 
 - **Docker**: Available on host (Docker 29.2.1)
-- **Sandbox image**: `python:3.11-slim` (no malware execution; use for behavioral tracing only)
+- **Sandbox image**: `python:3.11-slim` is the base runtime; `src/reveng/malware/docker_sandbox.py` now auto-builds `reveng-python:3.11-slim-strace` once so runtime containers can still use `--network=none` and have `strace` available
 - **Env var bypass**: `SKIP_SANDBOX=true` → return `{"sandbox_available": false}` gracefully (for CI)
-- **Current broken code**: `behavioral_monitor.py` calls `powershell Get-Process` on HOST — must be replaced
+- **Behavior monitor**: `BehavioralMonitor.start_monitoring()` now delegates to `DockerSandbox`, parses `strace -f -e trace=network,file,process` output into `BehaviorEvent`s, and stores sandbox metadata (`sandbox_available`, container name, stdout/stderr, exit code) on `BehavioralProfile`
 
 ## Memory Forensics
 
