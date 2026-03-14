@@ -1,0 +1,78 @@
+{
+  "milestone": "quality",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc",
+      "exitCode": 0,
+      "details": "307 passed, 93 skipped, 0 failures in 69.05s"
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "details": "15 errors (all pre-existing: 14 missing types-requests stubs + 1 angr Python 3.10 syntax). Within baseline of 14-15 errors."
+    },
+    "lint": {
+      "passed": true,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203",
+      "exitCode": 1,
+      "details": "468 pre-existing issues across 95 files. Zero issues in quality milestone files (test_automated_analysis_pipeline.py, test_cli.py, test_documentation.py, test_e2e_cli.py, pipeline_engine.py, automated_analysis.py)."
+    }
+  },
+  "reviewsSummary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Update or remove the 'Known Pre-Existing Test Failures' section — all listed failures (test_automated_analysis_pipeline.py, test_cli.py, test_documentation.py, test_ml_workflow.py, test_analyzer.py, test_installation.py) have been resolved. The scoped baseline is now 307 passed, 0 failed. Keeping the stale section will confuse future workers.",
+      "evidence": "cleanup-stubs reviewer confirmed 306 passed / 0 failed baseline before e2e-cli-integration brought it to 307. All 6 listed test files now pass.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add a Python syntax version policy: 'Test files may use Python 3.10+ syntax (e.g., parenthesized context managers, match/case) since CI runs on Python 3.14. Production code in src/reveng/ should remain compatible with Python 3.9+ as declared in pyproject.toml.'",
+      "evidence": "fix-cli-tests reviewer noted tests/unit/test_cli.py uses PEP 617 parenthesized context managers (Python 3.10+) in 3 places. The project documents 3.9+ support but runtime is 3.14.",
+      "isSystemic": true
+    },
+    {
+      "target": "skills",
+      "suggestion": "python-developer skill step for lint should say 'Run flake8 on the changed files (whether in src/reveng/ or tests/)' instead of only referencing src/reveng/ paths. Test-only features have no src/reveng/ changes to lint.",
+      "evidence": "fix-cli-tests worker deviated from step 6 by running flake8 against test files instead of src/reveng/ paths because only test files were modified.",
+      "isSystemic": true
+    },
+    {
+      "target": "skills",
+      "suggestion": "python-developer skill should include a validation-only code path that allows workers to skip 'Write tests first (red)' when the feature is explicitly a confirmation/validation pass with no code changes needed.",
+      "evidence": "cleanup-stubs worker 0e75d35a deviated from step 4 because the feature was validation-only. Both worker sessions (d37e2075 and 0e75d35a) suggested this in their skillFeedback.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "YAML serialization bug for StageType enum (fix-automated-pipeline-tests)",
+      "reason": "already-documented: Already documented in .factory/library/pipeline-upgrade.md with the correct convention (serialize as .value for yaml.safe_dump compatibility)."
+    },
+    {
+      "observation": "Module-level test functions preferred over class-based tests (fix-automated-pipeline-tests)",
+      "reason": "already-documented: Implicit convention already visible in newer test files (test_pipeline_engine_async.py, test_e2e_pipeline_integration.py). Not worth an explicit AGENTS.md entry."
+    },
+    {
+      "observation": "Worker documented pipeline upgrade behavior in library (e2e-cli-integration)",
+      "reason": "already-documented: Worker already applied this update to .factory/library/pipeline-upgrade.md. No further action needed."
+    },
+    {
+      "observation": "--output-dir flag defined on root parser but only used by analyze/recompile (e2e-cli-integration)",
+      "reason": "ambiguous: Too implementation-specific for AGENTS.md. Better addressed as an inline code comment if needed."
+    }
+  ],
+  "previousRound": null
+}

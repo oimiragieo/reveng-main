@@ -1,0 +1,39 @@
+{
+  "featureId": "fix-automated-pipeline-tests",
+  "reviewedAt": "2026-03-14T18:15:00.000Z",
+  "commitId": "8feed6bc9f041936698e5e0443c8d86e33e20209",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The worker fully rewrote tests/unit/test_automated_analysis_pipeline.py from an 18-test skipped class to 19 standalone test functions (22 collected with parametrize), all passing and skip-free. The new suite correctly targets the current AnalysisPipeline async DAG API: it tests pipeline creation, prebuilt templates, stage ordering, concurrent async execution, branch failure isolation with downstream skipping, missing and circular dependency detection, retry and timeout behavior, context propagation, output aggregation, analysis-target selection, output-directory resolution, and UTF-8 report persistence. All tests use monkeypatch to isolate DAG mechanics from real analysis backends. The worker properly discovered and documented (but did not fix) the StageType YAML serialization bug, deliberately omitting save/load round-trip tests that would have failed—a follow-up commit (7bf3bcc7) later fixed the serialization and added that test back.",
+    "issues": [
+      {
+        "file": "tests/unit/test_automated_analysis_pipeline.py",
+        "line": 185,
+        "severity": "non_blocking",
+        "description": "The async concurrency test uses time.sleep(0.2) inside monkeypatched stage methods executed via asyncio.to_thread. On heavily loaded CI runners this could occasionally produce false negatives on the timing overlap assertions, though the relative (not absolute) checks make this unlikely in practice."
+      },
+      {
+        "file": "tests/unit/test_automated_analysis_pipeline.py",
+        "line": null,
+        "severity": "non_blocking",
+        "description": "The original suite included negative-path tests for loading non-existent pipeline files (test_load_pipeline_nonexistent) and for save/load round-tripping. The worker omitted the round-trip tests due to the discovered YAML enum bug (correctly documented as a discoveredIssue) and did not add a negative test for load_pipeline with a missing path. These gaps are minor since the YAML round-trip was addressed in a follow-up commit."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "The YAML serialization bug discovered by this worker (StageType enum tags survive safe_dump but not safe_load) is already documented in .factory/library/pipeline-upgrade.md with the fix convention (serialize as .value, reconstruct via StageType(value)). No additional documentation needed.",
+      "evidence": ".factory/library/pipeline-upgrade.md last bullet: 'save_pipeline() serializes StageType enum as .value (plain string) for yaml.safe_dump() compatibility.'"
+    },
+    {
+      "area": "conventions",
+      "observation": "Worker used module-level test functions with pytest fixtures instead of a test class. This is consistent with the newer test files in the project (test_pipeline_engine_async.py, test_e2e_pipeline_integration.py) and is the preferred pytest style. AGENTS.md doesn't specify class-based vs function-based test organization; the implicit convention is function-based for new test files.",
+      "evidence": "tests/unit/test_pipeline_engine_async.py and tests/unit/test_e2e_pipeline_integration.py both use module-level functions, matching the worker's approach."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The worker successfully rewrote the entire test file from a fully-skipped 18-test class to 22 passing tests (0 skipped) that thoroughly exercise the current AnalysisPipeline async DAG API. Coverage spans pipeline creation, prebuilt templates, stage execution ordering, concurrent async execution, error isolation with downstream skipping, missing/circular dependency handling, retry/timeout behavior, context propagation, output aggregation, and helper utilities. Two non-blocking issues noted: potential timing sensitivity in the async concurrency test and omission of negative-path save/load tests (the latter intentionally deferred due to a discovered YAML bug that was fixed in a follow-up commit). The implementation is well-structured, properly uses monkeypatch for isolation, and aligns with current project conventions."
+}
