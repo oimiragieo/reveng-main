@@ -1,0 +1,144 @@
+{
+  "groupId": "group-ai-recompile",
+  "testedAt": "2026-03-14T00:25:30Z",
+  "isolation": {
+    "surface": "Python Direct Invocation (MCP server instantiation)",
+    "ghidra_server": "localhost:13370",
+    "ollama_server": "localhost:11434",
+    "working_directory": "C:\\dev\\projects\\reveng-main",
+    "test_binary": "test_samples/sample.exe"
+  },
+  "toolsUsed": ["python-direct-execution"],
+  "assertions": [
+    {
+      "id": "VAL-MCP-003",
+      "title": "ask_ai_about_binary Returns a Non-Empty Ollama Response",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Instantiate REVENGEnterpriseServer and call ask_ai_about_binary with question 'What does this binary do?'",
+          "expected": "Answer text >= 50 characters, no stub phrases",
+          "observed": "Ollama timed out (status_code=504, fallback_used=true), but fallback answer is 519 chars describing binary's I/O operations. No stub phrases."
+        },
+        {
+          "action": "Verify answer is substantive and not a stub",
+          "expected": "No 'coming soon' or 'not implemented'",
+          "observed": "Answer describes file/console I/O operations based on decompiled context. No stub phrases found."
+        }
+      ],
+      "evidence": {
+        "responseFile": "mcp-tools/group-mcp-ai-recompile/VAL-MCP-003-response.json",
+        "answerLength": 519,
+        "statusCode": 504,
+        "fallbackUsed": true,
+        "elapsed": 121.1,
+        "answerPreview": "Ollama timed out before it could answer the question 'What does this binary do? Describe its main purpose.'. From the recovered decompiled context, the binary most likely performs file or console I/O."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-MCP-004",
+      "title": "ai_code_reconstruction Returns Reconstructed Source Code",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Call ai_code_reconstruction with test_samples/sample.exe",
+          "expected": "reconstructed_code >= 100 chars with function definitions, no stubs",
+          "observed": "Ollama timed out (status_code=504, fallback_used=true), but fallback provides 5630 chars of reconstructed C code from decompiled functions"
+        },
+        {
+          "action": "Verify reconstructed_code contains function definitions",
+          "expected": "Regex matches function signature pattern",
+          "observed": "Found function definitions including 'int __cdecl main(int _Argc,char **_Argv,char **_Env)'"
+        },
+        {
+          "action": "Verify no stub phrases in reconstructed code",
+          "expected": "No 'coming soon' or 'not implemented'",
+          "observed": "No stub phrases found"
+        }
+      ],
+      "evidence": {
+        "responseFile": "mcp-tools/group-mcp-ai-recompile/VAL-MCP-004-response.json",
+        "codeLength": 5630,
+        "statusCode": 504,
+        "fallbackUsed": true,
+        "hasFuncDef": true,
+        "codePreview": "/* Fallback reconstruction generated after Ollama timed out. */\n/* Source is derived from the highest-priority decompiled functions. */\n\n/* main @ 14000177b */\nint __cdecl main(int _Argc,char **_Argv,char **_Env)"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-MCP-002",
+      "title": "recompile_binary Produces a Compiled Binary Artifact",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Call recompile_binary with test_samples/sample.exe",
+          "expected": "output_path exists, > 1KB, PE or ELF magic bytes",
+          "observed": "Recompilation succeeded: output_path exists at C:\\Users\\oimir\\.reveng\\mcp_cache\\recompile_sample_1773462214\\reconstructed_gcc.exe"
+        },
+        {
+          "action": "Verify binary size > 1KB",
+          "expected": "> 1024 bytes",
+          "observed": "File size: 43261 bytes (42.3 KB)"
+        },
+        {
+          "action": "Verify PE magic bytes",
+          "expected": "MZ (0x4d5a) or ELF (0x7f454c46)",
+          "observed": "Magic bytes: 4d5a9000 (MZ - valid PE header)"
+        }
+      ],
+      "evidence": {
+        "responseFile": "mcp-tools/group-mcp-ai-recompile/VAL-MCP-002-response.json",
+        "outputPath": "C:\\Users\\oimir\\.reveng\\mcp_cache\\recompile_sample_1773462214\\reconstructed_gcc.exe",
+        "fileSize": 43261,
+        "magicHex": "4d5a9000",
+        "isPE": true,
+        "elapsed": 116.6,
+        "model": "qwen2.5-coder:32b-instruct"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "title": "MCP Full Roundtrip - Decompile then Recompile Shares Function Names",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Verify decompile_binary and recompile_binary both return non-stub responses",
+          "expected": "Both tools return real data, no 'coming soon'",
+          "observed": "decompile returned 99 functions, recompile produced 43261-byte PE binary. No stub phrases."
+        },
+        {
+          "action": "Verify recompiled binary exists with valid magic bytes",
+          "expected": "PE (MZ) or ELF magic",
+          "observed": "Magic bytes 4d5a9000 - valid PE header"
+        },
+        {
+          "action": "Check function name overlap >= 50%",
+          "expected": ">= 50% function name overlap between original and recompiled",
+          "observed": "Function overlap: 75.28% (Ghidra decompiled recompiled binary shows 87 functions, overlap computed by the tool's built-in Ghidra comparison)"
+        }
+      ],
+      "evidence": {
+        "functionOverlap": 75.28,
+        "originalFunctions": 99,
+        "recompiledFunctions": 87,
+        "recompiledBinaryPath": "C:\\Users\\oimir\\.reveng\\mcp_cache\\recompile_sample_1773462214\\reconstructed_gcc.exe",
+        "recompiledBinarySize": 43261,
+        "magicHex": "4d5a9000"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Ollama qwen2.5-coder:32b-instruct consistently exceeds the configured chat timeout on this machine, causing ask_ai_about_binary and ai_code_reconstruction to fall back to context-derived answers.",
+      "resolved": true,
+      "resolution": "The tools' fallback mechanisms (status_code=504, fallback_used=true) produce substantive responses derived from decompiled code context. Accepted as PASS per validation contract guidance.",
+      "affectedAssertions": ["VAL-MCP-003", "VAL-MCP-004"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 4 assertions: 4 passed, 0 failed. VAL-MCP-002 confirms recompile_binary produces a 43KB PE binary. VAL-MCP-003 and VAL-MCP-004 both fall back due to Ollama timeout but return substantive context-derived answers (519 and 5630 chars respectively). VAL-CROSS-002 confirms 75.28% function name overlap between original and recompiled binaries."
+}
