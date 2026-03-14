@@ -80,7 +80,7 @@ Machine: 128 GB RAM, 8 cores / 16 logical (AMD Ryzen 7 5800XT)
 ## Known Gotchas
 
 - Ghidra headless takes 30-120 seconds to analyze a binary — tests must have generous timeouts
-- Ollama qwen2.5-coder:32b-instruct takes 10-60 seconds for typical code queries
+- Ollama qwen2.5-coder:32b-instruct can exceed 90 seconds on this machine (32B params) — MCP AI tools (`ask_ai_about_binary`, `ai_code_reconstruction`) will return `fallback_used: true` with context-derived content on timeout. Validators: accept `status_code: 504` responses with substantive `answer`/`reconstructed_code` as PASS.
 - `SKIP_SANDBOX=true` and `SKIP_VOLATILITY=true` should be set in CI to avoid Docker/dump requirements
 - Windows path separators: use `pathlib.Path` everywhere, convert to string only at subprocess call boundaries
 - **PowerShell + .bat files**: PowerShell cannot pass `--help` directly to `.bat` files (ParserError). When invoking `analyzeHeadless.bat` from Python/PowerShell, use `subprocess.run(['cmd', '/c', str(bat_path), ...])` or use shell=True with a quoted command string.
