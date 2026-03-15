@@ -70,6 +70,13 @@ python -m pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance 
 git status  # must be clean after commit
 ```
 
+**CRITICAL: Lint and typecheck scope for cleanup features**
+- Run `flake8` and `mypy` ONLY on the files you touched — NOT repo-wide.
+- Repo-wide `flake8 src/reveng/` and `mypy src/reveng/` have pre-existing failures unrelated to cleanup work.
+- Pre-existing lint/mypy failures in files you did NOT touch are NOT your problem and must NOT block your commit.
+- If the scoped lint on your touched files passes AND pytest passes with 0 failures, **commit and proceed**.
+- Only block if you introduced NEW failures in files you touched.
+
 ### 7. Commit and Report
 Single clean commit per feature (or small sequential commits). The handoff must include:
 - Exact `git ls-files` commands used for verification
