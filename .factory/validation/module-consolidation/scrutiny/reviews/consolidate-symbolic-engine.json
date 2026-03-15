@@ -1,0 +1,56 @@
+{
+  "featureId": "consolidate-symbolic-engine",
+  "milestone": "module-consolidation",
+  "reviewedAt": "2026-03-15T00:40:00.000Z",
+  "commitId": "53fb1c22bf475a28252f8ad942d40a10f3d69396",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReviewIssues": [
+    {
+      "severity": "non_blocking",
+      "description": "docs/changelogs/v4.0.md still references the removed `reveng.symbolic` package (lines 204, 402, 424). The worker noted this as a discovered issue. While not a code import, it could confuse readers following the changelog examples."
+    },
+    {
+      "severity": "non_blocking",
+      "description": "The AGENTS.md test baseline says '≥ 325 passed' but the worker observed only 306 passed consistently across multiple runs. The worker flagged this discrepancy. The mission metadata also expects ≥307. Neither matches reality, but this pre-dates this feature."
+    }
+  ],
+  "codeReview": {
+    "summary": "The consolidation was executed correctly. Both symbolic_execution_engine.py and incremental_compiler.py now have exactly one copy each at their canonical locations. The worker properly merged the legacy API surfaces (async explore_paths/generate_test_cases/deobfuscate_function for symbolic engine; compile/CacheStats/CompilationResult/cache_backend for incremental compiler) into the canonical modules before deleting the duplicates. All importers in src/ and tests/ were updated. The git diff shows clean removal of the duplicate files and surgical import path updates in 3 consumer files (v4_0_features_demo.py, exploit_chain_generator.py, test_incremental_compilation_poc.py). The incremental compiler additionally gained sccache support and a more robust cache backend detection pattern during merge, which is a reasonable enhancement from merging the two implementations. No stale import references remain in any Python files under src/ or tests/.",
+    "issues": [
+      {
+        "file": "docs/changelogs/v4.0.md",
+        "line": 204,
+        "severity": "non_blocking",
+        "description": "Stale reference to `from reveng.symbolic import SymbolicExecutionEngine` — module path no longer exists."
+      },
+      {
+        "file": "docs/changelogs/v4.0.md",
+        "line": 402,
+        "severity": "non_blocking",
+        "description": "Stale reference to `from reveng.symbolic import SymbolicExecutionEngine`."
+      },
+      {
+        "file": "docs/changelogs/v4.0.md",
+        "line": 424,
+        "severity": "non_blocking",
+        "description": "Stale reference to `from reveng.symbolic import SymbolicExecutionEngine`."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "target": "AGENTS.md",
+      "description": "Worker edited tests/poc/test_incremental_compilation_poc.py despite AGENTS.md listing tests/poc/ as off-limits. The edit was necessary to satisfy the feature contract (no stale import patterns in tests/). AGENTS.md should clarify whether tests/poc/ edits are permitted when a feature's verification steps explicitly require scanning tests/ and the only remaining stale importer is inside tests/poc/.",
+      "evidence": "AGENTS.md says 'Off-limits: tests/poc/' but the feature description step (3) says 'rg ... src/ tests/ --type py — find and update all importers'. Worker's skillFeedback.deviations documents this conflict."
+    },
+    {
+      "target": "AGENTS.md",
+      "description": "The test baseline expectation in AGENTS.md ('≥ 325 passed') does not match reality (306 passed, 94 skipped). The mission feature expectations say ≥307. Neither matches the actual baseline. This discrepancy should be corrected to avoid confusing future workers.",
+      "evidence": "Worker ran baseline 3 times, each showing 306 passed. Handoff discoveredIssues[0] documents this. AGENTS.md line says '≥ 325 passed'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The consolidation was executed correctly and completely. Only one copy of symbolic_execution_engine.py (at security/) and one copy of incremental_compiler.py (at compilation/) remain in git. All Python import references in src/ and tests/ were updated. The src/reveng/symbolic/ directory was fully removed. Legacy API surfaces were properly merged into the canonical modules. The only stale references are in docs/changelogs/v4.0.md (non-blocking, noted by the worker). Tests passed consistently at 306 passed / 0 failures across all verification runs."
+}

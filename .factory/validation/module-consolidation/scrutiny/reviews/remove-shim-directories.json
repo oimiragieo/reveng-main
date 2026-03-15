@@ -1,0 +1,37 @@
+{
+  "featureId": "remove-shim-directories",
+  "milestone": "module-consolidation",
+  "reviewedAt": "2026-03-15T00:42:00.000Z",
+  "commitId": "cefd843ff3a178b67efcf4dd0f78c7ea15db345d",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReviewIssues": [
+    {
+      "severity": "non_blocking",
+      "description": "tools/config/__init__.py changed from `from .config_manager import *` (star re-export) to `from . import config_manager, enhanced_config_manager` (module import). This subtly changes the public API: previously `from reveng.tools.config import ConfigManager` would work via star import, now only the module objects are exposed. No current code relies on the old star-import behavior (tests use `from reveng.tools.config.config_manager import ConfigManager`), so this is non-breaking but worth noting as a semantic change beyond shim removal."
+    },
+    {
+      "severity": "non_blocking",
+      "description": "In enhanced_health_monitor.py line 186, the module string was updated to 'reveng.agents.ai.ai_enhanced_analyzer' (a fully-qualified path) while the other entries in the same list still use short unqualified paths like 'tools.corporate_exposure_detector'. This inconsistency is pre-existing but the diff made it more visible. Not introduced by this feature."
+    },
+    {
+      "severity": "suggestion",
+      "description": "Worker handoff reported 'successState: partial' because the worker did not commit (repo-wide lint/mypy were red). The commit was later made by another process. The skill's guidance about scoped lint was already documented but the worker ran repo-wide lint first, wasting time before discovering the scoped approach. The skill file was subsequently updated with clearer guidance (see SKILL.md line about 'Lint and typecheck scope for cleanup features')."
+    }
+  ],
+  "sharedStateObservations": [
+    {
+      "target": "AGENTS.md",
+      "description": "AGENTS.md states expected baseline is '>= 325 passed, 0 failures' but worker observed 306 passed, 94 skipped. The feature metadata says '>= 307 passed'. These numbers are inconsistent across mission docs, feature specs, and actual environment. AGENTS.md should be updated to reflect the current reality.",
+      "evidence": "Handoff verification shows '306 passed, 94 skipped, 0 failed' consistently across multiple runs. AGENTS.md says '>= 325 passed'. Feature expectedBehavior says '>= 307 passed'."
+    },
+    {
+      "target": "skills",
+      "description": "Worker's skillFeedback.followedProcedure was false — worker did not commit because repo-wide flake8/mypy failed. The skill file has since been updated with explicit guidance about scoped lint for cleanup features. The worker's deviation was reasonable given the information available at the time.",
+      "evidence": "Handoff skillFeedback.deviations shows worker stopped short of committing due to repo-wide validator failures. SKILL.md now has a 'CRITICAL: Lint and typecheck scope for cleanup features' section that clarifies scoped-only validation is sufficient."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Feature passes review. All 3 shim directories (tools/ai/, tools/security/, tools/visualization/) and 3 ghidra shim files (tools/config/ghidra_engine.py, ghidra_http_client.py, ghidra_mcp_connector.py) are confirmed deleted from git. All 10 importer files were updated to canonical paths (agents.ai.*, security.*, integrations.ghidra.*). Zero leftover references to old shim paths found in src/ or tests/. `import reveng` succeeds. No blocking issues found."
+}
