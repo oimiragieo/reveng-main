@@ -191,6 +191,17 @@ All 15 MCP tools in `REVENGEnterpriseServer` are now fully implemented:
 - Pipeline YAML serialization fixed (safe round-trip save/load)
 - End-to-end CLI: `reveng analyze <binary>` → YARA-enriched report with decompiled functions and `.c` source
 
+### Codebase Cleanup (March 2026)
+
+Stripped AI-generated scaffolding to restore engineering discipline:
+
+- **113 `claude.md` context files deleted** (21,484 lines removed)
+- **docs/ reduced from 52 → 12 files** — self-audit docs, redundant guides, and internal indexes removed
+- **Empty stub modules removed** — `jit/`, `ml_models/`, `types/` were empty `__init__.py` placeholders
+- **Duplicate modules consolidated** — 3 copies of `gpu_accelerator.py` → 1 canonical (`ml/`); 2 copies of `symbolic_execution_engine.py` → 1 canonical (`security/`)
+- **Shim directories removed** — `tools/ai/`, `tools/security/`, `tools/visualization/`, and 3 Ghidra shims in `tools/config/`; 16 import sites updated
+- **325 tests passing, 0 failures** (up from 307) — 3 skipped test classes rewritten against current APIs
+
 ```bash
 # Start Ghidra server (required for decompilation)
 python external/ghidra-server/ghidra_http_server.py
