@@ -1118,11 +1118,14 @@ class AnalysisPipeline:
                 }
 
         try:
-            # This would implement malware analysis
-            # For now, return placeholder
             return {
-                "malware_analysis": "Not implemented yet",
-                "confidence": 0.0,
+                "status": "skipped",
+                "message": (
+                    "Malware analysis stage is not implemented for this pipeline "
+                    "configuration."
+                ),
+                "binary_path": binary_path,
+                "mode": stage.config.get("mode", "default"),
             }
 
         except Exception as e:
@@ -1166,9 +1169,15 @@ class AnalysisPipeline:
                 }
 
         try:
-            # This would implement ML analysis
-            # For now, return placeholder
-            return {"ml_analysis": "Not implemented yet", "confidence": 0.0}
+            return {
+                "status": "skipped",
+                "message": (
+                    "ML analysis stage is not implemented for this pipeline "
+                    "configuration."
+                ),
+                "binary_path": binary_path,
+                "mode": stage.config.get("mode", "default"),
+            }
 
         except Exception as e:
             self.logger.error(f"ML analysis failed: {e}")
@@ -1267,11 +1276,14 @@ class AnalysisPipeline:
             return self._build_stage_report(report, report_path)
 
         try:
-            # This would implement report generation
-            # For now, return placeholder
             return {
-                "report_generation": "Not implemented yet",
-                "output_path": "report.html",
+                "status": "skipped",
+                "message": (
+                    "Report generation stage is not implemented for this pipeline "
+                    "configuration."
+                ),
+                "binary_path": binary_path,
+                "format": stage.config.get("format", "json"),
             }
 
         except Exception as e:

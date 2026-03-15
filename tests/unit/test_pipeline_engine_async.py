@@ -263,6 +263,54 @@ def test_execute_pipeline_supports_dynamic_analysis_stage(
     }
 
 
+@pytest.mark.parametrize(
+    ("stage_type", "expected_message", "expected_extra_key", "expected_extra_value"),
+    [
+        (
+            StageType.MALWARE_ANALYSIS,
+            "Malware analysis stage is not implemented for this pipeline configuration.",
+            "mode",
+            "default",
+        ),
+        (
+            StageType.ML_ANALYSIS,
+            "ML analysis stage is not implemented for this pipeline configuration.",
+            "mode",
+            "default",
+        ),
+        (
+            StageType.REPORT_GENERATION,
+            "Report generation stage is not implemented for this pipeline configuration.",
+            "format",
+            "json",
+        ),
+    ],
+)
+def test_optional_stage_defaults_return_skipped_payloads(
+    test_binary: str,
+    stage_type: StageType,
+    expected_message: str,
+    expected_extra_key: str,
+    expected_extra_value: str,
+):
+    engine = AnalysisPipeline()
+    pipeline = engine.create_pipeline(f"placeholder_{stage_type.value}")
+    engine.add_stage(pipeline, _make_stage(stage_type.value, stage_type))
+
+    result = engine.execute_pipeline(pipeline, test_binary)
+
+    assert result.status == PipelineStatus.COMPLETED
+    assert result.success_count == 1
+    assert result.failure_count == 0
+    assert result.stage_results[0].status == StageStatus.COMPLETED
+    assert result.stage_results[0].output == {
+        "status": "skipped",
+        "message": expected_message,
+        "binary_path": test_binary,
+        expected_extra_key: expected_extra_value,
+    }
+
+
 def test_run_coroutine_sync_times_out_when_thread_hangs(
     monkeypatch: pytest.MonkeyPatch,
 ):
