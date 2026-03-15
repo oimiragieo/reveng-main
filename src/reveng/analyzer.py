@@ -289,7 +289,7 @@ class REVENGAnalyzer:
     def _check_ghidra_available(self) -> bool:
         """Check if Ghidra is available"""
         try:
-            from reveng.tools.config.ghidra_engine import GhidraEngine
+            from reveng.integrations.ghidra.ghidra_engine import GhidraEngine
 
             # Quick connection check (don't fail fast)
             GhidraEngine(server_url="http://127.0.0.1:13370", timeout=2, fail_fast=False)
@@ -1030,7 +1030,7 @@ class REVENGAnalyzer:
         Following Gemini's blueprint: "Ghidra is not a tool, it is the database."
         """
         try:
-            from reveng.tools.config.ghidra_engine import (
+            from reveng.integrations.ghidra.ghidra_engine import (
                 GhidraEngine,
                 GhidraConnectionError,
                 GhidraDataExtractor,

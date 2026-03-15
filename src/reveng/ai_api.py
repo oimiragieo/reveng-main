@@ -22,8 +22,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 # Import REVENG components
-from ..tools.ai.ai_enhanced.instant_triage import InstantTriageEngine, ThreatLevel
-from ..tools.ai.ai_enhanced.nl_interface import NaturalLanguageInterface, NLResponse
+from ..agents.ai.ai_enhanced.instant_triage import InstantTriageEngine, ThreatLevel
+from ..agents.ai.ai_enhanced.nl_interface import NaturalLanguageInterface, NLResponse
 from ..tools.translation import generate_translation_guide, generate_translation_hints
 
 logger = logging.getLogger(__name__)

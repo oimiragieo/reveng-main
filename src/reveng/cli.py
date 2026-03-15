@@ -675,7 +675,7 @@ def handle_ai_command(args):
 def handle_triage_command(args):
     """Handle the triage command (Instant Triage)."""
     try:
-        from ..tools.ai.ai_enhanced import InstantTriageEngine
+        from ..agents.ai.ai_enhanced import InstantTriageEngine
 
         engine = InstantTriageEngine()
 
@@ -992,7 +992,7 @@ def handle_unpack_command(args):
 def handle_enhance_code_command(args):
     """Handle the enhance-code command."""
     try:
-        from ..tools.ai.ai_enhanced import AICodeQualityEnhancer
+        from ..agents.ai.ai_enhanced import AICodeQualityEnhancer
 
         # Read code file
         with open(args.code_file, "r") as f:
@@ -1087,7 +1087,7 @@ def handle_decompile_command(args):
         if args.enhance and decompiled_code:
             print("Applying AI enhancement...")
             try:
-                from ..tools.ai.ai_enhanced import AICodeQualityEnhancer
+                from ..agents.ai.ai_enhanced import AICodeQualityEnhancer
 
                 enhancer = AICodeQualityEnhancer()
                 enhanced = enhancer.enhance_function(

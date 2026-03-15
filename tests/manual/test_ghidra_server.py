@@ -19,7 +19,11 @@ print()
 # Test 1: Import GhidraEngine
 print("[TEST 1] Importing GhidraEngine...")
 try:
-    from reveng.tools.config.ghidra_engine import GhidraEngine, GhidraConnectionError, GhidraDataExtractor
+    from reveng.integrations.ghidra.ghidra_engine import (
+        GhidraConnectionError,
+        GhidraDataExtractor,
+        GhidraEngine,
+    )
     print("✅ PASS: GhidraEngine imported successfully")
 except ImportError as e:
     print(f"❌ FAIL: {e}")

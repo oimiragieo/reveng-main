@@ -84,7 +84,7 @@ _MODULE_MAP = {
     "plugin_system": "reveng.tools.enterprise.plugin_system",
     "gpu_accelerator": "reveng.ml.gpu_accelerator",
     "config_manager": "reveng.tools.config.config_manager",
-    "ghidra_mcp_connector": "reveng.tools.config.ghidra_mcp_connector",
+    "ghidra_mcp_connector": "reveng.integrations.ghidra.ghidra_mcp_connector",
     "demonstration_generator": "reveng.tools.utils.demonstration_generator",
     "progress_reporter": "reveng.tools.utils.progress_reporter",
     "virustotal_connector": "reveng.tools.threat_intel.virustotal_connector",

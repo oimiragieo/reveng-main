@@ -21,6 +21,7 @@ from typing import Any, Dict
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from reveng.integrations.ghidra.ghidra_http_client import GhidraHTTPClient
 
 # Configure logging
 logging.basicConfig(
@@ -41,9 +42,6 @@ try:
 except ImportError:
     GHIDRA_BRIDGE_AVAILABLE = False
     logger.warning("ghidra_bridge not available, will use HTTP fallback")
-
-# Import our HTTP client for Ghidra MCP
-from reveng.tools.config.ghidra_http_client import GhidraHTTPClient
 
 
 class GhidraAnalysisEngine:

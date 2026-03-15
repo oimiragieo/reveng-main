@@ -20,11 +20,11 @@ from typing import Any, Dict, List, Optional
 # Import REVENG components
 from ..analyzer import REVENGAnalyzer
 from ..ghidra.scripting_engine import GhidraScriptingEngine
-from ..tools.ai.ollama_analyzer import OllamaAnalyzer
-from ..tools.ai.ai_enhanced_analyzer import AIEnhancedAnalyzer
-from ..tools.security.vulnerability_discovery_engine import VulnerabilityDiscoveryEngine
-from ..tools.security.threat_intelligence_correlator import ThreatIntelligenceCorrelator
-from ..tools.config.ghidra_mcp_connector import GhidraMCPConnector
+from ..agents.ai.ollama_analyzer import OllamaAnalyzer
+from ..agents.ai.ai_enhanced_analyzer import AIEnhancedAnalyzer
+from ..security.vulnerability_discovery_engine import VulnerabilityDiscoveryEngine
+from ..security.threat_intelligence_correlator import ThreatIntelligenceCorrelator
+from ..integrations.ghidra.ghidra_mcp_connector import GhidraMCPConnector
 from ..tools.languages.language_detector import LanguageDetector
 from ..tools.core.optimal_binary_analysis import OptimalBinaryAnalyzer
 

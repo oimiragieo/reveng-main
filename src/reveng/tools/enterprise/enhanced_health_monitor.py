@@ -184,7 +184,7 @@ class EnhancedModulesHealthChecker(HealthChecker):
 
         # Check enhanced analysis modules
         enhanced_modules = [
-            "tools.ai_enhanced_analyzer",
+            "reveng.agents.ai.ai_enhanced_analyzer",
             "tools.corporate_exposure_detector",
             "tools.vulnerability_discovery_engine",
             "tools.threat_intelligence_correlator",
@@ -226,7 +226,7 @@ class EnhancedModulesHealthChecker(HealthChecker):
                     value="available",
                     status="healthy",
                     timestamp=datetime.now(),
-                    message="Enhanced data models are available",
+                    message=f"{UniversalAnalysisResult.__name__} is available",
                 )
             )
         except ImportError as e:
