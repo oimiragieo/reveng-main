@@ -17,16 +17,34 @@ from pathlib import Path
 
 from .analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
 from .version import get_version_string
+from .translations import get_translator
 
 
 def create_parser() -> argparse.ArgumentParser:
     """Create the command-line argument parser."""
+    # Pre-parse language if specified to adjust help messages
+    lang = "en"
+    for i, arg in enumerate(sys.argv):
+        if arg == "--lang" and i + 1 < len(sys.argv):
+            lang = sys.argv[i + 1]
+            break
+
+    t = get_translator(lang)
+
     parser = argparse.ArgumentParser(
         prog="reveng",
-        description="REVENG - Universal Reverse Engineering Platform",
-        epilog="For more information, visit: https://github.com/oimiragieo/reveng-main",
+        description=t["description"],
+        epilog=t["epilog"],
         formatter_class=argparse.RawDescriptionHelpFormatter,
         add_help=True,
+    )
+
+    # Language option
+    parser.add_argument(
+        "--lang",
+        choices=["en", "pt-br"],
+        default="en",
+        help=t["lang_help"],
     )
 
     # Version information
@@ -35,366 +53,366 @@ def create_parser() -> argparse.ArgumentParser:
         "-v",
         action="version",
         version=get_version_string(),
-        help="Show version information and exit",
+        help=t["version_help"],
     )
 
     # Main command
-    subparsers = parser.add_subparsers(dest="command", help="Available commands", metavar="COMMAND")
+    subparsers = parser.add_subparsers(dest="command", help=t["commands_help"], metavar="COMMAND")
 
     # Analyze command
     analyze_parser = subparsers.add_parser(
         "analyze",
-        help="Analyze a binary file",
-        description="Run comprehensive binary analysis on the specified file",
+        help=t["analyze_help"],
+        description=t["analyze_desc"],
     )
     analyze_parser.add_argument(
         "binary_path",
         nargs="?",
-        help="Path to binary file (auto-detected if not provided)",
+        help=t["binary_path_help"],
     )
 
     # Serve command (web interface)
     serve_parser = subparsers.add_parser(
         "serve",
-        help="Start web interface server",
-        description="Launch the REVENG web interface for interactive analysis",
+        help=t["serve_help"],
+        description=t["serve_desc"],
     )
     serve_parser.add_argument(
         "--host",
         default="localhost",
-        help="Host to bind the server to (default: localhost)",
+        help=t["host_help"],
     )
     serve_parser.add_argument(
         "--port",
         type=int,
         default=3000,
-        help="Port to bind the server to (default: 3000)",
+        help=t["port_help"],
     )
     serve_parser.add_argument(
-        "--reload", action="store_true", help="Enable auto-reload for development"
+        "--reload", action="store_true", help=t["reload_help"]
     )
 
     # Ask command (Natural Language Interface)
     ask_parser = subparsers.add_parser(
         "ask",
-        help="Ask natural language questions about a binary",
-        description="Use AI to answer questions about binary behavior and functionality",
+        help=t["ask_help"],
+        description=t["ask_desc"],
     )
     ask_parser.add_argument(
-        "question", help='Natural language question (e.g., "What does this binary do?")'
+        "question", help=t["question_help"]
     )
     ask_parser.add_argument(
         "binary_path",
         nargs="?",
-        help="Path to binary file (optional if analysis results provided)",
+        help=t["binary_path_opt_help"],
     )
     ask_parser.add_argument(
-        "--analysis-results", help="Path to previous analysis results JSON file"
+        "--analysis-results", help=t["results_help"]
     )
     ask_parser.add_argument(
         "--conversational",
         action="store_true",
-        help="Enable conversational mode for follow-up questions",
+        help=t["conversational_help"],
     )
 
     # AI Assistant command (New)
     ai_parser = subparsers.add_parser(
         "ai",
-        help="AI Assistant for interactive binary analysis",
-        description="Start an interactive AI assistant session for comprehensive binary analysis",
+        help=t["ai_help"],
+        description=t["ai_desc"],
     )
-    ai_parser.add_argument("binary_path", help="Path to binary file to analyze")
+    ai_parser.add_argument("binary_path", help=t["binary_path_help"])
     ai_parser.add_argument(
         "--analysis-type",
         choices=["comprehensive", "security", "triage", "custom"],
         default="comprehensive",
-        help="Type of analysis to perform (default: comprehensive)",
+        help=t["analysis_type_help"],
     )
     ai_parser.add_argument(
         "--goals",
         nargs="+",
-        help="Analysis goals (e.g., understand_functionality find_vulnerabilities assess_threats)",
+        help=t["goals_help"],
     )
     ai_parser.add_argument(
         "--interactive",
         action="store_true",
-        help="Enable interactive mode for follow-up questions",
+        help=t["interactive_help"],
     )
 
     # Triage command (Instant Triage)
     triage_parser = subparsers.add_parser(
         "triage",
-        help="Rapid threat assessment (<30 seconds)",
-        description="Perform instant triage analysis for incident response",
+        help=t["triage_help"],
+        description=t["triage_desc"],
     )
-    triage_parser.add_argument("binary_path", help="Path to binary file")
-    triage_parser.add_argument("--bulk", nargs="+", help="Triage multiple files in batch")
+    triage_parser.add_argument("binary_path", help=t["binary_path_help"])
+    triage_parser.add_argument("--bulk", nargs="+", help=t["bulk_help"])
     triage_parser.add_argument(
         "--format",
         choices=["text", "json", "markdown"],
         default="text",
-        help="Output format (default: text)",
+        help=t["format_help"],
     )
 
     # VirusTotal lookup command
     vt_lookup_parser = subparsers.add_parser(
         "vt-lookup",
-        help="Lookup file hash on VirusTotal",
-        description="Enrich analysis with VirusTotal threat intelligence",
+        help=t["vt_lookup_help"],
+        description=t["vt_lookup_desc"],
     )
-    vt_lookup_parser.add_argument("binary_path", help="Path to binary file or SHA256 hash")
+    vt_lookup_parser.add_argument("binary_path", help=t["binary_path_help"])
     vt_lookup_parser.add_argument(
-        "--api-key", help="VirusTotal API key (or set VT_API_KEY environment variable)"
+        "--api-key", help=t["api_key_help"]
     )
 
     # VirusTotal submit command
     vt_submit_parser = subparsers.add_parser(
         "vt-submit",
-        help="Submit file to VirusTotal for analysis",
-        description="Upload binary to VirusTotal and wait for results",
+        help=t["vt_submit_help"],
+        description=t["vt_submit_desc"],
     )
-    vt_submit_parser.add_argument("binary_path", help="Path to binary file")
+    vt_submit_parser.add_argument("binary_path", help=t["binary_path_help"])
     vt_submit_parser.add_argument(
-        "--api-key", help="VirusTotal API key (or set VT_API_KEY environment variable)"
+        "--api-key", help=t["api_key_help"]
     )
     vt_submit_parser.add_argument(
-        "--wait", action="store_true", help="Wait for analysis to complete"
+        "--wait", action="store_true", help=t["wait_help"]
     )
 
     # YARA rule generation command
     yara_gen_parser = subparsers.add_parser(
         "generate-yara",
-        help="Generate YARA rule from binary",
-        description="Create YARA detection rule based on binary characteristics",
+        help=t["yara_gen_help"],
+        description=t["yara_gen_desc"],
     )
-    yara_gen_parser.add_argument("binary_path", help="Path to binary file")
-    yara_gen_parser.add_argument("--rule-name", help="Custom name for YARA rule")
-    yara_gen_parser.add_argument("--output", help="Path to save YARA rule file")
+    yara_gen_parser.add_argument("binary_path", help=t["binary_path_help"])
+    yara_gen_parser.add_argument("--rule-name", help=t["rule_name_help"])
+    yara_gen_parser.add_argument("--output", help=t["output_help"])
     yara_gen_parser.add_argument(
         "--analysis-results",
-        help="Path to previous analysis results for better rule generation",
+        help=t["results_help"],
     )
 
     # YARA scanning command
     yara_scan_parser = subparsers.add_parser(
         "scan-yara",
-        help="Scan binary with YARA rules",
-        description="Scan binary using YARA rules for threat detection",
+        help=t["yara_scan_help"],
+        description=t["yara_scan_desc"],
     )
-    yara_scan_parser.add_argument("binary_path", help="Path to binary file")
-    yara_scan_parser.add_argument("--rules-dir", help="Directory containing YARA rules")
-    yara_scan_parser.add_argument("--rule-file", help="Single YARA rule file to scan with")
+    yara_scan_parser.add_argument("binary_path", help=t["binary_path_help"])
+    yara_scan_parser.add_argument("--rules-dir", help=t["rules_dir_help"])
+    yara_scan_parser.add_argument("--rule-file", help=t["rule_file_help"])
 
     # Binary diffing command
     diff_parser = subparsers.add_parser(
         "diff",
-        help="Compare two binary versions",
-        description="Identify differences between two binary files at function level",
+        help=t["diff_help"],
+        description=t["diff_desc"],
     )
-    diff_parser.add_argument("binary_v1", help="Path to first binary (older version)")
-    diff_parser.add_argument("binary_v2", help="Path to second binary (newer version)")
+    diff_parser.add_argument("binary_v1", help=t["binary_path_help"])
+    diff_parser.add_argument("binary_v2", help=t["binary_path_help"])
     diff_parser.add_argument(
         "--deep",
         action="store_true",
-        help="Enable deep analysis for detailed comparison",
+        help=t["deep_help"],
     )
     diff_parser.add_argument(
         "--format",
         choices=["text", "json", "markdown"],
         default="text",
-        help="Output format (default: text)",
+        help=t["format_help"],
     )
 
     # Patch analysis command
     patch_parser = subparsers.add_parser(
         "patch-analysis",
-        help="Analyze security patches",
-        description="Identify vulnerabilities fixed in a security patch",
+        help=t["patch_help"],
+        description=t["patch_desc"],
     )
-    patch_parser.add_argument("unpatched_binary", help="Path to unpatched binary")
-    patch_parser.add_argument("patched_binary", help="Path to patched binary")
-    patch_parser.add_argument("--cve", help="CVE identifier for the patch (optional)")
+    patch_parser.add_argument("unpatched_binary", help=t["binary_path_help"])
+    patch_parser.add_argument("patched_binary", help=t["binary_path_help"])
+    patch_parser.add_argument("--cve", help=t["cve_help"])
     patch_parser.add_argument(
         "--format",
         choices=["text", "json", "markdown"],
         default="markdown",
-        help="Output format (default: markdown)",
+        help=t["format_help"],
     )
 
     # Packer detection command
     detect_packer_parser = subparsers.add_parser(
         "detect-packer",
-        help="Detect if binary is packed",
-        description="Identify packer/obfuscator used on binary",
+        help=t["packer_help"],
+        description=t["packer_desc"],
     )
-    detect_packer_parser.add_argument("binary_path", help="Path to binary file")
+    detect_packer_parser.add_argument("binary_path", help=t["binary_path_help"])
     detect_packer_parser.add_argument(
         "--format",
         choices=["text", "json", "markdown"],
         default="text",
-        help="Output format (default: text)",
+        help=t["format_help"],
     )
 
     # Unpacking command
     unpack_parser = subparsers.add_parser(
         "unpack",
-        help="Unpack packed binary",
-        description="Attempt to unpack/decompress packed binary",
+        help=t["unpack_help"],
+        description=t["unpack_desc"],
     )
-    unpack_parser.add_argument("binary_path", help="Path to packed binary")
+    unpack_parser.add_argument("binary_path", help=t["binary_path_help"])
     unpack_parser.add_argument(
-        "--output", help="Path for unpacked binary (default: auto-generated)"
+        "--output", help=t["output_help"]
     )
     unpack_parser.add_argument(
         "--method",
         choices=["auto", "specialized", "generic"],
         default="auto",
-        help="Unpacking method (default: auto)",
+        help=t["method_help"],
     )
 
     # Code enhancement command
     enhance_parser = subparsers.add_parser(
         "enhance-code",
-        help="Improve decompiled code quality with AI",
-        description="Transform raw decompiled code into readable, documented code",
+        help=t["enhance_help"],
+        description=t["enhance_desc"],
     )
-    enhance_parser.add_argument("code_file", help="Path to decompiled code file")
+    enhance_parser.add_argument("code_file", help=t["binary_path_help"])
     enhance_parser.add_argument(
-        "--function-name", default="unknown", help="Name of the function being enhanced"
+        "--function-name", default="unknown", help=t["func_name_help"]
     )
     enhance_parser.add_argument(
-        "--output", help="Path to save enhanced code (default: <file>_enhanced.c)"
+        "--output", help=t["output_help"]
     )
 
     # Recompile command (Binary → Source → Binary pipeline)
     recompile_parser = subparsers.add_parser(
         "recompile",
-        help="Binary → Source → Binary reconstruction pipeline",
-        description="Prove vulnerabilities through complete binary reconstruction",
+        help=t["recompile_help"],
+        description=t["recompile_desc"],
     )
-    recompile_parser.add_argument("binary_path", help="Path to binary file")
+    recompile_parser.add_argument("binary_path", help=t["binary_path_help"])
     recompile_parser.add_argument(
         "--output-dir",
-        help="Output directory for reconstruction (default: analysis_<binary_name>)",
+        help=t["out_dir_help"],
     )
     recompile_parser.add_argument(
         "--ghidra-url",
         default="http://127.0.0.1:13370",
-        help="Ghidra server URL (default: http://127.0.0.1:13370)",
+        help=t["ghidra_url_help"],
     )
     recompile_parser.add_argument(
         "--no-gemini",
         action="store_true",
-        help="Disable Gemini AI enhancement",
+        help=t["no_gemini_help"],
     )
     recompile_parser.add_argument(
         "--no-exploits",
         action="store_true",
-        help="Skip exploit generation",
+        help=t["no_exploits_help"],
     )
 
     # Decompile command
     decompile_parser = subparsers.add_parser(
         "decompile",
-        help="Decompile binary to source code",
-        description="Extract source code from binary using Ghidra + AI enhancement",
+        help=t["decompile_help"],
+        description=t["decompile_desc"],
     )
-    decompile_parser.add_argument("binary_path", help="Path to binary file")
+    decompile_parser.add_argument("binary_path", help=t["binary_path_help"])
     decompile_parser.add_argument(
         "--output",
-        help="Output file for decompiled code (default: <binary_name>_decompiled.c)",
+        help=t["output_help"],
     )
     decompile_parser.add_argument(
         "--language",
         choices=["c", "python", "pseudo"],
         default="c",
-        help="Output language (default: c)",
+        help=t["lang_out_help"],
     )
     decompile_parser.add_argument(
         "--enhance",
         action="store_true",
-        help="Apply AI enhancement to improve code quality",
+        help=t["enhance_opt_help"],
     )
 
     # Generate exploit command
     generate_exploit_parser = subparsers.add_parser(
         "generate-exploit",
-        help="Generate proof-of-concept exploit",
-        description="Automatically generate working exploits for discovered vulnerabilities",
+        help=t["exploit_help"],
+        description=t["exploit_desc"],
     )
-    generate_exploit_parser.add_argument("binary_path", help="Path to binary file")
+    generate_exploit_parser.add_argument("binary_path", help=t["binary_path_help"])
     generate_exploit_parser.add_argument(
         "--vulnerability",
-        help="Specific vulnerability to target (e.g., buffer_overflow, use_after_free)",
+        help=t["vuln_help"],
     )
     generate_exploit_parser.add_argument(
         "--output",
-        help="Output file for exploit code (default: exploit_<vuln_type>.py)",
+        help=t["output_help"],
     )
     generate_exploit_parser.add_argument(
         "--language",
         choices=["python", "c", "shellcode"],
         default="python",
-        help="Exploit language (default: python)",
+        help=t["lang_out_help"],
     )
     generate_exploit_parser.add_argument(
         "--analysis-results",
-        help="Path to previous analysis results (optional, speeds up generation)",
+        help=t["results_help"],
     )
 
     # Enhanced analysis options
     enhanced_group = parser.add_argument_group(
-        "Enhanced Analysis Options", "Control AI-enhanced analysis modules"
+        t["enhanced_group"], t["enhanced_group_desc"]
     )
     enhanced_group.add_argument(
         "--no-enhanced",
         action="store_true",
-        help="Disable all enhanced analysis modules",
+        help=t["no_enhanced_help"],
     )
     enhanced_group.add_argument(
         "--no-corporate",
         action="store_true",
-        help="Disable corporate exposure analysis",
+        help=t["no_corporate_help"],
     )
     enhanced_group.add_argument(
-        "--no-vuln", action="store_true", help="Disable vulnerability discovery"
+        "--no-vuln", action="store_true", help=t["no_vuln_help"]
     )
     enhanced_group.add_argument(
         "--no-threat",
         action="store_true",
-        help="Disable threat intelligence correlation",
+        help=t["no_threat_help"],
     )
     enhanced_group.add_argument(
         "--no-reconstruction",
         action="store_true",
-        help="Disable enhanced binary reconstruction",
+        help=t["no_recon_help"],
     )
     enhanced_group.add_argument(
-        "--no-demo", action="store_true", help="Disable demonstration generation"
+        "--no-demo", action="store_true", help=t["no_demo_help"]
     )
 
     # Configuration options
     config_group = parser.add_argument_group(
-        "Configuration Options", "Control analysis configuration"
+        t["config_group"], t["config_group_desc"]
     )
-    config_group.add_argument("--config", help="Path to enhanced analysis configuration file")
+    config_group.add_argument("--config", help=t["config_help"])
     config_group.add_argument(
-        "--no-ollama-check", action="store_true", help="Skip Ollama availability check"
+        "--no-ollama-check", action="store_true", help=t["no_ollama_help"]
     )
     config_group.add_argument(
         "--output-dir",
-        help="Directory to save analysis results (default: analysis_<binary_name>)",
+        help=t["out_dir_help"],
     )
 
     # Logging options
     logging_group = parser.add_argument_group(
-        "Logging Options", "Control logging and output verbosity"
+        t["logging_group"], t["logging_group_desc"]
     )
-    logging_group.add_argument("--verbose", "-V", action="store_true", help="Enable verbose output")
+    logging_group.add_argument("--verbose", "-V", action="store_true", help=t["verbose_help"])
     logging_group.add_argument(
-        "--quiet", "-q", action="store_true", help="Suppress non-essential output"
+        "--quiet", "-q", action="store_true", help=t["quiet_help"]
     )
-    logging_group.add_argument("--log-file", help="Path to log file (default: reveng_analyzer.log)")
+    logging_group.add_argument("--log-file", help=t["log_file_help"])
 
     return parser
 
@@ -432,6 +450,8 @@ def create_enhanced_features(args) -> EnhancedAnalysisFeatures:
 
 def handle_analyze_command(args):
     """Handle the analyze command."""
+    t = get_translator(getattr(args, "lang", "en"))
+
     # Create enhanced analysis features
     enhanced_features = create_enhanced_features(args)
 
@@ -445,24 +465,24 @@ def handle_analyze_command(args):
 
     # Check if binary exists
     if not Path(analyzer.binary_path).exists():
-        print(f"Error: Binary not found: {analyzer.binary_path}")
-        print("\nUsage: reveng analyze [binary_path] [options]")
+        print(f"{t['bin_not_found']}: {analyzer.binary_path}")
+        print(f"\n{t['usage']}: reveng analyze [binary_path] [options]")
         print("Or place a binary file in the current directory")
-        print("\nEnhanced Analysis Options:")
-        print("  --no-enhanced        Disable all enhanced analysis modules")
-        print("  --no-corporate       Disable corporate exposure analysis")
-        print("  --no-vuln           Disable vulnerability discovery")
-        print("  --no-threat         Disable threat intelligence correlation")
-        print("  --no-reconstruction Disable enhanced binary reconstruction")
-        print("  --no-demo           Disable demonstration generation")
-        print("  --config FILE       Load configuration from JSON file")
+        print(f"\n{t['enhanced_group']}:")
+        print(f"  --no-enhanced        {t['no_enhanced_help']}")
+        print(f"  --no-corporate       {t['no_corporate_help']}")
+        print(f"  --no-vuln           {t['no_vuln_help']}")
+        print(f"  --no-threat         {t['no_threat_help']}")
+        print(f"  --no-reconstruction {t['no_recon_help']}")
+        print(f"  --no-demo           {t['no_demo_help']}")
+        print(f"  --config FILE       {t['config_help']}")
         return 1
 
     # Run analysis
     analysis = analyzer.analyze_binary()
 
     if isinstance(analysis, dict) and analysis.get("status") == "success":
-        print("\n[SUCCESS] REVENG analysis completed successfully!")
+        print(f"\n{t['success']}")
         analysis_folder = analysis.get("analysis_folder")
         if analysis_folder:
             print(f"Results stored in: {analysis_folder}")
@@ -474,7 +494,7 @@ def handle_analyze_command(args):
     if isinstance(analysis, dict):
         error_message = analysis.get("error") or analysis.get("message")
 
-    print("\n[ERROR] REVENG analysis failed!")
+    print(f"\n{t['error']}")
     if error_message:
         print(f"Reason: {error_message}")
     return 1
