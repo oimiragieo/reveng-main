@@ -5,10 +5,11 @@ Automatically detects obfuscation types by analyzing code patterns.
 Used to guide the deobfuscation pipeline.
 """
 
-import re
 import logging
-from typing import List
+import re
 from dataclasses import dataclass
+from typing import List
+
 from .deobfuscator import ObfuscationType
 
 logger = logging.getLogger(__name__)
@@ -95,9 +96,7 @@ class ObfuscationDetector:
         if not types:
             types.append(ObfuscationType.MINIFIED)  # Default assumption
 
-        return DetectionResult(
-            obfuscation_types=types, confidence=confidence, details=details
-        )
+        return DetectionResult(obfuscation_types=types, confidence=confidence, details=details)
 
     def _is_minified(self, code: str) -> bool:
         """Check if code is minified"""

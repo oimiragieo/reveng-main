@@ -6,9 +6,22 @@ Provides REVENG binary analysis and JavaScript deobfuscation via MCP.
 """
 
 import asyncio
+from pathlib import Path
 from typing import Any, Dict, List
 
+from ....app_reverse_engineering import (
+    AppCorpusEntry,
+    create_default_framework,
+    run_app_corpus,
+    select_app_corpus_entries,
+)
+from ....result_contracts import build_mcp_tool_response, make_evidence_item
 from ..server import MCPServer, MCPTool
+
+try:
+    from scripts.run_app_reverse_engineering_corpus import load_app_corpus_config
+except Exception:  # pragma: no cover - script import fallback
+    load_app_corpus_config = None
 
 
 class REVENGMCPServer(MCPServer):
@@ -84,6 +97,47 @@ class REVENGMCPServer(MCPServer):
             )
         )
 
+        self.register_tool(
+            MCPTool(
+                name="reverse_engineer_app",
+                description="Generate a normalized app reverse-engineering contract and SPECS library",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "Path to app entry file or package"},
+                        "language": {
+                            "type": "string",
+                            "description": "Adapter language or auto",
+                            "enum": ["auto", "javascript", "jvm", "python", "dotnet"],
+                        },
+                        "output_dir": {"type": "string", "description": "Directory for analysis output"},
+                    },
+                    "required": ["path"],
+                },
+                handler=self.reverse_engineer_app,
+            )
+        )
+
+        self.register_tool(
+            MCPTool(
+                name="run_app_corpus",
+                description="Run the manifest-driven app reverse-engineering corpus and return the rollup report",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "config_path": {"type": "string", "description": "Optional corpus config path"},
+                        "entry_names": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Optional list of corpus entry names to run",
+                        },
+                        "output_dir": {"type": "string", "description": "Optional corpus output directory"},
+                    },
+                },
+                handler=self.run_app_corpus,
+            )
+        )
+
     async def analyze_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze a binary file"""
         try:
@@ -92,11 +146,11 @@ class REVENGMCPServer(MCPServer):
             path = args["path"]
             quick_mode = args.get("quick_mode", False)
 
-            analyzer = REVENGAnalyzer()
+            analyzer = REVENGAnalyzer(binary_path=path, check_ollama=not quick_mode)
 
             # Run analysis in executor to avoid blocking
             loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(None, analyzer.analyze, path)
+            result = await loop.run_in_executor(None, analyzer.analyze_binary)
 
             # Format results
             text = f"Binary Analysis: {path}\n"
@@ -113,19 +167,47 @@ class REVENGMCPServer(MCPServer):
             if hasattr(result, "decompiled_code"):
                 text += f"\nDecompiled Code:\n{result.decompiled_code[:1000]}\n"
 
-            return {
-                "content": [{"type": "text", "text": text}],
-                "analysis": {
-                    "file_type": getattr(result, "file_type", "unknown"),
-                    "vulnerabilities": getattr(result, "vulnerabilities", []),
+            analysis_payload = result if isinstance(result, dict) else {}
+            return build_mcp_tool_response(
+                tool_name="analyze_binary",
+                text=text,
+                payload={
+                    "analysis": {
+                        "file_type": analysis_payload.get("binary", {}).get("type", "unknown"),
+                        "vulnerabilities": analysis_payload.get("errors", []),
+                    },
+                    "analysis_result": analysis_payload,
                 },
-            }
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=path,
+                            trace_id=f"mcp:analyze:{path}",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "binary_analysis",
+                        "result_contract_serialization",
+                    ],
+                    "references": [],
+                    "tools": ["analyze_binary", "reveng_analyzer"],
+                },
+            )
 
         except Exception as e:
-            return {
-                "content": [{"type": "text", "text": f"Error analyzing binary: {str(e)}"}],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="analyze_binary",
+                text=f"Error analyzing binary: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
 
     async def deobfuscate_js(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Deobfuscate JavaScript code"""
@@ -148,7 +230,6 @@ class REVENGMCPServer(MCPServer):
             text += result.deobfuscated_code[:2000]
 
             response = {
-                "content": [{"type": "text", "text": text}],
                 "deobfuscated_code": result.deobfuscated_code,
                 "confidence": result.confidence,
                 "obfuscation_types": result.obfuscation_types,
@@ -170,13 +251,47 @@ class REVENGMCPServer(MCPServer):
                     for indicator in malware_result.indicators[:5]:
                         text += f"  • {indicator}\n"
 
-            return response
+            return build_mcp_tool_response(
+                tool_name="deobfuscate_js",
+                text=text,
+                payload=response,
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "javascript_input",
+                            trace_id="mcp:deobfuscate:code",
+                            evidence_kind="input_script",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [
+                        make_evidence_item(
+                            "deobfuscated_javascript",
+                            trace_id="mcp:deobfuscate:output",
+                            evidence_kind="generated_source",
+                            confidence=float(result.confidence) / 100.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "javascript_deobfuscation",
+                        "result_contract_serialization",
+                    ],
+                    "references": [],
+                    "tools": ["deobfuscate_js", "javascript_deobfuscator"],
+                },
+            )
 
         except Exception as e:
-            return {
-                "content": [{"type": "text", "text": f"Error deobfuscating JavaScript: {str(e)}"}],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="deobfuscate_js",
+                text=f"Error deobfuscating JavaScript: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
 
     async def detect_malware(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Detect malware in file"""
@@ -204,27 +319,153 @@ class REVENGMCPServer(MCPServer):
                     for indicator in result.indicators:
                         text += f"  • {indicator}\n"
 
-                return {
-                    "content": [{"type": "text", "text": text}],
-                    "threat_score": result.threat_score,
-                    "is_malicious": result.is_malicious,
-                    "indicators": result.indicators,
-                }
+                return build_mcp_tool_response(
+                    tool_name="detect_malware",
+                    text=text,
+                    payload={
+                        "threat_score": result.threat_score,
+                        "is_malicious": result.is_malicious,
+                        "indicators": result.indicators,
+                    },
+                    provenance={
+                        "inputs": [
+                            make_evidence_item(
+                                "javascript_input",
+                                path=path,
+                                trace_id=f"mcp:malware:{path}",
+                                evidence_kind="input_script",
+                                confidence=1.0,
+                                source_result_type="mcp_tool_result",
+                            )
+                        ],
+                        "artifacts": [],
+                        "stages": [
+                            "mcp_tool_execution",
+                            "javascript_malware_detection",
+                            "result_contract_serialization",
+                        ],
+                        "references": [],
+                        "tools": ["detect_malware", "javascript_malware_detector"],
+                    },
+                )
 
             else:
                 # Binary malware detection
                 # TODO: Implement binary malware detection
-                return {
-                    "content": [
-                        {"type": "text", "text": "Binary malware detection not yet implemented"}
-                    ]
-                }
+                return build_mcp_tool_response(
+                    tool_name="detect_malware",
+                    text="Binary malware detection not yet implemented",
+                    payload={},
+                )
 
         except Exception as e:
-            return {
-                "content": [{"type": "text", "text": f"Error detecting malware: {str(e)}"}],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="detect_malware",
+                text=f"Error detecting malware: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
+
+    async def reverse_engineer_app(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Run the shared app reverse-engineering workflow through MCP."""
+        try:
+            path = Path(args["path"]).expanduser().resolve()
+            language = str(args.get("language") or "auto")
+            output_dir = str(
+                Path(args.get("output_dir") or (Path.cwd() / f"analysis_{path.stem}"))
+                .expanduser()
+                .resolve()
+            )
+
+            framework = create_default_framework()
+            result = await framework.reverse_engineer(
+                str(path),
+                output_dir,
+                language=language,
+            )
+
+            text = (
+                f"App reverse engineering completed for {path.name}\n"
+                + "=" * 70
+                + "\n\n"
+                + f"Language: {result.language}\n"
+                + f"Adapter: {result.adapter_name}\n"
+                + f"Validation: {result.validation_grade}\n"
+                + f"Recovered sources: {result.source_count}\n"
+                + f"Analysis summary: {result.analysis_file}\n"
+            )
+            provenance = dict(result.provenance)
+            provenance["stages"] = ["mcp_tool_execution"] + list(provenance.get("stages", []))
+            provenance["tools"] = ["reverse_engineer_app"] + list(provenance.get("tools", []))
+
+            return build_mcp_tool_response(
+                tool_name="reverse_engineer_app",
+                text=text,
+                payload={
+                    "language": result.language,
+                    "analysis_file": str(result.analysis_file),
+                    "app_result": result.metadata,
+                },
+                provenance=provenance,
+            )
+        except Exception as e:
+            return build_mcp_tool_response(
+                tool_name="reverse_engineer_app",
+                text=f"Error reverse engineering app: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
+
+    async def run_app_corpus(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Run the manifest-driven app reverse-engineering corpus through MCP."""
+        try:
+            if load_app_corpus_config is None:
+                raise RuntimeError("App corpus loader is not available")
+
+            config_path = args.get("config_path")
+            config = (
+                load_app_corpus_config(Path(config_path).expanduser().resolve())
+                if config_path
+                else load_app_corpus_config()
+            )
+            corpus_entries = [AppCorpusEntry(**entry) for entry in config.get("entries", [])]
+            corpus_entries = select_app_corpus_entries(corpus_entries, args.get("entry_names"))
+            output_dir = str(
+                Path(args.get("output_dir") or (Path.cwd() / "reports" / "app_reverse_engineering_corpus"))
+                .expanduser()
+                .resolve()
+            )
+            report = await run_app_corpus(corpus_entries, output_dir)
+            text = (
+                "App corpus execution completed\n"
+                + "=" * 70
+                + "\n\n"
+                + f"Matrix status: {report['summary']['matrix_status']}\n"
+                + f"Completed entries: {report['summary']['completed_entries']}\n"
+                + f"Failed entries: {report['summary']['failed_entries']}\n"
+            )
+            return build_mcp_tool_response(
+                tool_name="run_app_corpus",
+                text=text,
+                payload={"corpus_report": report},
+                provenance={
+                    "inputs": [],
+                    "artifacts": [],
+                    "stages": ["mcp_tool_execution", "app_corpus_execution", "result_contract_serialization"],
+                    "references": [],
+                    "tools": ["run_app_corpus"],
+                },
+            )
+        except Exception as e:
+            return build_mcp_tool_response(
+                tool_name="run_app_corpus",
+                text=f"Error running app corpus: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
 
     async def read_resource(self, uri: str) -> Dict[str, Any]:
         """Read a resource (not implemented)"""
@@ -237,8 +478,6 @@ class REVENGMCPServer(MCPServer):
 
 # Main entry point
 if __name__ == "__main__":
-    import sys
-
     from ..transports import StdioTransport
 
     async def main():

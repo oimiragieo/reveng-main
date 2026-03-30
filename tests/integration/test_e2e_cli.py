@@ -11,7 +11,6 @@ from pathlib import Path
 import pytest
 import requests
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CLI_SCRIPT = REPO_ROOT / "src" / "reveng" / "cli" / "reveng.py"
 SAMPLE_BINARY = REPO_ROOT / "test_samples" / "sample.exe"

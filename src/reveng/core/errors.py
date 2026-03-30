@@ -4,6 +4,7 @@ REVENG Enhanced Error Handling System
 Structured error system with context and recovery suggestions.
 """
 
+import subprocess
 import traceback
 from dataclasses import dataclass
 from enum import Enum
@@ -94,9 +95,7 @@ class REVENGError(Exception):
     def get_recovery_commands(self) -> List[str]:
         """Get recovery commands"""
         return [
-            suggestion.command
-            for suggestion in self.recovery_suggestions
-            if suggestion.command
+            suggestion.command for suggestion in self.recovery_suggestions if suggestion.command
         ]
 
     def is_auto_fixable(self) -> bool:
@@ -569,7 +568,3 @@ def log_error(error: REVENGError, logger) -> None:
     if error.original_exception:
         logger.debug(f"Original exception: {error.original_exception}")
         logger.debug(f"Stack trace: {error.stack_trace}")
-
-
-# Import subprocess for error handling
-import subprocess

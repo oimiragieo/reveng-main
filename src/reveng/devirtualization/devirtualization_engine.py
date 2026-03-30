@@ -13,14 +13,13 @@ automated, seconds-long devirtualization.
 
 import logging
 import os
-import sys
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 try:
     import angr
+
     ANGR_AVAILABLE = True
 except ImportError:
     ANGR_AVAILABLE = False
@@ -29,6 +28,7 @@ except ImportError:
 
 class VMType(Enum):
     """Types of virtualization obfuscation"""
+
     VMPROTECT = "vmprotect"
     THEMIDA = "themida"
     CODE_VIRTUALIZER = "code_virtualizer"
@@ -39,6 +39,7 @@ class VMType(Enum):
 @dataclass
 class VirtualizedFunction:
     """Information about a virtualized function"""
+
     address: int
     name: Optional[str]
     vm_type: VMType
@@ -52,6 +53,7 @@ class VirtualizedFunction:
 @dataclass
 class DevirtualizationResult:
     """Result of devirtualization"""
+
     function: VirtualizedFunction
     success: bool
     devirtualized_code: Optional[bytes] = None
@@ -141,7 +143,7 @@ class DevirtualizationEngine:
     def _check_vmprotect_signatures(self) -> bool:
         """Check for VMProtect signatures"""
         try:
-            with open(self.binary_path, 'rb') as f:
+            with open(self.binary_path, "rb") as f:
                 data = f.read()
 
                 # VMProtect common strings
@@ -155,7 +157,7 @@ class DevirtualizationEngine:
                     if sig in data:
                         return True
 
-        except Exception as e:
+        except Exception:
             pass
 
         return False
@@ -163,7 +165,7 @@ class DevirtualizationEngine:
     def _check_themida_signatures(self) -> bool:
         """Check for Themida signatures"""
         try:
-            with open(self.binary_path, 'rb') as f:
+            with open(self.binary_path, "rb") as f:
                 data = f.read()
 
                 # Themida common strings
@@ -177,7 +179,7 @@ class DevirtualizationEngine:
                     if sig in data:
                         return True
 
-        except Exception as e:
+        except Exception:
             pass
 
         return False
@@ -204,7 +206,7 @@ class DevirtualizationEngine:
                         name=func.name,
                         vm_type=vm_type,
                         vm_entry=func_addr,
-                        original_size=func.size
+                        original_size=func.size,
                     )
 
                     virtualized.append(vfunc)
@@ -229,8 +231,9 @@ class DevirtualizationEngine:
 
         return False
 
-    def devirtualize(self, function: VirtualizedFunction,
-                    method: str = "auto") -> DevirtualizationResult:
+    def devirtualize(
+        self, function: VirtualizedFunction, method: str = "auto"
+    ) -> DevirtualizationResult:
         """
         Devirtualize a function.
 
@@ -252,9 +255,7 @@ class DevirtualizationEngine:
             result = self._devirtualize_symbolic(function)
         else:
             result = DevirtualizationResult(
-                function=function,
-                success=False,
-                error=f"Unknown method: {method}"
+                function=function, success=False, error=f"Unknown method: {method}"
             )
 
         self.results.append(result)
@@ -286,17 +287,14 @@ class DevirtualizationEngine:
                 function=function,
                 success=False,
                 method_used="llvm",
-                error="LLVM lifter not yet integrated"
+                error="LLVM lifter not yet integrated",
             )
 
             return result
 
         except Exception as e:
             return DevirtualizationResult(
-                function=function,
-                success=False,
-                method_used="llvm",
-                error=str(e)
+                function=function, success=False, method_used="llvm", error=str(e)
             )
 
     def _devirtualize_symbolic(self, function: VirtualizedFunction) -> DevirtualizationResult:
@@ -313,10 +311,7 @@ class DevirtualizationEngine:
 
         if not ANGR_AVAILABLE:
             return DevirtualizationResult(
-                function=function,
-                success=False,
-                method_used="symbolic",
-                error="angr not available"
+                function=function, success=False, method_used="symbolic", error="angr not available"
             )
 
         try:
@@ -333,20 +328,14 @@ class DevirtualizationEngine:
             reconstructed = self._reconstruct_code(semantics)
 
             result = DevirtualizationResult(
-                function=function,
-                success=True,
-                method_used="symbolic",
-                assembly=reconstructed
+                function=function, success=True, method_used="symbolic", assembly=reconstructed
             )
 
             return result
 
         except Exception as e:
             return DevirtualizationResult(
-                function=function,
-                success=False,
-                method_used="symbolic",
-                error=str(e)
+                function=function, success=False, method_used="symbolic", error=str(e)
             )
 
     def _trace_vm_execution(self, function: VirtualizedFunction) -> List[int]:
@@ -424,7 +413,7 @@ class DevirtualizationEngine:
             func_name = result.function.name or f"func_{result.function.address:x}"
             output_file = os.path.join(output_dir, f"{func_name}.asm")
 
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write(f"; Devirtualized: {func_name}\n")
                 f.write(f"; Method: {result.method_used}\n")
                 f.write(f"; Original address: 0x{result.function.address:x}\n")
@@ -443,15 +432,17 @@ class DevirtualizationEngine:
         successful = sum(1 for r in self.results if r.success)
 
         return {
-            'total_virtualized': total,
-            'devirtualized': successful,
-            'success_rate': (successful / total * 100) if total > 0 else 0,
-            'vm_types': {
+            "total_virtualized": total,
+            "devirtualized": successful,
+            "success_rate": (successful / total * 100) if total > 0 else 0,
+            "vm_types": {
                 vm_type.value: sum(1 for f in self.virtualized_functions if f.vm_type == vm_type)
                 for vm_type in VMType
             },
-            'methods_used': {
-                'llvm': sum(1 for r in self.results if r.method_used == 'llvm' and r.success),
-                'symbolic': sum(1 for r in self.results if r.method_used == 'symbolic' and r.success),
-            }
+            "methods_used": {
+                "llvm": sum(1 for r in self.results if r.method_used == "llvm" and r.success),
+                "symbolic": sum(
+                    1 for r in self.results if r.method_used == "symbolic" and r.success
+                ),
+            },
         }

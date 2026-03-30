@@ -70,9 +70,7 @@ def ml_integration(tmp_path):
 class TestMLWorkflow:
     """Integration tests for MLIntegration's current public behavior."""
 
-    def test_full_ml_analysis_workflow(
-        self, ml_integration, sample_binary, sample_analysis_data
-    ):
+    def test_full_ml_analysis_workflow(self, ml_integration, sample_binary, sample_analysis_data):
         """Enabled components should populate the structured ml_analysis payload."""
         integration, _, _ = ml_integration
 
@@ -107,9 +105,7 @@ class TestMLWorkflow:
             "anomaly_detection": anomaly_result,
             "threat_intelligence": threat_result,
         }
-        mock_reconstruction.assert_called_once_with(
-            str(sample_binary), sample_analysis_data
-        )
+        mock_reconstruction.assert_called_once_with(str(sample_binary), sample_analysis_data)
         mock_anomaly.assert_called_once_with(sample_analysis_data)
         mock_threat.assert_called_once_with(sample_analysis_data)
         saved_results, saved_binary_path = mock_save.call_args[0]

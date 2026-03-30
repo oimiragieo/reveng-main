@@ -9,10 +9,10 @@ Advanced patch analysis and malware variant detection:
 """
 
 from .semantic_differ import (
-    SemanticBinaryDiffer,
     DiffResult,
     GraphAlignment,
     SecurityImpact,
+    SemanticBinaryDiffer,
 )
 
 __all__ = [

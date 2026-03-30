@@ -261,9 +261,7 @@ int {domain}_validate();
                 original_content = f.read()
 
             # Deobfuscate and clean
-            deobfuscated_content = self._deobfuscate_function_content(
-                func_name, original_content
-            )
+            deobfuscated_content = self._deobfuscate_function_content(func_name, original_content)
 
             # Save deobfuscated function
             with open(domain_folder / f"{func_name}.c", "w", encoding="utf-8") as f:
@@ -602,9 +600,7 @@ def main():
     print("CLEAN, ORGANIZED CODE ACHIEVED!")
     print()
     print("[CHART] Statistics:")
-    total_functions = sum(
-        len(config["functions"]) for config in tool.domain_categories.values()
-    )
+    total_functions = sum(len(config["functions"]) for config in tool.domain_categories.values())
     print(f"  - Total Functions: {total_functions}")
     print(
         f"  - Domains Created: {len([d for d, config in tool.domain_categories.items() if config['functions']])}"

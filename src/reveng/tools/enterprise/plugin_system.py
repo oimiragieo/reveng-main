@@ -627,9 +627,7 @@ def main():
     """CLI interface for plugin system"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="REVENG plugin system for extensibility"
-    )
+    parser = argparse.ArgumentParser(description="REVENG plugin system for extensibility")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # List plugins

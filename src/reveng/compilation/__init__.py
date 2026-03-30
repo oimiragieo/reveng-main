@@ -8,9 +8,9 @@ This module provides world-class compilation capabilities including:
 - Distributed compilation support
 """
 
-from .incremental_compiler import IncrementalCompiler, BuildManifest, DependencyGraph
-from .smart_compiler import SmartCompiler, CompileError, CompileResult
+from .incremental_compiler import BuildManifest, DependencyGraph, IncrementalCompiler
 from .llvm_optimizer import LLVMOptimizationPipeline, PGOCompiler
+from .smart_compiler import CompileError, CompileResult, SmartCompiler
 
 __all__ = [
     "IncrementalCompiler",

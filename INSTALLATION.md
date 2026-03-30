@@ -71,6 +71,24 @@ pip install -e .
 reveng --version
 ```
 
+#### Windows First-Run Setup
+
+For Windows users, REVENG now includes a first-run setup script that installs Python dependencies, validates the bundled Ghidra distribution, starts the local Ghidra HTTP server, checks Ollama/compiler availability, and runs a smoke test:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup_first_run.ps1
+```
+
+Useful flags:
+
+```powershell
+# Verification only (skip package installation)
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup_first_run.ps1 -VerifyOnly
+
+# Skip the smoke test if you only want environment prep
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\setup_first_run.ps1 -SkipSmokeTest
+```
+
 ### 2. Install Ghidra (Optional - for Advanced Binary Disassembly)
 
 **Why**: Enables comprehensive binary disassembly and decompilation with Ghidra integration

@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0",
+  "result_type": "ga_asset_provisioning_report",
+  "manifest_path": "C:\\dev\\projects\\reveng-main\\.reveng\\ga_asset_manifest.json",
+  "selected_id_count": 0,
+  "summary": {
+    "asset_count": 14,
+    "completed_count": 11,
+    "skipped_count": 3,
+    "failed_count": 0,
+    "overall_status": "pass"
+  },
+  "results": [
+    {
+      "id": "hexyl-source",
+      "kind": "git_repo",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_sources\\hexyl",
+      "returncode": 0,
+      "stdout_tail": "",
+      "stderr_tail": "Cloning into 'C:\\dev\\projects\\reveng-main\\external\\ga_sources\\hexyl'...\nNote: switching to '8eb6d4771ce1ec7af65d06bd335457783b77d557'.\n\nYou are in 'detached HEAD' state. You can look around, make experimental\nchanges and commit them, and you can discard any commits you make in this\nstate without impacting any branches by switching back to a branch.\n\nIf you want to create a new branch to retain commits you create, you may\ndo so (now or later) by using -c with the switch command. Example:\n\n  git switch -c <new-branch-name>\n\nOr undo this operation with:\n\n  git switch -\n\nTurn off this advice by setting config variable advice.detachedHead to false\n\n"
+    },
+    {
+      "id": "fd-source",
+      "kind": "git_repo",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_sources\\fd",
+      "returncode": 0,
+      "stdout_tail": "",
+      "stderr_tail": "Cloning into 'C:\\dev\\projects\\reveng-main\\external\\ga_sources\\fd'...\nNote: switching to '7027d45303b412be6fa9c09d689cc6276748fb38'.\n\nYou are in 'detached HEAD' state. You can look around, make experimental\nchanges and commit them, and you can discard any commits you make in this\nstate without impacting any branches by switching back to a branch.\n\nIf you want to create a new branch to retain commits you create, you may\ndo so (now or later) by using -c with the switch command. Example:\n\n  git switch -c <new-branch-name>\n\nOr undo this operation with:\n\n  git switch -\n\nTurn off this advice by setting config variable advice.detachedHead to false\n\n"
+    },
+    {
+      "id": "bat-source",
+      "kind": "git_repo",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_sources\\bat",
+      "returncode": 0,
+      "stdout_tail": "",
+      "stderr_tail": "Cloning into 'C:\\dev\\projects\\reveng-main\\external\\ga_sources\\bat'...\nNote: switching to '979ba22628bc9d8171f2cffca2bd5c90c9fc0a9e'.\n\nYou are in 'detached HEAD' state. You can look around, make experimental\nchanges and commit them, and you can discard any commits you make in this\nstate without impacting any branches by switching back to a branch.\n\nIf you want to create a new branch to retain commits you create, you may\ndo so (now or later) by using -c with the switch command. Example:\n\n  git switch -c <new-branch-name>\n\nOr undo this operation with:\n\n  git switch -\n\nTurn off this advice by setting config variable advice.detachedHead to false\n\n"
+    },
+    {
+      "id": "hyperfine-source",
+      "kind": "git_repo",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_sources\\hyperfine",
+      "returncode": 0,
+      "stdout_tail": "",
+      "stderr_tail": "Cloning into 'C:\\dev\\projects\\reveng-main\\external\\ga_sources\\hyperfine'...\nNote: switching to '975fe108c4ee7bd2600d10758207b44ca3dae738'.\n\nYou are in 'detached HEAD' state. You can look around, make experimental\nchanges and commit them, and you can discard any commits you make in this\nstate without impacting any branches by switching back to a branch.\n\nIf you want to create a new branch to retain commits you create, you may\ndo so (now or later) by using -c with the switch command. Example:\n\n  git switch -c <new-branch-name>\n\nOr undo this operation with:\n\n  git switch -\n\nTurn off this advice by setting config variable advice.detachedHead to false\n\n"
+    },
+    {
+      "id": "ripgrep-source",
+      "kind": "git_repo",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_sources\\ripgrep",
+      "returncode": 0,
+      "stdout_tail": "",
+      "stderr_tail": "Cloning into 'C:\\dev\\projects\\reveng-main\\external\\ga_sources\\ripgrep'...\nwarning: refs/tags/15.1.0 dd0b4f5477d2962eea82dd6d2864f987d574934a is not a commit!\nNote: switching to 'af60c2de9d85e7f3d81c78601669468cf02dabab'.\n\nYou are in 'detached HEAD' state. You can look around, make experimental\nchanges and commit them, and you can discard any commits you make in this\nstate without impacting any branches by switching back to a branch.\n\nIf you want to create a new branch to retain commits you create, you may\ndo so (now or later) by using -c with the switch command. Example:\n\n  git switch -c <new-branch-name>\n\nOr undo this operation with:\n\n  git switch -\n\nTurn off this advice by setting config variable advice.detachedHead to false\n\n"
+    },
+    {
+      "id": "opencode-source",
+      "kind": "git_repo",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_sources\\opencode",
+      "returncode": 0,
+      "stdout_tail": "",
+      "stderr_tail": " (1885/4486)\nUpdating files:  43% (1929/4486)\nUpdating files:  44% (1974/4486)\nUpdating files:  45% (2019/4486)\nUpdating files:  46% (2064/4486)\nUpdating files:  47% (2109/4486)\nUpdating files:  48% (2154/4486)\nUpdating files:  49% (2199/4486)\nUpdating files:  50% (2243/4486)\nUpdating files:  51% (2288/4486)\nUpdating files:  52% (2333/4486)\nUpdating files:  53% (2378/4486)\nUpdating files:  54% (2423/4486)\nUpdating files:  55% (2468/4486)\nUpdating files:  56% (2513/4486)\nUpdating files:  57% (2558/4486)\nUpdating files:  58% (2602/4486)\nUpdating files:  59% (2647/4486)\nUpdating files:  60% (2692/4486)\nUpdating files:  61% (2737/4486)\nUpdating files:  62% (2782/4486)\nUpdating files:  63% (2827/4486)\nUpdating files:  64% (2872/4486)\nUpdating files:  65% (2916/4486)\nUpdating files:  66% (2961/4486)\nUpdating files:  67% (3006/4486)\nUpdating files:  68% (3051/4486)\nUpdating files:  69% (3096/4486)\nUpdating files:  70% (3141/4486)\nUpdating files:  70% (3148/4486)\nUpdating files:  71% (3186/4486)\nUpdating files:  72% (3230/4486)\nUpdating files:  73% (3275/4486)\nUpdating files:  74% (3320/4486)\nUpdating files:  75% (3365/4486)\nUpdating files:  76% (3410/4486)\nUpdating files:  77% (3455/4486)\nUpdating files:  78% (3500/4486)\nUpdating files:  79% (3544/4486)\nUpdating files:  80% (3589/4486)\nUpdating files:  81% (3634/4486)\nUpdating files:  82% (3679/4486)\nUpdating files:  83% (3724/4486)\nUpdating files:  84% (3769/4486)\nUpdating files:  85% (3814/4486)\nUpdating files:  86% (3858/4486)\nUpdating files:  87% (3903/4486)\nUpdating files:  88% (3948/4486)\nUpdating files:  89% (3993/4486)\nUpdating files:  90% (4038/4486)\nUpdating files:  91% (4083/4486)\nUpdating files:  92% (4128/4486)\nUpdating files:  93% (4172/4486)\nUpdating files:  94% (4217/4486)\nUpdating files:  95% (4262/4486)\nUpdating files:  96% (4307/4486)\nUpdating files:  97% (4352/4486)\nUpdating files:  98% (4397/4486)\nUpdating files:  99% (4442/4486)\nUpdating files: 100% (4486/4486)\nUpdating files: 100% (4486/4486), done.\n"
+    },
+    {
+      "id": "winsw-source",
+      "kind": "git_repo",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_sources\\winsw",
+      "returncode": 0,
+      "stdout_tail": "",
+      "stderr_tail": "Cloning into 'C:\\dev\\projects\\reveng-main\\external\\ga_sources\\winsw'...\nNote: switching to 'eef5bade59fca0254e387ac73ed7625ba6aa7147'.\n\nYou are in 'detached HEAD' state. You can look around, make experimental\nchanges and commit them, and you can discard any commits you make in this\nstate without impacting any branches by switching back to a branch.\n\nIf you want to create a new branch to retain commits you create, you may\ndo so (now or later) by using -c with the switch command. Example:\n\n  git switch -c <new-branch-name>\n\nOr undo this operation with:\n\n  git switch -\n\nTurn off this advice by setting config variable advice.detachedHead to false\n\n"
+    },
+    {
+      "id": "hexyl-binary",
+      "kind": "release_asset",
+      "status": "skipped_existing",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\hexyl",
+      "asset_type": "zip_extract"
+    },
+    {
+      "id": "fd-binary",
+      "kind": "release_asset",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\fd",
+      "asset_type": "zip_extract",
+      "extracted_files": [
+        "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\fd\\fd.exe"
+      ]
+    },
+    {
+      "id": "bat-binary",
+      "kind": "release_asset",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\bat",
+      "asset_type": "zip_extract",
+      "extracted_files": [
+        "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\bat\\bat.exe"
+      ]
+    },
+    {
+      "id": "hyperfine-binary",
+      "kind": "release_asset",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\hyperfine",
+      "asset_type": "zip_extract",
+      "extracted_files": [
+        "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\hyperfine\\hyperfine.exe"
+      ]
+    },
+    {
+      "id": "ripgrep-binary",
+      "kind": "release_asset",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\ripgrep",
+      "asset_type": "zip_extract",
+      "extracted_files": [
+        "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\ripgrep\\rg.exe"
+      ]
+    },
+    {
+      "id": "opencode-binary",
+      "kind": "release_asset",
+      "status": "skipped_existing",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\opencode",
+      "asset_type": "zip_extract"
+    },
+    {
+      "id": "winsw-binary",
+      "kind": "release_asset",
+      "status": "skipped_existing",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\winsw\\WinSW-x64.exe",
+      "asset_type": "file"
+    }
+  ],
+  "notes": [
+    "These assets back the stricter GA audit path with real public release binaries and source mirrors.",
+    "They are provisioned on demand rather than checked into the repository."
+  ]
+}

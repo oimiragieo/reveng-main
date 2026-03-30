@@ -13,8 +13,8 @@ from unittest.mock import patch
 import pytest
 
 import reveng.cli as cli
+from reveng.app_reverse_engineering.models import AppReverseEngineeringResult
 from reveng.version import get_version_string
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CLI_SCRIPT = REPO_ROOT / "src" / "reveng" / "cli" / "reveng.py"
@@ -36,6 +36,8 @@ def make_analyze_args(binary_path: str, **overrides: object) -> Namespace:
         "verbose": False,
         "quiet": False,
         "log_file": None,
+        "ghidra_timeout": 900,
+        "ghidra_retries": 0,
     }
     defaults.update(overrides)
     return Namespace(**defaults)
@@ -68,13 +70,21 @@ class TestCLIParser:
         help_text = cli.create_parser().format_help()
 
         assert "analyze" in help_text
+        assert "reverse-engineer-app" in help_text
         assert "decompile" in help_text
         assert "generate-exploit" in help_text
         assert "--version" in help_text
 
     def test_parser_analyze_command_accepts_current_global_flags(self):
         args = cli.create_parser().parse_args(
-            ["--no-enhanced", "--no-ollama-check", "--output-dir", "analysis_out", "analyze", "sample.exe"]
+            [
+                "--no-enhanced",
+                "--no-ollama-check",
+                "--output-dir",
+                "analysis_out",
+                "analyze",
+                "sample.exe",
+            ]
         )
 
         assert args.command == "analyze"
@@ -103,11 +113,61 @@ class TestCLIParser:
         assert args.language == "python"
         assert args.enhance is True
 
+    def test_parser_reverse_engineer_app_command(self):
+        args = cli.create_parser().parse_args(
+            [
+                "--output-dir",
+                "analysis_out",
+                "reverse-engineer-app",
+                "test_samples/HelloWorld.java",
+                "--language",
+                "jvm",
+                "--skip-pattern",
+                "sentry",
+            ]
+        )
+
+        assert args.command == "reverse-engineer-app"
+        assert args.input_path == "test_samples/HelloWorld.java"
+        assert args.language == "jvm"
+        assert args.output_dir == "analysis_out"
+        assert args.skip_pattern == ["sentry"]
+
+    def test_parser_reverse_engineer_app_command_accepts_python_language(self):
+        args = cli.create_parser().parse_args(
+            [
+                "reverse-engineer-app",
+                "sample.py",
+                "--language",
+                "python",
+            ]
+        )
+
+        assert args.command == "reverse-engineer-app"
+        assert args.input_path == "sample.py"
+        assert args.language == "python"
+
+    def test_parser_reverse_engineer_app_command_accepts_dotnet_language(self):
+        args = cli.create_parser().parse_args(
+            [
+                "reverse-engineer-app",
+                "sample.dll",
+                "--language",
+                "dotnet",
+            ]
+        )
+
+        assert args.command == "reverse-engineer-app"
+        assert args.input_path == "sample.dll"
+        assert args.language == "dotnet"
+
 
 class TestCLIHandlers:
     """Test direct command handlers with current behavior."""
 
-    def test_handle_analyze_command_success(self, tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+    def test_handle_analyze_command_success(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
         binary_path = tmp_path / "sample.exe"
         binary_path.write_bytes(b"MZ" + b"\0" * 64)
         analysis_dir = tmp_path / "analysis_out"
@@ -147,7 +207,9 @@ class TestCLIHandlers:
         capsys: pytest.CaptureFixture[str],
     ):
         missing_binary = tmp_path / "missing.exe"
-        analyzer = SimpleNamespace(binary_path=str(missing_binary), analysis_folder=tmp_path / "analysis")
+        analyzer = SimpleNamespace(
+            binary_path=str(missing_binary), analysis_folder=tmp_path / "analysis"
+        )
 
         with patch.object(cli, "REVENGAnalyzer", return_value=analyzer):
             result = cli.handle_analyze_command(make_analyze_args(str(missing_binary)))
@@ -164,7 +226,9 @@ class TestCLIHandlers:
     ):
         binary_path = tmp_path / "sample.exe"
         binary_path.write_bytes(b"MZ" + b"\0" * 64)
-        analyzer = SimpleNamespace(binary_path=str(binary_path), analysis_folder=tmp_path / "analysis")
+        analyzer = SimpleNamespace(
+            binary_path=str(binary_path), analysis_folder=tmp_path / "analysis"
+        )
 
         with (
             patch.object(cli, "REVENGAnalyzer", return_value=analyzer),
@@ -203,6 +267,67 @@ class TestCLIHandlers:
         captured = capsys.readouterr().out
         assert result == 1
         assert "Web interface not available" in captured
+
+    def test_handle_reverse_engineer_app_command_success(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        input_path = tmp_path / "HelloWorld.java"
+        input_path.write_text("public class HelloWorld {}", encoding="utf-8")
+        output_dir = tmp_path / "analysis_out"
+        result_obj = AppReverseEngineeringResult(
+            language="jvm",
+            adapter_name="jvm",
+            input_path=input_path,
+            input_root=input_path.parent,
+            output_dir=output_dir,
+            specs_dir=output_dir / "SPECS",
+            domains_dir=output_dir / "SPECS" / "domains",
+            artifacts_dir=output_dir / "artifacts",
+            analysis_file=output_dir / "analysis.json",
+            topic_files={},
+            domain_files={},
+            primary_artifacts={"sources": output_dir / "artifacts" / "normalized_sources"},
+            source_count=1,
+            warnings=[],
+            validation_grade="evidence_backed",
+            validation_summary="Recovered source and topic evidence were generated.",
+            evidence=[{"kind": "analysis_summary", "path": str(output_dir / "analysis.json")}],
+            provenance={
+                "inputs": [{"kind": "app_input", "path": str(input_path)}],
+                "artifacts": [{"kind": "analysis_summary", "path": str(output_dir / "analysis.json")}],
+                "stages": ["reverse_engineer_app"],
+                "references": [],
+                "tools": ["jvm"],
+            },
+        )
+        framework = SimpleNamespace(reverse_engineer=SimpleNamespace())
+
+        async def _fake_reverse_engineer(*args, **kwargs):
+            return result_obj
+
+        framework.reverse_engineer = _fake_reverse_engineer
+
+        with patch("reveng.app_reverse_engineering.create_default_framework", return_value=framework):
+            result = cli.handle_reverse_engineer_app_command(
+                Namespace(
+                    input_path=str(input_path),
+                    language="jvm",
+                    input_root=None,
+                    skip_pattern=["sentry"],
+                    max_snippets=12,
+                    snippet_context=2,
+                    run_deobfuscator=False,
+                    output_dir=str(output_dir),
+                )
+            )
+
+        captured = capsys.readouterr().out
+        assert result == 0
+        assert "App reverse engineering completed successfully" in captured
+        assert "Language: jvm" in captured
+        assert "Validation: evidence_backed" in captured
+        assert "Evidence items: 1" in captured
+        assert str(output_dir / "analysis.json") in captured
 
     def test_create_enhanced_features_loads_json_config(self, tmp_path: Path):
         config_path = tmp_path / "config.json"
@@ -246,7 +371,9 @@ class TestCLIMain:
     def test_main_routes_serve_command(self):
         with (
             patch.object(cli, "handle_serve_command", return_value=0) as mock_handler,
-            patch.object(sys, "argv", ["reveng", "serve", "--host", "127.0.0.1", "--port", "13370"]),
+            patch.object(
+                sys, "argv", ["reveng", "serve", "--host", "127.0.0.1", "--port", "13370"]
+            ),
         ):
             result = cli.main()
 
@@ -256,6 +383,32 @@ class TestCLIMain:
         assert args.command == "serve"
         assert args.host == "127.0.0.1"
         assert args.port == 13370
+
+    def test_main_routes_reverse_engineer_app_command(self):
+        with (
+            patch.object(cli, "handle_reverse_engineer_app_command", return_value=0) as mock_handler,
+            patch.object(
+                sys,
+                "argv",
+                [
+                    "reveng",
+                    "--output-dir",
+                    "analysis_out",
+                    "reverse-engineer-app",
+                    "test_samples/HelloWorld.java",
+                    "--language",
+                    "jvm",
+                ],
+            ),
+        ):
+            result = cli.main()
+
+        assert result == 0
+        mock_handler.assert_called_once()
+        args = mock_handler.call_args.args[0]
+        assert args.command == "reverse-engineer-app"
+        assert args.input_path == "test_samples/HelloWorld.java"
+        assert args.language == "jvm"
 
     def test_main_no_command(self, capsys: pytest.CaptureFixture[str]):
         with patch.object(sys, "argv", ["reveng"]):

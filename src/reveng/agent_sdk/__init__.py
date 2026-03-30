@@ -41,6 +41,7 @@ __author__ = "REVENG Development Team"
 # Make client import optional (requires anthropic package)
 try:
     from .client import ClaudeSDKClient
+
     _HAS_CLIENT = True
 except ImportError:
     _HAS_CLIENT = False

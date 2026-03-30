@@ -167,9 +167,7 @@ class TestPEResourceExtractor:
 
     def test_extract_icons_manual(self):
         """Test manual icon extraction"""
-        with patch.object(
-            self.extractor, "_get_resource_hacker_path", return_value=None
-        ):
+        with patch.object(self.extractor, "_get_resource_hacker_path", return_value=None):
             with patch.object(self.extractor, "_extract_icons_manual") as mock_manual:
                 mock_manual.return_value = [
                     IconResource(id="1", size=(16, 16), format="ICO", data=b"icon_data")
@@ -202,9 +200,7 @@ class TestPEResourceExtractor:
 
     def test_extract_strings_manual(self):
         """Test manual string extraction"""
-        with patch.object(
-            self.extractor, "_get_resource_hacker_path", return_value=None
-        ):
+        with patch.object(self.extractor, "_get_resource_hacker_path", return_value=None):
             with patch.object(self.extractor, "_extract_strings_manual") as mock_manual:
                 mock_manual.return_value = [
                     StringResource(id="1", language="en", value="Test String")
@@ -226,9 +222,7 @@ class TestPEResourceExtractor:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="Success")
 
-            with patch.object(
-                self.extractor, "_parse_extracted_manifests"
-            ) as mock_parse:
+            with patch.object(self.extractor, "_parse_extracted_manifests") as mock_parse:
                 mock_parse.return_value = [
                     ManifestResource(
                         id="1",
@@ -249,12 +243,8 @@ class TestPEResourceExtractor:
         test_binary = self.temp_dir / "test.exe"
         test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
 
-        with patch.object(
-            self.extractor, "_get_resource_hacker_path", return_value=None
-        ):
-            with patch.object(
-                self.extractor, "_extract_manifests_manual"
-            ) as mock_manual:
+        with patch.object(self.extractor, "_get_resource_hacker_path", return_value=None):
+            with patch.object(self.extractor, "_extract_manifests_manual") as mock_manual:
                 mock_manual.return_value = [
                     ManifestResource(
                         id="1",
@@ -303,9 +293,7 @@ class TestPEResourceExtractor:
         test_binary = self.temp_dir / "test.exe"
         test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
 
-        with patch.object(
-            self.extractor, "_get_resource_hacker_path", return_value=None
-        ):
+        with patch.object(self.extractor, "_get_resource_hacker_path", return_value=None):
             with patch.object(self.extractor, "_extract_version_manual") as mock_manual:
                 mock_manual.return_value = VersionResource(
                     file_version="1.0.0.0",
@@ -328,9 +316,7 @@ class TestPEResourceExtractor:
         test_binary = self.temp_dir / "test.exe"
         test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
 
-        with patch.object(
-            self.extractor, "_analyze_resources_for_embedded_files"
-        ) as mock_analyze:
+        with patch.object(self.extractor, "_analyze_resources_for_embedded_files") as mock_analyze:
             mock_analyze.return_value = [
                 CustomResource(
                     id="1",
@@ -385,9 +371,7 @@ class TestPEResourceExtractor:
         resource_section = (100, 500)
 
         with patch.object(self.extractor, "_parse_string_resources") as mock_parse:
-            mock_parse.return_value = [
-                StringResource(id="1", language="en", value="Test String")
-            ]
+            mock_parse.return_value = [StringResource(id="1", language="en", value="Test String")]
 
             result = self.extractor._parse_string_resources(pe_data, resource_section)
             assert len(result) == 1

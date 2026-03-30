@@ -10,13 +10,14 @@ Implements:
 """
 
 import logging
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from typing import List, Optional
 
 
 @dataclass
 class PowerTrace:
     """Power consumption trace"""
+
     samples: List[float]
     timestamp: float
     key_guess: Optional[bytes] = None
@@ -39,6 +40,7 @@ class ChipWhispererIntegration:
 
         try:
             import chipwhisperer as cw
+
             self.cw_available = True
             self.cw = cw
         except ImportError:

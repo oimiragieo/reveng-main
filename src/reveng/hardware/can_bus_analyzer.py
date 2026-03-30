@@ -10,13 +10,14 @@ Based on "The Modern Hacker's Playbook" - Part 4.1: Automotive ECU & CAN Bus Hac
 
 import logging
 import time
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class CANFrameType(Enum):
     """CAN frame types"""
+
     DATA = "data"
     REMOTE = "remote"
     ERROR = "error"
@@ -26,6 +27,7 @@ class CANFrameType(Enum):
 @dataclass
 class CANFrame:
     """CAN bus frame"""
+
     timestamp: float
     message_id: int
     data: bytes
@@ -36,6 +38,7 @@ class CANFrame:
 @dataclass
 class CANSignal:
     """Identified CAN signal"""
+
     message_id: int
     name: str
     description: str
@@ -79,6 +82,7 @@ class CANBusAnalyzer:
         # Check for python-can
         try:
             import can
+
             self.can_available = True
             self.can = can
         except ImportError:
@@ -94,20 +98,19 @@ class CANBusAnalyzer:
         self.logger.info(f"Starting capture on {self.interface}")
 
         try:
-            self.bus = self.can.interface.Bus(
-                channel=self.interface,
-                bustype='socketcan'
-            )
+            self.bus = self.can.interface.Bus(channel=self.interface, bustype="socketcan")
             self.capturing = True
 
         except Exception as e:
             self.logger.error(f"Failed to open CAN interface: {e}")
-            self.logger.info("Ensure interface is up: sudo ip link set can0 up type can bitrate 500000")
+            self.logger.info(
+                "Ensure interface is up: sudo ip link set can0 up type can bitrate 500000"
+            )
 
     def stop_capture(self):
         """Stop capturing"""
         self.capturing = False
-        if hasattr(self, 'bus'):
+        if hasattr(self, "bus"):
             self.bus.shutdown()
 
     def capture_frames(self, duration: float = 10.0) -> List[CANFrame]:
@@ -138,7 +141,7 @@ class CANBusAnalyzer:
                         message_id=msg.arbitration_id,
                         data=msg.data,
                         dlc=msg.dlc,
-                        extended=msg.is_extended_id
+                        extended=msg.is_extended_id,
                     )
 
                     frames.append(frame)
@@ -150,9 +153,12 @@ class CANBusAnalyzer:
         self.logger.info(f"Captured {len(frames)} frames")
         return frames
 
-    def correlate_action(self, action_name: str,
-                        before_frames: Optional[List[CANFrame]] = None,
-                        after_frames: Optional[List[CANFrame]] = None) -> Optional[CANSignal]:
+    def correlate_action(
+        self,
+        action_name: str,
+        before_frames: Optional[List[CANFrame]] = None,
+        after_frames: Optional[List[CANFrame]] = None,
+    ) -> Optional[CANSignal]:
         """
         Correlate a physical action with CAN messages.
 
@@ -194,7 +200,7 @@ class CANBusAnalyzer:
                 name=action_name,
                 description=f"Signal for {action_name}",
                 action=action_name,
-                data_pattern=frame.data
+                data_pattern=frame.data,
             )
 
             self.identified_signals[message_id] = signal
@@ -224,9 +230,7 @@ class CANBusAnalyzer:
 
         try:
             msg = self.can.Message(
-                arbitration_id=signal.message_id,
-                data=signal.data_pattern,
-                is_extended_id=False
+                arbitration_id=signal.message_id, data=signal.data_pattern, is_extended_id=False
             )
 
             self.bus.send(msg)
@@ -256,13 +260,11 @@ class CANBusAnalyzer:
         for i in range(iterations):
             # Generate random data
             import random
+
             data = bytes([random.randint(0, 255) for _ in range(8)])
 
             try:
-                msg = self.can.Message(
-                    arbitration_id=message_id,
-                    data=data
-                )
+                msg = self.can.Message(arbitration_id=message_id, data=data)
 
                 self.bus.send(msg)
                 time.sleep(0.1)
@@ -290,13 +292,10 @@ class CANBusAnalyzer:
         most_common = sorted(id_counts.items(), key=lambda x: x[1], reverse=True)[:10]
 
         analysis = {
-            'total_frames': len(self.frames),
-            'unique_ids': len(id_counts),
-            'most_common_ids': [
-                {'id': f"0x{id:x}", 'count': count}
-                for id, count in most_common
-            ],
-            'time_span': self.frames[-1].timestamp - self.frames[0].timestamp if self.frames else 0,
+            "total_frames": len(self.frames),
+            "unique_ids": len(id_counts),
+            "most_common_ids": [{"id": f"0x{id:x}", "count": count} for id, count in most_common],
+            "time_span": self.frames[-1].timestamp - self.frames[0].timestamp if self.frames else 0,
         }
 
         return analysis
@@ -307,16 +306,16 @@ class CANBusAnalyzer:
 
         signals_data = {
             id: {
-                'message_id': f"0x{signal.message_id:x}",
-                'name': signal.name,
-                'description': signal.description,
-                'action': signal.action,
-                'data_pattern': signal.data_pattern.hex()
+                "message_id": f"0x{signal.message_id:x}",
+                "name": signal.name,
+                "description": signal.description,
+                "action": signal.action,
+                "data_pattern": signal.data_pattern.hex(),
             }
             for id, signal in self.identified_signals.items()
         }
 
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(signals_data, f, indent=2)
 
         self.logger.info(f"Exported {len(signals_data)} signals to {output_file}")
@@ -324,9 +323,9 @@ class CANBusAnalyzer:
 
 # Common CAN baud rates
 CAN_BAUD_RATES = [
-    125000,   # Low speed CAN
+    125000,  # Low speed CAN
     250000,
-    500000,   # High speed CAN (most common)
+    500000,  # High speed CAN (most common)
     1000000,  # CAN-FD
 ]
 

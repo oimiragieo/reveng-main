@@ -22,7 +22,6 @@ from ..core.errors import (
 )
 from ..core.logger import get_logger
 
-
 TResult = TypeVar("TResult")
 SYNC_COROUTINE_THREAD_TIMEOUT_SECONDS = 30
 
@@ -145,34 +144,21 @@ class AnalysisPipeline:
         """Add analysis stage to pipeline"""
         try:
             pipeline.stages.append(stage)
-            self.logger.info(
-                f"Added stage {stage.name} to pipeline {pipeline.name}"
-            )
+            self.logger.info(f"Added stage {stage.name} to pipeline {pipeline.name}")
             return pipeline
 
         except Exception as e:
             self.logger.error(f"Failed to add stage: {e}")
             raise
 
-    def execute_pipeline(
-        self, pipeline: Pipeline, binary_path: str
-    ) -> PipelineResult:
+    def execute_pipeline(self, pipeline: Pipeline, binary_path: str) -> PipelineResult:
         """Execute complete pipeline synchronously."""
-        return self._run_coroutine_sync(
-            lambda: self.execute_pipeline_async(pipeline, binary_path)
-        )
+        return self._run_coroutine_sync(lambda: self.execute_pipeline_async(pipeline, binary_path))
 
-    async def execute_pipeline_async(
-        self, pipeline: Pipeline, binary_path: str
-    ) -> PipelineResult:
+    async def execute_pipeline_async(self, pipeline: Pipeline, binary_path: str) -> PipelineResult:
         """Execute complete pipeline asynchronously."""
         try:
-            self.logger.info(
-                (
-                    f"Starting pipeline execution: {pipeline.name} "
-                    f"on {binary_path}"
-                )
-            )
+            self.logger.info((f"Starting pipeline execution: {pipeline.name} " f"on {binary_path}"))
 
             start_time = time.time()
             self._validate_stage_names(pipeline)
@@ -183,9 +169,7 @@ class AnalysisPipeline:
             }
 
             while pending_stages:
-                ready_stages = self._get_ready_stages(
-                    pending_stages, stage_results_by_name
-                )
+                ready_stages = self._get_ready_stages(pending_stages, stage_results_by_name)
 
                 if not ready_stages:
                     self._mark_unresolved_stages(
@@ -203,15 +187,9 @@ class AnalysisPipeline:
                     )
                     if blocked_dependencies:
                         error_message = (
-                            (
-                                "Skipped because dependencies did not "
-                                "complete successfully: "
-                            )
-                            + ", ".join(blocked_dependencies)
-                        )
-                        self.logger.warning(
-                            f"Skipping stage {stage.name}: {error_message}"
-                        )
+                            "Skipped because dependencies did not " "complete successfully: "
+                        ) + ", ".join(blocked_dependencies)
+                        self.logger.warning(f"Skipping stage {stage.name}: {error_message}")
                         stage_results_by_name[stage.name] = StageResult(
                             stage_name=stage.name,
                             status=StageStatus.SKIPPED,
@@ -237,9 +215,7 @@ class AnalysisPipeline:
                         "Executing %d ready stage(s) concurrently: %s"
                         % (
                             len(executable_stages),
-                            ", ".join(
-                                stage.name for stage in executable_stages
-                            ),
+                            ", ".join(stage.name for stage in executable_stages),
                         )
                     )
                     raw_stage_results = await asyncio.gather(
@@ -254,9 +230,7 @@ class AnalysisPipeline:
                         return_exceptions=True,
                     )
 
-                    for stage, stage_result in zip(
-                        executable_stages, raw_stage_results
-                    ):
+                    for stage, stage_result in zip(executable_stages, raw_stage_results):
                         if isinstance(stage_result, Exception):
                             self.logger.error(
                                 (
@@ -285,14 +259,10 @@ class AnalysisPipeline:
             ]
 
             success_count = sum(
-                1
-                for result in stage_results
-                if result.status == StageStatus.COMPLETED
+                1 for result in stage_results if result.status == StageStatus.COMPLETED
             )
             failure_count = sum(
-                1
-                for result in stage_results
-                if result.status == StageStatus.FAILED
+                1 for result in stage_results if result.status == StageStatus.FAILED
             )
 
             total_execution_time = time.time() - start_time
@@ -379,14 +349,10 @@ class AnalysisPipeline:
     def _validate_stage_names(self, pipeline: Pipeline):
         """Ensure a pipeline does not contain duplicate stage names."""
         stage_names = [stage.name for stage in pipeline.stages]
-        duplicates = sorted(
-            {name for name in stage_names if stage_names.count(name) > 1}
-        )
+        duplicates = sorted({name for name in stage_names if stage_names.count(name) > 1})
         if duplicates:
             duplicate_names = ", ".join(duplicates)
-            raise ValueError(
-                f"Duplicate stage names found in pipeline: {duplicate_names}"
-            )
+            raise ValueError(f"Duplicate stage names found in pipeline: {duplicate_names}")
 
     def _get_ready_stages(
         self,
@@ -397,10 +363,7 @@ class AnalysisPipeline:
         return [
             stage
             for stage in pending_stages.values()
-            if all(
-                dependency in stage_results
-                for dependency in stage.dependencies
-            )
+            if all(dependency in stage_results for dependency in stage.dependencies)
         ]
 
     def _get_blocked_dependencies(
@@ -423,27 +386,17 @@ class AnalysisPipeline:
         """Fail remaining stages when the DAG can no longer make progress."""
         unresolved_stage_names = ", ".join(pending_stages.keys())
         self.logger.error(
-            (
-                "Pipeline DAG stalled because remaining stages could not "
-                "be resolved: %s"
-            )
+            ("Pipeline DAG stalled because remaining stages could not " "be resolved: %s")
             % unresolved_stage_names
         )
 
         for stage_name, stage in list(pending_stages.items()):
             missing_dependencies = [
-                dependency
-                for dependency in stage.dependencies
-                if dependency not in stage_results
+                dependency for dependency in stage.dependencies if dependency not in stage_results
             ]
-            error_message = (
-                "Unresolved dependencies or circular dependency detected"
-            )
+            error_message = "Unresolved dependencies or circular dependency detected"
             if missing_dependencies:
-                error_message = (
-                    f"{error_message}: missing "
-                    f"{', '.join(missing_dependencies)}"
-                )
+                error_message = f"{error_message}: missing " f"{', '.join(missing_dependencies)}"
 
             stage_results[stage_name] = StageResult(
                 stage_name=stage_name,
@@ -521,13 +474,9 @@ class AnalysisPipeline:
         """List available pipelines"""
         return list(self.pipelines.keys())
 
-    def _execute_stage(
-        self, stage: PipelineStage, binary_path: str
-    ) -> StageResult:
+    def _execute_stage(self, stage: PipelineStage, binary_path: str) -> StageResult:
         """Execute a single pipeline stage synchronously."""
-        return self._run_coroutine_sync(
-            lambda: self._execute_stage_async(stage, binary_path)
-        )
+        return self._run_coroutine_sync(lambda: self._execute_stage_async(stage, binary_path))
 
     async def _execute_stage_async(
         self,
@@ -802,9 +751,7 @@ class AnalysisPipeline:
         materialized_sources["c"] = str(fallback_c_file)
         return materialized_sources
 
-    def _execute_dynamic_analysis(
-        self, stage: PipelineStage, binary_path: str
-    ) -> Dict[str, Any]:
+    def _execute_dynamic_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
         """Execute dynamic analysis stage."""
         return {
             "status": "skipped",
@@ -812,9 +759,7 @@ class AnalysisPipeline:
             "binary_path": binary_path,
         }
 
-    def _execute_recompilation(
-        self, stage: PipelineStage, binary_path: str
-    ) -> Dict[str, Any]:
+    def _execute_recompilation(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
         """Execute the binary recompilation engine for end-to-end CLI flows."""
         output_dir = self._resolve_output_dir(stage, binary_path, "recompilation")
         stage_context = self._get_stage_context()
@@ -890,9 +835,7 @@ class AnalysisPipeline:
             "error": recompilation_result.get("error"),
         }
 
-    def _execute_static_analysis(
-        self, stage: PipelineStage, binary_path: str
-    ) -> Dict[str, Any]:
+    def _execute_static_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
         """Execute static analysis stage"""
         try:
             # Import analyzers
@@ -912,11 +855,7 @@ class AnalysisPipeline:
             # Business logic analysis
             if stage.config.get("business_logic_analysis", True):
                 business_extractor = BusinessLogicExtractor()
-                business_result = (
-                    business_extractor.analyze_application_domain(
-                        binary_path
-                    )
-                )
+                business_result = business_extractor.analyze_application_domain(binary_path)
                 results["business_logic"] = asdict(business_result)
 
             return results
@@ -925,9 +864,7 @@ class AnalysisPipeline:
             self.logger.error(f"Static analysis failed: {e}")
             raise
 
-    def _execute_pe_analysis(
-        self, stage: PipelineStage, binary_path: str
-    ) -> Dict[str, Any]:
+    def _execute_pe_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
         """Execute PE analysis stage"""
         try:
             # Import PE analyzers
@@ -939,9 +876,7 @@ class AnalysisPipeline:
             # Resource extraction
             if stage.config.get("resource_extraction", True):
                 resource_extractor = PEResourceExtractor()
-                resources = resource_extractor.extract_all_resources(
-                    binary_path
-                )
+                resources = resource_extractor.extract_all_resources(binary_path)
                 results["resources"] = asdict(resources)
 
             # Import analysis
@@ -956,9 +891,7 @@ class AnalysisPipeline:
             self.logger.error(f"PE analysis failed: {e}")
             raise
 
-    def _execute_ghidra_analysis(
-        self, stage: PipelineStage, binary_path: str
-    ) -> Dict[str, Any]:
+    def _execute_ghidra_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
         """Execute Ghidra analysis stage"""
         if stage.config.get("mode") == "e2e_disassembly":
             output_dir = self._resolve_output_dir(stage, binary_path, "ghidra_analysis")
@@ -1045,9 +978,7 @@ class AnalysisPipeline:
             self.logger.error(f"Ghidra analysis failed: {e}")
             raise
 
-    def _execute_hex_analysis(
-        self, stage: PipelineStage, binary_path: str
-    ) -> Dict[str, Any]:
+    def _execute_hex_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
         """Execute hex analysis stage"""
         try:
             from ..tools.hex_editor import HexEditor
@@ -1061,9 +992,7 @@ class AnalysisPipeline:
             self.logger.error(f"Hex analysis failed: {e}")
             raise
 
-    def _execute_malware_analysis(
-        self, stage: PipelineStage, binary_path: str
-    ) -> Dict[str, Any]:
+    def _execute_malware_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
         """Execute malware analysis stage"""
         if stage.config.get("mode") == "behavioral_forensics":
             output_dir = self._resolve_output_dir(stage, binary_path, "behavioral_forensics")
@@ -1076,7 +1005,9 @@ class AnalysisPipeline:
                 behavioral_monitor = BehavioralMonitor()
                 monitor_duration = max(1, int(stage.config.get("duration_seconds", 1)))
 
-                if not behavioral_monitor.start_monitoring(analysis_target, duration=monitor_duration):
+                if not behavioral_monitor.start_monitoring(
+                    analysis_target, duration=monitor_duration
+                ):
                     return {
                         "status": "failed",
                         "analyzed_binary": analysis_target,
@@ -1121,8 +1052,7 @@ class AnalysisPipeline:
             return {
                 "status": "skipped",
                 "message": (
-                    "Malware analysis stage is not implemented for this pipeline "
-                    "configuration."
+                    "Malware analysis stage is not implemented for this pipeline " "configuration."
                 ),
                 "binary_path": binary_path,
                 "mode": stage.config.get("mode", "default"),
@@ -1132,9 +1062,7 @@ class AnalysisPipeline:
             self.logger.error(f"Malware analysis failed: {e}")
             raise
 
-    def _execute_ml_analysis(
-        self, stage: PipelineStage, binary_path: str
-    ) -> Dict[str, Any]:
+    def _execute_ml_analysis(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
         """Execute ML analysis stage"""
         if stage.config.get("mode") == "memory_forensics":
             output_dir = self._resolve_output_dir(stage, binary_path, "memory_forensics")
@@ -1172,8 +1100,7 @@ class AnalysisPipeline:
             return {
                 "status": "skipped",
                 "message": (
-                    "ML analysis stage is not implemented for this pipeline "
-                    "configuration."
+                    "ML analysis stage is not implemented for this pipeline " "configuration."
                 ),
                 "binary_path": binary_path,
                 "mode": stage.config.get("mode", "default"),
@@ -1183,9 +1110,7 @@ class AnalysisPipeline:
             self.logger.error(f"ML analysis failed: {e}")
             raise
 
-    def _execute_report_generation(
-        self, stage: PipelineStage, binary_path: str
-    ) -> Dict[str, Any]:
+    def _execute_report_generation(self, stage: PipelineStage, binary_path: str) -> Dict[str, Any]:
         """Execute report generation stage"""
         if stage.config.get("mode") == "unified_e2e_report":
             output_dir = self._resolve_output_dir(stage, binary_path, "reports")
@@ -1279,8 +1204,7 @@ class AnalysisPipeline:
             return {
                 "status": "skipped",
                 "message": (
-                    "Report generation stage is not implemented for this pipeline "
-                    "configuration."
+                    "Report generation stage is not implemented for this pipeline " "configuration."
                 ),
                 "binary_path": binary_path,
                 "format": stage.config.get("format", "json"),
@@ -1290,9 +1214,7 @@ class AnalysisPipeline:
             self.logger.error(f"Report generation failed: {e}")
             raise
 
-    def _aggregate_stage_outputs(
-        self, stage_results: List[StageResult]
-    ) -> Dict[str, Any]:
+    def _aggregate_stage_outputs(self, stage_results: List[StageResult]) -> Dict[str, Any]:
         """Aggregate outputs from all stages"""
         try:
             aggregated = {}
@@ -1558,9 +1480,7 @@ class AnalysisPipeline:
                 "deep_analysis": deep_pipeline,
             }
 
-            self.logger.info(
-                f"Loaded {len(self.pipelines)} prebuilt pipelines"
-            )
+            self.logger.info(f"Loaded {len(self.pipelines)} prebuilt pipelines")
 
         except Exception as e:
             self.logger.error(f"Failed to load prebuilt pipelines: {e}")

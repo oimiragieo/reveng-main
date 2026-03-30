@@ -208,7 +208,9 @@ class TestAutomatedAnalysisPipeline:
         assert result["success"] is False
         assert "Timeout" in result["error"]
 
-    def test_template_definitions_use_expected_stage_layout(self, pipeline: AutomatedAnalysisPipeline):
+    def test_template_definitions_use_expected_stage_layout(
+        self, pipeline: AutomatedAnalysisPipeline
+    ):
         quick_triage = pipeline.templates["quick_triage"]
         malware = pipeline.templates["malware_analysis"]
 

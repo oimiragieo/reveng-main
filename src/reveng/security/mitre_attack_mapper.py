@@ -11,13 +11,9 @@ Version: 1.0
 """
 
 import logging
-import os
-import sys
 from dataclasses import dataclass, field
 from typing import List
 
-# Import our data models
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from ..ai.ai_enhanced_data_models import EvidenceTracker, MITREMapping
 
 

@@ -261,7 +261,11 @@ class SymbolicExecutionEngine:
         if target_function:
             cfg = self.run_cfg_fast()
             func = next(
-                (function for function in cfg.kb.functions.values() if function.name == target_function),
+                (
+                    function
+                    for function in cfg.kb.functions.values()
+                    if function.name == target_function
+                ),
                 None,
             )
             if func is None:
@@ -410,7 +414,9 @@ class SymbolicExecutionEngine:
                         address=state.addr,
                         function_name=self._get_containing_function(state.addr),
                         description="Potential buffer overflow detected",
-                        exploit_input=self._generate_symbolic_exploit_input(state, "buffer_overflow"),
+                        exploit_input=self._generate_symbolic_exploit_input(
+                            state, "buffer_overflow"
+                        ),
                         severity="critical",
                         cwe_id="CWE-120",
                     )
@@ -465,7 +471,10 @@ class SymbolicExecutionEngine:
         """Detect potential NULL dereferences during path exploration."""
         try:
             for action in state.history.actions:
-                if getattr(action, "type", None) == "mem" and getattr(action, "action", None) == "read":
+                if (
+                    getattr(action, "type", None) == "mem"
+                    and getattr(action, "action", None) == "read"
+                ):
                     addr = getattr(action, "addr", None)
                     if addr is not None and state.solver.satisfiable(extra_constraints=[addr == 0]):
                         return True
@@ -479,7 +488,9 @@ class SymbolicExecutionEngine:
         """Detect potential division-by-zero during path exploration."""
         try:
             for action in state.history.actions:
-                if getattr(action, "type", None) == "operation" and getattr(action, "action", None) in {"Div", "Mod"}:
+                if getattr(action, "type", None) == "operation" and getattr(
+                    action, "action", None
+                ) in {"Div", "Mod"}:
                     args = getattr(action, "args", ())
                     if len(args) > 1 and state.solver.satisfiable(extra_constraints=[args[1] == 0]):
                         return True
@@ -786,7 +797,9 @@ print("Exploit template - requires manual implementation")
         self, coverage_target: float = 0.95, max_cases: int = 100
     ) -> List[bytes]:
         """Generate symbolic test inputs for compatibility with the legacy API."""
-        logger.info("Generating symbolic test cases (target coverage: %.0f%%)", coverage_target * 100)
+        logger.info(
+            "Generating symbolic test cases (target coverage: %.0f%%)", coverage_target * 100
+        )
 
         test_cases: List[bytes] = []
         covered_blocks = set()
@@ -823,7 +836,11 @@ print("Exploit template - requires manual implementation")
         logger.info("Deobfuscating function: %s", function_name)
 
         function = next(
-            (candidate for candidate in self.run_cfg_fast().kb.functions.values() if candidate.name == function_name),
+            (
+                candidate
+                for candidate in self.run_cfg_fast().kb.functions.values()
+                if candidate.name == function_name
+            ),
             None,
         )
         if function is None:

@@ -6,8 +6,8 @@ from types import SimpleNamespace
 import pytest
 
 from reveng.malware.behavioral_monitor import (
-    BehaviorEvent,
     BehavioralMonitor,
+    BehaviorEvent,
     BehaviorType,
     ThreatLevel,
 )

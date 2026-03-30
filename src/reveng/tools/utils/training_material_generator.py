@@ -288,9 +288,7 @@ class TrainingContentGenerator:
             },
         }
 
-        base_content = topic_content.get(
-            topic, topic_content["reverse_engineering_risks"]
-        )
+        base_content = topic_content.get(topic, topic_content["reverse_engineering_risks"])
 
         # Generate exercises based on analysis results
         exercises = []
@@ -415,9 +413,7 @@ class TrainingContentGenerator:
             ]
 
             analysis_findings = []
-            for i, cred in enumerate(
-                credentials[:3]
-            ):  # Limit to first 3 for readability
+            for i, cred in enumerate(credentials[:3]):  # Limit to first 3 for readability
                 analysis_findings.append(
                     {
                         "category": "Credential Exposure",
@@ -465,9 +461,7 @@ class TrainingContentGenerator:
                 analysis_findings.append(
                     {
                         "category": vuln.get("type", "Security Vulnerability"),
-                        "description": vuln.get(
-                            "description", "Vulnerability detected"
-                        ),
+                        "description": vuln.get("description", "Vulnerability detected"),
                         "evidence": vuln.get("evidence", "Automated analysis"),
                         "impact": vuln.get("impact", "Medium"),
                         "cvss_score": vuln.get("cvss_score", "6.5"),
@@ -595,9 +589,7 @@ class TrainingContentGenerator:
             ],
         )
 
-    def export_training_module(
-        self, module: TrainingModule, format: str = "markdown"
-    ) -> str:
+    def export_training_module(self, module: TrainingModule, format: str = "markdown") -> str:
         """Export training module to specified format"""
 
         if format == "markdown":
@@ -678,9 +670,7 @@ class TrainingContentGenerator:
 
             # Add to appropriate learning path
             if module.difficulty_level in curriculum["learning_paths"]:
-                curriculum["learning_paths"][module.difficulty_level].append(
-                    module.title
-                )
+                curriculum["learning_paths"][module.difficulty_level].append(module.title)
 
             # Export module
             self.export_training_module(module)
@@ -690,15 +680,11 @@ class TrainingContentGenerator:
             self.export_case_study(case_study)
 
             # Create interactive module
-            interactive_module = self.create_interactive_learning_module(
-                topic, analysis_results
-            )
+            interactive_module = self.create_interactive_learning_module(topic, analysis_results)
 
             # Export interactive module
             interactive_filename = f"interactive_{topic}.json"
-            interactive_filepath = (
-                self.output_dir / "interactive" / interactive_filename
-            )
+            interactive_filepath = self.output_dir / "interactive" / interactive_filename
             interactive_filepath.parent.mkdir(exist_ok=True)
 
             with open(interactive_filepath, "w") as f:

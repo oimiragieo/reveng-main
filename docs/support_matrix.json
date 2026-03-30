@@ -1,0 +1,55 @@
+{
+  "version": "1.0",
+  "generated_scope": "customer-facing-supported-surface",
+  "workflows": [
+    {
+      "id": "cli_triage",
+      "name": "CLI threat triage",
+      "status": "supported",
+      "surface": ["cli"],
+      "platforms": ["windows", "linux", "macos"],
+      "notes": [
+        "Core triage flow without advanced reconstruction requirements."
+      ]
+    },
+    {
+      "id": "app_reverse_engineering",
+      "name": "App reverse engineering",
+      "status": "supported",
+      "surface": ["cli", "api", "mcp"],
+      "languages": ["javascript", "jvm", "python", "dotnet"],
+      "notes": [
+        "Quality varies by adapter input shape and optional external tools.",
+        "Tracked by the app reverse-engineering corpus and readiness verifier."
+      ]
+    },
+    {
+      "id": "ghidra_backed_native_analysis",
+      "name": "Ghidra-backed native analysis",
+      "status": "limited",
+      "surface": ["cli", "api", "mcp"],
+      "platforms": ["windows", "linux"],
+      "notes": [
+        "Requires external Ghidra setup and should not be marketed as GA-equivalent today."
+      ]
+    },
+    {
+      "id": "exploit_generation",
+      "name": "Exploit generation",
+      "status": "experimental",
+      "surface": ["cli"],
+      "notes": [
+        "Not a GA workflow and should not be represented as production-ready."
+      ]
+    },
+    {
+      "id": "symbolic_execution",
+      "name": "Symbolic execution workflows",
+      "status": "experimental",
+      "surface": ["cli", "api"],
+      "notes": [
+        "Coverage and operational depth remain uneven."
+      ]
+    }
+  ]
+}

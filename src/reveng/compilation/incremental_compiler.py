@@ -8,16 +8,16 @@ Provides 5-10x speedup on rebuilds through:
 - Distributed compilation with distcc
 """
 
-import os
-import subprocess
 import hashlib
 import json
-import time
-import shutil
-from pathlib import Path
-from typing import List, Dict, Set, Optional
-from dataclasses import dataclass, asdict
 import logging
+import os
+import shutil
+import subprocess
+import time
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -280,9 +280,7 @@ class IncrementalCompiler:
             object_files=object_files,
             checksums=self._compute_checksums(source_files),
             timestamp=time.time(),
-            dependencies={
-                f: list(self.dependency_graph.get_dependencies(f)) for f in source_files
-            },
+            dependencies={f: list(self.dependency_graph.get_dependencies(f)) for f in source_files},
         )
         manifest.save(self.cache_dir / "build_manifest.json")
 
@@ -407,9 +405,7 @@ class IncrementalCompiler:
 
         return changed
 
-    def _compute_affected_files(
-        self, changed: Set[str], all_files: List[str]
-    ) -> Set[str]:
+    def _compute_affected_files(self, changed: Set[str], all_files: List[str]) -> Set[str]:
         """
         Compute transitive closure of affected files
         If A.c includes B.h, and B.h changed, then A.c needs recompilation
@@ -446,9 +442,7 @@ class IncrementalCompiler:
             result = subprocess.run(cmd, capture_output=True, timeout=120)
 
             if result.returncode != 0:
-                logger.error(
-                    f"Compilation failed for {source}: {result.stderr.decode()}"
-                )
+                logger.error(f"Compilation failed for {source}: {result.stderr.decode()}")
                 return None, False
 
             was_cached = False

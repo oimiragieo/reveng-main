@@ -13,9 +13,9 @@ from .symbolic_devirtualizer import SymbolicDevirtualizer
 from .vm_analyzer import VMAnalyzer
 
 __all__ = [
-    'DevirtualizationEngine',
-    'VMType',
-    'LLVMFlattener',
-    'SymbolicDevirtualizer',
-    'VMAnalyzer',
+    "DevirtualizationEngine",
+    "VMType",
+    "LLVMFlattener",
+    "SymbolicDevirtualizer",
+    "VMAnalyzer",
 ]

@@ -9,8 +9,8 @@ import pytest
 import reveng.pipeline.pipeline_engine as pipeline_engine_module
 from reveng.pipeline.pipeline_engine import (
     AnalysisPipeline,
-    PipelineStatus,
     PipelineStage,
+    PipelineStatus,
     StageStatus,
     StageType,
 )
@@ -183,9 +183,7 @@ def test_execute_pipeline_isolates_failed_branch(
         stage: PipelineStage,
         binary_path: str,
     ):
-        pytest.fail(
-            "Dependent stage should have been skipped after upstream failure"
-        )
+        pytest.fail("Dependent stage should have been skipped after upstream failure")
 
     def summary_stage(
         self: AnalysisPipeline,
@@ -217,9 +215,7 @@ def test_execute_pipeline_isolates_failed_branch(
     )
 
     result = engine.execute_pipeline(pipeline, test_binary)
-    stage_results = {
-        stage.stage_name: stage for stage in result.stage_results
-    }
+    stage_results = {stage.stage_name: stage for stage in result.stage_results}
 
     assert result.status == PipelineStatus.COMPLETED
     assert result.success_count == 2
@@ -256,8 +252,7 @@ def test_execute_pipeline_supports_dynamic_analysis_stage(
     assert result.stage_results[0].output == {
         "status": "skipped",
         "message": (
-            "Dynamic analysis stage is not implemented for this "
-            "pipeline configuration."
+            "Dynamic analysis stage is not implemented for this " "pipeline configuration."
         ),
         "binary_path": test_binary,
     }

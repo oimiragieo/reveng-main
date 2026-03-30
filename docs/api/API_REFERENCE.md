@@ -2,7 +2,7 @@
 
 This page keeps the stable Python-facing APIs in one place. It replaces the older split between the generic API doc and the AI API doc.
 
-## 🔧 Core API
+## Core API
 
 ## Public Imports
 
@@ -45,8 +45,8 @@ REVENGAnalyzer(
 
 ### Useful methods
 
-- `analyze_binary()` — run the main analysis flow
-- `get_capabilities()` — return agent-friendly capability metadata
+- `analyze_binary()` -> run the main analysis flow
+- `get_capabilities()` -> return agent-friendly capability metadata
 
 ### Feature flags
 
@@ -75,16 +75,17 @@ result = api.analyze_binary("sample.exe", enhanced=True)
 - `analyze_binary(binary_path, enhanced=False, modules=None)`
 - `reconstruct_binary(binary_path, output_format="c")`
 - `detect_malware(binary_path)`
+- `reverse_engineer_app(input_path, language="auto", output_dir=None, **options)`
 
 ### Convenience functions
 
-The module also exposes free functions with the same names:
+The package also exposes script-friendly helpers with the same names:
 
 ```python
 from reveng import analyze_binary, detect_malware, reconstruct_binary
 ```
 
-## 🛠️ Tool APIs
+## Tool APIs
 
 ## `REVENG_AI_API`
 
@@ -108,17 +109,13 @@ answer = ai.ask("What does this binary do?", "sample.exe")
 - `analyze_binary(binary_path, mode=...)`
 - `explain_binary(binary_path, detail_level="standard")`
 - `find_vulnerabilities(binary_path, vulnerability_types=None)`
-- `extract_iocs(binary_path, ioc_types=None)`
-- `compare_binaries(binary1_path, binary2_path)`
 
 ### Common dataclasses
 
-- `TriageResult`
-- `CryptoDetails`
-- `NetworkDetails`
-- `TranslationGuide`
-
-These types expose `to_dict()` helpers for easy JSON serialization.
+- `TriageResponse`
+- `AskResponse`
+- `AnalysisSummary`
+- `CapabilityReport`
 
 ## Example: script-friendly analysis
 
@@ -128,8 +125,8 @@ from reveng.api import REVENGAPI
 api = REVENGAPI()
 result = api.analyze_binary("sample.exe", enhanced=True)
 
-print(result["classification"])
-print(result["analysis"]["decompiled_functions"])
+print(result.summary["file_type"])
+print(result.summary["imports_count"])
 ```
 
 ## Example: AI-first workflow
@@ -137,7 +134,7 @@ print(result["analysis"]["decompiled_functions"])
 ```python
 from reveng.ai_api import REVENG_AI_API
 
-ai = REVENG_AI_API()
+ai = REVENG_AI_API(use_ollama=True, ollama_model="auto")
 triage = ai.triage_binary("sample.exe")
 
 if triage.is_malicious:
@@ -147,7 +144,7 @@ response = ai.ask("Summarize the network behavior", "sample.exe")
 print(response)
 ```
 
-## 🌐 Web Interface API
+## Web Interface API
 
 The CLI exposes a `serve` command for the local web interface. Internal server and MCP entry points live under `src/reveng/server/` and `src/reveng/agent_sdk/`. Treat those modules as implementation details unless you are working directly inside the repository.
 

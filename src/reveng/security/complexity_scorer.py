@@ -128,9 +128,7 @@ class ComplexityScorer:
 
         # Pattern to match function definitions
         # Matches: return_type function_name(params) { body }
-        func_pattern = re.compile(
-            r"([\w\s\*]+)\s+(\w+)\s*\(([^)]*)\)\s*\{", re.MULTILINE
-        )
+        func_pattern = re.compile(r"([\w\s\*]+)\s+(\w+)\s*\(([^)]*)\)\s*\{", re.MULTILINE)
 
         matches = list(func_pattern.finditer(content))
 
@@ -336,13 +334,9 @@ class ComplexityScorer:
             metrics.issues.append(
                 f"Very high cyclomatic complexity ({metrics.cyclomatic_complexity})"
             )
-            metrics.recommendations.append(
-                "Consider refactoring into smaller functions"
-            )
+            metrics.recommendations.append("Consider refactoring into smaller functions")
         elif metrics.cyclomatic_complexity > self.thresholds["cyclomatic"]["medium"]:
-            metrics.issues.append(
-                f"High cyclomatic complexity ({metrics.cyclomatic_complexity})"
-            )
+            metrics.issues.append(f"High cyclomatic complexity ({metrics.cyclomatic_complexity})")
             metrics.recommendations.append(
                 "Review branching logic for simplification opportunities"
             )
@@ -378,9 +372,7 @@ class ComplexityScorer:
             Report dict with summary and detailed results
         """
         # Sort by complexity score (highest first)
-        sorted_metrics = sorted(
-            metrics_list, key=lambda m: m.complexity_score, reverse=True
-        )
+        sorted_metrics = sorted(metrics_list, key=lambda m: m.complexity_score, reverse=True)
 
         # Calculate summary statistics
         total_functions = len(metrics_list)
@@ -402,8 +394,7 @@ class ComplexityScorer:
                 "total_functions": total_functions,
                 "average_complexity": round(avg_complexity, 3),
                 "complexity_distribution": level_counts,
-                "high_complexity_count": level_counts["high"]
-                + level_counts["very_high"],
+                "high_complexity_count": level_counts["high"] + level_counts["very_high"],
                 "review_recommended": level_counts["high"] + level_counts["very_high"],
             },
             "top_10_complex": [
@@ -523,9 +514,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
         # Generate report
-        report = scorer.generate_report(
-            metrics_list, output_path=Path("complexity_report.json")
-        )
+        report = scorer.generate_report(metrics_list, output_path=Path("complexity_report.json"))
 
         # Print summary
         scorer.print_summary(report)

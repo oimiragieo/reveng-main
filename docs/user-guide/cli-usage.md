@@ -105,6 +105,6 @@ Selected command-specific options from the current parser:
 ## Related Docs
 
 - [Getting Started](../getting-started/installation.md)
+- [Bun Executable Reversing](bun-reversing.md)
 - [API Reference](../api/API_REFERENCE.md)
 - [MCP Guide](../mcp/README.md)
-```

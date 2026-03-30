@@ -5,13 +5,11 @@ Cost Tracking and Analytics
 Track token usage, API costs, and generate billing reports.
 """
 
-import asyncio
 import json
-import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from .types import CostReport, UsageMetrics
 

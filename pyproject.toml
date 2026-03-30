@@ -31,7 +31,7 @@ keywords = [
     "security"
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Information Technology",
@@ -61,6 +61,8 @@ Repository = "https://github.com/oimiragieo/reveng-main"
 
 [project.scripts]
 reveng = "reveng.cli:main"
+reveng-js = "reveng.javascript.cli:console_main"
+reveng-app = "reveng.app_reverse_engineering.cli:console_main"
 
 [project.optional-dependencies]
 dev = [

@@ -12,24 +12,16 @@ License: MIT
 
 import hashlib
 import logging
+import math
 import os
 import secrets
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
+from reveng.core.exceptions import SecurityError, ValidationError
+
 logger = logging.getLogger(__name__)
-
-
-class ValidationError(Exception):
-    """Raised when input validation fails."""
-
-    pass
-
-
-class SecurityError(Exception):
-    """Raised when security constraints are violated."""
-
-    pass
 
 
 def validate_file_path(
@@ -52,8 +44,28 @@ def validate_file_path(
         ValidationError: If path is invalid
         SecurityError: If security constraints violated
     """
+    raw_path = Path(path)
+
+    # Reject traversal attempts before resolution can erase the original segments.
+    if ".." in raw_path.parts:
+        raise SecurityError("Path traversal detected")
+
+    raw_path_str = str(path).replace("\\", "/").lower()
+    suspicious_patterns = [
+        "/etc/",
+        "/sys/",
+        "/proc/",
+        "/proc/self",
+        "/sys/kernel",
+        "c:/windows/system32",
+        "c:/windows/system32/config",
+    ]
+    for pattern in suspicious_patterns:
+        if pattern in raw_path_str:
+            raise SecurityError(f"Suspicious path pattern detected: {pattern}")
+
     try:
-        path = Path(path).resolve()
+        path = raw_path.resolve()
     except (OSError, ValueError) as e:
         raise ValidationError(f"Invalid path: {e}") from e
 
@@ -72,17 +84,6 @@ def validate_file_path(
             raise ValidationError(f"File too large: {size_mb:.1f}MB > {max_size_mb}MB")
     except OSError as e:
         raise ValidationError(f"Cannot access file: {e}") from e
-
-    # Prevent path traversal
-    if ".." in path.parts:
-        raise SecurityError("Path traversal detected")
-
-    # Check for suspicious patterns
-    suspicious_patterns = ["/etc/", "/sys/", "/proc/", "C:\\Windows\\System32"]
-    path_str = str(path).lower()
-    for pattern in suspicious_patterns:
-        if pattern.lower() in path_str:
-            raise SecurityError(f"Suspicious path pattern detected: {pattern}")
 
     # Check file extension if specified
     if allowed_extensions:
@@ -157,14 +158,14 @@ def secure_temp_file(
         allowed_temp_dirs = [
             Path.cwd() / "temp",
             Path.cwd() / "tmp",
+            Path(tempfile.gettempdir()),
             Path("/tmp"),
             Path("/var/tmp"),
             Path.home() / "tmp",
         ]
 
         is_allowed = any(
-            str(dir_path).startswith(str(allowed_dir))
-            for allowed_dir in allowed_temp_dirs
+            dir_path == allowed_dir or allowed_dir in dir_path.parents for allowed_dir in allowed_temp_dirs
         )
 
         if not is_allowed:
@@ -179,8 +180,6 @@ def secure_temp_file(
     if dir_path:
         temp_path = dir_path / filename
     else:
-        import tempfile
-
         temp_path = Path(tempfile.mktemp(prefix=prefix, suffix=suffix))
 
     return temp_path
@@ -276,7 +275,7 @@ def calculate_entropy(data: bytes) -> float:
     for count in byte_counts.values():
         probability = count / data_len
         if probability > 0:
-            entropy -= probability * (probability.bit_length() - 1)
+            entropy -= probability * math.log2(probability)
 
     return entropy
 
@@ -332,28 +331,36 @@ def validate_analysis_config(config: Dict[str, Any]) -> Dict[str, Any]:
 
     # Validate timeout
     timeout = config.get("timeout", 3600)
-    if (
-        not isinstance(timeout, (int, float)) or timeout <= 0 or timeout > 86400
-    ):  # Max 24 hours
+    if not isinstance(timeout, (int, float)) or timeout <= 0 or timeout > 86400:  # Max 24 hours
         raise ValidationError("Invalid timeout: must be between 1 and 86400 seconds")
     validated_config["timeout"] = int(timeout)
 
     # Validate max file size
     max_size = config.get("max_file_size_mb", 500)
-    if (
-        not isinstance(max_size, (int, float)) or max_size <= 0 or max_size > 10000
-    ):  # Max 10GB
+    if not isinstance(max_size, (int, float)) or max_size <= 0 or max_size > 10000:  # Max 10GB
         raise ValidationError("Invalid max_file_size_mb: must be between 1 and 10000")
     validated_config["max_file_size_mb"] = int(max_size)
 
     # Validate output directory
     output_dir = config.get("output_directory", "./analysis_output")
     try:
+        raw_output = str(output_dir).replace("\\", "/").lower()
+        raw_system_dirs = ["/etc", "/sys", "/proc", "/dev", "c:/windows/system32"]
+        for sys_dir in raw_system_dirs:
+            if raw_output == sys_dir or raw_output.startswith(sys_dir + "/"):
+                raise SecurityError(f"Output directory in system directory: {sys_dir}")
+
         output_path = Path(output_dir).resolve()
         # Ensure output directory is not in system directories
-        system_dirs = ["/etc", "/sys", "/proc", "/dev", "C:\\Windows\\System32"]
+        normalized_output = str(output_path).replace("\\", "/").lower()
+        system_dirs = ["/etc", "/sys", "/proc", "/dev", "c:/windows/system32"]
         for sys_dir in system_dirs:
-            if str(output_path).startswith(sys_dir):
+            normalized_system = sys_dir.replace("\\", "/").lower()
+            if (
+                normalized_output == normalized_system
+                or normalized_output.startswith(normalized_system + "/")
+                or normalized_output.startswith(normalized_system)
+            ):
                 raise SecurityError(f"Output directory in system directory: {sys_dir}")
 
         # Create directory if it doesn't exist
@@ -366,9 +373,7 @@ def validate_analysis_config(config: Dict[str, Any]) -> Dict[str, Any]:
     ai_provider = config.get("ai_provider", "ollama")
     allowed_providers = {"ollama", "claude", "openai", "local", "none"}
     if ai_provider not in allowed_providers:
-        raise ValidationError(
-            f"Invalid AI provider: {ai_provider}. Allowed: {allowed_providers}"
-        )
+        raise ValidationError(f"Invalid AI provider: {ai_provider}. Allowed: {allowed_providers}")
     validated_config["ai_provider"] = ai_provider
 
     return validated_config

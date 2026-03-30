@@ -242,9 +242,7 @@ class StringDecryptor:
     def _decrypt_base64_strings(self, source: str) -> str:
         """Detect and decrypt Base64-encoded strings"""
         # Pattern: new String(Base64.decode("..."))
-        pattern = (
-            r'new\s+String\s*\(\s*Base64\.decode\s*\(\s*"([A-Za-z0-9+/=]+)"\s*\)\s*\)'
-        )
+        pattern = r'new\s+String\s*\(\s*Base64\.decode\s*\(\s*"([A-Za-z0-9+/=]+)"\s*\)\s*\)'
 
         def replace_func(match):
             try:
@@ -616,9 +614,7 @@ def main():
         default="deobfuscated_advanced",
         help="Output directory for deobfuscated code",
     )
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 

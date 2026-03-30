@@ -7,7 +7,12 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from src.reveng.core.dependency_manager import DependencyManager, InstallationResult
+from src.reveng.core.dependency_manager import (
+    DependencyManager,
+    GhidraInstaller,
+    InstallationResult,
+    Platform,
+)
 
 
 class TestDependencyManager:
@@ -21,6 +26,15 @@ class TestDependencyManager:
     def teardown_method(self):
         """Cleanup test environment"""
         shutil.rmtree(self.temp_dir, ignore_errors=True)
+
+    def _create_ghidra_dist(self, root: Path, version: str = "12.0.4") -> Path:
+        """Create a minimal fake Ghidra distribution for installer detection tests."""
+        dist = root / f"ghidra_{version}_PUBLIC"
+        support = dist / "support"
+        support.mkdir(parents=True)
+        (dist / "ghidraRun.bat").write_text("@echo off\n", encoding="utf-8")
+        (support / "analyzeHeadless.bat").write_text("@echo off\n", encoding="utf-8")
+        return dist
 
     def test_init(self):
         """Test DependencyManager initialization"""
@@ -53,21 +67,15 @@ class TestDependencyManager:
             {
                 "ghidra": Mock(
                     check_installed=Mock(return_value=False),
-                    install=Mock(
-                        return_value=InstallationResult(True, "ghidra", "/path")
-                    ),
+                    install=Mock(return_value=InstallationResult(True, "ghidra", "/path")),
                 ),
                 "ilspy": Mock(
                     check_installed=Mock(return_value=True),
-                    install=Mock(
-                        return_value=InstallationResult(True, "ilspy", "/path")
-                    ),
+                    install=Mock(return_value=InstallationResult(True, "ilspy", "/path")),
                 ),
             },
         ):
-            results = self.dm.install_missing_tools(
-                ["ghidra", "ilspy"], auto_install=True
-            )
+            results = self.dm.install_missing_tools(["ghidra", "ilspy"], auto_install=True)
 
             assert "ghidra" in results
             assert "ilspy" in results
@@ -222,3 +230,23 @@ class TestDependencyManager:
 
         success = self.dm.import_configuration(str(config_path))
         assert success is False
+
+    def test_ghidra_installer_detects_versioned_distribution_in_install_dir(self):
+        """Ghidra detection should work for the current versioned dist layout."""
+        self._create_ghidra_dist(self.temp_dir)
+
+        installer = GhidraInstaller(custom_install_dir=self.temp_dir)
+        installer.platform = Platform.WINDOWS
+
+        assert installer.check_installed() is True
+
+    def test_ghidra_installer_detects_repo_bundled_distribution(self):
+        """Ghidra detection should fall back to the repo-bundled distribution."""
+        bundled_root = self.temp_dir / "external" / "ghidra-dist"
+        self._create_ghidra_dist(bundled_root)
+
+        installer = GhidraInstaller(custom_install_dir=self.temp_dir / "missing-user-install")
+        installer.platform = Platform.WINDOWS
+
+        with patch.object(installer, "_get_bundled_dist_root", return_value=bundled_root):
+            assert installer.check_installed() is True

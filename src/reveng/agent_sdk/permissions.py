@@ -5,12 +5,11 @@ Permissions and Security System
 Control tool access, implement hooks, and enforce security policies.
 """
 
+import asyncio
 import logging
-from dataclasses import dataclass, field
-from enum import Enum
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional, Set
 
-from .exceptions import PermissionError
 from .types import PermissionMode
 
 logger = logging.getLogger(__name__)
@@ -228,7 +227,7 @@ class PermissionManager:
 
 
 # Global permission manager
-_global_manager = None
+_global_manager: Optional[PermissionManager] = None
 
 
 def get_global_manager() -> PermissionManager:
@@ -237,7 +236,3 @@ def get_global_manager() -> PermissionManager:
     if _global_manager is None:
         _global_manager = PermissionManager()
     return _global_manager
-
-
-# Import asyncio for coroutine checking
-import asyncio

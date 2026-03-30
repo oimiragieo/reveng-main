@@ -56,9 +56,7 @@ class AngrCFGPreprocessor:
         edge_count = len(list(cfg.graph.edges()))
 
         if not functions or node_count == 0:
-            raise CFGExtractionError(
-                f"angr produced an empty CFG payload for {binary.name}"
-            )
+            raise CFGExtractionError(f"angr produced an empty CFG payload for {binary.name}")
 
         payload = {
             "status": "success",
@@ -125,15 +123,11 @@ class AngrCFGPreprocessor:
                 f"{function['block_count']} basic blocks"
             )
 
-            callees = ", ".join(
-                callee["name"] for callee in function.get("callees", [])[:6]
-            )
+            callees = ", ".join(callee["name"] for callee in function.get("callees", [])[:6])
             if callees:
                 lines.append(f"  Calls: {callees}")
 
-            callers = ", ".join(
-                caller["name"] for caller in function.get("callers", [])[:6]
-            )
+            callers = ", ".join(caller["name"] for caller in function.get("callers", [])[:6])
             if callers:
                 lines.append(f"  Called by: {callers}")
 

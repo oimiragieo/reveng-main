@@ -96,12 +96,14 @@ class DotNetDetector:
                 magic = struct.unpack("<H", f.read(2))[0]
                 is_64bit = magic == 0x20B
 
-                # Skip to Data Directories
-                skip_size = 94 if is_64bit else 78
+                # Skip the rest of the optional header until the data-directory table.
+                # After reading the 2-byte magic, PE32 has 94 bytes left before the table,
+                # and PE32+ has 110 bytes left.
+                skip_size = 110 if is_64bit else 94
                 f.read(skip_size)
 
-                # Read COM+ descriptor RVA (14th data directory)
-                f.read(8 * 13)  # Skip first 13 directories
+                # Read COM+ descriptor RVA (15th directory, index 14)
+                f.read(8 * 14)  # Skip first 14 directories
                 clr_rva, clr_size = struct.unpack("<II", f.read(8))
 
                 has_clr = clr_rva != 0 and clr_size != 0
@@ -154,9 +156,7 @@ class ILDasmRunner:
 
         # Try finding via 'where' command
         try:
-            result = subprocess.run(
-                ["where", "ildasm"], capture_output=True, text=True, timeout=5
-            )
+            result = subprocess.run(["where", "ildasm"], capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 return Path(result.stdout.strip().splitlines()[0])
         except Exception:
@@ -256,9 +256,7 @@ class DotNetObfuscationDetector:
     - Agile.NET
     """
 
-    def detect_obfuscation(
-        self, il_content: str, assembly_path: str
-    ) -> Tuple[bool, Optional[str]]:
+    def detect_obfuscation(self, il_content: str, assembly_path: str) -> Tuple[bool, Optional[str]]:
         """Detect if assembly is obfuscated"""
 
         # Check for ConfuserEx
@@ -292,17 +290,13 @@ class DotNetObfuscationDetector:
 
         # 3. Control flow obfuscation (lots of branches)
         branches = (
-            il_content.count("br.")
-            + il_content.count("brtrue")
-            + il_content.count("brfalse")
+            il_content.count("br.") + il_content.count("brtrue") + il_content.count("brfalse")
         )
         if branches > 1000:
             obfuscation_indicators += 1
 
         # 4. String encryption (lots of ldc.i4 + xor)
-        string_encryption = (
-            il_content.count("ldc.i4") > 500 and il_content.count("xor") > 100
-        )
+        string_encryption = il_content.count("ldc.i4") > 500 and il_content.count("xor") > 100
         if string_encryption:
             obfuscation_indicators += 1
 
@@ -355,12 +349,29 @@ class CSharpILAnalyzer:
         # Step 2: Disassemble to IL
         il_output = output_subdir / f"{assembly_name}.il"
         il_success = self.ildasm.disassemble(assembly_path, str(il_output))
+        metadata["tooling"] = {
+            "ildasm": {
+                "available": bool(self.ildasm.ildasm_path),
+                "used": bool(il_success and il_output.exists()),
+                "output": str(il_output) if il_success and il_output.exists() else None,
+            },
+            "ilspy": {
+                "available": bool(self.ilspy.ilspy_available),
+                "used": False,
+                "output_dir": None,
+            },
+        }
 
         # Step 3: Decompile to C# (if ILSpy available)
         decompiled_dir = None
         if self.ilspy.ilspy_available:
             decompiled_dir = output_subdir / "decompiled_csharp"
-            self.ilspy.decompile(assembly_path, str(decompiled_dir))
+            decompile_success = self.ilspy.decompile(assembly_path, str(decompiled_dir))
+            metadata["tooling"]["ilspy"] = {
+                "available": True,
+                "used": bool(decompile_success and decompiled_dir.exists()),
+                "output_dir": str(decompiled_dir) if decompiled_dir.exists() else None,
+            }
 
         # Step 4: Parse IL to extract metadata
         if il_success and il_output.exists():
@@ -391,9 +402,7 @@ class CSharpILAnalyzer:
         metadata = {}
 
         # Extract assembly version
-        version_match = re.search(
-            r"\.assembly\s+\w+.*?\.ver\s+([\d:]+)", il_content, re.DOTALL
-        )
+        version_match = re.search(r"\.assembly\s+\w+.*?\.ver\s+([\d:]+)", il_content, re.DOTALL)
         if version_match:
             metadata["version"] = version_match.group(1).replace(":", ".")
 
@@ -407,16 +416,12 @@ class CSharpILAnalyzer:
         metadata["namespaces"] = sorted(namespaces)
 
         # Extract types (classes, interfaces, structs)
-        types = re.findall(
-            r"\.class\s+(?:public|private|interface)?\s+[\w.]+", il_content
-        )
+        types = re.findall(r"\.class\s+(?:public|private|interface)?\s+[\w.]+", il_content)
         metadata["types"] = types[:100]  # Limit to first 100
         metadata["types_count"] = len(types)
 
         # Extract methods
-        methods = re.findall(
-            r"\.method\s+(?:public|private|static)?\s+[\w\s<>]+", il_content
-        )
+        methods = re.findall(r"\.method\s+(?:public|private|static)?\s+[\w\s<>]+", il_content)
         metadata["methods_count"] = len(methods)
 
         # Find entry point
@@ -424,9 +429,7 @@ class CSharpILAnalyzer:
         if entry_point_match:
             # Find preceding method
             before_entry = il_content[: entry_point_match.start()]
-            method_match = re.findall(
-                r"\.method\s+[\w\s<>]+\s+([\w.]+)\(", before_entry
-            )
+            method_match = re.findall(r"\.method\s+[\w\s<>]+\s+([\w.]+)\(", before_entry)
             if method_match:
                 metadata["entry_point"] = method_match[-1]
 
@@ -514,9 +517,7 @@ def main():
         default="csharp_analysis",
         help="Output directory for analysis results",
     )
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 

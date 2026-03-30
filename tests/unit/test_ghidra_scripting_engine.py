@@ -78,9 +78,7 @@ def test_execute_java_script_failure(tmp_path: Path):
         script_path.write_text('print("Large binary processed")')
 
         # Execute script
-        result = self.script_engine.execute_python_script(
-            script_path, test_binary, "large_project"
-        )
+        result = self.script_engine.execute_python_script(script_path, test_binary, "large_project")
 
         assert isinstance(result, ScriptResult)
         assert result.success is True

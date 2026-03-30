@@ -9,13 +9,13 @@ Reference: SANS DFIR Summit 2023
 """
 
 import logging
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
 import re
-
+from dataclasses import dataclass
+from typing import List, Optional
 
 try:
     import boto3
+
     BOTO3_AVAILABLE = True
 except ImportError:
     BOTO3_AVAILABLE = False
@@ -25,6 +25,7 @@ except ImportError:
 @dataclass
 class EBSSnapshot:
     """EBS snapshot information"""
+
     snapshot_id: str
     volume_id: str
     description: str
@@ -38,6 +39,7 @@ class EBSSnapshot:
 @dataclass
 class SecretMatch:
     """Detected secret in snapshot"""
+
     snapshot_id: str
     block_index: int
     secret_type: str
@@ -78,10 +80,14 @@ class AWSEBSTriage:
             return
 
         try:
-            session = boto3.Session(profile_name=profile, region_name=region) if profile else boto3.Session(region_name=region)
+            session = (
+                boto3.Session(profile_name=profile, region_name=region)
+                if profile
+                else boto3.Session(region_name=region)
+            )
 
-            self.ec2 = session.client('ec2')
-            self.ebs = session.client('ebs')
+            self.ec2 = session.client("ec2")
+            self.ebs = session.client("ebs")
 
             self.logger.info(f"Connected to AWS region: {region}")
 
@@ -106,28 +112,26 @@ class AWSEBSTriage:
         self.logger.info("Listing EBS snapshots...")
 
         try:
-            filters = []
-
             if owner_ids is None:
                 # Get current account ID
-                sts = boto3.client('sts')
-                account_id = sts.get_caller_identity()['Account']
+                sts = boto3.client("sts")
+                account_id = sts.get_caller_identity()["Account"]
                 owner_ids = [account_id]
 
             response = self.ec2.describe_snapshots(OwnerIds=owner_ids)
 
             snapshots = []
 
-            for snap in response['Snapshots']:
+            for snap in response["Snapshots"]:
                 snapshot = EBSSnapshot(
-                    snapshot_id=snap['SnapshotId'],
-                    volume_id=snap.get('VolumeId', ''),
-                    description=snap.get('Description', ''),
-                    state=snap['State'],
-                    volume_size=snap['VolumeSize'],
-                    encrypted=snap.get('Encrypted', False),
-                    owner_id=snap['OwnerId'],
-                    start_time=str(snap['StartTime'])
+                    snapshot_id=snap["SnapshotId"],
+                    volume_id=snap.get("VolumeId", ""),
+                    description=snap.get("Description", ""),
+                    state=snap["State"],
+                    volume_size=snap["VolumeSize"],
+                    encrypted=snap.get("Encrypted", False),
+                    owner_id=snap["OwnerId"],
+                    start_time=str(snap["StartTime"]),
                 )
 
                 snapshots.append(snapshot)
@@ -139,8 +143,9 @@ class AWSEBSTriage:
             self.logger.error(f"Failed to list snapshots: {e}")
             return []
 
-    def scan_for_secrets(self, snapshot_id: str,
-                        block_limit: Optional[int] = 1000) -> List[SecretMatch]:
+    def scan_for_secrets(
+        self, snapshot_id: str, block_limit: Optional[int] = 1000
+    ) -> List[SecretMatch]:
         """
         Scan snapshot for secrets using EBS Direct APIs.
 
@@ -165,7 +170,7 @@ class AWSEBSTriage:
             # List snapshot blocks
             response = self.ebs.list_snapshot_blocks(SnapshotId=snapshot_id)
 
-            blocks = response.get('Blocks', [])
+            blocks = response.get("Blocks", [])
 
             if block_limit:
                 blocks = blocks[:block_limit]
@@ -173,7 +178,7 @@ class AWSEBSTriage:
             self.logger.info(f"Scanning {len(blocks)} blocks...")
 
             for i, block in enumerate(blocks):
-                block_index = block['BlockIndex']
+                block_index = block["BlockIndex"]
 
                 # Read block data
                 block_data = self._read_snapshot_block(snapshot_id, block_index)
@@ -199,36 +204,35 @@ class AWSEBSTriage:
             response = self.ebs.get_snapshot_block(
                 SnapshotId=snapshot_id,
                 BlockIndex=block_index,
-                BlockToken='...'  # Obtained from list_snapshot_blocks
+                BlockToken="...",  # Obtained from list_snapshot_blocks
             )
 
             # Read block data
-            block_data = response['BlockData'].read()
+            block_data = response["BlockData"].read()
             return block_data
 
-        except Exception as e:
+        except Exception:
             # Block might not exist or be readable
             return None
 
-    def _detect_secrets(self, data: bytes, snapshot_id: str,
-                       block_index: int) -> List[SecretMatch]:
+    def _detect_secrets(self, data: bytes, snapshot_id: str, block_index: int) -> List[SecretMatch]:
         """Detect secrets in block data"""
         secrets = []
 
         # Convert to string (try multiple encodings)
         try:
-            text = data.decode('utf-8', errors='ignore')
-        except:
-            text = data.decode('latin-1', errors='ignore')
+            text = data.decode("utf-8", errors="ignore")
+        except UnicodeDecodeError:
+            text = data.decode("latin-1", errors="ignore")
 
         # Secret patterns
         patterns = {
-            'AWS Access Key': r'AKIA[0-9A-Z]{16}',
-            'AWS Secret Key': r'(?i)aws_secret_access_key.*[\'"]([a-zA-Z0-9/+=]{40})[\'"]',
-            'Private Key': r'-----BEGIN (?:RSA|OPENSSH|EC) PRIVATE KEY-----',
-            'API Key': r'(?i)api[_-]?key.*[\'"]([a-zA-Z0-9_-]{32,})[\'"]',
-            'Password': r'(?i)password.*[=:]\s*[\'"]([^\'"]{8,})[\'"]',
-            'Database URI': r'(?i)(postgres|mysql|mongodb)://[^\s]+',
+            "AWS Access Key": r"AKIA[0-9A-Z]{16}",
+            "AWS Secret Key": r'(?i)aws_secret_access_key.*[\'"]([a-zA-Z0-9/+=]{40})[\'"]',
+            "Private Key": r"-----BEGIN (?:RSA|OPENSSH|EC) PRIVATE KEY-----",
+            "API Key": r'(?i)api[_-]?key.*[\'"]([a-zA-Z0-9_-]{32,})[\'"]',
+            "Password": r'(?i)password.*[=:]\s*[\'"]([^\'"]{8,})[\'"]',
+            "Database URI": r"(?i)(postgres|mysql|mongodb)://[^\s]+",
         }
 
         for secret_type, pattern in patterns.items():
@@ -240,7 +244,7 @@ class AWSEBSTriage:
                     block_index=block_index,
                     secret_type=secret_type,
                     value=match.group(0),
-                    confidence=0.8
+                    confidence=0.8,
                 )
 
                 secrets.append(secret)
@@ -253,16 +257,16 @@ class AWSEBSTriage:
 
         secrets_data = [
             {
-                'snapshot_id': s.snapshot_id,
-                'block_index': s.block_index,
-                'type': s.secret_type,
-                'value': s.value,
-                'confidence': s.confidence
+                "snapshot_id": s.snapshot_id,
+                "block_index": s.block_index,
+                "type": s.secret_type,
+                "value": s.value,
+                "confidence": s.confidence,
             }
             for s in secrets
         ]
 
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(secrets_data, f, indent=2)
 
         self.logger.info(f"Exported {len(secrets)} secrets to {output_file}")
@@ -274,19 +278,9 @@ EBS_DIRECT_READONLY_POLICY = {
     "Statement": [
         {
             "Effect": "Allow",
-            "Action": [
-                "ebs:ListSnapshotBlocks",
-                "ebs:ListChangedBlocks",
-                "ebs:GetSnapshotBlock"
-            ],
-            "Resource": "*"
+            "Action": ["ebs:ListSnapshotBlocks", "ebs:ListChangedBlocks", "ebs:GetSnapshotBlock"],
+            "Resource": "*",
         },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ec2:DescribeSnapshots"
-            ],
-            "Resource": "*"
-        }
-    ]
+        {"Effect": "Allow", "Action": ["ec2:DescribeSnapshots"], "Resource": "*"},
+    ],
 }

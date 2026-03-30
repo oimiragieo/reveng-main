@@ -68,10 +68,7 @@ def test_select_best_model_prefers_current_available_fallbacks(
         reconstructor._select_best_model(ReconstructionTask.THREAT_INTELLIGENCE)
         == ModelType.CODEBERT
     )
-    assert (
-        reconstructor._select_best_model(ReconstructionTask.DECOMPILATION)
-        == ModelType.CODEBERT
-    )
+    assert reconstructor._select_best_model(ReconstructionTask.DECOMPILATION) == ModelType.CODEBERT
 
 
 def test_generate_threat_intelligence_uses_current_analysis_inputs(
@@ -130,9 +127,7 @@ def test_save_reconstruction_and_threat_results_write_current_json_shapes(
     threats = reconstructor.generate_threat_intelligence(
         {
             "api_analysis": {
-                "suspicious_apis": [
-                    {"api": "CreateRemoteThread", "category": "process_injection"}
-                ]
+                "suspicious_apis": [{"api": "CreateRemoteThread", "category": "process_injection"}]
             }
         }
     )
@@ -148,9 +143,7 @@ def test_save_reconstruction_and_threat_results_write_current_json_shapes(
 
     assert reconstruction_payload["summary"]["total_results"] == 1
     assert reconstruction_payload["reconstruction_results"][0]["task"] == "decompilation"
-    assert reconstruction_payload["reconstruction_results"][0]["address"] == hex(
-        fragment.address
-    )
+    assert reconstruction_payload["reconstruction_results"][0]["address"] == hex(fragment.address)
     assert threats_payload["summary"]["total_threats"] == 1
     assert threats_payload["threat_intelligence"][0]["threat_type"] == "Process Injection"
 

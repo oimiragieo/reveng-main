@@ -85,12 +85,22 @@ If a plugin depends on external tools, validate the dependency during initializa
 Use the repository validators defined in `.factory/services.yaml`:
 
 ```bash
-python -m pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc
+python -m pytest tests/unit/ tests/integration/ tests/performance -n 4 --ignore=tests/poc
 flake8 src/reveng/ --extend-ignore=E501,F811,E203
 python -m mypy src/reveng/ --ignore-missing-imports
 ```
 
 Windows contributors should prefer `python -m pytest` over invoking `pytest` directly.
+
+The remaining `tests/poc/` coverage is intentionally optional. Those files are now explicitly marked with `poc`, `requires_external_tools`, and `slow` because they depend on local compiler/model/runtime availability such as angr, GCC, and LLM4Decompile weights.
+
+```bash
+# Run the optional environment-heavy POC suite
+python -m pytest tests/poc/ -m "poc and requires_external_tools" -v
+
+# Or use the repo helper target
+make test-poc
+```
 
 ## Release Checklist
 

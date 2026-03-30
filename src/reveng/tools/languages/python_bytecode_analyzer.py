@@ -25,6 +25,8 @@ import marshal
 import os
 import struct
 import subprocess
+import sys
+from importlib import util as importlib_util
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -155,6 +157,10 @@ class PythonBytecodeDetector:
                 # Check if it's a known Python magic number
                 python_version = PYTHON_MAGIC_NUMBERS.get(magic)
                 if not python_version:
+                    current_magic = struct.unpack("<H", importlib_util.MAGIC_NUMBER[:2])[0]
+                    if magic == current_magic:
+                        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+                if not python_version:
                     return False, None
 
                 # Read timestamp
@@ -170,23 +176,19 @@ class PythonBytecodeDetector:
                     # SECURITY: Use safer deserialization for marshal
                     # Only load from trusted sources and validate data
                     if not PythonBytecodeDetector._is_trusted_source(file_path):
-                        logger.warning(
-                            f"Untrusted source, skipping marshal load: {file_path}"
-                        )
+                        logger.warning(f"Untrusted source, skipping marshal load: {file_path}")
                         imports, functions, classes = [], [], []
                     else:
                         code = marshal.load(f)
-                        imports, functions, classes = (
-                            PythonBytecodeDetector._analyze_code_object(code)
+                        imports, functions, classes = PythonBytecodeDetector._analyze_code_object(
+                            code
                         )
                 except Exception as e:
                     logger.warning(f"Failed to read code object: {e}")
                     imports, functions, classes = [], [], []
 
                 # Detect obfuscation
-                is_obfuscated, obfuscator = PythonBytecodeDetector._detect_obfuscation(
-                    file_path
-                )
+                is_obfuscated, obfuscator = PythonBytecodeDetector._detect_obfuscation(file_path)
 
                 info = PythonBytecodeInfo(
                     file_path=file_path,
@@ -309,9 +311,7 @@ class PythonDecompiler:
     def _check_tool(self, tool_name: str) -> bool:
         """Check if decompiler tool is available"""
         try:
-            result = subprocess.run(
-                [tool_name, "--version"], capture_output=True, timeout=5
-            )
+            result = subprocess.run([tool_name, "--version"], capture_output=True, timeout=5)
             return result.returncode == 0
         except Exception:
             return False
@@ -366,9 +366,7 @@ class PythonDecompiler:
             metadata={},
         )
 
-    def _run_uncompyle6(
-        self, pyc_file: str, output_file: str
-    ) -> Tuple[bool, Optional[str]]:
+    def _run_uncompyle6(self, pyc_file: str, output_file: str) -> Tuple[bool, Optional[str]]:
         """Run uncompyle6 decompiler"""
         cmd = ["uncompyle6", "-o", output_file, pyc_file]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
@@ -379,9 +377,7 @@ class PythonDecompiler:
 
         return False, None
 
-    def _run_decompyle3(
-        self, pyc_file: str, output_file: str
-    ) -> Tuple[bool, Optional[str]]:
+    def _run_decompyle3(self, pyc_file: str, output_file: str) -> Tuple[bool, Optional[str]]:
         """Run decompyle3 decompiler"""
         cmd = ["decompyle3", "-o", output_file, pyc_file]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
@@ -446,9 +442,7 @@ class PythonBytecodeAnalyzer:
 
         # Step 2: Decompile
         output_py = output_subdir / f"{pyc_name}.py"
-        result = self.decompiler.decompile(
-            pyc_file, str(output_py), info.python_version
-        )
+        result = self.decompiler.decompile(pyc_file, str(output_py), info.python_version)
 
         # Step 3: Add metadata
         result.metadata.update(
@@ -590,9 +584,7 @@ def main():
         default="python_analysis",
         help="Output directory for analysis results",
     )
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 

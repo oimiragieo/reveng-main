@@ -15,20 +15,18 @@ IoT & Embedded Systems Analysis:
 - Side-channel attacks (ChipWhisperer)
 """
 
+from .can_bus_analyzer import CANBusAnalyzer, CANFrame, CANSignal
+from .chipwhisperer_integration import ChipWhispererIntegration
+from .firmware_analyzer import Architecture, FirmwareAnalyzer, FirmwareType
+from .hardware_breakpoint_engine import Breakpoint, HardwareBreakpointEngine, WatchType
 from .intel_pt_analyzer import (
-    IntelPTAnalyzer,
-    TraceResult,
     ControlFlowTrace,
     CoverageMap,
+    IntelPTAnalyzer,
     PerformanceProfile,
+    TraceResult,
 )
-
-from .hardware_breakpoint_engine import HardwareBreakpointEngine, Breakpoint, WatchType
-
-from .firmware_analyzer import FirmwareAnalyzer, FirmwareType, Architecture
-from .can_bus_analyzer import CANBusAnalyzer, CANFrame, CANSignal
-from .jtag_scanner import JTAGScanner, JTAGPin
-from .chipwhisperer_integration import ChipWhispererIntegration
+from .jtag_scanner import JTAGPin, JTAGScanner
 
 __all__ = [
     "IntelPTAnalyzer",

@@ -35,44 +35,33 @@ theme:
     view: material/eye
 
 nav:
-  - Home: index.md
+  - Home: README.md
   - Getting Started:
-    - Quick Start: getting-started/quick-start.md
     - Installation: getting-started/installation.md
-    - First Analysis: getting-started/first-analysis.md
-    - Troubleshooting: getting-started/troubleshooting.md
   - User Guide:
-    - Overview: user-guide/README.md
     - CLI Usage: user-guide/cli-usage.md
-    - Web Interface: user-guide/web-interface.md
-    - Binary Analysis: user-guide/binary-analysis.md
-    - Multi-Language Support: user-guide/multi-language.md
-    - AI Features: user-guide/ai-features.md
-    - Advanced Features: user-guide/advanced-features.md
-    - Configuration: user-guide/configuration.md
+    - Bun Executable Reversing: user-guide/bun-reversing.md
+    - MCP Guide: mcp/README.md
   - Developer Guide:
-    - Overview: developer-guide/README.md
-    - Architecture: developer-guide/architecture.md
-    - Contributing: developer-guide/contributing.md
-    - Tool Development: developer-guide/tool-development.md
-    - API Reference: developer-guide/api-reference.md
-    - Testing: developer-guide/testing.md
+    - Developer Guide: developer-guide/DEVELOPER_GUIDE.md
+    - API Reference: api/API_REFERENCE.md
   - Architecture:
     - Overview: architecture/overview.md
-    - Package Map: architecture/package-map.md
-    - Pipeline: architecture/pipeline.md
-    - Ghidra Integration: architecture/ghidra-integration.md
-  - AI Assistant Guide:
-    - Overview: ai-assistant-guide/README.md
-    - Claude Integration: ai-assistant-guide/claude-integration.md
-    - Tool Selection: ai-assistant-guide/tool-selection.md
-    - Automation: ai-assistant-guide/automation.md
-    - Best Practices: ai-assistant-guide/best-practices.md
+    - REVENG System Paper: architecture/reveng-system-paper.md
+    - Feature Research Roadmap: architecture/reveng-feature-roadmap.md
+    - World-Class Implementation Roadmap: architecture/reveng-world-class-implementation-roadmap.md
+    - World-Class Execution Backlog: architecture/reveng-world-class-execution-backlog.md
+    - TDD Microservices Plan: architecture/reveng-tdd-microservices-plan.md
+    - TDD Implementation Backlog: architecture/reveng-tdd-implementation-backlog.md
+    - Bun Escalation Paths: architecture/bun-escalation-paths.md
+    - Bun Real-Sample Matrix: architecture/bun-real-sample-matrix.md
   - Deployment:
-    - Docker: deployment/docker.md
-    - Kubernetes: deployment/kubernetes.md
-    - Cloud Providers: deployment/cloud-providers.md
-    - Enterprise: deployment/enterprise.md
+    - Deployment Notes: deployment/README.md
+    - Privacy Notes: legal/PRIVACY.md
+  - Release History:
+    - v4.0: changelogs/v4.0.md
+    - v5.0: changelogs/v5.0.md
+    - v6.0: changelogs/v6.0.md
 
 plugins:
   - search:

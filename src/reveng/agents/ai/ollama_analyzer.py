@@ -120,9 +120,7 @@ class OllamaAnalyzer:
 
         # Fallback: Try CLI
         try:
-            result = subprocess.run(
-                ["ollama", "list"], capture_output=True, text=True, timeout=10
-            )
+            result = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=10)
 
             if result.returncode == 0:
                 models = []
@@ -229,13 +227,9 @@ class OllamaAnalyzer:
         context_info = ""
         if context:
             if context.get("strings"):
-                context_info += (
-                    f"\nString references: {', '.join(context['strings'][:5])}"
-                )
+                context_info += f"\nString references: {', '.join(context['strings'][:5])}"
             if context.get("imports"):
-                context_info += (
-                    f"\nImported functions: {', '.join(context['imports'][:5])}"
-                )
+                context_info += f"\nImported functions: {', '.join(context['imports'][:5])}"
             if context.get("callers"):
                 context_info += f"\nCalled by: {', '.join(context['callers'][:3])}"
 
@@ -376,9 +370,7 @@ Respond with ONLY valid JSON, no other text."""
             reasoning="Extracted from free-form text",
         )
 
-    def _fallback_analysis(
-        self, function_name: str, function_code: str
-    ) -> AnalysisResult:
+    def _fallback_analysis(self, function_name: str, function_code: str) -> AnalysisResult:
         """Fallback analysis when Ollama unavailable"""
         # Simple heuristic analysis
         code_lower = function_code.lower()
@@ -401,9 +393,7 @@ Respond with ONLY valid JSON, no other text."""
             reasoning="Fallback heuristic analysis (Ollama unavailable)",
         )
 
-    def generate_implementation(
-        self, function_spec: Dict[str, Any], language: str = "c"
-    ) -> str:
+    def generate_implementation(self, function_spec: Dict[str, Any], language: str = "c") -> str:
         """
         Generate function implementation from specification
 
@@ -532,9 +522,7 @@ Example: ["Buffer overflow in strcpy at line 5", "Integer overflow in size calcu
             if progress_callback:
                 progress_callback(i + 1, total)
 
-            result = self.analyze_function(
-                func["code"], func["name"], func.get("context")
-            )
+            result = self.analyze_function(func["code"], func["name"], func.get("context"))
             results.append(result)
 
         return results

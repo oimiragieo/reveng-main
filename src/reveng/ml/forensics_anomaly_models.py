@@ -86,8 +86,7 @@ class _IsolationForestFeatureModel:
             self.pipeline.fit(training_samples)
             self._feature_stats = self._build_feature_stats(training_samples)
             decision_scores = [
-                float(score)
-                for score in self.pipeline.decision_function(training_samples)
+                float(score) for score in self.pipeline.decision_function(training_samples)
             ]
             self._decision_mean = sum(decision_scores) / len(decision_scores)
             decision_variance = sum(
@@ -98,9 +97,7 @@ class _IsolationForestFeatureModel:
 
     def assess(self, features: Mapping[str, float]) -> MLAnomalyAssessment:
         """Score a feature mapping and return a normalized anomaly assessment."""
-        normalized_features = {
-            name: float(features.get(name, 0.0)) for name in self.feature_names
-        }
+        normalized_features = {name: float(features.get(name, 0.0)) for name in self.feature_names}
         feature_vector = [normalized_features[name] for name in self.feature_names]
         raw_decision_score = float(self.pipeline.decision_function([feature_vector])[0])
         normalized_score = self._normalize_score(raw_decision_score)
@@ -224,9 +221,7 @@ class BehavioralAnomalyModel(_IsolationForestFeatureModel):
 
         features = {
             "total_events": float(len(events)),
-            "unique_operations": float(
-                len({getattr(event, "operation", "") for event in events})
-            ),
+            "unique_operations": float(len({getattr(event, "operation", "") for event in events})),
             "unique_behavior_types": float(
                 len(
                     {
@@ -245,8 +240,7 @@ class BehavioralAnomalyModel(_IsolationForestFeatureModel):
                 == "critical"
             ),
             "medium_ratio": _ratio(
-                lambda event: getattr(getattr(event, "threat_level", None), "value", "")
-                == "medium"
+                lambda event: getattr(getattr(event, "threat_level", None), "value", "") == "medium"
             ),
             "network_ratio": _ratio(
                 lambda event: getattr(getattr(event, "behavior_type", None), "value", "")
@@ -265,8 +259,7 @@ class BehavioralAnomalyModel(_IsolationForestFeatureModel):
                 == "anti_analysis"
             ),
             "indicator_ratio": _ratio(
-                lambda event: getattr(event, "operation", "").lower()
-                in suspicious_operation_set
+                lambda event: getattr(event, "operation", "").lower() in suspicious_operation_set
             ),
             "target_diversity": len(
                 {getattr(event, "target", "") for event in events if getattr(event, "target", "")}
@@ -315,9 +308,7 @@ class MemoryArtifactAnomalyModel(_IsolationForestFeatureModel):
         data: bytes,
         suspicious_patterns: Mapping[str, Sequence[bytes]],
     ) -> MLAnomalyAssessment:
-        total_patterns = max(
-            sum(len(patterns) for patterns in suspicious_patterns.values()), 1
-        )
+        total_patterns = max(sum(len(patterns) for patterns in suspicious_patterns.values()), 1)
         matched_patterns = sum(
             1
             for patterns in suspicious_patterns.values()
@@ -439,13 +430,9 @@ class ForensicsAnomalyModel(_IsolationForestFeatureModel):
             },
         )
 
-    def assess_binary_features(
-        self, features: Mapping[str, float]
-    ) -> MLAnomalyAssessment:
+    def assess_binary_features(self, features: Mapping[str, float]) -> MLAnomalyAssessment:
         """Score static binary features and return a normalized anomaly assessment."""
-        normalized = {
-            name: float(features.get(name, 0.0)) for name in self.feature_names
-        }
+        normalized = {name: float(features.get(name, 0.0)) for name in self.feature_names}
         return self.assess(normalized)
 
 

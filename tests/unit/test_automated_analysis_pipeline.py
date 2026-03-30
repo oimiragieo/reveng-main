@@ -422,9 +422,7 @@ def test_execute_dynamic_analysis_stage_returns_placeholder_message(
     assert result.stage_results[0].status == StageStatus.COMPLETED
     assert result.stage_results[0].output == {
         "status": "skipped",
-        "message": (
-            "Dynamic analysis stage is not implemented for this pipeline configuration."
-        ),
+        "message": ("Dynamic analysis stage is not implemented for this pipeline configuration."),
         "binary_path": test_binary,
     }
 
@@ -496,9 +494,7 @@ def test_aggregate_stage_outputs_only_includes_completed_results(
         ),
     ]
 
-    assert engine._aggregate_stage_outputs(stage_results) == {
-        "completed_stage": {"value": 1}
-    }
+    assert engine._aggregate_stage_outputs(stage_results) == {"completed_stage": {"value": 1}}
 
 
 def test_select_analysis_target_prefers_recompiled_binary(
@@ -506,11 +502,7 @@ def test_select_analysis_target_prefers_recompiled_binary(
     test_binary: str,
 ):
     engine._stage_context_local.current = {
-        "dependencies": {
-            "recompilation": {
-                "compiled_binaries": {"c_gcc": "recompiled.exe"}
-            }
-        }
+        "dependencies": {"recompilation": {"compiled_binaries": {"c_gcc": "recompiled.exe"}}}
     }
 
     try:
@@ -594,9 +586,7 @@ def test_save_and_load_pipeline_roundtrip_preserves_stage_fields(
 
     engine.save_pipeline(original_pipeline, str(pipeline_path))
 
-    serialized_pipeline = yaml.safe_load(
-        pipeline_path.read_text(encoding="utf-8")
-    )
+    serialized_pipeline = yaml.safe_load(pipeline_path.read_text(encoding="utf-8"))
     assert serialized_pipeline["stages"][0]["stage_type"] == StageType.STATIC_ANALYSIS.value
     assert serialized_pipeline["stages"][1]["stage_type"] == StageType.REPORT_GENERATION.value
 

@@ -107,9 +107,7 @@ class GeminiEngine:
                 "error": "Gemini not available",
             }
 
-        prompt = self._create_reconstruction_prompt(
-            decompiled_code, function_name, context
-        )
+        prompt = self._create_reconstruction_prompt(decompiled_code, function_name, context)
 
         try:
             response = await self._generate_async(prompt)
@@ -185,9 +183,7 @@ class GeminiEngine:
             logger.error(f"Gemini exploit generation failed: {e}")
             return None
 
-    async def ask_question(
-        self, question: str, context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def ask_question(self, question: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """
         Answer natural language questions about binary analysis.
 
@@ -234,9 +230,7 @@ class GeminiEngine:
         """
         # Run in thread pool since genai is synchronous
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
-            None, lambda: self.client.generate_content(prompt)
-        )
+        response = await loop.run_in_executor(None, lambda: self.client.generate_content(prompt))
         return response.text
 
     def _create_reconstruction_prompt(
@@ -249,17 +243,12 @@ class GeminiEngine:
         context_str = ""
         if context:
             if "imports" in context:
-                context_str += (
-                    f"\n\nImported functions:\n{', '.join(context['imports'][:20])}"
-                )
+                context_str += f"\n\nImported functions:\n{', '.join(context['imports'][:20])}"
             if "strings" in context:
-                context_str += (
-                    f"\n\nString constants:\n{', '.join(context['strings'][:20])}"
-                )
+                context_str += f"\n\nString constants:\n{', '.join(context['strings'][:20])}"
             if context.get("cfg_context_text"):
                 context_str += (
-                    "\n\nControl-flow graph (angr summary):\n"
-                    f"{context['cfg_context_text']}"
+                    "\n\nControl-flow graph (angr summary):\n" f"{context['cfg_context_text']}"
                 )
 
         return f"""You are an expert reverse engineer. Reconstruct the following decompiled function into clean, readable source code.
@@ -332,9 +321,7 @@ Output format (JSON array):
 ]
 """
 
-    def _create_exploit_prompt(
-        self, vulnerability: Dict[str, Any], source_code: str
-    ) -> str:
+    def _create_exploit_prompt(self, vulnerability: Dict[str, Any], source_code: str) -> str:
         """Create prompt for exploit generation."""
         return f"""You are a security researcher creating a proof-of-concept exploit for educational purposes.
 
@@ -393,18 +380,14 @@ Output format (JSON):
         """Format functions for prompt."""
         result = []
         for func in functions[:5]:
-            result.append(
-                f"- {func.get('name', 'unknown')} at {func.get('entry_point', '?')}"
-            )
+            result.append(f"- {func.get('name', 'unknown')} at {func.get('entry_point', '?')}")
         return "\n".join(result)
 
     def _format_strings(self, strings: List[str]) -> str:
         """Format strings for prompt."""
         return "\n".join([f"- {s[:50]}" for s in strings[:10]])
 
-    def _parse_reconstruction_response(
-        self, response: str, original_code: str
-    ) -> Dict[str, Any]:
+    def _parse_reconstruction_response(self, response: str, original_code: str) -> Dict[str, Any]:
         """Parse reconstruction response."""
         try:
             # Try to parse JSON response

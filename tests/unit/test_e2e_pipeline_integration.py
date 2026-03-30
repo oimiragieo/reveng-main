@@ -11,8 +11,8 @@ from reveng.pipeline.e2e_integration import EndToEndPipelineRunner
 from reveng.pipeline.pipeline_engine import (
     AnalysisPipeline,
     PipelineResult,
-    PipelineStatus,
     PipelineStage,
+    PipelineStatus,
     StageResult,
     StageStatus,
     StageType,
@@ -69,12 +69,8 @@ def _make_pipeline_result(
         status=status,
         stage_results=stage_results,
         total_execution_time=0.05,
-        success_count=sum(
-            1 for result in stage_results if result.status == StageStatus.COMPLETED
-        ),
-        failure_count=sum(
-            1 for result in stage_results if result.status == StageStatus.FAILED
-        ),
+        success_count=sum(1 for result in stage_results if result.status == StageStatus.COMPLETED),
+        failure_count=sum(1 for result in stage_results if result.status == StageStatus.FAILED),
         output=output,
     )
 
@@ -164,9 +160,7 @@ def test_analysis_pipeline_generates_unified_report(monkeypatch, tmp_path: Path)
             "status": "success",
             "source_files": {"c": str(reconstructed_c)},
             "compiled_binaries": {"c_gcc": str(recompilation_dir / "reconstructed.exe")},
-            "compilation_reports": {
-                "c_gcc": {"status": "success", "total_attempts": 1}
-            },
+            "compilation_reports": {"c_gcc": {"status": "success", "total_attempts": 1}},
             "cfg_summary": stage_context["dependencies"]["ghidra_analysis"]["analysis_data"][
                 "cfg_summary"
             ],
@@ -177,9 +171,9 @@ def test_analysis_pipeline_generates_unified_report(monkeypatch, tmp_path: Path)
         assert "recompilation" in stage_context["dependencies"]
         return {
             "status": "success",
-            "analyzed_binary": stage_context["dependencies"]["recompilation"][
-                "compiled_binaries"
-            ]["c_gcc"],
+            "analyzed_binary": stage_context["dependencies"]["recompilation"]["compiled_binaries"][
+                "c_gcc"
+            ],
             "risk_score": 82.0,
             "threat_level": "high",
             "anomaly_score": 0.82,
@@ -192,9 +186,9 @@ def test_analysis_pipeline_generates_unified_report(monkeypatch, tmp_path: Path)
         assert "recompilation" in stage_context["dependencies"]
         return {
             "status": "success",
-            "analyzed_binary": stage_context["dependencies"]["recompilation"][
-                "compiled_binaries"
-            ]["c_gcc"],
+            "analyzed_binary": stage_context["dependencies"]["recompilation"]["compiled_binaries"][
+                "c_gcc"
+            ],
             "risk_score": 91.0,
             "threat_level": "CRITICAL",
             "anomaly_score": 0.91,
@@ -246,7 +240,14 @@ def test_handle_analyze_command_reports_unified_pipeline_result(
     binary_path.write_bytes(b"MZ\x90\x00" + b"\x00" * 128)
     report_path = tmp_path / "analysis_sample" / "unified_analysis_report.json"
 
-    def fake_run_end_to_end_analysis(*, binary_path: str, output_dir: str, enhanced_features):
+    def fake_run_end_to_end_analysis(
+        *,
+        binary_path: str,
+        output_dir: str,
+        enhanced_features,
+        ghidra_timeout_seconds: int,
+        ghidra_retry_count: int,
+    ):
         return {
             "status": "partial_success",
             "report_path": str(report_path),
@@ -272,6 +273,8 @@ def test_handle_analyze_command_reports_unified_pipeline_result(
         no_threat=False,
         no_reconstruction=False,
         no_demo=False,
+        ghidra_timeout=900,
+        ghidra_retries=0,
     )
 
     exit_code = cli.handle_analyze_command(args)
@@ -298,9 +301,7 @@ def test_runner_marks_all_stages_failing_as_failed(monkeypatch, tmp_path: Path):
     report = {
         "summary": {
             "overall_status": "failed",
-            "stage_statuses": {
-                name: output["status"] for name, output in stage_outputs.items()
-            },
+            "stage_statuses": {name: output["status"] for name, output in stage_outputs.items()},
             "compiled_binaries": [],
             "behavioral_anomaly_score": None,
             "memory_anomaly_score": None,
@@ -365,6 +366,20 @@ def test_runner_build_pipeline_skips_forensics_when_disabled(tmp_path: Path):
     assert unified_report_stage.dependencies == ["ghidra_analysis", "recompilation"]
 
 
+def test_runner_build_pipeline_uses_configured_ghidra_timeout_and_retry_count(tmp_path: Path):
+    runner = EndToEndPipelineRunner(
+        output_dir=str(tmp_path / "analysis_sample"),
+        ghidra_timeout_seconds=900,
+        ghidra_retry_count=0,
+    )
+
+    pipeline = runner.build_pipeline()
+    ghidra_stage = next(stage for stage in pipeline.stages if stage.name == "ghidra_analysis")
+
+    assert ghidra_stage.timeout == 900
+    assert ghidra_stage.retry_count == 0
+
+
 def test_runner_resolves_invalid_binary_path_before_execution(
     monkeypatch,
     tmp_path: Path,
@@ -399,6 +414,64 @@ def test_runner_resolves_invalid_binary_path_before_execution(
     assert result["unified_report"] == {}
 
 
+def test_handle_analyze_command_passes_ghidra_stage_overrides(
+    monkeypatch,
+    tmp_path: Path,
+    capsys,
+):
+    binary_path = tmp_path / "sample.exe"
+    binary_path.write_bytes(b"MZ\x90\x00" + b"\x00" * 128)
+    captured_call: dict[str, object] = {}
+
+    def fake_run_end_to_end_analysis(
+        *,
+        binary_path: str,
+        output_dir: str,
+        enhanced_features,
+        ghidra_timeout_seconds: int,
+        ghidra_retry_count: int,
+    ):
+        captured_call.update(
+            {
+                "binary_path": binary_path,
+                "output_dir": output_dir,
+                "ghidra_timeout_seconds": ghidra_timeout_seconds,
+                "ghidra_retry_count": ghidra_retry_count,
+            }
+        )
+        return {
+            "status": "success",
+            "report_path": None,
+            "output_dir": output_dir,
+            "summary": {},
+        }
+
+    monkeypatch.setattr(cli, "run_end_to_end_analysis", fake_run_end_to_end_analysis)
+
+    args = SimpleNamespace(
+        binary_path=str(binary_path),
+        output_dir=str(tmp_path / "analysis_sample"),
+        no_ollama_check=True,
+        config=None,
+        no_enhanced=False,
+        no_corporate=False,
+        no_vuln=False,
+        no_threat=False,
+        no_reconstruction=False,
+        no_demo=False,
+        ghidra_timeout=900,
+        ghidra_retries=0,
+    )
+
+    exit_code = cli.handle_analyze_command(args)
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Ghidra stage timeout: 900s" in captured.out
+    assert captured_call["ghidra_timeout_seconds"] == 900
+    assert captured_call["ghidra_retry_count"] == 0
+
+
 def test_runner_preserves_graceful_recompilation_failure(monkeypatch, tmp_path: Path):
     runner = EndToEndPipelineRunner(output_dir=str(tmp_path / "analysis_sample"))
     binary_path = tmp_path / "sample.exe"
@@ -419,9 +492,7 @@ def test_runner_preserves_graceful_recompilation_failure(monkeypatch, tmp_path: 
     report = {
         "summary": {
             "overall_status": "partial_success",
-            "stage_statuses": {
-                name: output["status"] for name, output in stage_outputs.items()
-            },
+            "stage_statuses": {name: output["status"] for name, output in stage_outputs.items()},
             "compiled_binaries": [],
             "behavioral_anomaly_score": 0.41,
             "memory_anomaly_score": 0.58,

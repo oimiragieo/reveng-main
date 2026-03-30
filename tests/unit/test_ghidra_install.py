@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 INSTALLER_PATH = REPO_ROOT / "scripts" / "install_ghidra.py"
 SERVER_PATH = REPO_ROOT / "external" / "ghidra-server" / "ghidra_http_server.py"

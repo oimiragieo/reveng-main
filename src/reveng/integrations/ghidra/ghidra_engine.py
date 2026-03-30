@@ -39,7 +39,7 @@ class GhidraEngine:
     def __init__(
         self,
         server_url: str = "http://127.0.0.1:13370",  # Changed from 1337 to avoid Razer SDK conflict
-        timeout: int = 30,
+        timeout: int = 180,
         fail_fast: bool = True,
     ):
         """
@@ -77,15 +77,11 @@ class GhidraEngine:
                 data = response.json()
                 if data.get("status") == "healthy":
                     method = data.get("method", "unknown")
-                    logger.info(
-                        f"✅ Connection successful. Ghidra ready (via {method})."
-                    )
+                    logger.info(f"✅ Connection successful. Ghidra ready (via {method}).")
                     return
                 else:
                     error_msg = data.get("error", "Unknown error")
-                    raise GhidraConnectionError(
-                        f"Ghidra Analysis Server is unhealthy: {error_msg}"
-                    )
+                    raise GhidraConnectionError(f"Ghidra Analysis Server is unhealthy: {error_msg}")
             else:
                 raise GhidraConnectionError(
                     f"Ghidra Analysis Server returned status {response.status_code}"
@@ -110,9 +106,7 @@ class GhidraEngine:
                 f"   For Java/Python/C# files, Ghidra is NOT needed.\n"
             )
         except requests.exceptions.Timeout:
-            raise GhidraConnectionError(
-                f"Ghidra Analysis Server at {self.server_url} timed out"
-            )
+            raise GhidraConnectionError(f"Ghidra Analysis Server at {self.server_url} timed out")
 
     def analyze_binary(self, binary_path: str) -> Dict[str, Any]:
         """
@@ -191,7 +185,7 @@ class GhidraEngine:
         try:
             response = self.session.post(
                 f"{self.server_url}{endpoint}",
-                json={"binary_path": binary_path},
+                json={"binary_path": binary_path, "timeout": self.timeout},
                 timeout=self.timeout,
             )
 
@@ -207,9 +201,7 @@ class GhidraEngine:
                     error_msg = error_data.get("error", "Unknown error")
                 except ValueError:
                     error_msg = response.text.strip() or "Unknown error"
-                raise GhidraConnectionError(
-                    f"{action.capitalize()} failed: {error_msg}"
-                )
+                raise GhidraConnectionError(f"{action.capitalize()} failed: {error_msg}")
 
         except requests.exceptions.ConnectionError:
             raise GhidraConnectionError(
@@ -266,18 +258,14 @@ class GhidraEngine:
             else:
                 error_data = cast(Dict[str, Any], response.json())
                 error_msg = error_data.get("error", "Unknown error")
-                raise GhidraConnectionError(
-                    f"Failed to get function details: {error_msg}"
-                )
+                raise GhidraConnectionError(f"Failed to get function details: {error_msg}")
 
         except requests.exceptions.ConnectionError:
             raise GhidraConnectionError(
                 f"Lost connection to Ghidra Analysis Server at {self.server_url}"
             )
         except requests.exceptions.Timeout:
-            raise GhidraConnectionError(
-                f"Request timed out after {self.timeout} seconds"
-            )
+            raise GhidraConnectionError(f"Request timed out after {self.timeout} seconds")
 
     def is_available(self) -> bool:
         """

@@ -8,13 +8,11 @@ Achieves 95%+ recompilation accuracy through:
 - Binary equivalence verification
 """
 
+import logging
 import os
 import subprocess
-import logging
-from pathlib import Path
-from typing import List, Dict, Optional
 from dataclasses import dataclass
-import re
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +64,7 @@ class LLVMOptimizationPipeline:
             result = subprocess.run(["which", program], capture_output=True, timeout=5)
             if result.returncode == 0:
                 return result.stdout.decode().strip()
-        except:
+        except Exception:
             pass
         return None
 
@@ -286,9 +284,7 @@ class LLVMOptimizationPipeline:
 
             # Heuristic 2: Check for vectorization (SSE/AVX instructions)
             has_vectorization = (
-                b"xmm" in code  # SSE
-                or b"ymm" in code  # AVX
-                or b"zmm" in code  # AVX-512
+                b"xmm" in code or b"ymm" in code or b"zmm" in code  # SSE  # AVX  # AVX-512
             )
             if has_vectorization:
                 return "O3"
@@ -428,16 +424,12 @@ class PGOCompiler:
         result = subprocess.run(cmd, capture_output=True, timeout=60)
 
         if result.returncode != 0:
-            raise RuntimeError(
-                f"Instrumented compilation failed: {result.stderr.decode()}"
-            )
+            raise RuntimeError(f"Instrumented compilation failed: {result.stderr.decode()}")
 
         logger.info(f"Created instrumented binary: {output}")
         return output
 
-    async def _collect_profiles(
-        self, instrumented: str, training_inputs: List[str]
-    ) -> str:
+    async def _collect_profiles(self, instrumented: str, training_inputs: List[str]) -> str:
         """Run instrumented binary with training data"""
         # Run with each training input
         for i, input_data in enumerate(training_inputs):
@@ -463,7 +455,7 @@ class PGOCompiler:
 
         try:
             subprocess.run(cmd, check=True, timeout=30)
-        except:
+        except (subprocess.SubprocessError, FileNotFoundError):
             # If llvm-profdata not found, use raw profile
             logger.warning("llvm-profdata not found, using raw profile")
             return profile_raw
@@ -503,7 +495,7 @@ class PGOCompiler:
             await self.llvm.compile_with_llvm(
                 source, baseline, optimization_level="O3", match_original=False
             )
-        except:
+        except Exception:
             return None
 
         # Measure execution time for both
@@ -520,7 +512,7 @@ class PGOCompiler:
                     capture_output=True,
                     timeout=5,
                 )
-            except:
+            except Exception:
                 pass
             baseline_time += time.time() - start
 
@@ -535,7 +527,7 @@ class PGOCompiler:
                     capture_output=True,
                     timeout=5,
                 )
-            except:
+            except Exception:
                 pass
             pgo_time += time.time() - start
 

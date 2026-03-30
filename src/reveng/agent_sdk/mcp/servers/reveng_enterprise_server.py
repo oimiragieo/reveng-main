@@ -31,6 +31,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import os
 import re
 import shutil
 import time
@@ -41,8 +42,22 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, cast
 
 import requests
 
+from ....app_reverse_engineering import (
+    AppCorpusEntry,
+    create_default_framework,
+    run_app_corpus,
+    select_app_corpus_entries,
+)
 from ....ai.angr_cfg_preprocessor import AngrCFGPreprocessor, CFGExtractionError
 from ....integrations.ghidra.ghidra_engine import GhidraEngine
+from ....result_contracts import (
+    RESULT_SCHEMA_VERSION,
+    build_mcp_resource_result,
+    build_mcp_tool_response,
+    make_evidence_item,
+    make_trace_reference,
+)
+from ....tools.anti_analysis.bun_extractor import run_bun_sea_workflow
 from ..server import MCPPrompt, MCPResource, MCPServer, MCPTool
 
 # Configure logging
@@ -50,6 +65,11 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
+try:
+    from scripts.run_app_reverse_engineering_corpus import load_app_corpus_config
+except Exception:  # pragma: no cover - script import fallback
+    load_app_corpus_config = None
 
 OLLAMA_CHAT_HOST = "http://localhost:11434"
 OLLAMA_CHAT_ENDPOINT = f"{OLLAMA_CHAT_HOST}/api/chat"
@@ -136,9 +156,7 @@ class OllamaRepairEngine:
         else:
             self.ollama = ollama_module
             self.client = (
-                ollama_module.Client(host=host)
-                if hasattr(ollama_module, "Client")
-                else None
+                ollama_module.Client(host=host) if hasattr(ollama_module, "Client") else None
             )
 
     def is_available(self) -> bool:
@@ -223,12 +241,37 @@ class REVENGEnterpriseServer(MCPServer):
         ```
     """
 
+    _TOOL_RISK_POLICIES: Dict[str, Dict[str, Any]] = {
+        "analyze_binary": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "decompile_binary": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "recompile_binary": {"risk_level": "high", "requires_policy_acknowledgement": False},
+        "diff_binaries": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "scan_yara": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "analyze_memory_dump": {"risk_level": "high", "requires_policy_acknowledgement": False},
+        "find_vulnerabilities": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "generate_exploit": {"risk_level": "high", "requires_policy_acknowledgement": True},
+        "classify_malware": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "deobfuscate_javascript": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "detect_js_malware": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "ask_ai_about_binary": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "ai_code_reconstruction": {"risk_level": "high", "requires_policy_acknowledgement": False},
+        "get_analysis_report": {"risk_level": "low", "requires_policy_acknowledgement": False},
+        "list_recent_analyses": {"risk_level": "low", "requires_policy_acknowledgement": False},
+        "reverse_engineer_app": {"risk_level": "low", "requires_policy_acknowledgement": False},
+        "run_app_corpus": {"risk_level": "low", "requires_policy_acknowledgement": False},
+    }
+
     def __init__(self, enable_rate_limiting: bool = True, enable_audit_log: bool = True):
         super().__init__("reveng-enterprise", "4.0.0")
 
         # Enterprise features
         self.audit_logger = AuditLogger() if enable_audit_log else None
         self.rate_limiter = RateLimiter(tokens_per_second=5.0) if enable_rate_limiting else None
+        ollama_chat_config = self._resolve_ollama_chat_config()
+        self.ollama_chat_host = ollama_chat_config["host"]
+        self.ollama_chat_endpoint = ollama_chat_config["endpoint"]
+        self.ollama_chat_model = ollama_chat_config["model"]
+        self.ollama_chat_timeout_seconds = ollama_chat_config["timeout_seconds"]
 
         # Analysis results cache
         self.results_cache: Dict[str, Any] = {}
@@ -249,8 +292,135 @@ class REVENGEnterpriseServer(MCPServer):
 
         # Register prompts
         self._register_prompts()
+        self._apply_tool_policies()
 
         logger.info("REVENG Enterprise MCP Server initialized")
+
+    def _resolve_ollama_chat_config(self) -> Dict[str, Any]:
+        """Resolve MCP-local Ollama routing from config and environment."""
+        host = OLLAMA_CHAT_HOST
+        model = OLLAMA_CHAT_MODEL
+        timeout_seconds = OLLAMA_CHAT_TIMEOUT_SECONDS
+
+        try:
+            from ....tools.config.config_manager import ConfigManager
+
+            ai_config = ConfigManager().get_ai_config()
+        except Exception:
+            ai_config = None
+        else:
+            if ai_config.provider in {"ollama", "local"}:
+                host = ai_config.ollama_host or host
+                if ai_config.ollama_model and ai_config.ollama_model != "auto":
+                    model = ai_config.ollama_model
+                timeout_seconds = int(ai_config.ollama_timeout or timeout_seconds)
+
+        host = os.environ.get(
+            "REVENG_MCP_OLLAMA_HOST",
+            os.environ.get("OLLAMA_HOST", host),
+        )
+        model = os.environ.get(
+            "REVENG_MCP_OLLAMA_MODEL",
+            os.environ.get("OLLAMA_MODEL", model),
+        )
+        timeout_raw = os.environ.get(
+            "REVENG_MCP_OLLAMA_TIMEOUT",
+            os.environ.get("OLLAMA_TIMEOUT", str(timeout_seconds)),
+        )
+        try:
+            timeout_seconds = max(1, int(timeout_raw))
+        except ValueError:
+            timeout_seconds = OLLAMA_CHAT_TIMEOUT_SECONDS
+
+        normalized_host = host.rstrip("/")
+        return {
+            "host": normalized_host,
+            "endpoint": f"{normalized_host}/api/chat",
+            "model": model,
+            "timeout_seconds": timeout_seconds,
+        }
+
+    def _apply_tool_policies(self) -> None:
+        """Apply enterprise risk annotations and input gates to registered tools."""
+        for tool_name, tool in self.tools.items():
+            policy = self._TOOL_RISK_POLICIES.get(
+                tool_name,
+                {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+            )
+            tool.annotations = {
+                "risk_level": policy["risk_level"],
+                "requires_policy_acknowledgement": policy["requires_policy_acknowledgement"],
+                "least_privilege_reviewed": True,
+            }
+            if policy["requires_policy_acknowledgement"]:
+                properties = tool.input_schema.setdefault("properties", {})
+                properties.setdefault(
+                    "policy_acknowledged",
+                    {
+                        "type": "boolean",
+                        "description": (
+                            "Explicit acknowledgement that this high-risk tool may generate "
+                            "sensitive outputs or perform privileged analysis steps."
+                        ),
+                    },
+                )
+
+    def _build_policy_denied_response(self, tool_name: str, reason: str) -> Dict[str, Any]:
+        """Build a policy denial response with explicit provenance."""
+        return build_mcp_tool_response(
+            tool_name=tool_name,
+            text=(
+                f"Policy denied `{tool_name}`. "
+                "This tool requires explicit `policy_acknowledged: true`."
+            ),
+            payload={},
+            status="error",
+            error=reason,
+            provenance={
+                "inputs": [],
+                "artifacts": [],
+                "stages": ["mcp_tool_execution", "enterprise_policy_gate", "result_contract_serialization"],
+                "references": [
+                    make_trace_reference(
+                        "blocked_by_policy",
+                        tool_name,
+                        trace_id=f"enterprise:mcp:policy:{tool_name}",
+                        confidence=1.0,
+                    )
+                ],
+                "tools": [tool_name, "enterprise_policy_gate"],
+            },
+        )
+
+    def _validate_tool_policy(self, tool_name: str, args: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Validate policy requirements for a tool invocation."""
+        policy = self._TOOL_RISK_POLICIES.get(tool_name)
+        if not policy or not policy.get("requires_policy_acknowledgement"):
+            return None
+        if args.get("policy_acknowledged") is True:
+            return None
+        return self._build_policy_denied_response(tool_name, "policy_acknowledgement_required")
+
+    @staticmethod
+    def _hash_text(value: str) -> str:
+        """Return a stable SHA-256 hash for provenance metadata."""
+        return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+    def _build_ollama_provenance_metadata(
+        self,
+        *,
+        prompt_text: str,
+        context_text: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Build traceable metadata for Ollama-backed MCP outputs."""
+        metadata: Dict[str, Any] = {
+            "prompt_sha256": self._hash_text(prompt_text),
+            "model_host": self.ollama_chat_host,
+            "model_endpoint": self.ollama_chat_endpoint,
+        }
+        if context_text is not None:
+            metadata["context_sha256"] = self._hash_text(context_text)
+        return metadata
 
     # ==================================================================================
     # BINARY ANALYSIS TOOLS
@@ -709,6 +879,50 @@ class REVENGEnterpriseServer(MCPServer):
             )
         )
 
+        self.register_tool(
+            MCPTool(
+                name="reverse_engineer_app",
+                description="Run the shared multi-language app reverse-engineering workflow and return a normalized contract",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "Path to app entry file or package"},
+                        "language": {
+                            "type": "string",
+                            "description": "Adapter language or auto",
+                            "enum": ["auto", "javascript", "jvm", "python", "dotnet"],
+                        },
+                        "output_dir": {
+                            "type": "string",
+                            "description": "Optional output directory for artifacts and SPECS",
+                        },
+                    },
+                    "required": ["path"],
+                },
+                handler=self.reverse_engineer_app,
+            )
+        )
+
+        self.register_tool(
+            MCPTool(
+                name="run_app_corpus",
+                description="Run the manifest-driven app reverse-engineering corpus and return the rollup report",
+                input_schema={
+                    "type": "object",
+                    "properties": {
+                        "config_path": {"type": "string", "description": "Optional corpus config path"},
+                        "entry_names": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Optional list of corpus entry names to run",
+                        },
+                        "output_dir": {"type": "string", "description": "Optional corpus output directory"},
+                    },
+                },
+                handler=self.run_app_corpus,
+            )
+        )
+
     # ==================================================================================
     # TOOL IMPLEMENTATIONS
     # ==================================================================================
@@ -720,15 +934,39 @@ class REVENGEnterpriseServer(MCPServer):
         handler_func: Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]],
     ) -> Dict[str, Any]:
         """Execute tool with rate limiting and audit logging"""
+        policy_denied = self._validate_tool_policy(tool_name, args)
+        if policy_denied is not None:
+            if self.audit_logger:
+                self.audit_logger.log_event(
+                    event_type="tool_execution",
+                    tool_name=tool_name,
+                    args=args,
+                    result="error",
+                    duration_ms=0.0,
+                    error="policy_acknowledgement_required",
+                )
+            return policy_denied
+
         # Rate limiting
         if self.rate_limiter:
             if not await self.rate_limiter.acquire():
-                return {
-                    "content": [
-                        {"type": "text", "text": "Rate limit exceeded. Please try again later."}
-                    ],
-                    "error": "rate_limit_exceeded",
-                }
+                result = build_mcp_tool_response(
+                    tool_name=tool_name,
+                    text="Rate limit exceeded. Please try again later.",
+                    payload={},
+                    status="error",
+                    error="rate_limit_exceeded",
+                )
+                if self.audit_logger:
+                    self.audit_logger.log_event(
+                        event_type="tool_execution",
+                        tool_name=tool_name,
+                        args=args,
+                        result="error",
+                        duration_ms=0.0,
+                        error="rate_limit_exceeded",
+                    )
+                return result
 
         # Execute with timing
         start_time = time.time()
@@ -739,10 +977,13 @@ class REVENGEnterpriseServer(MCPServer):
             result_status = "success" if "error" not in result else "error"
         except Exception as e:
             logger.exception(f"Error executing {tool_name}")
-            result = {
-                "content": [{"type": "text", "text": f"Internal error: {str(e)}"}],
-                "error": str(e),
-            }
+            result = build_mcp_tool_response(
+                tool_name=tool_name,
+                text=f"Internal error: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
             result_status = "error"
             error = str(e)
 
@@ -784,19 +1025,56 @@ class REVENGEnterpriseServer(MCPServer):
             # Format response
             text = self._format_analysis_results(result, path, analysis_id)
 
-            return {
-                "content": [{"type": "text", "text": text}],
-                "analysis_id": analysis_id,
-                "file_type": getattr(result, "file_type", "unknown"),
-                "architecture": getattr(result, "architecture", "unknown"),
-            }
+            analysis_payload = result if isinstance(result, dict) else {}
+            return build_mcp_tool_response(
+                tool_name="analyze_binary",
+                text=text,
+                payload={
+                    "analysis_id": analysis_id,
+                    "file_type": analysis_payload.get("binary", {}).get("type", "unknown"),
+                    "architecture": analysis_payload.get("binary", {}).get(
+                        "architecture", "unknown"
+                    ),
+                    "analysis_result": analysis_payload,
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=path,
+                            trace_id=f"enterprise:mcp:analysis:{analysis_id}:input",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "binary_analysis",
+                        "result_contract_serialization",
+                    ],
+                    "references": [
+                        make_trace_reference(
+                            "cached_as",
+                            analysis_id,
+                            trace_id=f"enterprise:mcp:analysis:{analysis_id}",
+                            confidence=1.0,
+                        )
+                    ],
+                    "tools": ["analyze_binary", "reveng_analyzer"],
+                },
+            )
 
         except Exception as e:
             logger.exception("Error in analyze_binary")
-            return {
-                "content": [{"type": "text", "text": f"Error analyzing binary: {str(e)}"}],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="analyze_binary",
+                text=f"Error analyzing binary: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
 
     async def decompile_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Decompile binary to source code"""
@@ -821,15 +1099,63 @@ class REVENGEnterpriseServer(MCPServer):
                 output_file.write_text(structured_result["decompiled_source"], encoding="utf-8")
                 structured_result["output_path"] = str(output_file)
 
-            return structured_result
+            return build_mcp_tool_response(
+                tool_name="decompile_binary",
+                text=structured_result["content"][0]["text"],
+                payload={
+                    key: value for key, value in structured_result.items() if key != "content"
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=path,
+                            trace_id=f"enterprise:mcp:decompile:{Path(path).name}",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": (
+                        [
+                            make_evidence_item(
+                                "decompiled_source",
+                                path=structured_result.get("output_path"),
+                                trace_id=f"enterprise:mcp:decompile:{Path(path).name}:source",
+                                evidence_kind="generated_source",
+                                confidence=0.8,
+                                source_result_type="mcp_tool_result",
+                            )
+                        ]
+                        if structured_result.get("output_path")
+                        else []
+                    ),
+                    "stages": [
+                        "mcp_tool_execution",
+                        "binary_decompilation",
+                        "result_contract_serialization",
+                    ],
+                    "references": [
+                        make_trace_reference(
+                            "derived_from",
+                            path,
+                            trace_id=f"enterprise:mcp:decompile:{Path(path).name}:input",
+                            confidence=1.0,
+                        )
+                    ],
+                    "tools": ["decompile_binary", "ghidra_engine"],
+                },
+            )
 
         except Exception as e:
             logger.exception("Error in decompile_binary")
-            return {
-                "content": [{"type": "text", "text": f"Error decompiling binary: {str(e)}"}],
-                "error": f"Error decompiling binary: {str(e)}",
-                "status_code": 500,
-            }
+            return build_mcp_tool_response(
+                tool_name="decompile_binary",
+                text=f"Error decompiling binary: {str(e)}",
+                payload={"status_code": 500},
+                status="error",
+                error=f"Error decompiling binary: {str(e)}",
+            )
 
     async def recompile_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Recompile source to binary"""
@@ -840,10 +1166,245 @@ class REVENGEnterpriseServer(MCPServer):
             provided_source = args.get("source_code")
             requested_output_path = args.get("output_path")
             ghidra_timeout = max(180, self._coerce_optional_int(args.get("_ghidra_timeout")) or 0)
-            recompilation_ghidra = self._get_ghidra_engine(timeout_override=ghidra_timeout)
 
             output_dir = self.cache_dir / f"recompile_{Path(binary_path).stem}_{int(time.time())}"
             output_dir.mkdir(parents=True, exist_ok=True)
+
+            if not str(provided_source or "").strip():
+                loop = asyncio.get_running_loop()
+                bun_result = await loop.run_in_executor(
+                    None,
+                    lambda: run_bun_sea_workflow(
+                        binary_path=binary_path,
+                        output_dir=str(output_dir),
+                        output_path=requested_output_path,
+                        skip_install=False,
+                    ),
+                )
+                if bun_result.info.is_bun_executable:
+                    if (
+                        bun_result.status == "success"
+                        and bun_result.build_result
+                        and bun_result.build_result.output_path
+                    ):
+                        compiled_binary = bun_result.build_result.output_path
+                        artifact_details = self._inspect_binary_artifact(compiled_binary)
+                        normalization = bun_result.normalization
+                        report_path = bun_result.report_path
+                        text = (
+                            "Bun executable recompilation complete\n"
+                            + "=" * 70
+                            + "\n\n"
+                            + f"Input: {binary_path}\n"
+                            + f"Output: {compiled_binary}\n"
+                            + f"Size: {artifact_details['size_bytes']} bytes\n"
+                            + f"Magic: {artifact_details['magic']}\n"
+                            + "Strategy: bun_node_sea\n"
+                            + f"Canonical input: {bun_result.canonical_input}\n"
+                            + f"Build report: {report_path}\n"
+                        )
+
+                        return build_mcp_tool_response(
+                            tool_name="recompile_binary",
+                            text=text,
+                            payload={
+                                "status_code": 200,
+                                "binary_path": binary_path,
+                                "output_path": compiled_binary,
+                                "success": True,
+                                "recompilation_strategy": "bun_node_sea",
+                                "function_overlap": None,
+                                "binary_size": artifact_details["size_bytes"],
+                                "magic_bytes": artifact_details["magic"],
+                                "source_path": (
+                                    normalization.entrypoint_path
+                                    if normalization
+                                    else bun_result.canonical_input
+                                ),
+                                "canonical_recompilation_input": bun_result.canonical_input,
+                                "canonical_recompilation_reason": bun_result.canonical_reason,
+                                "bun_report_path": report_path,
+                                "bun_build_report": bun_result.report_data,
+                                "bun_report_severity": (
+                                    bun_result.report_data.get("report_severity")
+                                    if bun_result.report_data
+                                    else None
+                                ),
+                                "bun_differential_validation": (
+                                    bun_result.report_data.get("differential_validation")
+                                    if bun_result.report_data
+                                    else None
+                                ),
+                                "bun_runtime_escalation": (
+                                    bun_result.report_data.get("runtime_escalation")
+                                    if bun_result.report_data
+                                    else None
+                                ),
+                                "bun_equivalence_validation": (
+                                    bun_result.report_data.get("equivalence_validation")
+                                    if bun_result.report_data
+                                    else None
+                                ),
+                                "bun_build_verification": (
+                                    bun_result.build_result.verification
+                                    if bun_result.build_result
+                                    else None
+                                ),
+                                "normalized_project_dir": (
+                                    normalization.output_dir if normalization else None
+                                ),
+                                "sea_blob_path": (
+                                    bun_result.build_result.sea_blob_path if bun_result.build_result else None
+                                ),
+                                "installed_dependencies": (
+                                    bun_result.build_result.installed_dependencies
+                                    if bun_result.build_result
+                                    else []
+                                ),
+                                "compilation_attempts": [],
+                                "commands_run": (
+                                    bun_result.build_result.commands_run
+                                    if bun_result.build_result
+                                    else []
+                                ),
+                                "model": None,
+                            },
+                            provenance={
+                                "inputs": [
+                                    make_evidence_item(
+                                        "binary_input",
+                                        path=binary_path,
+                                        trace_id=f"enterprise:mcp:recompile:{Path(binary_path).name}",
+                                        evidence_kind="input_binary",
+                                        confidence=1.0,
+                                        source_result_type="mcp_tool_result",
+                                    )
+                                ],
+                                "artifacts": [
+                                    make_evidence_item(
+                                        "rebuilt_binary",
+                                        path=compiled_binary,
+                                        trace_id=(
+                                            f"enterprise:mcp:recompile:{Path(binary_path).name}:rebuilt"
+                                        ),
+                                        evidence_kind="generated_binary",
+                                        confidence=0.95,
+                                        source_result_type="mcp_tool_result",
+                                    ),
+                                    make_evidence_item(
+                                        "bun_rebuild_report",
+                                        path=report_path,
+                                        trace_id=(
+                                            f"enterprise:mcp:recompile:{Path(binary_path).name}:bun-report"
+                                        ),
+                                        evidence_kind="analysis_report",
+                                        confidence=0.9,
+                                        source_result_type="mcp_tool_result",
+                                    ),
+                                ],
+                                "stages": [
+                                    "mcp_tool_execution",
+                                    "bun_detection",
+                                    "bun_bundle_extraction",
+                                    "bun_virtual_filesystem_recovery",
+                                    "bun_project_normalization",
+                                    "node_sea_packaging",
+                                    "result_contract_serialization",
+                                ],
+                                "references": [
+                                    make_trace_reference(
+                                        "rebuilt_from",
+                                        binary_path,
+                                        trace_id=(
+                                            f"enterprise:mcp:recompile:{Path(binary_path).name}:source"
+                                        ),
+                                        confidence=0.95,
+                                    )
+                                ],
+                                "tools": ["recompile_binary", "bun_extractor", "node", "npm", "postject"],
+                            },
+                        )
+
+                    return build_mcp_tool_response(
+                        tool_name="recompile_binary",
+                        text=(
+                            "Bun executable recompilation failed\n"
+                            + "=" * 70
+                            + "\n\n"
+                            + f"Input: {binary_path}\n"
+                            + f"Failure reason: {bun_result.reason or 'bun_rebuild_failed'}\n"
+                            + (f"Build report: {bun_result.report_path}\n" if bun_result.report_path else "")
+                        ),
+                        payload={
+                            "status_code": 200,
+                            "binary_path": binary_path,
+                            "success": False,
+                            "recompilation_strategy": "bun_node_sea",
+                            "compilation_errors": [bun_result.reason or "bun_rebuild_failed"],
+                            "partial_source": None,
+                            "source_path": (
+                                bun_result.normalization.entrypoint_path
+                                if bun_result.normalization
+                                else bun_result.canonical_input
+                            ),
+                            "compilation_attempts": [],
+                            "failure_reason": bun_result.reason or bun_result.message,
+                            "bun_report_path": bun_result.report_path,
+                            "bun_build_report": bun_result.report_data,
+                            "bun_report_severity": (
+                                bun_result.report_data.get("report_severity")
+                                if bun_result.report_data
+                                else None
+                            ),
+                            "bun_differential_validation": (
+                                bun_result.report_data.get("differential_validation")
+                                if bun_result.report_data
+                                else None
+                            ),
+                            "bun_runtime_escalation": (
+                                bun_result.report_data.get("runtime_escalation")
+                                if bun_result.report_data
+                                else None
+                            ),
+                            "bun_equivalence_validation": (
+                                bun_result.report_data.get("equivalence_validation")
+                                if bun_result.report_data
+                                else None
+                            ),
+                            "bun_build_verification": (
+                                bun_result.build_result.verification
+                                if bun_result.build_result
+                                else None
+                            ),
+                            "model": None,
+                        },
+                        provenance={
+                            "inputs": [
+                                make_evidence_item(
+                                    "binary_input",
+                                    path=binary_path,
+                                    trace_id=f"enterprise:mcp:recompile:{Path(binary_path).name}",
+                                    evidence_kind="input_binary",
+                                    confidence=1.0,
+                                    source_result_type="mcp_tool_result",
+                                )
+                            ],
+                            "artifacts": [],
+                            "stages": [
+                                "mcp_tool_execution",
+                                "bun_detection",
+                                "bun_bundle_extraction",
+                                "bun_virtual_filesystem_recovery",
+                                "bun_project_normalization",
+                                "node_sea_packaging",
+                                "result_contract_serialization",
+                            ],
+                            "references": [],
+                            "tools": ["recompile_binary", "bun_extractor", "node", "npm", "postject"],
+                        },
+                    )
+
+            recompilation_ghidra = self._get_ghidra_engine(timeout_override=ghidra_timeout)
 
             decompile_result: Optional[Dict[str, Any]] = None
             source_text = str(provided_source or "")
@@ -913,19 +1474,62 @@ class REVENGEnterpriseServer(MCPServer):
                     + f"Compilation attempts: {compile_report.get('total_attempts', 0)}\n"
                 )
 
-                return {
-                    "content": [{"type": "text", "text": text}],
-                    "status_code": 200,
-                    "binary_path": binary_path,
-                    "output_path": compiled_binary,
-                    "success": True,
-                    "function_overlap": function_overlap,
-                    "binary_size": artifact_details["size_bytes"],
-                    "magic_bytes": artifact_details["magic"],
-                    "source_path": compile_report.get("final_source_file", str(source_file)),
-                    "compilation_attempts": compile_report.get("attempts", []),
-                    "model": llm_backend.model,
-                }
+                return build_mcp_tool_response(
+                    tool_name="recompile_binary",
+                    text=text,
+                    payload={
+                        "status_code": 200,
+                        "binary_path": binary_path,
+                        "output_path": compiled_binary,
+                        "success": True,
+                        "function_overlap": function_overlap,
+                        "binary_size": artifact_details["size_bytes"],
+                        "magic_bytes": artifact_details["magic"],
+                        "source_path": compile_report.get("final_source_file", str(source_file)),
+                        "compilation_attempts": compile_report.get("attempts", []),
+                        "model": llm_backend.model,
+                    },
+                    provenance={
+                        "inputs": [
+                            make_evidence_item(
+                                "binary_input",
+                                path=binary_path,
+                                trace_id=f"enterprise:mcp:recompile:{Path(binary_path).name}",
+                                evidence_kind="input_binary",
+                                confidence=1.0,
+                                source_result_type="mcp_tool_result",
+                            )
+                        ],
+                        "artifacts": [
+                            make_evidence_item(
+                                "rebuilt_binary",
+                                path=compiled_binary,
+                                trace_id=(
+                                    f"enterprise:mcp:recompile:{Path(binary_path).name}:rebuilt"
+                                ),
+                                evidence_kind="generated_binary",
+                                confidence=max(function_overlap / 100.0, 0.0),
+                                source_result_type="mcp_tool_result",
+                                model=llm_backend.model,
+                            )
+                        ],
+                        "stages": [
+                            "mcp_tool_execution",
+                            "binary_decompilation",
+                            "binary_recompilation",
+                            "result_contract_serialization",
+                        ],
+                        "references": [
+                            make_trace_reference(
+                                "rebuilt_from",
+                                binary_path,
+                                trace_id=f"enterprise:mcp:recompile:{Path(binary_path).name}:source",
+                                confidence=max(function_overlap / 100.0, 0.0),
+                            )
+                        ],
+                        "tools": ["recompile_binary", "ghidra_engine", "ollama"],
+                    },
+                )
 
             final_source_path = Path(str(compile_report.get("final_source_file", source_file)))
             partial_source = (
@@ -950,28 +1554,68 @@ class REVENGEnterpriseServer(MCPServer):
                 + f"Failure reason: {compile_report.get('failure_reason', 'compilation_failed')}\n"
             )
 
-            return {
-                "content": [{"type": "text", "text": text}],
-                "status_code": 200,
-                "binary_path": binary_path,
-                "success": False,
-                "compilation_errors": compilation_errors,
-                "partial_source": partial_source,
-                "source_path": str(final_source_path),
-                "compilation_attempts": compile_report.get("attempts", []),
-                "failure_reason": compile_report.get("failure_reason"),
-                "model": llm_backend.model,
-            }
+            return build_mcp_tool_response(
+                tool_name="recompile_binary",
+                text=text,
+                payload={
+                    "status_code": 200,
+                    "binary_path": binary_path,
+                    "success": False,
+                    "compilation_errors": compilation_errors,
+                    "partial_source": partial_source,
+                    "source_path": str(final_source_path),
+                    "compilation_attempts": compile_report.get("attempts", []),
+                    "failure_reason": compile_report.get("failure_reason"),
+                    "model": llm_backend.model,
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=binary_path,
+                            trace_id=f"enterprise:mcp:recompile:{Path(binary_path).name}",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [
+                        make_evidence_item(
+                            "partial_source",
+                            path=str(final_source_path),
+                            trace_id=(
+                                f"enterprise:mcp:recompile:{Path(binary_path).name}:partial-source"
+                            ),
+                            evidence_kind="generated_source",
+                            confidence=0.3,
+                            source_result_type="mcp_tool_result",
+                            model=llm_backend.model,
+                        )
+                    ],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "binary_decompilation",
+                        "binary_recompilation",
+                        "result_contract_serialization",
+                    ],
+                    "references": [],
+                    "tools": ["recompile_binary", "ghidra_engine", "ollama"],
+                },
+            )
 
         except Exception as e:
             logger.exception("Error in recompile_binary")
-            return {
-                "content": [{"type": "text", "text": f"Error recompiling binary: {str(e)}"}],
-                "status_code": 500,
-                "success": False,
-                "compilation_errors": [str(e)],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="recompile_binary",
+                text=f"Error recompiling binary: {str(e)}",
+                payload={
+                    "status_code": 500,
+                    "success": False,
+                    "compilation_errors": [str(e)],
+                },
+                status="error",
+                error=str(e),
+            )
 
     async def scan_yara(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Scan a file using YARA rules."""
@@ -979,7 +1623,9 @@ class REVENGEnterpriseServer(MCPServer):
             from reveng.tools.threat_intel.yara_scanner import YARAScanner
 
             path = self._require_existing_file(args, "path")
-            rules_path = self._require_existing_path(args, "rules_path")
+            rules_path = self._validate_yara_rules_path(
+                self._require_existing_path(args, "rules_path")
+            )
             include_string_data = args.get("include_string_data", True)
 
             loop = asyncio.get_running_loop()
@@ -992,20 +1638,61 @@ class REVENGEnterpriseServer(MCPServer):
             ]
             text = self._format_yara_scan_results(path, rules_path, structured_matches)
 
-            return {
-                "content": [{"type": "text", "text": text}],
-                "path": path,
-                "rules_path": rules_path,
-                "match_count": len(structured_matches),
-                "matches": structured_matches,
-            }
+            return build_mcp_tool_response(
+                tool_name="scan_yara",
+                text=text,
+                payload={
+                    "status_code": 200,
+                    "path": path,
+                    "rules_path": rules_path,
+                    "match_count": len(structured_matches),
+                    "matches": structured_matches,
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=path,
+                            trace_id=f"enterprise:mcp:yara:{Path(path).name}",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        ),
+                        make_evidence_item(
+                            "rule_input",
+                            path=rules_path,
+                            trace_id=f"enterprise:mcp:yara:{Path(path).name}:rules",
+                            evidence_kind="rule_bundle",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        ),
+                    ],
+                    "artifacts": [],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "yara_scan",
+                        "result_contract_serialization",
+                    ],
+                    "references": [
+                        make_trace_reference(
+                            "scanned_with_rules",
+                            rules_path,
+                            trace_id=f"enterprise:mcp:yara:{Path(path).name}:scan",
+                        )
+                    ],
+                    "tools": ["scan_yara", "yara_scanner"],
+                },
+            )
 
         except Exception as e:
             logger.exception("Error in scan_yara")
-            return {
-                "content": [{"type": "text", "text": f"Error scanning with YARA: {str(e)}"}],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="scan_yara",
+                text=f"Error scanning with YARA: {str(e)}",
+                payload={"match_count": 0, "matches": []},
+                status="error",
+                error=str(e),
+            )
 
     async def analyze_memory_dump(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze a memory dump or binary using the memory forensics engine."""
@@ -1031,20 +1718,60 @@ class REVENGEnterpriseServer(MCPServer):
             structured_analysis = self._serialize_memory_analysis(analysis)
             text = self._format_memory_analysis_results(structured_analysis)
 
-            return {
-                "content": [{"type": "text", "text": text}],
-                "analysis": structured_analysis,
-                "output_dir": output_dir,
-            }
+            return build_mcp_tool_response(
+                tool_name="analyze_memory_dump",
+                text=text,
+                payload={
+                    "status_code": 200,
+                    "analysis": structured_analysis,
+                    "output_dir": output_dir,
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=path,
+                            trace_id=f"enterprise:mcp:memory-analysis:{Path(path).name}",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [
+                        make_evidence_item(
+                            "memory_analysis_report",
+                            path=output_dir,
+                            trace_id=(f"enterprise:mcp:memory-analysis:{Path(path).name}:report"),
+                            evidence_kind="analysis_report",
+                            confidence=0.9,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "memory_forensics_analysis",
+                        "result_contract_serialization",
+                    ],
+                    "references": [
+                        make_trace_reference(
+                            "analyzed_from",
+                            path,
+                            trace_id=f"enterprise:mcp:memory-analysis:{Path(path).name}",
+                        )
+                    ],
+                    "tools": ["analyze_memory_dump", "memory_forensics"],
+                },
+            )
 
         except Exception as e:
             logger.exception("Error in analyze_memory_dump")
-            return {
-                "content": [
-                    {"type": "text", "text": f"Error analyzing memory dump: {str(e)}"}
-                ],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="analyze_memory_dump",
+                text=f"Error analyzing memory dump: {str(e)}",
+                payload={"analysis": {}, "output_dir": args.get("output_dir")},
+                status="error",
+                error=str(e),
+            )
 
     async def diff_binaries(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Semantic binary diffing"""
@@ -1058,25 +1785,69 @@ class REVENGEnterpriseServer(MCPServer):
             loop = asyncio.get_running_loop()
             diff_result = await loop.run_in_executor(
                 None,
-                lambda: BinaryDiffer().diff(
-                    binary1, binary2, deep_analysis=bool(semantic_diff)
-                ),
+                lambda: BinaryDiffer().diff(binary1, binary2, deep_analysis=bool(semantic_diff)),
             )
 
             structured_diff = self._serialize_diff_result(diff_result)
             text = self._format_binary_diff_results(structured_diff)
 
-            return {
-                "content": [{"type": "text", "text": text}],
-                "diff": structured_diff,
-            }
+            diff_trace_id = f"enterprise:mcp:binary-diff:{Path(binary1).name}:{Path(binary2).name}"
+            return build_mcp_tool_response(
+                tool_name="diff_binaries",
+                text=text,
+                payload={
+                    "status_code": 200,
+                    "binary1": binary1,
+                    "binary2": binary2,
+                    "semantic_diff": bool(semantic_diff),
+                    "diff": structured_diff,
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=binary1,
+                            trace_id=f"{diff_trace_id}:left",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        ),
+                        make_evidence_item(
+                            "binary_input",
+                            path=binary2,
+                            trace_id=f"{diff_trace_id}:right",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        ),
+                    ],
+                    "artifacts": [],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "binary_diff_analysis",
+                        "result_contract_serialization",
+                    ],
+                    "references": [
+                        make_trace_reference(
+                            "compared_with",
+                            binary2,
+                            trace_id=f"{diff_trace_id}:comparison",
+                            metadata={"source": binary1},
+                        )
+                    ],
+                    "tools": ["diff_binaries", "binary_differ"],
+                },
+            )
 
         except Exception as e:
             logger.exception("Error in diff_binaries")
-            return {
-                "content": [{"type": "text", "text": f"Error diffing binaries: {str(e)}"}],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="diff_binaries",
+                text=f"Error diffing binaries: {str(e)}",
+                payload={"diff": {}},
+                status="error",
+                error=str(e),
+            )
 
     async def find_vulnerabilities(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Find vulnerabilities in binary"""
@@ -1100,22 +1871,51 @@ class REVENGEnterpriseServer(MCPServer):
                     text += f"  Location: {vuln.address}\n"
                     text += f"  Severity: {vuln.severity}\n\n"
 
-                return {
-                    "content": [{"type": "text", "text": text}],
-                    "vulnerabilities": [
-                        self._serialize_vulnerability(vulnerability)
-                        for vulnerability in vulnerabilities
-                    ],
-                }
+                serialized = [
+                    self._serialize_vulnerability(vulnerability)
+                    for vulnerability in vulnerabilities
+                ]
+                return build_mcp_tool_response(
+                    tool_name="find_vulnerabilities",
+                    text=text,
+                    payload={"vulnerabilities": serialized},
+                    provenance={
+                        "inputs": [
+                            make_evidence_item(
+                                "binary_input",
+                                path=path,
+                                trace_id=f"enterprise:mcp:vulns:{Path(path).name}",
+                                evidence_kind="input_binary",
+                                confidence=1.0,
+                                source_result_type="mcp_tool_result",
+                            )
+                        ],
+                        "artifacts": [],
+                        "stages": [
+                            "mcp_tool_execution",
+                            "symbolic_vulnerability_analysis",
+                            "result_contract_serialization",
+                        ],
+                        "references": [],
+                        "tools": ["find_vulnerabilities", "symbolic_execution_engine"],
+                    },
+                )
 
-            return {"content": [{"type": "text", "text": "No vulnerabilities found"}]}
+            return build_mcp_tool_response(
+                tool_name="find_vulnerabilities",
+                text="No vulnerabilities found",
+                payload={"vulnerabilities": []},
+            )
 
         except Exception as e:
             logger.exception("Error in find_vulnerabilities")
-            return {
-                "content": [{"type": "text", "text": f"Error finding vulnerabilities: {str(e)}"}],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="find_vulnerabilities",
+                text=f"Error finding vulnerabilities: {str(e)}",
+                payload={"vulnerabilities": []},
+                status="error",
+                error=str(e),
+            )
 
     async def generate_exploit(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Generate exploit for vulnerability"""
@@ -1151,15 +1951,39 @@ class REVENGEnterpriseServer(MCPServer):
                     note=note,
                     cfg_summary=cfg_summary,
                 )
-                return {
-                    "content": [{"type": "text", "text": text}],
-                    "status_code": 200,
-                    "binary_path": binary_path,
-                    "analysis_time": timeout_seconds,
-                    "cfg_summary": cfg_summary,
-                    "vulnerabilities": [],
-                    "note": note,
-                }
+                return build_mcp_tool_response(
+                    tool_name="generate_exploit",
+                    text=text,
+                    payload={
+                        "status_code": 200,
+                        "binary_path": binary_path,
+                        "analysis_time": timeout_seconds,
+                        "cfg_summary": cfg_summary,
+                        "vulnerabilities": [],
+                        "note": note,
+                    },
+                    provenance={
+                        "inputs": [
+                            make_evidence_item(
+                                "binary_input",
+                                path=binary_path,
+                                trace_id=f"enterprise:mcp:exploit:{Path(binary_path).name}",
+                                evidence_kind="input_binary",
+                                confidence=1.0,
+                                source_result_type="mcp_tool_result",
+                            )
+                        ],
+                        "artifacts": [],
+                        "stages": [
+                            "mcp_tool_execution",
+                            "cfg_generation",
+                            "symbolic_vulnerability_analysis",
+                            "result_contract_serialization",
+                        ],
+                        "references": [],
+                        "tools": ["generate_exploit", "symbolic_execution_engine"],
+                    },
+                )
 
             matching_vulnerabilities = [
                 vulnerability
@@ -1203,7 +2027,6 @@ class REVENGEnterpriseServer(MCPServer):
             )
 
             response: Dict[str, Any] = {
-                "content": [{"type": "text", "text": text}],
                 "status_code": 200,
                 "binary_path": binary_path,
                 "analysis_time": analysis_time,
@@ -1212,18 +2035,57 @@ class REVENGEnterpriseServer(MCPServer):
             }
             if note_message:
                 response["note"] = note_message
-            return response
+            return build_mcp_tool_response(
+                tool_name="generate_exploit",
+                text=text,
+                payload=response,
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=binary_path,
+                            trace_id=f"enterprise:mcp:exploit:{Path(binary_path).name}",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [
+                        make_evidence_item(
+                            "exploit_candidate",
+                            trace_id=f"enterprise:mcp:exploit:{Path(binary_path).name}:{index}",
+                            evidence_kind="generated_exploit",
+                            confidence=candidate.get("confidence"),
+                            source_result_type="mcp_tool_result",
+                        )
+                        for index, candidate in enumerate(serialized_vulnerabilities, start=1)
+                    ],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "cfg_generation",
+                        "symbolic_vulnerability_analysis",
+                        "exploit_synthesis",
+                        "result_contract_serialization",
+                    ],
+                    "references": [],
+                    "tools": ["generate_exploit", "symbolic_execution_engine"],
+                },
+            )
 
         except Exception as e:
             logger.exception("Error in generate_exploit")
-            return {
-                "content": [{"type": "text", "text": f"Error generating exploit: {str(e)}"}],
-                "status_code": 500,
-                "binary_path": str(args.get("binary_path") or args.get("path") or ""),
-                "analysis_time": 0,
-                "vulnerabilities": [],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="generate_exploit",
+                text=f"Error generating exploit: {str(e)}",
+                payload={
+                    "status_code": 500,
+                    "binary_path": str(args.get("binary_path") or args.get("path") or ""),
+                    "analysis_time": 0,
+                    "vulnerabilities": [],
+                },
+                status="error",
+                error=str(e),
+            )
 
     async def classify_malware(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Classify malware family"""
@@ -1249,26 +2111,57 @@ class REVENGEnterpriseServer(MCPServer):
 
             text = self._format_malware_classification_results(path, classification)
 
-            return {
-                "content": [{"type": "text", "text": text}],
-                "path": path,
-                "family": classification["family"],
-                "confidence": classification["confidence"],
-                "matched_rules": classification["matched_rules"],
-                "indicators": classification["indicators"],
-                "yara_matches": classification["yara_matches"],
-                "ml_assessment": classification["ml_assessment"],
-                "feature_summary": classification["feature_summary"],
-            }
+            return build_mcp_tool_response(
+                tool_name="classify_malware",
+                text=text,
+                payload={
+                    "path": path,
+                    "family": classification["family"],
+                    "confidence": classification["confidence"],
+                    "matched_rules": classification["matched_rules"],
+                    "indicators": classification["indicators"],
+                    "yara_matches": classification["yara_matches"],
+                    "ml_assessment": classification["ml_assessment"],
+                    "feature_summary": classification["feature_summary"],
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=path,
+                            trace_id=f"enterprise:mcp:malware:{Path(path).name}",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "malware_classification",
+                        "result_contract_serialization",
+                    ],
+                    "references": [
+                        make_trace_reference(
+                            "classified_as",
+                            classification["family"],
+                            trace_id=f"enterprise:mcp:malware:{Path(path).name}:family",
+                            confidence=classification["confidence"],
+                        )
+                    ],
+                    "tools": ["classify_malware", "yara_scanner"],
+                },
+            )
 
         except Exception as e:
             logger.exception("Error in classify_malware")
-            return {
-                "content": [
-                    {"type": "text", "text": f"Error classifying malware: {str(e)}"}
-                ],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="classify_malware",
+                text=f"Error classifying malware: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
 
     async def deobfuscate_javascript(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Deobfuscate JavaScript code"""
@@ -1283,14 +2176,17 @@ class REVENGEnterpriseServer(MCPServer):
 
             # Read from file if provided
             if file_path and not code:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    code = f.read()
+                file_path = self._require_existing_file({"file_path": file_path}, "file_path")
+                code = self._read_utf8_text_file(file_path, purpose="JavaScript file")
 
             if not code:
-                return {
-                    "content": [{"type": "text", "text": "Error: No code or file_path provided"}],
-                    "error": "missing_input",
-                }
+                return build_mcp_tool_response(
+                    tool_name="deobfuscate_javascript",
+                    text="Error: No code or file_path provided",
+                    payload={},
+                    status="error",
+                    error="missing_input",
+                )
 
             # Deobfuscate
             deob = JavaScriptDeobfuscator(use_ml=use_ml, use_llm=use_llm)
@@ -1301,9 +2197,11 @@ class REVENGEnterpriseServer(MCPServer):
             text += f"Confidence: {result.confidence}%\n"
             text += "Obfuscation Types: "
             text += ", ".join(
-                obfuscation_type.value
-                if hasattr(obfuscation_type, "value")
-                else str(obfuscation_type)
+                (
+                    obfuscation_type.value
+                    if hasattr(obfuscation_type, "value")
+                    else str(obfuscation_type)
+                )
                 for obfuscation_type in result.obfuscation_types
             )
             text += "\n\n"
@@ -1312,7 +2210,6 @@ class REVENGEnterpriseServer(MCPServer):
             text += result.deobfuscated_code[:2000]
 
             response = {
-                "content": [{"type": "text", "text": text}],
                 "deobfuscated_code": result.deobfuscated_code,
                 "confidence": result.confidence,
             }
@@ -1330,14 +2227,49 @@ class REVENGEnterpriseServer(MCPServer):
                 if malware_result.is_malicious:
                     text += f"\n\n⚠️  MALWARE DETECTED (score: {malware_result.threat_score}/100)\n"
 
-            return response
+            return build_mcp_tool_response(
+                tool_name="deobfuscate_javascript",
+                text=text,
+                payload=response,
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "javascript_input",
+                            path=file_path,
+                            trace_id="enterprise:mcp:deobfuscate:input",
+                            evidence_kind="input_script",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [
+                        make_evidence_item(
+                            "deobfuscated_javascript",
+                            trace_id="enterprise:mcp:deobfuscate:output",
+                            evidence_kind="generated_source",
+                            confidence=float(result.confidence) / 100.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "javascript_deobfuscation",
+                        "result_contract_serialization",
+                    ],
+                    "references": [],
+                    "tools": ["deobfuscate_javascript", "javascript_deobfuscator"],
+                },
+            )
 
         except Exception as e:
             logger.exception("Error in deobfuscate_javascript")
-            return {
-                "content": [{"type": "text", "text": f"Error deobfuscating JavaScript: {str(e)}"}],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="deobfuscate_javascript",
+                text=f"Error deobfuscating JavaScript: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
 
     async def detect_js_malware(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Detect JavaScript malware"""
@@ -1348,14 +2280,17 @@ class REVENGEnterpriseServer(MCPServer):
             file_path = args.get("file_path")
 
             if file_path and not code:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    code = f.read()
+                file_path = self._require_existing_file({"file_path": file_path}, "file_path")
+                code = self._read_utf8_text_file(file_path, purpose="JavaScript file")
 
             if not isinstance(code, str) or not code:
-                return {
-                    "content": [{"type": "text", "text": "Error: No code or file_path provided"}],
-                    "error": "missing_input",
-                }
+                return build_mcp_tool_response(
+                    tool_name="detect_js_malware",
+                    text="Error: No code or file_path provided",
+                    payload={"threat_score": 0, "is_malicious": False, "indicators": []},
+                    status="error",
+                    error="missing_input",
+                )
 
             detector = MalwareDetector()
             result = detector.analyze(code)
@@ -1370,18 +2305,56 @@ class REVENGEnterpriseServer(MCPServer):
                 for indicator in result.indicators:
                     text += f"  • {indicator}\n"
 
-            return {
-                "content": [{"type": "text", "text": text}],
-                "threat_score": result.threat_score,
-                "is_malicious": result.is_malicious,
-            }
+            source_label = str(file_path) if file_path else "<inline>"
+            return build_mcp_tool_response(
+                tool_name="detect_js_malware",
+                text=text,
+                payload={
+                    "status_code": 200,
+                    "file_path": file_path,
+                    "threat_score": result.threat_score,
+                    "is_malicious": result.is_malicious,
+                    "indicators": list(result.indicators),
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "javascript_input",
+                            path=str(file_path) if file_path else None,
+                            trace_id=f"enterprise:mcp:js-malware:{Path(source_label).name}",
+                            evidence_kind="input_source",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                            metadata={"source": "file" if file_path else "inline"},
+                        )
+                    ],
+                    "artifacts": [],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "javascript_malware_detection",
+                        "result_contract_serialization",
+                    ],
+                    "references": [
+                        make_trace_reference(
+                            "classified_as",
+                            "malicious_javascript" if result.is_malicious else "benign_javascript",
+                            trace_id=f"enterprise:mcp:js-malware:{Path(source_label).name}:classification",
+                            confidence=float(result.threat_score) / 100.0,
+                        )
+                    ],
+                    "tools": ["detect_js_malware", "malware_detector"],
+                },
+            )
 
         except Exception as e:
             logger.exception("Error in detect_js_malware")
-            return {
-                "content": [{"type": "text", "text": f"Error detecting malware: {str(e)}"}],
-                "error": str(e),
-            }
+            return build_mcp_tool_response(
+                tool_name="detect_js_malware",
+                text=f"Error detecting malware: {str(e)}",
+                payload={"threat_score": 0, "is_malicious": False, "indicators": []},
+                status="error",
+                error=str(e),
+            )
 
     async def ask_ai_about_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """AI-powered Q&A about binaries"""
@@ -1423,58 +2396,112 @@ class REVENGEnterpriseServer(MCPServer):
                 + "=" * 70
                 + f"\n\nBinary: {binary_path}\n"
                 + f"Question: {question}\n"
-                + f"Model: {OLLAMA_CHAT_MODEL}\n\n"
+                + f"Model: {self.ollama_chat_model}\n\n"
                 + answer
             )
 
-            return {
-                "content": [{"type": "text", "text": text}],
-                "status_code": 200,
-                "binary_path": binary_path,
-                "question": question,
-                "answer": answer,
-                "model": OLLAMA_CHAT_MODEL,
-                "context_used": bool(prompt_context.strip()),
-            }
+            question_trace_id = f"enterprise:mcp:binary-qa:{Path(binary_path).name}"
+            return build_mcp_tool_response(
+                tool_name="ask_ai_about_binary",
+                text=text,
+                payload={
+                    "status_code": 200,
+                    "binary_path": binary_path,
+                    "question": question,
+                    "answer": answer,
+                    "model": self.ollama_chat_model,
+                    "context_used": bool(prompt_context.strip()),
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=binary_path,
+                            trace_id=question_trace_id,
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [
+                        make_evidence_item(
+                            "question_answer",
+                            trace_id=f"{question_trace_id}:answer",
+                            evidence_kind="generated_answer",
+                            confidence=0.82,
+                            source_result_type="mcp_tool_result",
+                            model=self.ollama_chat_model,
+                            metadata=self._build_ollama_provenance_metadata(
+                                prompt_text=prompt_context,
+                                context_text=prompt_context,
+                            ),
+                        )
+                    ],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "binary_decompilation",
+                        "llm_question_answering",
+                        "result_contract_serialization",
+                    ],
+                    "references": [
+                        make_trace_reference(
+                            "answers_question",
+                            question,
+                            trace_id=f"{question_trace_id}:question",
+                        )
+                    ],
+                    "tools": ["ask_ai_about_binary", "ghidra_engine", "ollama"],
+                },
+            )
         except TimeoutError as exc:
             message = str(exc) or (
-                f"Ollama request timed out after {OLLAMA_CHAT_TIMEOUT_SECONDS} seconds"
+                f"Ollama request timed out after {self.ollama_chat_timeout_seconds} seconds"
             )
-            fallback_answer = self._build_timeout_question_fallback(
-                question=question,
-                decompile_result=decompile_result,
+            if self._has_decompile_context(decompile_result):
+                fallback_answer = self._build_timeout_question_fallback(
+                    question=question,
+                    decompile_result=decompile_result,
+                )
+            else:
+                fallback_answer = (
+                    f"Ollama timed out before it could produce an answer for '{question}'. "
+                    "No stable decompiled context was available, so REVENG could not infer a "
+                    "reliable behavior summary."
+                )
+            return build_mcp_tool_response(
+                tool_name="ask_ai_about_binary",
+                text=(
+                    f"Error querying Ollama: {message}\n\n"
+                    "Fallback context-only answer:\n"
+                    f"{fallback_answer}"
+                ),
+                payload={
+                    "status_code": 504,
+                    "binary_path": binary_path,
+                    "question": question,
+                    "model": self.ollama_chat_model,
+                    "context_used": bool(prompt_context.strip()),
+                    "fallback_used": True,
+                    "answer": fallback_answer,
+                },
+                status="error",
+                error=message,
             )
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": (
-                            f"Error querying Ollama: {message}\n\n"
-                            "Fallback context-only answer:\n"
-                            f"{fallback_answer}"
-                        ),
-                    }
-                ],
-                "status_code": 504,
-                "binary_path": binary_path,
-                "question": question,
-                "model": OLLAMA_CHAT_MODEL,
-                "context_used": bool(prompt_context.strip()),
-                "fallback_used": True,
-                "answer": fallback_answer,
-                "error": message,
-            }
         except Exception as exc:
             logger.exception("Error in ask_ai_about_binary")
-            return {
-                "content": [{"type": "text", "text": f"Error querying binary with AI: {exc}"}],
-                "status_code": 500,
-                "binary_path": binary_path,
-                "question": question,
-                "model": OLLAMA_CHAT_MODEL,
-                "context_used": False,
-                "error": str(exc),
-            }
+            return build_mcp_tool_response(
+                tool_name="ask_ai_about_binary",
+                text=f"Error querying binary with AI: {exc}",
+                payload={
+                    "status_code": 500,
+                    "binary_path": binary_path,
+                    "question": question,
+                    "model": self.ollama_chat_model,
+                    "context_used": False,
+                },
+                status="error",
+                error=str(exc),
+            )
 
     async def ai_code_reconstruction(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """AI code reconstruction"""
@@ -1533,7 +2560,7 @@ class REVENGEnterpriseServer(MCPServer):
                 "AI Code Reconstruction\n"
                 + "=" * 70
                 + f"\n\nBinary: {binary_path}\n"
-                + f"Model: {OLLAMA_CHAT_MODEL}\n"
+                + f"Model: {self.ollama_chat_model}\n"
                 + (
                     f"CFG summary: {cfg_context['function_count']} functions, "
                     f"{cfg_context['node_count']} nodes, {cfg_context['edge_count']} edges\n\n"
@@ -1546,74 +2573,163 @@ class REVENGEnterpriseServer(MCPServer):
                 + reconstructed_code[:4000]
             )
 
-            return {
-                "content": [{"type": "text", "text": text}],
-                "status_code": 200,
-                "binary_path": binary_path,
-                "reconstructed_code": reconstructed_code,
-                "improvement_notes": improvement_notes,
-                "model": OLLAMA_CHAT_MODEL,
-                "context_used": True,
-                "cfg_context_used": True,
-                "cfg_summary": {
-                    "function_count": cfg_context["function_count"],
-                    "node_count": cfg_context["node_count"],
-                    "edge_count": cfg_context["edge_count"],
+            return build_mcp_tool_response(
+                tool_name="ai_code_reconstruction",
+                text=text,
+                payload={
+                    "status_code": 200,
+                    "binary_path": binary_path,
+                    "reconstructed_code": reconstructed_code,
+                    "improvement_notes": improvement_notes,
+                    "model": self.ollama_chat_model,
+                    "context_used": True,
+                    "cfg_context_used": True,
+                    "cfg_summary": {
+                        "function_count": cfg_context["function_count"],
+                        "node_count": cfg_context["node_count"],
+                        "edge_count": cfg_context["edge_count"],
+                    },
                 },
-            }
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=binary_path,
+                            trace_id=f"enterprise:mcp:ai-reconstruct:{Path(binary_path).name}",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [
+                        make_evidence_item(
+                            "reconstructed_source",
+                            trace_id=f"enterprise:mcp:ai-reconstruct:{Path(binary_path).name}:output",
+                            evidence_kind="generated_source",
+                            confidence=0.85,
+                            source_result_type="mcp_tool_result",
+                            model=self.ollama_chat_model,
+                            metadata={
+                                **self._build_ollama_provenance_metadata(
+                                    prompt_text=reconstruction_prompt,
+                                    context_text=prompt_source,
+                                ),
+                                "cfg_context_sha256": self._hash_text(cfg_context["context_text"]),
+                            },
+                        )
+                    ],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "binary_decompilation",
+                        "cfg_extraction",
+                        "llm_reconstruction",
+                        "result_contract_serialization",
+                    ],
+                    "references": [],
+                    "tools": ["ai_code_reconstruction", "ghidra_engine", "ollama"],
+                },
+            )
         except TimeoutError as exc:
             message = str(exc) or (
-                f"Ollama request timed out after {OLLAMA_CHAT_TIMEOUT_SECONDS} seconds"
+                f"Ollama request timed out after {self.ollama_chat_timeout_seconds} seconds"
             )
             fallback_code = self._build_timeout_reconstruction_fallback(decompile_result)
             fallback_notes = self._build_timeout_reconstruction_notes(cfg_context)
-            return {
-                "content": [
-                    {
-                        "type": "text",
-                        "text": (
-                            f"Error reconstructing code with AI: {message}\n\n"
-                            "Fallback reconstruction generated from decompiled context."
-                        ),
-                    }
-                ],
-                "status_code": 504,
-                "binary_path": binary_path,
-                "model": OLLAMA_CHAT_MODEL,
-                "context_used": False,
-                "cfg_context_used": False,
-                "fallback_used": True,
-                "reconstructed_code": fallback_code,
-                "improvement_notes": fallback_notes,
-                "error": message,
-            }
+            return build_mcp_tool_response(
+                tool_name="ai_code_reconstruction",
+                text=(
+                    f"Error reconstructing code with AI: {message}\n\n"
+                    "Fallback reconstruction generated from decompiled context."
+                ),
+                payload={
+                    "status_code": 504,
+                    "binary_path": binary_path,
+                    "model": self.ollama_chat_model,
+                    "context_used": False,
+                    "cfg_context_used": False,
+                    "fallback_used": True,
+                    "reconstructed_code": fallback_code,
+                    "improvement_notes": fallback_notes,
+                },
+                status="error",
+                error=message,
+            )
         except Exception as exc:
             logger.exception("Error in ai_code_reconstruction")
-            return {
-                "content": [
-                    {"type": "text", "text": f"Error reconstructing code with AI: {exc}"}
-                ],
-                "status_code": 500,
-                "binary_path": binary_path,
-                "model": OLLAMA_CHAT_MODEL,
-                "context_used": False,
-                "cfg_context_used": False,
-                "error": str(exc),
-            }
+            return build_mcp_tool_response(
+                tool_name="ai_code_reconstruction",
+                text=f"Error reconstructing code with AI: {exc}",
+                payload={
+                    "status_code": 500,
+                    "binary_path": binary_path,
+                    "model": self.ollama_chat_model,
+                    "context_used": False,
+                    "cfg_context_used": False,
+                },
+                status="error",
+                error=str(exc),
+            )
 
     async def get_analysis_report(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Get analysis report"""
         analysis_id = args["analysis_id"]
+        report_format = str(args.get("format") or "text")
 
         if analysis_id in self.results_cache:
             result = self.results_cache[analysis_id]
             text = self._format_analysis_results(result, "cached", analysis_id)
-            return {"content": [{"type": "text", "text": text}]}
+            return build_mcp_tool_response(
+                tool_name="get_analysis_report",
+                text=text,
+                payload={
+                    "status_code": 200,
+                    "analysis_id": analysis_id,
+                    "format": report_format,
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "analysis_request",
+                            trace_id=f"enterprise:mcp:analysis-report:{analysis_id}",
+                            evidence_kind="analysis_request",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                            metadata={"format": report_format},
+                        )
+                    ],
+                    "artifacts": [
+                        make_evidence_item(
+                            "analysis_report",
+                            trace_id=f"enterprise:mcp:analysis-report:{analysis_id}:report",
+                            evidence_kind="analysis_report",
+                            confidence=0.95,
+                            source_result_type="mcp_tool_result",
+                            metadata={"format": report_format, "cache": "results_cache"},
+                        )
+                    ],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "analysis_report_lookup",
+                        "result_contract_serialization",
+                    ],
+                    "references": [
+                        make_trace_reference(
+                            "loaded_from_cache",
+                            analysis_id,
+                            trace_id=f"enterprise:mcp:analysis-report:{analysis_id}:cache",
+                        )
+                    ],
+                    "tools": ["get_analysis_report", "results_cache"],
+                },
+            )
 
-        return {
-            "content": [{"type": "text", "text": f"Analysis {analysis_id} not found in cache"}],
-            "error": "not_found",
-        }
+        return build_mcp_tool_response(
+            tool_name="get_analysis_report",
+            text=f"Analysis {analysis_id} not found in cache",
+            payload={"status_code": 404, "analysis_id": analysis_id, "format": report_format},
+            status="error",
+            error="not_found",
+        )
 
     async def list_recent_analyses(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """List recent analyses"""
@@ -1625,7 +2741,196 @@ class REVENGEnterpriseServer(MCPServer):
         for analysis_id in analyses:
             text += f"• {analysis_id}\n"
 
-        return {"content": [{"type": "text", "text": text}], "analyses": analyses}
+        return build_mcp_tool_response(
+            tool_name="list_recent_analyses",
+            text=text,
+            payload={
+                "status_code": 200,
+                "limit": limit,
+                "analyses": analyses,
+            },
+            provenance={
+                "inputs": [
+                    make_evidence_item(
+                        "analysis_list_request",
+                        trace_id="enterprise:mcp:recent-analyses:request",
+                        evidence_kind="analysis_request",
+                        confidence=1.0,
+                        source_result_type="mcp_tool_result",
+                        metadata={"limit": limit},
+                    )
+                ],
+                "artifacts": [],
+                "stages": [
+                    "mcp_tool_execution",
+                    "analysis_cache_enumeration",
+                    "result_contract_serialization",
+                ],
+                "references": [
+                    make_trace_reference(
+                        "enumerates_cache_entries",
+                        "results_cache",
+                        trace_id="enterprise:mcp:recent-analyses:cache",
+                        metadata={"count": len(analyses)},
+                    )
+                ],
+                "tools": ["list_recent_analyses", "results_cache"],
+            },
+        )
+
+    async def reverse_engineer_app(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Run the shared app reverse-engineering workflow and cache the result."""
+        try:
+            path = Path(args["path"]).expanduser().resolve()
+            if not path.exists():
+                raise FileNotFoundError(f"Path not found: {path}")
+
+            language = str(args.get("language") or "auto")
+            output_dir = str(
+                Path(args.get("output_dir") or (Path.cwd() / f"analysis_{path.stem}"))
+                .expanduser()
+                .resolve()
+            )
+
+            framework = create_default_framework()
+            app_result = await framework.reverse_engineer(
+                str(path),
+                output_dir,
+                language=language,
+            )
+
+            analysis_id = hashlib.md5(f"{path}{time.time()}".encode()).hexdigest()[:16]
+            self.results_cache[analysis_id] = app_result.metadata
+
+            text = (
+                f"App reverse engineering completed for {path.name}\n"
+                + "=" * 70
+                + "\n\n"
+                + f"Language: {app_result.language}\n"
+                + f"Adapter: {app_result.adapter_name}\n"
+                + f"Validation: {app_result.validation_grade}\n"
+                + f"Recovered sources: {app_result.source_count}\n"
+                + f"Analysis summary: {app_result.analysis_file}\n"
+                + f"Analysis ID: {analysis_id}\n"
+            )
+
+            trace_id = f"enterprise:mcp:app-re:{path.name}"
+            return build_mcp_tool_response(
+                tool_name="reverse_engineer_app",
+                text=text,
+                payload={
+                    "analysis_id": analysis_id,
+                    "language": app_result.language,
+                    "analysis_file": str(app_result.analysis_file),
+                    "app_result": app_result.metadata,
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "app_input",
+                            path=str(path),
+                            trace_id=trace_id,
+                            evidence_kind="input_app",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [
+                        make_evidence_item(
+                            "analysis_summary",
+                            path=str(app_result.analysis_file),
+                            trace_id=f"{trace_id}:summary",
+                            evidence_kind="analysis_summary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                            metadata={"validation_grade": app_result.validation_grade},
+                        )
+                    ],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "app_reverse_engineering",
+                        "result_contract_serialization",
+                    ],
+                    "references": [
+                        make_trace_reference(
+                            "cached_as",
+                            analysis_id,
+                            trace_id=f"{trace_id}:cache",
+                            metadata={"cache": "results_cache"},
+                        )
+                    ],
+                    "tools": ["reverse_engineer_app", app_result.adapter_name],
+                },
+            )
+        except Exception as e:
+            logger.exception("Error in reverse_engineer_app")
+            return build_mcp_tool_response(
+                tool_name="reverse_engineer_app",
+                text=f"Error reverse engineering app: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
+
+    async def run_app_corpus(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Run the manifest-driven app reverse-engineering corpus and cache the rollup."""
+        try:
+            if load_app_corpus_config is None:
+                raise RuntimeError("App corpus loader is not available")
+
+            config_path = args.get("config_path")
+            config = (
+                load_app_corpus_config(Path(config_path).expanduser().resolve())
+                if config_path
+                else load_app_corpus_config()
+            )
+            corpus_entries = [AppCorpusEntry(**entry) for entry in config.get("entries", [])]
+            corpus_entries = select_app_corpus_entries(corpus_entries, args.get("entry_names"))
+            output_dir = str(
+                Path(args.get("output_dir") or (Path.cwd() / "reports" / "app_reverse_engineering_corpus"))
+                .expanduser()
+                .resolve()
+            )
+            report = await run_app_corpus(corpus_entries, output_dir)
+            analysis_id = hashlib.md5(f"app-corpus{time.time()}".encode()).hexdigest()[:16]
+            self.results_cache[analysis_id] = report
+            text = (
+                "App corpus execution completed\n"
+                + "=" * 70
+                + "\n\n"
+                + f"Matrix status: {report['summary']['matrix_status']}\n"
+                + f"Completed entries: {report['summary']['completed_entries']}\n"
+                + f"Failed entries: {report['summary']['failed_entries']}\n"
+                + f"Analysis ID: {analysis_id}\n"
+            )
+            return build_mcp_tool_response(
+                tool_name="run_app_corpus",
+                text=text,
+                payload={"analysis_id": analysis_id, "corpus_report": report},
+                provenance={
+                    "inputs": [],
+                    "artifacts": [],
+                    "stages": ["mcp_tool_execution", "app_corpus_execution", "result_contract_serialization"],
+                    "references": [
+                        make_trace_reference(
+                            "cached_as",
+                            analysis_id,
+                            trace_id=f"enterprise:mcp:app-corpus:{analysis_id}",
+                            metadata={"cache": "results_cache"},
+                        )
+                    ],
+                    "tools": ["run_app_corpus"],
+                },
+            )
+        except Exception as e:
+            logger.exception("Error in run_app_corpus")
+            return build_mcp_tool_response(
+                tool_name="run_app_corpus",
+                text=f"Error running app corpus: {str(e)}",
+                payload={},
+                status="error",
+                error=str(e),
+            )
 
     # ==================================================================================
     # RESOURCES
@@ -1659,10 +2964,27 @@ class REVENGEnterpriseServer(MCPServer):
             return {
                 "uri": uri,
                 "mimeType": "application/json",
-                "text": json.dumps({"analyses": analyses}, indent=2),
+                "text": json.dumps(
+                    build_mcp_resource_result(
+                        resource_name="recent_analyses",
+                        payload={"analyses": analyses},
+                    ),
+                    indent=2,
+                ),
             }
 
-        return {"uri": uri, "mimeType": "text/plain", "text": f"Resource not found: {uri}"}
+        return {
+            "uri": uri,
+            "mimeType": "text/plain",
+            "text": json.dumps(
+                build_mcp_resource_result(
+                    resource_name="missing_resource",
+                    payload={"uri": uri},
+                    status="error",
+                    error=f"Resource not found: {uri}",
+                )
+            ),
+        }
 
     # ==================================================================================
     # PROMPTS
@@ -1710,42 +3032,42 @@ class REVENGEnterpriseServer(MCPServer):
         if name == "analyze_malware":
             binary_path = arguments.get("binary_path", "<binary_path>")
             return [
-                {
-                    "role": "user",
-                    "content": {
-                        "type": "text",
-                        "text": f"Perform comprehensive malware analysis on {binary_path}. "
+                self._build_prompt_message(
+                    prompt_name=name,
+                    prompt_text=(
+                        f"Perform comprehensive malware analysis on {binary_path}. "
                         f"Include binary analysis, vulnerability detection, malware classification, "
-                        f"and threat intelligence correlation. Provide a detailed report.",
-                    },
-                }
+                        f"and threat intelligence correlation. Provide a detailed report."
+                    ),
+                    arguments=arguments,
+                )
             ]
 
         elif name == "find_and_exploit":
             binary_path = arguments.get("binary_path", "<binary_path>")
             return [
-                {
-                    "role": "user",
-                    "content": {
-                        "type": "text",
-                        "text": f"Analyze {binary_path} to find vulnerabilities, then generate "
+                self._build_prompt_message(
+                    prompt_name=name,
+                    prompt_text=(
+                        f"Analyze {binary_path} to find vulnerabilities, then generate "
                         f"working exploit code. Use symbolic execution for vulnerability discovery "
-                        f"and create ROP chains if needed.",
-                    },
-                }
+                        f"and create ROP chains if needed."
+                    ),
+                    arguments=arguments,
+                )
             ]
 
         elif name == "deobfuscate_analyze":
             js_file = arguments.get("js_file", "<js_file>")
             return [
-                {
-                    "role": "user",
-                    "content": {
-                        "type": "text",
-                        "text": f"Deobfuscate {js_file} using ML renaming and LLM analysis. "
-                        f"Detect any malware and provide a security assessment.",
-                    },
-                }
+                self._build_prompt_message(
+                    prompt_name=name,
+                    prompt_text=(
+                        f"Deobfuscate {js_file} using ML renaming and LLM analysis. "
+                        f"Detect any malware and provide a security assessment."
+                    ),
+                    arguments=arguments,
+                )
             ]
 
         return []
@@ -1753,6 +3075,26 @@ class REVENGEnterpriseServer(MCPServer):
     # ==================================================================================
     # HELPERS
     # ==================================================================================
+
+    def _build_prompt_message(
+        self, *, prompt_name: str, prompt_text: str, arguments: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Build a versioned prompt message while preserving MCP prompt message shape."""
+        return {
+            "role": "user",
+            "content": {
+                "type": "text",
+                "text": prompt_text,
+                "schema_version": RESULT_SCHEMA_VERSION,
+                "result_type": "mcp_prompt_message",
+                "prompt_name": prompt_name,
+                "prompt_arguments": dict(arguments),
+                "provenance": {
+                    "stages": ["prompt_template_resolution"],
+                    "tools": ["prompt_template"],
+                },
+            },
+        }
 
     def _format_analysis_results(self, result: Any, path: str, analysis_id: str) -> str:
         """Format analysis results as text"""
@@ -1785,12 +3127,18 @@ class REVENGEnterpriseServer(MCPServer):
             raise ValueError(f"Missing required argument: {field_name}")
 
         path = Path(value)
+        if not path.exists():
+            raise FileNotFoundError(f"File not found: {value}")
+        if path.is_dir():
+            raise IsADirectoryError(f"Expected file but received directory: {value}")
         if not path.is_file():
             raise FileNotFoundError(f"File not found: {value}")
 
         return str(path)
 
-    def _resolve_binary_argument(self, args: Dict[str, Any], field_name: str = "binary_path") -> str:
+    def _resolve_binary_argument(
+        self, args: Dict[str, Any], field_name: str = "binary_path"
+    ) -> str:
         """Resolve a binary path while accepting the legacy `path` argument as a fallback."""
         value = args.get(field_name) or args.get("path")
         if not value:
@@ -1798,9 +3146,7 @@ class REVENGEnterpriseServer(MCPServer):
 
         return self._require_existing_file({field_name: value}, field_name)
 
-    def _build_decompile_response(
-        self, binary_path: str, result: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _build_decompile_response(self, binary_path: str, result: Dict[str, Any]) -> Dict[str, Any]:
         """Normalize a Ghidra decompile response into MCP-friendly structured JSON."""
         raw_functions = result.get("functions", [])
         decompiled_functions: List[Dict[str, Any]] = []
@@ -1812,9 +3158,7 @@ class REVENGEnterpriseServer(MCPServer):
 
             normalized_function = dict(function)
             source = str(
-                normalized_function.get("source")
-                or normalized_function.get("decompiled")
-                or ""
+                normalized_function.get("source") or normalized_function.get("decompiled") or ""
             )
             normalized_function["source"] = source
             if source and not normalized_function.get("decompiled"):
@@ -1831,7 +3175,9 @@ class REVENGEnterpriseServer(MCPServer):
             ]
 
         decompiled_source = "\n\n".join(source_parts)
-        preview = decompiled_source[:4000] if decompiled_source else "No decompiled source returned."
+        preview = (
+            decompiled_source[:4000] if decompiled_source else "No decompiled source returned."
+        )
         text = (
             f"Decompilation Complete: {binary_path}\n"
             f"{'=' * 70}\n\n"
@@ -1846,10 +3192,25 @@ class REVENGEnterpriseServer(MCPServer):
             "decompiled_functions": decompiled_functions,
             "functions": decompiled_functions,
             "function_count": len(decompiled_functions),
-            "strings": list(result.get("strings", [])) if isinstance(result.get("strings"), list) else [],
-            "imports": list(result.get("imports", [])) if isinstance(result.get("imports"), list) else [],
+            "strings": (
+                list(result.get("strings", [])) if isinstance(result.get("strings"), list) else []
+            ),
+            "imports": (
+                list(result.get("imports", [])) if isinstance(result.get("imports"), list) else []
+            ),
             "decompiled_source": decompiled_source,
         }
+
+    def _has_decompile_context(self, decompile_result: Dict[str, Any]) -> bool:
+        """Return True when decompilation produced enough context for deterministic fallbacks."""
+        if not isinstance(decompile_result, dict):
+            return False
+
+        if str(decompile_result.get("decompiled_source") or "").strip():
+            return True
+
+        list_keys = ("decompiled_functions", "functions", "imports", "strings")
+        return any(bool(decompile_result.get(key)) for key in list_keys)
 
     def _build_binary_question_context(
         self,
@@ -1915,12 +3276,14 @@ class REVENGEnterpriseServer(MCPServer):
         if additional_context:
             context_sections.append(f"Additional user context: {additional_context}")
         if decompiled_source:
-            context_sections.extend([
-                "Decompiled code:",
-                "```c",
-                decompiled_source,
-                "```",
-            ])
+            context_sections.extend(
+                [
+                    "Decompiled code:",
+                    "```c",
+                    decompiled_source,
+                    "```",
+                ]
+            )
 
         context_sections.append(
             "Answer the question directly using the supplied binary context. "
@@ -1962,7 +3325,10 @@ class REVENGEnterpriseServer(MCPServer):
             excerpt = fallback_source[:max_source_chars].strip()
 
         if len(excerpt) > max_source_chars:
-            excerpt = excerpt[:max_source_chars].rstrip() + "\n/* Decompiled source truncated for prompt size. */"
+            excerpt = (
+                excerpt[:max_source_chars].rstrip()
+                + "\n/* Decompiled source truncated for prompt size. */"
+            )
 
         return excerpt
 
@@ -1973,7 +3339,9 @@ class REVENGEnterpriseServer(MCPServer):
         decompile_result: Dict[str, Any],
     ) -> str:
         """Build a deterministic answer when Ollama times out after context was prepared."""
-        functions = self._prioritize_functions_for_llm(decompile_result.get("decompiled_functions", []))
+        functions = self._prioritize_functions_for_llm(
+            decompile_result.get("decompiled_functions", [])
+        )
         function_names = [
             str(function.get("name") or "unknown")
             for function in functions[:4]
@@ -2000,7 +3368,9 @@ class REVENGEnterpriseServer(MCPServer):
             max_functions=2,
             max_source_chars=1200,
         )
-        behavior_hint = self._infer_behavior_from_context(import_names, string_values, source_excerpt)
+        behavior_hint = self._infer_behavior_from_context(
+            import_names, string_values, source_excerpt
+        )
 
         return (
             f"Ollama timed out before it could answer the question '{question}'. "
@@ -2051,11 +3421,23 @@ class REVENGEnterpriseServer(MCPServer):
         combined = " ".join(import_names + string_values + [source_excerpt]).lower()
 
         behavior_map = [
-            (["socket", "connect", "send", "recv", "internet", "ws2_32"], "performs network communication or telemetry"),
-            (["createfile", "readfile", "writefile", "fopen", "fprintf", "puts"], "performs file or console I/O"),
+            (
+                ["socket", "connect", "send", "recv", "internet", "ws2_32"],
+                "performs network communication or telemetry",
+            ),
+            (
+                ["createfile", "readfile", "writefile", "fopen", "fprintf", "puts"],
+                "performs file or console I/O",
+            ),
             (["regopenkey", "regsetvalue", "registry"], "interacts with the Windows registry"),
-            (["crypt", "bcrypt", "sha", "aes", "md5"], "performs cryptographic or hashing operations"),
-            (["loadlibrary", "getprocaddress", "virtualprotect"], "uses dynamic runtime loading or memory-management routines"),
+            (
+                ["crypt", "bcrypt", "sha", "aes", "md5"],
+                "performs cryptographic or hashing operations",
+            ),
+            (
+                ["loadlibrary", "getprocaddress", "virtualprotect"],
+                "uses dynamic runtime loading or memory-management routines",
+            ),
         ]
 
         for keywords, description in behavior_map:
@@ -2094,7 +3476,9 @@ class REVENGEnterpriseServer(MCPServer):
             normalized_name = self._normalize_function_name(raw_name)
             source = str(function.get("source") or function.get("decompiled") or "")
             is_primary = normalized_name in {"main", "winmain", "wmain", "start"}
-            is_runtime = raw_name.startswith("__") or "crt" in normalized_name or "mingw" in normalized_name
+            is_runtime = (
+                raw_name.startswith("__") or "crt" in normalized_name or "mingw" in normalized_name
+            )
             is_generic = raw_name.startswith(("FUN_", "sub_", "LAB_", "thunk_", "_"))
             return (
                 0 if is_primary else 1,
@@ -2112,7 +3496,9 @@ class REVENGEnterpriseServer(MCPServer):
         loop = asyncio.get_running_loop()
 
         try:
-            payload = await loop.run_in_executor(None, preprocessor.extract_cfg_payload, binary_path)
+            payload = await loop.run_in_executor(
+                None, preprocessor.extract_cfg_payload, binary_path
+            )
             context_text = await loop.run_in_executor(
                 None,
                 lambda: preprocessor.build_llm_context(payload),
@@ -2175,23 +3561,26 @@ class REVENGEnterpriseServer(MCPServer):
         *,
         system_prompt: str,
         user_prompt: str,
-        timeout: int = OLLAMA_CHAT_TIMEOUT_SECONDS,
+        timeout: Optional[int] = None,
         num_predict: Optional[int] = None,
     ) -> str:
         """Query the local Ollama chat endpoint and return message content."""
+        resolved_timeout = timeout or self.ollama_chat_timeout_seconds
         try:
             response = await asyncio.wait_for(
                 asyncio.to_thread(
                     self._post_ollama_chat,
                     system_prompt,
                     user_prompt,
-                    timeout,
+                    resolved_timeout,
                     num_predict,
                 ),
-                timeout=timeout,
+                timeout=resolved_timeout,
             )
         except asyncio.TimeoutError as exc:
-            raise TimeoutError(f"Ollama request timed out after {timeout} seconds") from exc
+            raise TimeoutError(
+                f"Ollama request timed out after {resolved_timeout} seconds"
+            ) from exc
 
         content = self._extract_ollama_message_content(response)
         if not content:
@@ -2211,7 +3600,7 @@ class REVENGEnterpriseServer(MCPServer):
             options["num_predict"] = int(num_predict)
 
         payload = {
-            "model": OLLAMA_CHAT_MODEL,
+            "model": self.ollama_chat_model,
             "stream": False,
             "messages": [
                 {"role": "system", "content": system_prompt},
@@ -2222,7 +3611,7 @@ class REVENGEnterpriseServer(MCPServer):
 
         try:
             response = requests.post(
-                OLLAMA_CHAT_ENDPOINT,
+                self.ollama_chat_endpoint,
                 json=payload,
                 timeout=timeout,
             )
@@ -2267,10 +3656,14 @@ class REVENGEnterpriseServer(MCPServer):
             ).strip()
 
         if not reconstructed_code:
-            code_match = re.search(r"```(?:c|cpp)?\s*(.*?)```", response_text, re.DOTALL | re.IGNORECASE)
+            code_match = re.search(
+                r"```(?:c|cpp)?\s*(.*?)```", response_text, re.DOTALL | re.IGNORECASE
+            )
             if code_match:
                 reconstructed_code = code_match.group(1).strip()
-                improvement_notes = improvement_notes or response_text.replace(code_match.group(0), "").strip()
+                improvement_notes = (
+                    improvement_notes or response_text.replace(code_match.group(0), "").strip()
+                )
 
         if not reconstructed_code and self._contains_c_function_definition(response_text):
             reconstructed_code = response_text.strip()
@@ -2297,7 +3690,9 @@ class REVENGEnterpriseServer(MCPServer):
         if not stripped:
             return None
 
-        fenced_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", stripped, re.DOTALL | re.IGNORECASE)
+        fenced_match = re.search(
+            r"```(?:json)?\s*(\{.*?\})\s*```", stripped, re.DOTALL | re.IGNORECASE
+        )
         candidates = [fenced_match.group(1)] if fenced_match else []
         candidates.append(stripped)
 
@@ -2413,9 +3808,7 @@ class REVENGEnterpriseServer(MCPServer):
             )
 
         if not has_entry_point:
-            bodies.append(
-                "int main(void)\n{\n    return 0;\n}\n"
-            )
+            bodies.append("int main(void)\n{\n    return 0;\n}\n")
 
         if not bodies:
             fallback = str(decompile_result.get("decompiled_source") or "").strip()
@@ -2437,7 +3830,11 @@ class REVENGEnterpriseServer(MCPServer):
         candidate = header.strip()
         if not separator or "(" not in candidate or ")" not in candidate:
             return None
-        if candidate.startswith("if ") or candidate.startswith("while ") or candidate.startswith("switch "):
+        if (
+            candidate.startswith("if ")
+            or candidate.startswith("while ")
+            or candidate.startswith("switch ")
+        ):
             return None
         return candidate
 
@@ -2643,7 +4040,11 @@ class REVENGEnterpriseServer(MCPServer):
         if value is None or value == "":
             return None
 
-        return int(value)
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            logger.warning("Invalid integer value for optional MCP argument: %r", value)
+            return None
 
     def _extract_function_names(self, result: Dict[str, Any]) -> set[str]:
         """Collect normalized function names from a decompile/analyze response."""
@@ -2680,15 +4081,50 @@ class REVENGEnterpriseServer(MCPServer):
 
         return str(path)
 
-    def _serialize_yara_match(
-        self, match: Any, include_string_data: bool = True
-    ) -> Dict[str, Any]:
+    def _read_utf8_text_file(self, file_path: str, *, purpose: str) -> str:
+        """Read a UTF-8 text file while surfacing decode failures clearly."""
+        try:
+            return Path(file_path).read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            raise ValueError(f"Could not decode {purpose} as UTF-8: {file_path}") from exc
+
+    def _validate_yara_rules_path(self, rules_path: str) -> str:
+        """Validate that a YARA rules path is a rule file or a directory containing rules."""
+        path = Path(rules_path)
+        valid_suffixes = {".yar", ".yara"}
+
+        if path.is_file():
+            if path.suffix.lower() not in valid_suffixes:
+                raise ValueError(
+                    "YARA rules path must be a .yar/.yara file or directory containing rule files"
+                )
+            return str(path)
+
+        if path.is_dir():
+            rule_files = [
+                candidate
+                for candidate in path.rglob("*")
+                if candidate.is_file() and candidate.suffix.lower() in valid_suffixes
+            ]
+            if not rule_files:
+                raise ValueError(
+                    "YARA rules path must be a .yar/.yara file or directory containing rule files"
+                )
+            return str(path)
+
+        raise ValueError(
+            "YARA rules path must be a .yar/.yara file or directory containing rule files"
+        )
+
+    def _serialize_yara_match(self, match: Any, include_string_data: bool = True) -> Dict[str, Any]:
         """Convert a YARA match into JSON-safe data."""
         serialized_strings = []
         for offset, identifier, data in getattr(match, "strings", []):
             string_result = {"offset": offset, "identifier": identifier}
             if include_string_data:
-                decoded = data.decode("utf-8", errors="replace") if isinstance(data, bytes) else str(data)
+                decoded = (
+                    data.decode("utf-8", errors="replace") if isinstance(data, bytes) else str(data)
+                )
                 string_result["data_text"] = decoded
                 string_result["data_hex"] = data.hex() if isinstance(data, bytes) else str(data)
             serialized_strings.append(string_result)
@@ -2783,7 +4219,9 @@ class REVENGEnterpriseServer(MCPServer):
         """Convert a symbolic-execution vulnerability into JSON-safe data."""
         serialized = asdict(vulnerability)
         serialized["type"] = getattr(vulnerability.type, "value", str(vulnerability.type))
-        serialized["severity"] = getattr(vulnerability.severity, "value", str(vulnerability.severity))
+        serialized["severity"] = getattr(
+            vulnerability.severity, "value", str(vulnerability.severity)
+        )
 
         exploit_payload = serialized.get("exploit_payload")
         if isinstance(exploit_payload, bytes):
@@ -3166,9 +4604,7 @@ class REVENGEnterpriseServer(MCPServer):
                         self._create_error(msg_id, -32603, f"No handler for tool: {tool_name}"),
                     )
 
-                handler = cast(
-                    Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]], tool.handler
-                )
+                handler = cast(Callable[[Dict[str, Any]], Awaitable[Dict[str, Any]]], tool.handler)
                 result = await self._execute_with_audit(tool_name, arguments, handler)
                 return cast(Dict[str, Any], self._create_response(msg_id, result))
 

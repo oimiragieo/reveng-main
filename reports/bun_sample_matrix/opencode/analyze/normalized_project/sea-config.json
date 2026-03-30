@@ -1,0 +1,7 @@
+{
+  "main": "./sea-entry.cjs",
+  "output": "./sea-prep.blob",
+  "disableExperimentalSEAWarning": true,
+  "useCodeCache": false,
+  "assets": {}
+}

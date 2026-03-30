@@ -8,13 +8,11 @@ Enables advanced transformations through:
 - Security hardening (SafeStack, ASAN, CFI)
 """
 
-import os
-import subprocess
 import logging
-from pathlib import Path
-from typing import List, Optional, Dict
+import subprocess
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -104,14 +102,12 @@ class LLVMBinaryLifter:
 
         for tool in ["llvm-dis", "llvm-as", "opt", "llc", "clang"]:
             try:
-                result = subprocess.run(
-                    ["which", tool], capture_output=True, text=True, timeout=5
-                )
+                result = subprocess.run(["which", tool], capture_output=True, text=True, timeout=5)
 
                 if result.returncode == 0:
                     tools[tool] = result.stdout.strip()
 
-            except:
+            except (OSError, subprocess.SubprocessError):
                 pass
 
         return tools
@@ -256,11 +252,7 @@ class LLVMBinaryLifter:
             passes = self._get_deobfuscation_passes()
 
             # Run optimizer
-            cmd = (
-                [self.llvm_tools["opt"]]
-                + passes
-                + [ir_path, "-S", "-o", optimized_path]
-            )
+            cmd = [self.llvm_tools["opt"]] + passes + [ir_path, "-S", "-o", optimized_path]
 
             result = subprocess.run(cmd, capture_output=True, timeout=60)
 
@@ -336,9 +328,7 @@ class LLVMBinaryLifter:
             result = subprocess.run(llc_cmd, capture_output=True, timeout=60)
 
             if result.returncode != 0:
-                raise RuntimeError(
-                    f"Assembly generation failed: {result.stderr.decode()}"
-                )
+                raise RuntimeError(f"Assembly generation failed: {result.stderr.decode()}")
 
             # Step 2: Assemble and link
             clang_cmd = [
@@ -427,18 +417,12 @@ class LLVMBinaryLifter:
 
             # Apply passes if any
             if passes:
-                opt_cmd = (
-                    [self.llvm_tools["opt"]]
-                    + passes
-                    + [ir_path, "-S", "-o", hardened_ir]
-                )
+                opt_cmd = [self.llvm_tools["opt"]] + passes + [ir_path, "-S", "-o", hardened_ir]
 
                 result = subprocess.run(opt_cmd, capture_output=True, timeout=60)
 
                 if result.returncode != 0:
-                    raise RuntimeError(
-                        f"Hardening passes failed: {result.stderr.decode()}"
-                    )
+                    raise RuntimeError(f"Hardening passes failed: {result.stderr.decode()}")
             else:
                 hardened_ir = ir_path
 

@@ -5,7 +5,6 @@ import json
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SERVER_PATH = REPO_ROOT / "external" / "ghidra-server" / "ghidra_http_server.py"
 
@@ -57,9 +56,7 @@ def test_decompile_endpoint_returns_503_without_mock_data_when_unavailable(
         },
     )
 
-    response = server.app.test_client().post(
-        "/decompile", json={"binary_path": str(binary_path)}
-    )
+    response = server.app.test_client().post("/decompile", json={"binary_path": str(binary_path)})
 
     assert response.status_code == 503
     assert response.get_json() == {"error": "Ghidra unavailable"}
@@ -89,12 +86,14 @@ def test_build_headless_command_preserves_windows_paths_with_spaces(tmp_path: Pa
     assert command[2] == "temp_project"
     assert command[command.index("-import") + 1] == str(binary_path)
     assert command[command.index("-scriptPath") + 1] == str(scripts_dir)
-    assert command[command.index("-postScript") + 1] == server.get_export_script_path(scripts_dir).name
+    assert (
+        command[command.index("-postScript") + 1] == server.get_export_script_path(scripts_dir).name
+    )
     assert command[command.index("-postScript") + 2] == str(output_json)
     assert command[-1] == "-deleteProject"
 
 
-def test_run_ghidra_analysis_uses_120_second_timeout_and_returns_source(
+def test_run_ghidra_analysis_uses_default_timeout_and_returns_source(
     monkeypatch, tmp_path: Path
 ):
     server = _load_module("test_ghidra_server_run")
@@ -116,38 +115,47 @@ def test_run_ghidra_analysis_uses_120_second_timeout_and_returns_source(
         def __exit__(self, exc_type, exc, tb):
             return False
 
-    def _fake_run(cmd, capture_output, text, timeout, cwd):
+    class _FakeProcess:
+        returncode = 0
+
+        def __init__(self, cmd, cwd):
+            self.cmd = cmd
+            self.cwd = cwd
+
+        def communicate(self, timeout):
+            call_details["cmd"] = self.cmd
+            call_details["timeout"] = timeout
+            call_details["cwd"] = self.cwd
+            output_json = Path(self.cmd[self.cmd.index("-postScript") + 2])
+            output_json.parent.mkdir(parents=True, exist_ok=True)
+            output_json.write_text(
+                json.dumps(
+                    {
+                        "status": "success",
+                        "functions": [
+                            {"name": "thunk", "source": "", "decompiled": None},
+                            {
+                                "name": "main",
+                                "source": "",
+                                "decompiled": 'int main(void) {\n    puts("hello");\n    return 0;\n}',
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            return ("ok", "")
+
+        def poll(self):
+            return self.returncode
+
+    def _fake_popen(cmd, stdout, stderr, text, cwd, creationflags=0, start_new_session=False):
         call_details["cmd"] = cmd
-        call_details["timeout"] = timeout
         call_details["cwd"] = cwd
-        output_json = Path(cmd[cmd.index("-postScript") + 2])
-        output_json.parent.mkdir(parents=True, exist_ok=True)
-        output_json.write_text(
-            json.dumps(
-                {
-                    "status": "success",
-                    "functions": [
-                        {"name": "thunk", "source": "", "decompiled": None},
-                        {
-                            "name": "main",
-                            "source": "",
-                            "decompiled": "int main(void) {\n    puts(\"hello\");\n    return 0;\n}",
-                        },
-                    ],
-                }
-            ),
-            encoding="utf-8",
-        )
-
-        class _Result:
-            returncode = 0
-            stdout = "ok"
-            stderr = ""
-
-        return _Result()
+        return _FakeProcess(cmd, cwd)
 
     monkeypatch.setattr(server.tempfile, "TemporaryDirectory", lambda: _TempDir())
-    monkeypatch.setattr(server.subprocess, "run", _fake_run)
+    monkeypatch.setattr(server.subprocess, "Popen", _fake_popen)
 
     result = server.run_ghidra_analysis(binary_path=binary_path, ghidra_path=ghidra_path)
 
@@ -155,3 +163,45 @@ def test_run_ghidra_analysis_uses_120_second_timeout_and_returns_source(
     assert call_details["cwd"] == str(ghidra_path)
     assert result["functions"][0]["name"] == "main"
     assert result["functions"][0]["source"].startswith("int main(void)")
+
+
+def test_analyze_endpoint_passes_requested_timeout_to_headless_runner(monkeypatch, tmp_path: Path):
+    server = _load_module("test_ghidra_server_requested_timeout")
+    binary_path = tmp_path / "sample.exe"
+    binary_path.write_bytes(b"MZ")
+    captured: dict[str, object] = {}
+
+    def fake_run_ghidra_analysis(binary_path, ghidra_path=None, timeout=server.GHIDRA_HEADLESS_TIMEOUT):
+        captured["binary_path"] = str(binary_path)
+        captured["timeout"] = timeout
+        return {"functions": [], "imports": [], "strings": []}
+
+    monkeypatch.setattr(server, "run_ghidra_analysis", fake_run_ghidra_analysis)
+
+    response = server.app.test_client().post(
+        "/analyze",
+        json={"binary_path": str(binary_path), "timeout": 900},
+    )
+
+    assert response.status_code == 200
+    assert captured["binary_path"] == str(binary_path)
+    assert captured["timeout"] == 900
+
+
+def test_analyze_endpoint_timeout_response_uses_requested_timeout(monkeypatch, tmp_path: Path):
+    server = _load_module("test_ghidra_server_timeout_response")
+    binary_path = tmp_path / "sample.exe"
+    binary_path.write_bytes(b"MZ")
+
+    def fake_run_ghidra_analysis(binary_path, ghidra_path=None, timeout=server.GHIDRA_HEADLESS_TIMEOUT):
+        raise server.subprocess.TimeoutExpired(cmd=["ghidra"], timeout=timeout)
+
+    monkeypatch.setattr(server, "run_ghidra_analysis", fake_run_ghidra_analysis)
+
+    response = server.app.test_client().post(
+        "/analyze",
+        json={"binary_path": str(binary_path), "timeout": 321},
+    )
+
+    assert response.status_code == 504
+    assert response.get_json() == {"error": "Analysis timeout (321s)"}

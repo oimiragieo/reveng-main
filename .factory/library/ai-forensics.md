@@ -42,6 +42,6 @@
 - Focused validation that passed for this feature:
   - `python -c "import volatility3; print('OK')"`
   - `pytest tests/unit/test_volatility_integration.py tests/unit/test_malware_forensics_anomaly_detection.py -v`
-  - `pytest tests/poc/test_mcp_integration.py -v -k analyze_memory_dump`
+  - `pytest tests/integration/test_mcp_integration.py -v -k analyze_memory_dump`
   - `python -m flake8 src/reveng/malware/memory_forensics.py src/reveng/malware/volatility_analyzer.py tests/unit/test_volatility_integration.py --extend-ignore=E501,F811,E203`
   - `python -m mypy src/reveng/malware/memory_forensics.py src/reveng/malware/volatility_analyzer.py --ignore-missing-imports --follow-imports=skip`

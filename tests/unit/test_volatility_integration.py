@@ -111,7 +111,9 @@ def test_volatility_analyzer_requires_existing_dump(tmp_path):
         VolatilityAnalyzer().analyze_dump(str(missing_dump))
 
 
-def test_volatility_analyzer_uses_timezone_aware_timestamp(monkeypatch: pytest.MonkeyPatch, tmp_path):
+def test_volatility_analyzer_uses_timezone_aware_timestamp(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+):
     """Real analysis responses should emit timezone-aware UTC timestamps."""
     dump_path = tmp_path / "sample.dmp"
     dump_path.write_bytes(b"dump")
@@ -132,9 +134,11 @@ def test_volatility_analyzer_uses_timezone_aware_timestamp(monkeypatch: pytest.M
     monkeypatch.setattr(
         analyzer,
         "_run_plugin",
-        lambda dump, plugin_class: [{"PID": 7, "PPID": 4, "ImageFileName": "sample.exe"}]
-        if plugin_class is analyzer.WINDOWS_PLUGINS["pslist"]
-        else [],
+        lambda dump, plugin_class: (
+            [{"PID": 7, "PPID": 4, "ImageFileName": "sample.exe"}]
+            if plugin_class is analyzer.WINDOWS_PLUGINS["pslist"]
+            else []
+        ),
     )
 
     analysis = analyzer.analyze_dump(str(dump_path))

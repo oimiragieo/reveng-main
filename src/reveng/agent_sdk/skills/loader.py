@@ -6,7 +6,6 @@ Load skills from .claude/skills/ directory and Python modules.
 """
 
 import importlib.util
-import os
 from pathlib import Path
 from typing import Optional
 

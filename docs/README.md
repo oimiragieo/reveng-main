@@ -14,6 +14,8 @@ This directory now keeps a small set of current reference docs instead of multip
 ### User Guide
 
 - [CLI Usage](user-guide/cli-usage.md)
+- [Support Matrix](user-guide/support-matrix.md)
+- [Bun Executable Reversing](user-guide/bun-reversing.md)
 - [MCP Guide](mcp/README.md)
 
 ## Engineering References
@@ -21,6 +23,20 @@ This directory now keeps a small set of current reference docs instead of multip
 ### Developer Guide
 
 - [Architecture Overview](architecture/overview.md)
+- [Bun Escalation Paths](architecture/bun-escalation-paths.md)
+- [Bun Real-Sample Matrix](architecture/bun-real-sample-matrix.md)
+- [REVENG System Paper](architecture/reveng-system-paper.md)
+- [Feature Research Roadmap](architecture/reveng-feature-roadmap.md)
+- [World-Class Implementation Roadmap](architecture/reveng-world-class-implementation-roadmap.md)
+- [World-Class Execution Backlog](architecture/reveng-world-class-execution-backlog.md)
+- [GA Master Plan](architecture/reveng-ga-master-plan.md)
+- [Release Checklist](../.github/RELEASE_CHECKLIST.md)
+- [GA Asset Provisioning Manifest](../.reveng/ga_asset_manifest.json)
+- [App Reverse Engineering TDD Plan](architecture/app-reverse-engineering-tdd-plan.md)
+- [App Reverse Engineering Corpus](architecture/app-reverse-engineering-corpus.md)
+- [Current Platform Status](architecture/current-platform-status.md)
+- [TDD Microservices Plan](architecture/reveng-tdd-microservices-plan.md)
+- [TDD Implementation Backlog](architecture/reveng-tdd-implementation-backlog.md)
 - [API Reference](api/API_REFERENCE.md)
 - [Developer Guide](developer-guide/DEVELOPER_GUIDE.md)
 - [Contributing](../CONTRIBUTING.md)
@@ -32,6 +48,7 @@ This directory now keeps a small set of current reference docs instead of multip
 ### Deployment
 
 - [Deployment Notes](deployment/README.md)
+- [Release Evidence Verification](deployment/release-evidence-verification.md)
 - [Privacy Notes](legal/PRIVACY.md)
 
 ## Release History

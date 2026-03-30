@@ -23,7 +23,7 @@ NOT for: writing new features, TDD workflows, or fixing broken logic (use python
 ### 1. Baseline Verification
 Before touching anything, run the test suite and record the baseline:
 ```
-python -m pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc -q
+python -m pytest tests/unit/ tests/integration/ tests/performance -n 4 --ignore=tests/poc -q
 ```
 Record: X passed, Y failed. If Y > 0, stop and return to orchestrator — do not proceed with cleanup against a broken baseline.
 
@@ -38,7 +38,7 @@ If importers exist, update them BEFORE deleting the source. Never delete a file 
 ### 3. The Cleanup Loop (repeat for each batch)
 ```
 a) Update imports (if any) in dependent files
-b) Run tests: python -m pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc -q
+b) Run tests: python -m pytest tests/unit/ tests/integration/ tests/performance -n 4 --ignore=tests/poc -q
    → Must pass with 0 failures before proceeding
 c) git rm <files>  (use git rm, not plain rm, so deletions are staged)
 d) Run tests again to confirm nothing broke
@@ -66,7 +66,7 @@ git rm -r <dir/>     # removes any remaining tracked files
 After completing all work for the feature:
 ```
 git ls-files | rg '<pattern>'  # confirm deletions took effect
-python -m pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc -q
+python -m pytest tests/unit/ tests/integration/ tests/performance -n 4 --ignore=tests/poc -q
 git status  # must be clean after commit
 ```
 
@@ -98,7 +98,7 @@ Single clean commit per feature (or small sequential commits). The handoff must 
         "observation": "Confirmed 113 claude.md files in git index before deletion"
       },
       {
-        "command": "python -m pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc -q",
+        "command": "python -m pytest tests/unit/ tests/integration/ tests/performance -n 4 --ignore=tests/poc -q",
         "exitCode": 0,
         "observation": "307 passed, 0 failed, 93 skipped — baseline confirmed clean before deletion"
       },
@@ -108,7 +108,7 @@ Single clean commit per feature (or small sequential commits). The handoff must 
         "observation": "113 files staged for removal"
       },
       {
-        "command": "python -m pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc -q",
+        "command": "python -m pytest tests/unit/ tests/integration/ tests/performance -n 4 --ignore=tests/poc -q",
         "exitCode": 0,
         "observation": "307 passed, 0 failed — no regressions from deletion"
       },

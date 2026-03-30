@@ -132,9 +132,7 @@ class GPUAccelerator:
         self._memory_forensics_queue: List[QueuedMemoryForensicsTask] = []
         self._memory_forensics_lock = threading.Lock()
         self._memory_forensics_batch_id = 0
-        self.memory_forensics_dispatch_history: List[
-            MemoryForensicsBatchDispatch
-        ] = []
+        self.memory_forensics_dispatch_history: List[MemoryForensicsBatchDispatch] = []
 
         self._initialize()
 
@@ -401,12 +399,10 @@ class GPUAccelerator:
         dispatches: List[MemoryForensicsBatchDispatch] = []
 
         while True:
-            queued_batch, trigger, queued_for_seconds = (
-                self._pop_memory_forensics_batch(
-                    batch_size=batch_size,
-                    max_wait_seconds=0.0,
-                    force=True,
-                )
+            queued_batch, trigger, queued_for_seconds = self._pop_memory_forensics_batch(
+                batch_size=batch_size,
+                max_wait_seconds=0.0,
+                force=True,
             )
             if not queued_batch:
                 break

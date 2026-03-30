@@ -1,0 +1,88 @@
+  0          0       RESUME                   0
+
+  1          2       LOAD_SMALL_INT           0
+             4       LOAD_CONST               1 (None)
+             6       IMPORT_NAME              0 (argparse)
+             8       STORE_NAME               0 (argparse)
+
+  2         10       LOAD_SMALL_INT           0
+            12       LOAD_CONST               2 (('Path',))
+            14       IMPORT_NAME              1 (pathlib)
+            16       IMPORT_FROM              2 (Path)
+            18       STORE_NAME               2 (Path)
+            20       POP_TOP
+
+  5         22       LOAD_CONST               3 (<code object __annotate__ at 0x000001E154BE1980, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>)
+            24       MAKE_FUNCTION
+            26       LOAD_CONST               4 (<code object main at 0x000001E154AA30F0, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>)
+            28       MAKE_FUNCTION
+            30       SET_FUNCTION_ATTRIBUTE  16 (annotate)
+            32       STORE_NAME               3 (main)
+
+ 12         34       LOAD_NAME                4 (__name__)
+            36       LOAD_CONST               5 ('__main__')
+            38       COMPARE_OP              88 (bool(==))
+            42       POP_JUMP_IF_FALSE       10 (to L1)
+            46       NOT_TAKEN
+
+ 13         48       LOAD_NAME                3 (main)
+            50       PUSH_NULL
+            52       CALL                     0
+            60       POP_TOP
+            62       LOAD_CONST               1 (None)
+            64       RETURN_VALUE
+
+ 12   L1:   66       LOAD_CONST               1 (None)
+            68       RETURN_VALUE
+
+Disassembly of <code object __annotate__ at 0x000001E154BE1980, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>:
+  5          0       RESUME                   0
+             2       LOAD_FAST_BORROW         0 (format)
+             4       LOAD_SMALL_INT           2
+             6       COMPARE_OP             132 (>)
+            10       POP_JUMP_IF_FALSE        3 (to L1)
+            14       NOT_TAKEN
+            16       LOAD_COMMON_CONSTANT     1 (NotImplementedError)
+            18       RAISE_VARARGS            1
+      L1:   20       LOAD_CONST               1 ('return')
+            22       LOAD_CONST               2 (None)
+            24       BUILD_MAP                1
+            26       RETURN_VALUE
+
+Disassembly of <code object main at 0x000001E154AA30F0, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>:
+  5          0       RESUME                   0
+
+  6          2       LOAD_GLOBAL              0 (argparse)
+            12       LOAD_ATTR                2 (ArgumentParser)
+            32       PUSH_NULL
+            34       CALL                     0
+            42       STORE_FAST               0 (parser)
+
+  7         44       LOAD_FAST_BORROW         0 (parser)
+            46       LOAD_ATTR                5 (add_argument + NULL|self)
+            66       LOAD_CONST               0 ('--name')
+            68       LOAD_CONST               1 ('world')
+            70       LOAD_CONST               2 (('default',))
+            72       CALL_KW                  2
+            80       POP_TOP
+
+  8         82       LOAD_FAST_BORROW         0 (parser)
+            84       LOAD_ATTR                7 (parse_args + NULL|self)
+           104       CALL                     0
+           112       STORE_FAST               1 (args)
+
+  9        114       LOAD_GLOBAL              9 (Path + NULL)
+           124       LOAD_CONST               3 ('sample_output.txt')
+           126       CALL                     1
+           134       LOAD_ATTR               11 (write_text + NULL|self)
+           154       LOAD_CONST               4 ('hello ')
+           156       LOAD_FAST_BORROW         1 (args)
+           158       LOAD_ATTR               12 (name)
+           178       FORMAT_SIMPLE
+           180       BUILD_STRING             2
+           182       LOAD_CONST               5 ('utf-8')
+           184       LOAD_CONST               6 (('encoding',))
+           186       CALL_KW                  2
+           194       POP_TOP
+           196       LOAD_CONST               7 (None)
+           198       RETURN_VALUE

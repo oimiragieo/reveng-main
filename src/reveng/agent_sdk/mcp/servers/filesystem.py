@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List
 
-from ..server import MCPResource, MCPServer, MCPTool
+from ..server import MCPServer, MCPTool
 
 
 class FilesystemMCPServer(MCPServer):
@@ -217,8 +217,6 @@ class FilesystemMCPServer(MCPServer):
 
 # Main entry point
 if __name__ == "__main__":
-    import sys
-
     from ..transports import StdioTransport
 
     async def main():

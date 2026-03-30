@@ -217,7 +217,10 @@ class YARAScanner:
 
         extracted_strings = self._extract_ascii_strings(data)
         indicator_hits = sum(
-            1 for extracted in extracted_strings for token in self._INDICATOR_TOKENS if token in extracted.lower()
+            1
+            for extracted in extracted_strings
+            for token in self._INDICATOR_TOKENS
+            if token in extracted.lower()
         )
         features["string_indicator_density"] = indicator_hits / max(len(extracted_strings), 1)
 
@@ -261,9 +264,7 @@ class YARAScanner:
                         writable_executable_sections += 1
 
                 features["executable_section_count"] = float(executable_sections)
-                features["writable_executable_section_count"] = float(
-                    writable_executable_sections
-                )
+                features["writable_executable_section_count"] = float(writable_executable_sections)
                 features["average_section_entropy"] = sum(entropies) / len(entropies)
                 features["max_section_entropy"] = max(entropies)
         except Exception:
@@ -280,10 +281,7 @@ class YARAScanner:
     def _discover_rule_files(self, directory: Path) -> Dict[str, str]:
         if not directory.exists():
             return {}
-        return {
-            rule_file.stem: str(rule_file)
-            for rule_file in sorted(directory.glob("*.yar"))
-        }
+        return {rule_file.stem: str(rule_file) for rule_file in sorted(directory.glob("*.yar"))}
 
     def _resolve_custom_rule_files(
         self,
@@ -333,7 +331,9 @@ class YARAScanner:
         for string_match in strings:
             if isinstance(string_match, tuple) and len(string_match) == 3:
                 offset, identifier, data = string_match
-                payload = data if isinstance(data, bytes) else str(data).encode("utf-8", errors="replace")
+                payload = (
+                    data if isinstance(data, bytes) else str(data).encode("utf-8", errors="replace")
+                )
                 normalized.append((int(offset), str(identifier), payload))
                 continue
 
@@ -391,9 +391,10 @@ class YARAScanner:
             dominant_category = category_votes.most_common(1)[0][0]
             return f"Generic {dominant_category.title()}"
 
-        if features.get("writable_executable_section_count", 0.0) > 0 and features.get(
-            "entropy", 0.0
-        ) >= 7.0:
+        if (
+            features.get("writable_executable_section_count", 0.0) > 0
+            and features.get("entropy", 0.0) >= 7.0
+        ):
             return "Packed Loader"
 
         if features.get("suspicious_import_ratio", 0.0) >= 0.25:
@@ -451,13 +452,9 @@ class YARAScanner:
                 f"High file entropy ({features['entropy']:.2f}) suggests packing or encryption"
             )
         if features.get("writable_executable_section_count", 0.0) > 0:
-            indicators.append(
-                "Writable and executable PE sections were detected"
-            )
+            indicators.append("Writable and executable PE sections were detected")
         if features.get("suspicious_import_ratio", 0.0) >= 0.15:
-            indicators.append(
-                "Import table contains a concentrated set of suspicious APIs"
-            )
+            indicators.append("Import table contains a concentrated set of suspicious APIs")
 
         indicators.extend(ml_assessment.reasons)
 

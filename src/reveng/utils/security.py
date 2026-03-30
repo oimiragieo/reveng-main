@@ -95,9 +95,7 @@ def safe_extract_tar(tar_file: tarfile.TarFile, extract_path: Union[str, Path]) 
     tar_file.extractall(extract_path)  # noqa: S202
 
 
-def safe_extract_archive(
-    archive_path: Union[str, Path], extract_path: Union[str, Path]
-) -> None:
+def safe_extract_archive(archive_path: Union[str, Path], extract_path: Union[str, Path]) -> None:
     """
     Safely extract an archive (ZIP or TAR), auto-detecting the format.
 

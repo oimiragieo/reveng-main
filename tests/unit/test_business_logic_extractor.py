@@ -43,8 +43,7 @@ def test_analyze_application_domain_extracts_real_business_signals(
         for flow in result.data_flows
     )
     assert {
-        (operation.operation_type, operation.file_extension)
-        for operation in result.file_operations
+        (operation.operation_type, operation.file_extension) for operation in result.file_operations
     } >= {("read", ".nessus"), ("write", ".xlsx")}
     assert result.report_generation is not None
     assert result.report_generation.report_type == "Excel Report"
@@ -84,12 +83,7 @@ def test_extract_strings_keeps_printable_sequences_of_length_four_or_more(
     tmp_path: Path,
 ):
     binary_path = tmp_path / "strings.exe"
-    binary_path.write_bytes(
-        b"MZ\x90\x00abc\x00"
-        + b"query\x00auth\x00"
-        + b"\xff\x00"
-        + b"tls1\x00"
-    )
+    binary_path.write_bytes(b"MZ\x90\x00abc\x00" + b"query\x00auth\x00" + b"\xff\x00" + b"tls1\x00")
 
     strings = extractor._extract_strings(str(binary_path))
 
@@ -115,8 +109,7 @@ def test_supporting_extractors_and_loaders_expose_current_patterns(
         ("CSV Data", "JSON Output", DataFlowType.PROCESSING),
     }
     assert {
-        (operation.operation_type, operation.file_extension)
-        for operation in file_operations
+        (operation.operation_type, operation.file_extension) for operation in file_operations
     } == {("read", ".nessus"), ("write", ".pdf"), ("write", ".json")}
     assert report is not None
     assert report.report_type == "HTML Report"

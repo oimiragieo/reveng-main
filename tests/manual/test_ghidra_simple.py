@@ -16,6 +16,7 @@ print("=" * 70)
 # Direct import to avoid lazy loading issues
 try:
     from reveng.integrations.ghidra.ghidra_http_client import GhidraHTTPClient
+
     print(f"[OK] {GhidraHTTPClient.__name__} imported")
 except Exception as e:
     print(f"[FAIL] GhidraHTTPClient: {e}")
@@ -27,6 +28,7 @@ try:
         GhidraDataExtractor,
         GhidraEngine,
     )
+
     print("[OK] GhidraEngine imported")
 except Exception as e:
     print(f"[FAIL] GhidraEngine: {e}")
@@ -37,7 +39,7 @@ try:
     mock_data = {
         "decompiled_code": {
             "0x401000": "void main() { strcpy(buf, input); }",
-            "0x401100": "void crypto() { data[i] ^= key; }"
+            "0x401100": "void crypto() { data[i] ^= key; }",
         }
     }
     extractor = GhidraDataExtractor(mock_data)

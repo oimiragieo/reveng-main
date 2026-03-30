@@ -19,18 +19,22 @@ Integrates best-of-breed open source tools:
 """
 
 from .deobfuscator import (
-    JavaScriptDeobfuscator,
     DeobfuscationResult,
-    ObfuscationType,
     DeobfuscationStage,
+    JavaScriptDeobfuscator,
+    ObfuscationType,
 )
-
-from .detectors import ObfuscationDetector, DetectionResult
-
+from .bundle_reverse_engineer import (
+    BundleReverseEngineeringResult,
+    JavaScriptBundleReverseEngineer,
+)
+from .detectors import DetectionResult, ObfuscationDetector
 from .source_map_recoverer import SourceMapRecoverer, SourceMapResult
 
 __all__ = [
     "JavaScriptDeobfuscator",
+    "JavaScriptBundleReverseEngineer",
+    "BundleReverseEngineeringResult",
     "DeobfuscationResult",
     "ObfuscationType",
     "DeobfuscationStage",

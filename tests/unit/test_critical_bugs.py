@@ -45,12 +45,18 @@ def test_ghidra_engine_decompile_calls_decompile_endpoint():
     assert calls == [
         (
             "http://example.test/decompile",
-            {"binary_path": "test_samples/sample.exe"},
+            {"binary_path": "test_samples/sample.exe", "timeout": engine.timeout},
             engine.timeout,
         )
     ]
     assert result["functions"][0]["source"] == "int main(void) { return 0; }"
     assert result["decompiled_code"]["0x401000"] == "int main(void) { return 0; }"
+
+
+def test_ghidra_engine_defaults_to_long_running_native_timeout():
+    engine = GhidraEngine(server_url="http://example.test", fail_fast=False)
+
+    assert engine.timeout == 180
 
 
 def test_behavioral_monitor_entropy_uses_log2_without_attribute_errors():

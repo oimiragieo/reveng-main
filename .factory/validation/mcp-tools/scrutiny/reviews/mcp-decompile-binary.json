@@ -9,7 +9,7 @@
     "summary": "The decompile_binary MCP tool was properly fixed. The commit replaces the broken `ghidra.decompile()` call with `self.ghidra_engine.decompile(path)` using a shared GhidraEngine instance initialized in __init__. The tool's inputSchema was updated to require `binary_path` (with legacy `path` fallback via `_resolve_binary_argument`). A new `_build_decompile_response` helper normalizes Ghidra's raw dict into structured JSON with `decompiled_functions`, `decompiled_source`, `strings`, `imports`, `function_count`, and `status_code`. Error handling returns `status_code: 500` with a descriptive message instead of crashing. Three well-targeted tests cover schema correctness, structured response content, and error handling. The worker also fixed several pre-existing type/API issues in the same file to pass scoped mypy, which is justified scope creep. All 15 tools remain registered with correct schemas (VAL-MCP-006 satisfied).",
     "issues": [
       {
-        "file": "tests/poc/test_mcp_integration.py",
+        "file": "tests/integration/test_mcp_integration.py",
         "line": 310,
         "severity": "non_blocking",
         "description": "Test `test_decompile_binary_tool_returns_descriptive_error` names its temp file 'missing.exe' but the file actually exists (it's written with `write_bytes`); the error comes from the mocked RuntimeError, not a missing file. The name is slightly misleading but the test logic is correct."

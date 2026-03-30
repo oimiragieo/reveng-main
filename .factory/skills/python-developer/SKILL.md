@@ -17,7 +17,7 @@ Use this skill to implement all features in the REVENG production-grade reverse 
 
 2. **Windows environment setup** (do NOT run init.sh on Windows): Run `python -m pip install yara-python ollama volatility3 pytest-xdist` if these are not yet installed. Check with `python -c "import yara, ollama, volatility3"`.
 
-3. Run the scoped baseline: `pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc`. If failures match the documented pre-existing list in `AGENTS.md`, document them and continue. Do NOT stop because the baseline is red from pre-existing failures.
+3. Run the scoped baseline: `pytest tests/unit/ tests/integration/ tests/performance -n 4 --ignore=tests/poc`. If failures match the documented pre-existing list in `AGENTS.md`, document them and continue. Do NOT stop because the baseline is red from pre-existing failures.
 
 4. **Write tests first (red)**. Add test cases to the appropriate file in `tests/unit/` or `tests/integration/`. Run targeted tests to confirm they fail. **TDD exception**: if implementation already exists, add tests and verify they pass.
 

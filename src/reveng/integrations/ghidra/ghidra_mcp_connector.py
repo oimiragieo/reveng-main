@@ -85,9 +85,7 @@ class GhidraMCPConnector:
                 "threat_indicators": [],
             }
 
-            self.logger.info(
-                f"Started Ghidra session {self.session_id} for {binary_path}"
-            )
+            self.logger.info(f"Started Ghidra session {self.session_id} for {binary_path}")
             return {
                 "session_id": self.session_id,
                 "binary_path": binary_path,
@@ -117,17 +115,11 @@ class GhidraMCPConnector:
 
             # Analyze based on type
             if analysis_type == "comprehensive":
-                result = self._comprehensive_function_analysis(
-                    function_name, decompiled_code
-                )
+                result = self._comprehensive_function_analysis(function_name, decompiled_code)
             elif analysis_type == "security":
-                result = self._security_function_analysis(
-                    function_name, decompiled_code
-                )
+                result = self._security_function_analysis(function_name, decompiled_code)
             elif analysis_type == "performance":
-                result = self._performance_function_analysis(
-                    function_name, decompiled_code
-                )
+                result = self._performance_function_analysis(function_name, decompiled_code)
             else:
                 result = self._basic_function_analysis(function_name, decompiled_code)
 
@@ -258,17 +250,10 @@ class GhidraMCPConnector:
         return {
             "session_id": self.session_id,
             "binary_path": self.analysis_context.get("binary_path"),
-            "duration": time.time()
-            - self.analysis_context.get("start_time", time.time()),
-            "functions_analyzed": len(
-                self.analysis_context.get("functions_analyzed", [])
-            ),
-            "vulnerabilities_found": len(
-                self.analysis_context.get("vulnerabilities_found", [])
-            ),
-            "threat_indicators": len(
-                self.analysis_context.get("threat_indicators", [])
-            ),
+            "duration": time.time() - self.analysis_context.get("start_time", time.time()),
+            "functions_analyzed": len(self.analysis_context.get("functions_analyzed", [])),
+            "vulnerabilities_found": len(self.analysis_context.get("vulnerabilities_found", [])),
+            "threat_indicators": len(self.analysis_context.get("threat_indicators", [])),
             "context": self.analysis_context,
         }
 
@@ -301,17 +286,13 @@ class GhidraMCPConnector:
     def _get_function_decompilation(self, function_name: str) -> str:
         """Get decompiled code for a function from Ghidra server"""
         try:
-            response = self.http_client.post(
-                "decompile", data=function_name, timeout=30
-            )
+            response = self.http_client.post("decompile", data=function_name, timeout=30)
             return response.text
         except Exception as e:
             self.logger.error(f"Failed to decompile {function_name}: {e}")
             return f"// Error getting decompilation: {e}"
 
-    def _comprehensive_function_analysis(
-        self, function_name: str, code: str
-    ) -> Dict[str, Any]:
+    def _comprehensive_function_analysis(self, function_name: str, code: str) -> Dict[str, Any]:
         """Comprehensive function analysis"""
         return {
             "function_name": function_name,
@@ -323,9 +304,7 @@ class GhidraMCPConnector:
             "suggestions": self._generate_improvement_suggestions(code),
         }
 
-    def _security_function_analysis(
-        self, function_name: str, code: str
-    ) -> Dict[str, Any]:
+    def _security_function_analysis(self, function_name: str, code: str) -> Dict[str, Any]:
         """Security-focused function analysis"""
         return {
             "function_name": function_name,
@@ -335,9 +314,7 @@ class GhidraMCPConnector:
             "recommendations": self._generate_security_recommendations(code),
         }
 
-    def _performance_function_analysis(
-        self, function_name: str, code: str
-    ) -> Dict[str, Any]:
+    def _performance_function_analysis(self, function_name: str, code: str) -> Dict[str, Any]:
         """Performance-focused function analysis"""
         return {
             "function_name": function_name,
@@ -407,18 +384,14 @@ class GhidraMCPConnector:
         """Get all functions in the binary from Ghidra server"""
         try:
             # Note: Ghidra MCP bridge uses 'methods' endpoint, not 'list_functions'
-            functions = self.http_client.get_json(
-                "methods", params={"limit": 10000}, default=[]
-            )
+            functions = self.http_client.get_json("methods", params={"limit": 10000}, default=[])
             self.logger.info(f"Retrieved {len(functions)} functions from Ghidra")
             return functions
         except Exception as e:
             self.logger.error(f"Failed to get function list: {e}")
             return []
 
-    def _calculate_function_similarity(
-        self, pattern: str, function: Dict[str, Any]
-    ) -> float:
+    def _calculate_function_similarity(self, pattern: str, function: Dict[str, Any]) -> float:
         """Calculate similarity between pattern and function"""
         # Simple similarity calculation
         name = function.get("name", "")
@@ -495,9 +468,7 @@ class GhidraMCPConnector:
         """Get all strings from binary via Ghidra"""
         try:
             # Note: Ghidra MCP bridge uses 'strings' endpoint
-            strings = self.http_client.get_json(
-                "strings", params={"limit": 2000}, default=[]
-            )
+            strings = self.http_client.get_json("strings", params={"limit": 2000}, default=[])
             self.logger.info(f"Retrieved {len(strings)} strings from Ghidra")
             return strings
         except Exception as e:
@@ -528,9 +499,7 @@ class GhidraMCPConnector:
     def get_function_calls(self, function_name: str) -> List[str]:
         """Get all function calls made by a function"""
         try:
-            calls = self.http_client.get_json(
-                f"get_function_calls/{function_name}", default=[]
-            )
+            calls = self.http_client.get_json(f"get_function_calls/{function_name}", default=[])
             return calls
         except Exception as e:
             self.logger.error(f"Failed to get function calls for {function_name}: {e}")
@@ -540,9 +509,7 @@ class GhidraMCPConnector:
     def get_callers(self, function_name: str) -> List[str]:
         """Get all functions that call this function"""
         try:
-            callers = self.http_client.get_json(
-                f"get_callers/{function_name}", default=[]
-            )
+            callers = self.http_client.get_json(f"get_callers/{function_name}", default=[])
             return callers
         except Exception as e:
             self.logger.error(f"Failed to get callers for {function_name}: {e}")
@@ -659,9 +626,7 @@ class GhidraMCPConnector:
     def get_function_complexity(self, function_name: str) -> Dict[str, Any]:
         """Calculate cyclomatic complexity and other metrics"""
         try:
-            complexity = self.http_client.get_json(
-                f"get_complexity/{function_name}", default={}
-            )
+            complexity = self.http_client.get_json(f"get_complexity/{function_name}", default={})
             return complexity
         except Exception as e:
             self.logger.error(f"Failed to get complexity for {function_name}: {e}")
@@ -686,9 +651,7 @@ class GhidraMCPConnector:
             params = {"function": function_name}
             if variable:
                 params["variable"] = variable
-            data_flow = self.http_client.get_json(
-                "analyze_data_flow", params=params, default={}
-            )
+            data_flow = self.http_client.get_json("analyze_data_flow", params=params, default={})
             return data_flow
         except Exception as e:
             self.logger.error(f"Failed to get data flow for {function_name}: {e}")
@@ -742,9 +705,7 @@ class GhidraMCPConnector:
     def get_function_signature(self, function_name: str) -> Dict[str, Any]:
         """Get detailed function signature"""
         try:
-            signature = self.http_client.get_json(
-                f"get_signature/{function_name}", default={}
-            )
+            signature = self.http_client.get_json(f"get_signature/{function_name}", default={})
             return signature
         except Exception as e:
             self.logger.error(f"Failed to get signature for {function_name}: {e}")
@@ -758,9 +719,7 @@ class GhidraMCPConnector:
         """Get comments (optionally at specific address)"""
         try:
             if address:
-                comments = self.http_client.get_json(
-                    f"get_comments/{address}", default=[]
-                )
+                comments = self.http_client.get_json(f"get_comments/{address}", default=[])
             else:
                 comments = self.http_client.get_json("get_all_comments", default=[])
             return comments
@@ -768,9 +727,7 @@ class GhidraMCPConnector:
             self.logger.error(f"Failed to get comments: {e}")
             return []
 
-    def set_comment(
-        self, address: str, comment: str, comment_type: str = "EOL"
-    ) -> bool:
+    def set_comment(self, address: str, comment: str, comment_type: str = "EOL") -> bool:
         """Set a comment at a specific address"""
         try:
             response = self.http_client.post_json(
@@ -802,9 +759,7 @@ class GhidraMCPConnector:
     def get_register_usage(self, function_name: str) -> Dict[str, Any]:
         """Get register usage analysis for a function"""
         try:
-            usage = self.http_client.get_json(
-                f"get_register_usage/{function_name}", default={}
-            )
+            usage = self.http_client.get_json(f"get_register_usage/{function_name}", default={})
             return usage
         except Exception as e:
             self.logger.error(f"Failed to get register usage for {function_name}: {e}")
@@ -825,13 +780,9 @@ class GhidraMCPConnector:
         except Exception as e:
             self.logger.error(f"Batch decompilation failed: {e}")
             # Fallback to individual decompilation
-            return {
-                name: self._get_function_decompilation(name) for name in function_names
-            }
+            return {name: self._get_function_decompilation(name) for name in function_names}
 
-    def batch_get_function_info(
-        self, addresses: List[str]
-    ) -> Dict[str, Dict[str, Any]]:
+    def batch_get_function_info(self, addresses: List[str]) -> Dict[str, Dict[str, Any]]:
         """Batch get function information for multiple addresses"""
         try:
             response = self.http_client.post_json(
@@ -889,17 +840,13 @@ class GhidraMCPConnector:
             self.logger.info(f"Executed Ghidra script: {script_name}")
             return response
         except Exception as e:
-            self.logger.error(
-                f"Ghidra script execution failed for '{script_name}': {e}"
-            )
+            self.logger.error(f"Ghidra script execution failed for '{script_name}': {e}")
             return {"error": str(e), "success": False}
 
     def save_ghidra_project(self, project_name: str) -> bool:
         """Save current Ghidra analysis as a project"""
         try:
-            response = self.http_client.post_json(
-                "save_project", json={"name": project_name}
-            )
+            response = self.http_client.post_json("save_project", json={"name": project_name})
             success = response.get("success", False)
             if success:
                 self.logger.info(f"Saved Ghidra project: {project_name}")
@@ -911,9 +858,7 @@ class GhidraMCPConnector:
     def load_ghidra_project(self, project_name: str) -> bool:
         """Load a previously saved Ghidra project"""
         try:
-            response = self.http_client.post_json(
-                "load_project", json={"name": project_name}
-            )
+            response = self.http_client.post_json("load_project", json={"name": project_name})
             success = response.get("success", False)
             if success:
                 self.logger.info(f"Loaded Ghidra project: {project_name}")

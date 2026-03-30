@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -155,6 +156,44 @@ def load_analysis_json(output_json: Path) -> dict[str, object]:
         return normalize_analysis_data(json.load(handle))
 
 
+def normalize_timeout(raw_timeout: object) -> int:
+    """Normalize request timeouts to a safe, bounded integer."""
+    if raw_timeout is None:
+        return GHIDRA_HEADLESS_TIMEOUT
+
+    try:
+        normalized = int(raw_timeout)
+    except (TypeError, ValueError):
+        return GHIDRA_HEADLESS_TIMEOUT
+
+    return max(30, min(normalized, 3600))
+
+
+def terminate_process_tree(process: subprocess.Popen[str]) -> None:
+    """Terminate a headless Ghidra process and any spawned children."""
+    if process.poll() is not None:
+        return
+
+    try:
+        if os.name == "nt":
+            subprocess.run(
+                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
+            )
+        else:
+            os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+    except Exception:
+        process.kill()
+    finally:
+        try:
+            process.communicate(timeout=5)
+        except Exception:
+            pass
+
+
 def run_ghidra_analysis(
     binary_path: Path | str,
     ghidra_path: Path | None = None,
@@ -184,12 +223,33 @@ def run_ghidra_analysis(
         )
 
         logger.info("Running Ghidra command: %s", command)
-        result = subprocess.run(
+        popen_kwargs = {
+            "stdout": subprocess.PIPE,
+            "stderr": subprocess.PIPE,
+            "text": True,
+            "cwd": str(resolved_ghidra_path),
+        }
+        if os.name == "nt":
+            popen_kwargs["creationflags"] = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+        else:
+            popen_kwargs["start_new_session"] = True
+
+        process = subprocess.Popen(
             command,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=str(resolved_ghidra_path),
+            **popen_kwargs,
+        )
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            logger.error("Ghidra analysis timeout after %ss", timeout)
+            terminate_process_tree(process)
+            raise
+
+        result = subprocess.CompletedProcess(
+            args=command,
+            returncode=process.returncode,
+            stdout=stdout,
+            stderr=stderr,
         )
 
         logger.info("Ghidra exit code: %s", result.returncode)
@@ -218,17 +278,18 @@ def _process_analysis_request() -> tuple[object, int]:
     if not binary_file.exists():
         return jsonify({"error": f"Binary not found: {binary_path}"}), 404
 
+    requested_timeout = normalize_timeout(payload.get("timeout"))
     logger.info("Analyzing binary: %s", binary_file)
 
     try:
-        analysis_data = run_ghidra_analysis(binary_file)
+        analysis_data = run_ghidra_analysis(binary_file, timeout=requested_timeout)
         return jsonify(analysis_data), 200
     except GhidraUnavailableError:
         logger.warning("Ghidra unavailable for analysis request")
         return jsonify({"error": "Ghidra unavailable"}), 503
     except subprocess.TimeoutExpired:
-        logger.error("Ghidra analysis timeout after %ss", GHIDRA_HEADLESS_TIMEOUT)
-        return jsonify({"error": f"Analysis timeout ({GHIDRA_HEADLESS_TIMEOUT}s)"}), 504
+        logger.error("Ghidra analysis timeout after %ss", requested_timeout)
+        return jsonify({"error": f"Analysis timeout ({requested_timeout}s)"}), 504
     except Exception as exc:
         logger.error("Ghidra execution error: %s", exc, exc_info=True)
         return jsonify({"error": f"Ghidra error: {exc}"}), 500

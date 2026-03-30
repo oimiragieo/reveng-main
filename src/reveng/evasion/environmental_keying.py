@@ -10,19 +10,19 @@ Modern malware uses environmental keying to:
 3. Evade automated sandboxes
 """
 
-import os
-import sys
 import logging
+import os
 import platform
 import socket
+import sys
 import time
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
-import hashlib
+from typing import List, Tuple
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -35,6 +35,7 @@ if sys.platform == "win32":
 
 class EnvironmentType(Enum):
     """Types of analysis environments"""
+
     BARE_METAL = "bare_metal"
     VIRTUAL_MACHINE = "virtual_machine"
     SANDBOX = "sandbox"
@@ -45,6 +46,7 @@ class EnvironmentType(Enum):
 @dataclass
 class EnvironmentCheck:
     """Single environment check result"""
+
     check_name: str
     category: str
     detected: bool
@@ -55,6 +57,7 @@ class EnvironmentCheck:
 @dataclass
 class EnvironmentProfile:
     """Complete environment analysis"""
+
     environment_type: EnvironmentType
     confidence: float
     checks: List[EnvironmentCheck]
@@ -117,7 +120,7 @@ class EnvironmentalKeying:
             confidence=confidence,
             checks=self.checks.copy(),
             is_analysis_env=is_analysis,
-            risk_score=risk_score
+            risk_score=risk_score,
         )
 
         return profile
@@ -175,8 +178,8 @@ class EnvironmentalKeying:
                     "vmwareuser.exe",
                 ]
 
-                for proc in psutil.process_iter(['name']):
-                    if proc.info['name'].lower() in vm_processes:
+                for proc in psutil.process_iter(["name"]):
+                    if proc.info["name"].lower() in vm_processes:
                         evidence.append(f"VM Process: {proc.info['name']}")
                         detected = True
 
@@ -185,13 +188,15 @@ class EnvironmentalKeying:
             evidence.append("VM vendor MAC address")
             detected = True
 
-        self.checks.append(EnvironmentCheck(
-            check_name="Virtual Machine Detection",
-            category="VM",
-            detected=detected,
-            confidence=0.9 if detected else 0.1,
-            evidence=evidence
-        ))
+        self.checks.append(
+            EnvironmentCheck(
+                check_name="Virtual Machine Detection",
+                category="VM",
+                detected=detected,
+                confidence=0.9 if detected else 0.1,
+                evidence=evidence,
+            )
+        )
 
     def _check_vm_mac_address(self) -> bool:
         """Check if MAC address belongs to VM vendor"""
@@ -216,7 +221,7 @@ class EnvironmentalKeying:
                         for prefix in vm_mac_prefixes:
                             if mac.startswith(prefix):
                                 return True
-        except:
+        except Exception:
             pass
 
         return False
@@ -231,9 +236,20 @@ class EnvironmentalKeying:
         # Check hostname
         hostname = socket.gethostname().lower()
         sandbox_hostnames = [
-            'sandbox', 'malware', 'virus', 'sample', 'test',
-            'cuckoo', 'analysis', 'vmware', 'vbox', 'honeypot',
-            'joe', 'triage', 'reverse', 'anyrun'
+            "sandbox",
+            "malware",
+            "virus",
+            "sample",
+            "test",
+            "cuckoo",
+            "analysis",
+            "vmware",
+            "vbox",
+            "honeypot",
+            "joe",
+            "triage",
+            "reverse",
+            "anyrun",
         ]
 
         for name in sandbox_hostnames:
@@ -243,10 +259,16 @@ class EnvironmentalKeying:
                 break
 
         # Check username
-        username = os.environ.get('USERNAME', '').lower()
+        username = os.environ.get("USERNAME", "").lower()
         sandbox_usernames = [
-            'sandbox', 'malware', 'virus', 'sample',
-            'john', 'admin', 'user', 'test'
+            "sandbox",
+            "malware",
+            "virus",
+            "sample",
+            "john",
+            "admin",
+            "user",
+            "test",
         ]
 
         for name in sandbox_usernames:
@@ -269,10 +291,10 @@ class EnvironmentalKeying:
 
             # Less than 50GB disk
             try:
-                if psutil.disk_usage('/').total < 50 * 1024 * 1024 * 1024:
+                if psutil.disk_usage("/").total < 50 * 1024 * 1024 * 1024:
                     evidence.append("Low disk space (< 50GB)")
                     detected = True
-            except:
+            except Exception:
                 pass
 
         # Check for recently created system
@@ -280,28 +302,26 @@ class EnvironmentalKeying:
             try:
                 # Check Windows installation date
                 import subprocess
-                result = subprocess.run(
-                    ["systeminfo"],
-                    capture_output=True,
-                    text=True,
-                    timeout=10
-                )
+
+                result = subprocess.run(["systeminfo"], capture_output=True, text=True, timeout=10)
 
                 # Sandboxes often have very recent install dates
                 if "Original Install Date" in result.stdout:
                     evidence.append("Potentially fresh Windows install")
                     # Could parse date and check if < 30 days old
 
-            except:
+            except Exception:
                 pass
 
-        self.checks.append(EnvironmentCheck(
-            check_name="Sandbox Artifacts",
-            category="Sandbox",
-            detected=detected,
-            confidence=0.8 if detected else 0.2,
-            evidence=evidence
-        ))
+        self.checks.append(
+            EnvironmentCheck(
+                check_name="Sandbox Artifacts",
+                category="Sandbox",
+                detected=detected,
+                confidence=0.8 if detected else 0.2,
+                evidence=evidence,
+            )
+        )
 
     # ========== DEBUGGER DETECTION ==========
 
@@ -321,8 +341,7 @@ class EnvironmentalKeying:
             # CheckRemoteDebuggerPresent
             debugger_present = ctypes.c_bool()
             kernel32.CheckRemoteDebuggerPresent(
-                kernel32.GetCurrentProcess(),
-                ctypes.byref(debugger_present)
+                kernel32.GetCurrentProcess(), ctypes.byref(debugger_present)
             )
 
             if debugger_present.value:
@@ -337,25 +356,36 @@ class EnvironmentalKeying:
         # Check for debugger processes
         if PSUTIL_AVAILABLE:
             debugger_processes = [
-                'ollydbg.exe', 'x64dbg.exe', 'x32dbg.exe',
-                'windbg.exe', 'idaq.exe', 'idaq64.exe',
-                'idaw.exe', 'idaw64.exe', 'scylla.exe',
-                'protection_id.exe', 'charles.exe',
-                'wireshark.exe', 'fiddler.exe', 'httpdebugger.exe'
+                "ollydbg.exe",
+                "x64dbg.exe",
+                "x32dbg.exe",
+                "windbg.exe",
+                "idaq.exe",
+                "idaq64.exe",
+                "idaw.exe",
+                "idaw64.exe",
+                "scylla.exe",
+                "protection_id.exe",
+                "charles.exe",
+                "wireshark.exe",
+                "fiddler.exe",
+                "httpdebugger.exe",
             ]
 
-            for proc in psutil.process_iter(['name']):
-                if proc.info['name'].lower() in debugger_processes:
+            for proc in psutil.process_iter(["name"]):
+                if proc.info["name"].lower() in debugger_processes:
                     evidence.append(f"Debugger process: {proc.info['name']}")
                     detected = True
 
-        self.checks.append(EnvironmentCheck(
-            check_name="Debugger Detection",
-            category="Debugger",
-            detected=detected,
-            confidence=0.95 if detected else 0.05,
-            evidence=evidence
-        ))
+        self.checks.append(
+            EnvironmentCheck(
+                check_name="Debugger Detection",
+                category="Debugger",
+                detected=detected,
+                confidence=0.95 if detected else 0.05,
+                evidence=evidence,
+            )
+        )
 
     def _check_peb_debugged(self) -> bool:
         """Check PEB.BeingDebugged flag (Windows)"""
@@ -365,7 +395,7 @@ class EnvironmentalKeying:
         try:
             # Get PEB address (x64)
             import ctypes
-            peb = ctypes.c_ulonglong()
+
             ntdll = ctypes.windll.ntdll
 
             # NtQueryInformationProcess to get PEB
@@ -375,7 +405,7 @@ class EnvironmentalKeying:
                 0,  # ProcessBasicInformation
                 ctypes.byref(process_basic_info),
                 ctypes.sizeof(process_basic_info),
-                None
+                None,
             )
 
             peb_addr = process_basic_info[1]
@@ -387,12 +417,12 @@ class EnvironmentalKeying:
                 ctypes.c_void_p(peb_addr + 2),
                 ctypes.byref(being_debugged),
                 1,
-                None
+                None,
             )
 
             return being_debugged.value != 0
 
-        except:
+        except Exception:
             return False
 
     # ========== ANALYSIS TOOLS ==========
@@ -407,40 +437,50 @@ class EnvironmentalKeying:
 
         analysis_tools = [
             # Disassemblers
-            'ghidra.exe', 'ida.exe', 'ida64.exe',
-            'binaryninja.exe', 'hopper.exe',
-
+            "ghidra.exe",
+            "ida.exe",
+            "ida64.exe",
+            "binaryninja.exe",
+            "hopper.exe",
             # Debuggers
-            'ollydbg.exe', 'x64dbg.exe', 'windbg.exe',
-
+            "ollydbg.exe",
+            "x64dbg.exe",
+            "windbg.exe",
             # System monitors
-            'procmon.exe', 'procmon64.exe',
-            'procexp.exe', 'procexp64.exe',
-            'processhacker.exe',
-
+            "procmon.exe",
+            "procmon64.exe",
+            "procexp.exe",
+            "procexp64.exe",
+            "processhacker.exe",
             # Network monitors
-            'wireshark.exe', 'fiddler.exe', 'charles.exe',
-            'mitmproxy.exe', 'burpsuite.exe',
-
+            "wireshark.exe",
+            "fiddler.exe",
+            "charles.exe",
+            "mitmproxy.exe",
+            "burpsuite.exe",
             # PE tools
-            'pestudio.exe', 'pe-bear.exe', 'exeinfope.exe',
-
+            "pestudio.exe",
+            "pe-bear.exe",
+            "exeinfope.exe",
             # Sandboxes
-            'cuckoo.exe', 'fakenet.exe',
+            "cuckoo.exe",
+            "fakenet.exe",
         ]
 
-        for proc in psutil.process_iter(['name']):
-            if proc.info['name'].lower() in analysis_tools:
+        for proc in psutil.process_iter(["name"]):
+            if proc.info["name"].lower() in analysis_tools:
                 evidence.append(f"Analysis tool: {proc.info['name']}")
                 detected = True
 
-        self.checks.append(EnvironmentCheck(
-            check_name="Analysis Tools",
-            category="Tools",
-            detected=detected,
-            confidence=0.9 if detected else 0.1,
-            evidence=evidence
-        ))
+        self.checks.append(
+            EnvironmentCheck(
+                check_name="Analysis Tools",
+                category="Tools",
+                detected=detected,
+                confidence=0.9 if detected else 0.1,
+                evidence=evidence,
+            )
+        )
 
     # ========== HARDWARE ANOMALIES ==========
 
@@ -452,19 +492,20 @@ class EnvironmentalKeying:
         if sys.platform == "win32":
             # Check for VM GPUs
             evil_gpus = [
-                'ASPEED Graphics',
-                'VirtualBox Graphics',
-                'VMware SVGA',
-                'Microsoft Basic Display',
+                "ASPEED Graphics",
+                "VirtualBox Graphics",
+                "VMware SVGA",
+                "Microsoft Basic Display",
             ]
 
             try:
                 import subprocess
+
                 result = subprocess.run(
                     ["wmic", "path", "win32_VideoController", "get", "name"],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
 
                 for gpu in evil_gpus:
@@ -472,16 +513,18 @@ class EnvironmentalKeying:
                         evidence.append(f"VM GPU: {gpu}")
                         detected = True
 
-            except:
+            except Exception:
                 pass
 
-        self.checks.append(EnvironmentCheck(
-            check_name="Hardware Anomalies",
-            category="Hardware",
-            detected=detected,
-            confidence=0.7 if detected else 0.3,
-            evidence=evidence
-        ))
+        self.checks.append(
+            EnvironmentCheck(
+                check_name="Hardware Anomalies",
+                category="Hardware",
+                detected=detected,
+                confidence=0.7 if detected else 0.3,
+                evidence=evidence,
+            )
+        )
 
     # ========== NETWORK INDICATORS ==========
 
@@ -493,15 +536,16 @@ class EnvironmentalKeying:
         try:
             # Check IP address
             import requests
-            response = requests.get('https://api.ipify.org', timeout=5)
+
+            response = requests.get("https://api.ipify.org", timeout=5)
             public_ip = response.text
 
             # Check against known analysis service IP ranges
             # (This is a simplified check)
             analysis_ip_prefixes = [
-                '192.0.2.',    # TEST-NET-1
-                '198.51.100.', # TEST-NET-2
-                '203.0.113.',  # TEST-NET-3
+                "192.0.2.",  # TEST-NET-1
+                "198.51.100.",  # TEST-NET-2
+                "203.0.113.",  # TEST-NET-3
             ]
 
             for prefix in analysis_ip_prefixes:
@@ -509,16 +553,18 @@ class EnvironmentalKeying:
                     evidence.append(f"Analysis IP range: {public_ip}")
                     detected = True
 
-        except:
+        except Exception:
             pass
 
-        self.checks.append(EnvironmentCheck(
-            check_name="Network Indicators",
-            category="Network",
-            detected=detected,
-            confidence=0.6 if detected else 0.4,
-            evidence=evidence
-        ))
+        self.checks.append(
+            EnvironmentCheck(
+                check_name="Network Indicators",
+                category="Network",
+                detected=detected,
+                confidence=0.6 if detected else 0.4,
+                evidence=evidence,
+            )
+        )
 
     # ========== TIMING ANOMALIES ==========
 
@@ -529,7 +575,7 @@ class EnvironmentalKeying:
 
         # CPU cycle timing (detect if running too fast/slow)
         start = time.perf_counter()
-        dummy_operation = sum(range(1000000))
+        _ = sum(range(1000000))
         end = time.perf_counter()
 
         elapsed = end - start
@@ -551,13 +597,15 @@ class EnvironmentalKeying:
             evidence.append(f"Sleep skipped: {sleep_actual:.6f}s")
             detected = True
 
-        self.checks.append(EnvironmentCheck(
-            check_name="Timing Anomalies",
-            category="Timing",
-            detected=detected,
-            confidence=0.5 if detected else 0.5,
-            evidence=evidence
-        ))
+        self.checks.append(
+            EnvironmentCheck(
+                check_name="Timing Anomalies",
+                category="Timing",
+                detected=detected,
+                confidence=0.5 if detected else 0.5,
+                evidence=evidence,
+            )
+        )
 
     # ========== USER INTERACTION ==========
 
@@ -570,30 +618,33 @@ class EnvironmentalKeying:
             # Check uptime (fresh systems are suspicious)
             try:
                 import subprocess
-                result = subprocess.run(
+
+                _ = subprocess.run(
                     ["wmic", "os", "get", "lastbootuptime"],
                     capture_output=True,
                     text=True,
-                    timeout=10
+                    timeout=10,
                 )
 
                 # Parse and check if system booted very recently
                 # (Sandboxes often have very short uptimes)
 
-            except:
+            except Exception:
                 pass
 
             # Check for cursor movement (no movement = automated)
             # Check for recent file access patterns
             # etc.
 
-        self.checks.append(EnvironmentCheck(
-            check_name="User Interaction",
-            category="User",
-            detected=detected,
-            confidence=0.4,
-            evidence=evidence
-        ))
+        self.checks.append(
+            EnvironmentCheck(
+                check_name="User Interaction",
+                category="User",
+                detected=detected,
+                confidence=0.4,
+                evidence=evidence,
+            )
+        )
 
     # ========== SCORING ==========
 
@@ -651,14 +702,8 @@ class EnvironmentalKeying:
 KNOWN_SANDBOXES = {
     "cuckoo": {
         "indicators": ["CUCKOO", "agent.py", "analyzer.py"],
-        "description": "Cuckoo Sandbox"
+        "description": "Cuckoo Sandbox",
     },
-    "joe_sandbox": {
-        "indicators": ["JoeBox", "joe", "sample"],
-        "description": "Joe Sandbox"
-    },
-    "any_run": {
-        "indicators": ["anyrun", "analysis"],
-        "description": "Any.Run"
-    },
+    "joe_sandbox": {"indicators": ["JoeBox", "joe", "sample"], "description": "Joe Sandbox"},
+    "any_run": {"indicators": ["anyrun", "analysis"], "description": "Any.Run"},
 }

@@ -1,0 +1,241 @@
+{
+  "config_path": ".reveng\\source_binary_benchmarks.ga.json",
+  "benchmark_count": 5,
+  "benchmarks": [
+    {
+      "id": "java-helloworld-class",
+      "source_repo": ".reveng\\..\\test_samples",
+      "binary_path": ".reveng\\..\\test_samples\\HelloWorld.class",
+      "output_dir": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class",
+      "analyze_command": {
+        "command": [
+          "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+          "C:\\dev\\projects\\reveng-main\\reveng.py",
+          "--no-ollama-check",
+          "--output-dir",
+          ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze",
+          "analyze",
+          ".reveng\\..\\test_samples\\HelloWorld.class",
+          "--ghidra-timeout",
+          "120"
+        ],
+        "returncode": 0,
+        "stdout_tail": "Running end-to-end pipeline...\r\nGhidra stage timeout: 120s (retries: 0)\r\n\r\n[SUCCESS] REVENG analysis completed successfully!\r\nPipeline status: partial_success\r\nResults stored in: .reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\r\nUnified report: .reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\reports\\unified_analysis_report.json\r\nBehavioral anomaly score: 0.5739076106271356\r\nMemory anomaly score: 0.35\r\n",
+        "stderr_tail": "2026-03-29 19:08:59,731 - reveng.analyzer - INFO - Audit trail initialized\r\n2026-03-29 19:08:59,731 - reveng.analyzer - INFO - REVENG Analyzer initialized\r\n2026-03-29 19:08:59,731 - reveng.analyzer - INFO - Target binary: C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.class\r\n2026-03-29 19:08:59,731 - reveng.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\r\n2026-03-29 19:08:59,731 - reveng.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\r\n2026-03-29 19:08:59,731 - reveng.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\r\n2026-03-29 19:08:59,761 - reveng.analyzer - INFO - Detected file type: java/class (confidence: 100.00%)\r\n2026-03-29 19:08:59,761 - reveng.analyzer - INFO - Analysis category: java_bytecode\r\n2026-03-29 19:09:00,082 - reveng.analyzer - INFO - Java 21 detected - fully compatible\r\nConfig file not found: C:\\Users\\oimir\\.reveng\\config.yaml, using defaults\r\n2026-03-29 19:09:00,086 - reveng.analyzer - INFO - All critical tools validated successfully\r\n\\u26a0\\ufe0f google-generativeai not installed. Install with: pip install google-generativeai\r\nWARNING  | 2026-03-29 19:09:21,916 | reveng.ai.recompilation_engine |   \\u26a0\\ufe0f angr CFG preprocessing failed: angr CFG extraction failed for C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.class: Unable to find a loader backend for C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.class.  Perhaps try the 'blob' loader?\r\nWARNING  | 2026-03-29 19:09:24,053 | reveng.ai.recompilation_engine | Gemini not available for compilation feedback loop\r\nWARNING  | 2026-03-29 19:09:24,053 | reveng.ai.recompilation_engine |   \\u26a0\\ufe0f GCC compilation failed after 1 attempt(s): llm_feedback_unavailable\r\nWARNING  | 2026-03-29 19:09:25,557 | reveng.ai.recompilation_engine | Gemini not available for compilation feedback loop\r\nWARNING  | 2026-03-29 19:09:25,557 | reveng.ai.recompilation_engine |   \\u26a0\\ufe0f Clang compilation failed after 1 attempt(s): llm_feedback_unavailable\r\nERROR    | 2026-03-29 19:09:25,557 | reveng.ai.recompilation_engine | \\u274c Compilation failed for all configured compilers\r\nERROR    | 2026-03-29 19:09:30,192 | reveng.malware.behavioral_monitor | Behavioral monitoring failed: REVENGLogger.warning() takes 2 positional arguments but 4 were given\r\nERROR    | 2026-03-29 19:09:58,898 | reveng.malware.memory_forensics | Failed to analyze processes: Command '['wmic', 'process', 'get', 'ProcessId,Name,ParentProcessId,CommandLine,ExecutablePath', '/format:csv']' timed out after 30 seconds\r\n",
+        "timed_out": false
+      },
+      "recompile_command": {
+        "command": [
+          "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+          "C:\\dev\\projects\\reveng-main\\reveng.py",
+          "--no-ollama-check",
+          "--output-dir",
+          ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\recompile",
+          "recompile",
+          ".reveng\\..\\test_samples\\HelloWorld.class",
+          "--ghidra-timeout",
+          "120"
+        ],
+        "returncode": 1,
+        "stdout_tail": "\r\n================================================================================\r\nRECONSTRUCTION SUMMARY\r\n================================================================================\r\n\r\n? Generated Source Files:\r\n  ? C: analysis_HelloWorld\\reconstructed.c (9,419 bytes)\r\n\r\n? Compiled Binaries:\r\n\r\n? Behavioral Validation:\r\n  Similarity Score: 0.0%\r\n\r\n? Equivalence Confidence:\r\n  not_recompiled / high\r\n  Equivalence is blocked because recompilation did not produce a candidate binary.\r\n\r\n? Security Vulnerabilities:\r\n  ? No vulnerabilities detected\r\n\r\n? Proof-of-Concept Exploits:\r\n  No exploits generated\r\n\r\n================================================================================\r\nStatus: FAILED\r\n================================================================================\r\n\r\n",
+        "stderr_tail": "\\u26a0\\ufe0f google-generativeai not installed. Install with: pip install google-generativeai\r\n  \\u26a0\\ufe0f Gemini not available (set GEMINI_API_KEY)\r\nWARNING  | 2026-03-29 19:10:24,184 | reveng.ai.recompilation_engine |   \\u26a0\\ufe0f angr CFG preprocessing failed: angr CFG extraction failed for .reveng\\..\\test_samples\\HelloWorld.class: Unable to find a loader backend for .reveng\\..\\test_samples\\HelloWorld.class.  Perhaps try the 'blob' loader?\r\nWARNING  | 2026-03-29 19:10:25,818 | reveng.ai.recompilation_engine | Gemini not available for compilation feedback loop\r\nWARNING  | 2026-03-29 19:10:25,818 | reveng.ai.recompilation_engine |   \\u26a0\\ufe0f GCC compilation failed after 1 attempt(s): llm_feedback_unavailable\r\nWARNING  | 2026-03-29 19:10:26,638 | reveng.ai.recompilation_engine | Gemini not available for compilation feedback loop\r\nWARNING  | 2026-03-29 19:10:26,638 | reveng.ai.recompilation_engine |   \\u26a0\\ufe0f Clang compilation failed after 1 attempt(s): llm_feedback_unavailable\r\nERROR    | 2026-03-29 19:10:26,639 | reveng.ai.recompilation_engine | \\u274c Compilation failed for all configured compilers\r\n",
+        "timed_out": false
+      },
+      "analyze_report_exists": false,
+      "recompile_report_exists": false,
+      "original_behavior": [],
+      "rebuilt_binary_path": null,
+      "rebuilt_behavior": [],
+      "behavior_comparisons": [],
+      "status": "recompile_failed"
+    },
+    {
+      "id": "java-helloworld-jar",
+      "source_repo": ".reveng\\..\\test_samples",
+      "binary_path": ".reveng\\..\\test_samples\\HelloWorld.jar",
+      "output_dir": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-jar",
+      "analyze_command": {
+        "command": [
+          "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+          "C:\\dev\\projects\\reveng-main\\reveng.py",
+          "--no-ollama-check",
+          "--output-dir",
+          ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-jar\\analyze",
+          "analyze",
+          ".reveng\\..\\test_samples\\HelloWorld.jar",
+          "--ghidra-timeout",
+          "120"
+        ],
+        "returncode": 0,
+        "stdout_tail": "Running end-to-end pipeline...\r\nGhidra stage timeout: 120s (retries: 0)\r\n\r\n[SUCCESS] REVENG analysis completed successfully!\r\nPipeline status: partial_success\r\nResults stored in: .reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-jar\\analyze\r\nUnified report: .reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-jar\\analyze\\reports\\unified_analysis_report.json\r\nBehavioral anomaly score: 0.5739076106271356\r\nMemory anomaly score: 0.35\r\n",
+        "stderr_tail": "2026-03-29 19:10:27,409 - reveng.analyzer - INFO - Audit trail initialized\r\n2026-03-29 19:10:27,409 - reveng.analyzer - INFO - REVENG Analyzer initialized\r\n2026-03-29 19:10:27,409 - reveng.analyzer - INFO - Target binary: C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.jar\r\n2026-03-29 19:10:27,409 - reveng.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\r\n2026-03-29 19:10:27,409 - reveng.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\r\n2026-03-29 19:10:27,410 - reveng.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\r\n2026-03-29 19:10:27,441 - reveng.analyzer - INFO - Detected file type: java/jar (confidence: 95.00%)\r\n2026-03-29 19:10:27,441 - reveng.analyzer - INFO - Analysis category: java_bytecode\r\n2026-03-29 19:10:27,715 - reveng.analyzer - INFO - Java 21 detected - fully compatible\r\nConfig file not found: C:\\Users\\oimir\\.reveng\\config.yaml, using defaults\r\n2026-03-29 19:10:27,718 - reveng.analyzer - INFO - All critical tools validated successfully\r\n\\u26a0\\ufe0f google-generativeai not installed. Install with: pip install google-generativeai\r\n\\u274c Pipeline failed: GhidraEngine not configured\r\nTraceback (most recent call last):\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 371, in full_reconstruction_pipeline\r\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\r\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 447, in _phase1_decompilation\r\n    raise ValueError(\"GhidraEngine not configured\")\r\nValueError: GhidraEngine not configured\r\nBehavioral monitoring failed: REVENGLogger.warning() takes 2 positional arguments but 4 were given\r\nFailed to analyze processes: Command '['wmic', 'process', 'get', 'ProcessId,Name,ParentProcessId,CommandLine,ExecutablePath', '/format:csv']' timed out after 30 seconds\r\n",
+        "timed_out": false
+      },
+      "recompile_command": {
+        "command": [
+          "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+          "C:\\dev\\projects\\reveng-main\\reveng.py",
+          "--no-ollama-check",
+          "--output-dir",
+          ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-jar\\recompile",
+          "recompile",
+          ".reveng\\..\\test_samples\\HelloWorld.jar",
+          "--ghidra-timeout",
+          "120"
+        ],
+        "returncode": 1,
+        "stdout_tail": "\r\n================================================================================\r\nRECONSTRUCTION SUMMARY\r\n================================================================================\r\n\r\n? Generated Source Files:\r\n\r\n? Compiled Binaries:\r\n\r\n? Behavioral Validation:\r\n  Similarity Score: 0.0%\r\n\r\n? Security Vulnerabilities:\r\n  ? No vulnerabilities detected\r\n\r\n? Proof-of-Concept Exploits:\r\n  No exploits generated\r\n\r\n================================================================================\r\nStatus: FAILED\r\n================================================================================\r\n\r\n",
+        "stderr_tail": "\\u26a0\\ufe0f google-generativeai not installed. Install with: pip install google-generativeai\r\n  \\u26a0\\ufe0f Gemini not available (set GEMINI_API_KEY)\r\n\\u274c Pipeline failed: Analysis failed: Ghidra error: Ghidra analysis did not produce JSON output\r\nTraceback (most recent call last):\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 371, in full_reconstruction_pipeline\r\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\r\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 450, in _phase1_decompilation\r\n    ghidra_data = await asyncio.to_thread(self.ghidra.analyze_binary, binary_path)\r\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\asyncio\\threads.py\", line 25, in to_thread\r\n    return await loop.run_in_executor(None, func_call)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\concurrent\\futures\\thread.py\", line 86, in run\r\n    result = ctx.run(self.task)\r\n  File \"C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\concurrent\\futures\\thread.py\", line 73, in run\r\n    return fn(*args, **kwargs)\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\integrations\\ghidra\\ghidra_engine.py\", line 137, in analyze_binary\r\n    data = self._request_binary_endpoint(\r\n        endpoint=\"/analyze\",\r\n        binary_path=binary_path,\r\n        action=\"analysis\",\r\n    )\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\integrations\\ghidra\\ghidra_engine.py\", line 204, in _request_binary_endpoint\r\n    raise GhidraConnectionError(f\"{action.capitalize()} failed: {error_msg}\")\r\nreveng.integrations.ghidra.ghidra_engine.GhidraConnectionError: Analysis failed: Ghidra error: Ghidra analysis did not produce JSON output\r\n",
+        "timed_out": false
+      },
+      "analyze_report_exists": false,
+      "recompile_report_exists": false,
+      "original_behavior": [],
+      "rebuilt_binary_path": null,
+      "rebuilt_behavior": [],
+      "behavior_comparisons": [],
+      "status": "recompile_failed"
+    },
+    {
+      "id": "python-sample-bytecode",
+      "source_repo": ".reveng\\..\\test_samples",
+      "binary_path": ".reveng\\..\\test_samples\\sample_app.pyc",
+      "output_dir": ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode",
+      "analyze_command": {
+        "command": [
+          "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+          "C:\\dev\\projects\\reveng-main\\reveng.py",
+          "--no-ollama-check",
+          "--output-dir",
+          ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode\\analyze",
+          "analyze",
+          ".reveng\\..\\test_samples\\sample_app.pyc",
+          "--ghidra-timeout",
+          "120"
+        ],
+        "returncode": 0,
+        "stdout_tail": "Running end-to-end pipeline...\r\nGhidra stage timeout: 120s (retries: 0)\r\n\r\n[SUCCESS] REVENG analysis completed successfully!\r\nPipeline status: partial_success\r\nResults stored in: .reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode\\analyze\r\nUnified report: .reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode\\analyze\\reports\\unified_analysis_report.json\r\nBehavioral anomaly score: 0.5739076106271356\r\nMemory anomaly score: 0.35\r\n",
+        "stderr_tail": "2026-03-29 19:11:30,944 - reveng.analyzer - INFO - Audit trail initialized\r\n2026-03-29 19:11:30,944 - reveng.analyzer - INFO - REVENG Analyzer initialized\r\n2026-03-29 19:11:30,945 - reveng.analyzer - INFO - Target binary: C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyc\r\n2026-03-29 19:11:30,945 - reveng.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\r\n2026-03-29 19:11:30,945 - reveng.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\r\n2026-03-29 19:11:30,945 - reveng.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\r\n2026-03-29 19:11:30,978 - reveng.analyzer - INFO - Detected file type: python/pyc (confidence: 85.00%)\r\n2026-03-29 19:11:30,978 - reveng.analyzer - INFO - Analysis category: python_bytecode\r\n2026-03-29 19:11:31,396 - reveng.analyzer - INFO - Java 21 detected - fully compatible\r\nConfig file not found: C:\\Users\\oimir\\.reveng\\config.yaml, using defaults\r\n2026-03-29 19:11:31,399 - reveng.analyzer - INFO - All critical tools validated successfully\r\n\\u26a0\\ufe0f google-generativeai not installed. Install with: pip install google-generativeai\r\n\\u274c Pipeline failed: GhidraEngine not configured\r\nTraceback (most recent call last):\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 371, in full_reconstruction_pipeline\r\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\r\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 447, in _phase1_decompilation\r\n    raise ValueError(\"GhidraEngine not configured\")\r\nValueError: GhidraEngine not configured\r\nBehavioral monitoring failed: REVENGLogger.warning() takes 2 positional arguments but 4 were given\r\nFailed to analyze processes: Command '['wmic', 'process', 'get', 'ProcessId,Name,ParentProcessId,CommandLine,ExecutablePath', '/format:csv']' timed out after 30 seconds\r\n",
+        "timed_out": false
+      },
+      "recompile_command": {
+        "command": [
+          "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+          "C:\\dev\\projects\\reveng-main\\reveng.py",
+          "--no-ollama-check",
+          "--output-dir",
+          ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode\\recompile",
+          "recompile",
+          ".reveng\\..\\test_samples\\sample_app.pyc",
+          "--ghidra-timeout",
+          "120"
+        ],
+        "returncode": 1,
+        "stdout_tail": "\r\n================================================================================\r\nRECONSTRUCTION SUMMARY\r\n================================================================================\r\n\r\n? Generated Source Files:\r\n\r\n? Compiled Binaries:\r\n\r\n? Behavioral Validation:\r\n  Similarity Score: 0.0%\r\n\r\n? Security Vulnerabilities:\r\n  ? No vulnerabilities detected\r\n\r\n? Proof-of-Concept Exploits:\r\n  No exploits generated\r\n\r\n================================================================================\r\nStatus: FAILED\r\n================================================================================\r\n\r\n",
+        "stderr_tail": "\\u26a0\\ufe0f google-generativeai not installed. Install with: pip install google-generativeai\r\n  \\u26a0\\ufe0f Gemini not available (set GEMINI_API_KEY)\r\n\\u274c Pipeline failed: Analysis failed: Ghidra error: Ghidra analysis did not produce JSON output\r\nTraceback (most recent call last):\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 371, in full_reconstruction_pipeline\r\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\r\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 450, in _phase1_decompilation\r\n    ghidra_data = await asyncio.to_thread(self.ghidra.analyze_binary, binary_path)\r\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\asyncio\\threads.py\", line 25, in to_thread\r\n    return await loop.run_in_executor(None, func_call)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\concurrent\\futures\\thread.py\", line 86, in run\r\n    result = ctx.run(self.task)\r\n  File \"C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\concurrent\\futures\\thread.py\", line 73, in run\r\n    return fn(*args, **kwargs)\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\integrations\\ghidra\\ghidra_engine.py\", line 137, in analyze_binary\r\n    data = self._request_binary_endpoint(\r\n        endpoint=\"/analyze\",\r\n        binary_path=binary_path,\r\n        action=\"analysis\",\r\n    )\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\integrations\\ghidra\\ghidra_engine.py\", line 204, in _request_binary_endpoint\r\n    raise GhidraConnectionError(f\"{action.capitalize()} failed: {error_msg}\")\r\nreveng.integrations.ghidra.ghidra_engine.GhidraConnectionError: Analysis failed: Ghidra error: Ghidra analysis did not produce JSON output\r\n",
+        "timed_out": false
+      },
+      "analyze_report_exists": false,
+      "recompile_report_exists": false,
+      "original_behavior": [],
+      "rebuilt_binary_path": null,
+      "rebuilt_behavior": [],
+      "behavior_comparisons": [],
+      "status": "recompile_failed"
+    },
+    {
+      "id": "python-sample-zipapp",
+      "source_repo": ".reveng\\..\\test_samples",
+      "binary_path": ".reveng\\..\\test_samples\\sample_app.pyz",
+      "output_dir": ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-zipapp",
+      "analyze_command": {
+        "command": [
+          "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+          "C:\\dev\\projects\\reveng-main\\reveng.py",
+          "--no-ollama-check",
+          "--output-dir",
+          ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-zipapp\\analyze",
+          "analyze",
+          ".reveng\\..\\test_samples\\sample_app.pyz",
+          "--ghidra-timeout",
+          "120"
+        ],
+        "returncode": 0,
+        "stdout_tail": "Running end-to-end pipeline...\r\nGhidra stage timeout: 120s (retries: 0)\r\n\r\n[SUCCESS] REVENG analysis completed successfully!\r\nPipeline status: partial_success\r\nResults stored in: .reveng\\..\\reports\\source_binary_benchmarks\\python-sample-zipapp\\analyze\r\nUnified report: .reveng\\..\\reports\\source_binary_benchmarks\\python-sample-zipapp\\analyze\\reports\\unified_analysis_report.json\r\nBehavioral anomaly score: 0.5739076106271356\r\nMemory anomaly score: 0.35\r\n",
+        "stderr_tail": "2026-03-29 19:12:36,483 - reveng.analyzer - INFO - Audit trail initialized\r\n2026-03-29 19:12:36,483 - reveng.analyzer - INFO - REVENG Analyzer initialized\r\n2026-03-29 19:12:36,483 - reveng.analyzer - INFO - Target binary: C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyz\r\n2026-03-29 19:12:36,483 - reveng.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\r\n2026-03-29 19:12:36,483 - reveng.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\r\n2026-03-29 19:12:36,483 - reveng.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\r\n2026-03-29 19:12:36,514 - reveng.analyzer - INFO - Detected file type: unknown/zip (confidence: 50.00%)\r\n2026-03-29 19:12:36,515 - reveng.analyzer - INFO - Analysis category: unknown\r\n2026-03-29 19:12:36,740 - reveng.analyzer - INFO - Java 21 detected - fully compatible\r\nConfig file not found: C:\\Users\\oimir\\.reveng\\config.yaml, using defaults\r\n2026-03-29 19:12:36,742 - reveng.analyzer - INFO - All critical tools validated successfully\r\n\\u26a0\\ufe0f google-generativeai not installed. Install with: pip install google-generativeai\r\n\\u274c Pipeline failed: GhidraEngine not configured\r\nTraceback (most recent call last):\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 371, in full_reconstruction_pipeline\r\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\r\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 447, in _phase1_decompilation\r\n    raise ValueError(\"GhidraEngine not configured\")\r\nValueError: GhidraEngine not configured\r\nBehavioral monitoring failed: REVENGLogger.warning() takes 2 positional arguments but 4 were given\r\nFailed to analyze processes: Command '['wmic', 'process', 'get', 'ProcessId,Name,ParentProcessId,CommandLine,ExecutablePath', '/format:csv']' timed out after 30 seconds\r\n",
+        "timed_out": false
+      },
+      "recompile_command": {
+        "command": [
+          "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+          "C:\\dev\\projects\\reveng-main\\reveng.py",
+          "--no-ollama-check",
+          "--output-dir",
+          ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-zipapp\\recompile",
+          "recompile",
+          ".reveng\\..\\test_samples\\sample_app.pyz",
+          "--ghidra-timeout",
+          "120"
+        ],
+        "returncode": 1,
+        "stdout_tail": "\r\n================================================================================\r\nRECONSTRUCTION SUMMARY\r\n================================================================================\r\n\r\n? Generated Source Files:\r\n\r\n? Compiled Binaries:\r\n\r\n? Behavioral Validation:\r\n  Similarity Score: 0.0%\r\n\r\n? Security Vulnerabilities:\r\n  ? No vulnerabilities detected\r\n\r\n? Proof-of-Concept Exploits:\r\n  No exploits generated\r\n\r\n================================================================================\r\nStatus: FAILED\r\n================================================================================\r\n\r\n",
+        "stderr_tail": "\\u26a0\\ufe0f google-generativeai not installed. Install with: pip install google-generativeai\r\n  \\u26a0\\ufe0f Gemini not available (set GEMINI_API_KEY)\r\n\\u274c Pipeline failed: Analysis failed: Ghidra error: Ghidra analysis did not produce JSON output\r\nTraceback (most recent call last):\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 371, in full_reconstruction_pipeline\r\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\r\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\ai\\recompilation_engine.py\", line 450, in _phase1_decompilation\r\n    ghidra_data = await asyncio.to_thread(self.ghidra.analyze_binary, binary_path)\r\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\asyncio\\threads.py\", line 25, in to_thread\r\n    return await loop.run_in_executor(None, func_call)\r\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\concurrent\\futures\\thread.py\", line 86, in run\r\n    result = ctx.run(self.task)\r\n  File \"C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\Lib\\concurrent\\futures\\thread.py\", line 73, in run\r\n    return fn(*args, **kwargs)\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\integrations\\ghidra\\ghidra_engine.py\", line 137, in analyze_binary\r\n    data = self._request_binary_endpoint(\r\n        endpoint=\"/analyze\",\r\n        binary_path=binary_path,\r\n        action=\"analysis\",\r\n    )\r\n  File \"C:\\dev\\projects\\reveng-main\\src\\reveng\\integrations\\ghidra\\ghidra_engine.py\", line 204, in _request_binary_endpoint\r\n    raise GhidraConnectionError(f\"{action.capitalize()} failed: {error_msg}\")\r\nreveng.integrations.ghidra.ghidra_engine.GhidraConnectionError: Analysis failed: Ghidra error: Ghidra analysis did not produce JSON output\r\n",
+        "timed_out": false
+      },
+      "analyze_report_exists": false,
+      "recompile_report_exists": false,
+      "original_behavior": [],
+      "rebuilt_binary_path": null,
+      "rebuilt_behavior": [],
+      "behavior_comparisons": [],
+      "status": "recompile_failed"
+    },
+    {
+      "id": "opencode",
+      "source_repo": ".reveng\\..\\external\\ga_sources\\opencode",
+      "binary_path": ".reveng\\..\\external\\ga_binaries\\opencode\\opencode.exe",
+      "output_dir": ".reveng\\..\\reports\\source_binary_benchmarks\\opencode",
+      "analyze_command": {
+        "command": [
+          "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+          "C:\\dev\\projects\\reveng-main\\reveng.py",
+          "--no-ollama-check",
+          "--output-dir",
+          ".reveng\\..\\reports\\source_binary_benchmarks\\opencode\\analyze",
+          "analyze",
+          ".reveng\\..\\external\\ga_binaries\\opencode\\opencode.exe",
+          "--ghidra-timeout",
+          "600"
+        ],
+        "returncode": 0,
+        "stdout_tail": "Detected Bun executable; routing analyze to Bun bundle extraction.\r\nBundled JavaScript: .reveng\\..\\reports\\source_binary_benchmarks\\opencode\\analyze\\opencode_bundle.js\r\nBun virtual filesystem: .reveng\\..\\reports\\source_binary_benchmarks\\opencode\\analyze\\opencode_bunfs\r\nBun recovery mode: module_graph\r\nPreferred recompilation input: .reveng\\..\\reports\\source_binary_benchmarks\\opencode\\analyze\\opencode_bunfs\\root\\src\\index.js\r\nReason: Recovered Bun virtual file excludes appended bundle metadata\r\nNormalized project workspace: .reveng\\..\\reports\\source_binary_benchmarks\\opencode\\analyze\\normalized_project\r\nNormalized entrypoint: .reveng\\..\\reports\\source_binary_benchmarks\\opencode\\analyze\\normalized_project\\index.mjs\r\nNormalized SEA entrypoint: .reveng\\..\\reports\\source_binary_benchmarks\\opencode\\analyze\\normalized_project\\sea-entry.cjs\r\nBun analysis report: .reveng\\..\\reports\\source_binary_benchmarks\\opencode\\analyze\\bun_analysis.json\r\n",
+        "stderr_tail": "2026-03-29 19:13:38,528 - reveng.analyzer - INFO - Audit trail initialized\r\n2026-03-29 19:13:38,529 - reveng.analyzer - INFO - REVENG Analyzer initialized\r\n2026-03-29 19:13:38,529 - reveng.analyzer - INFO - Target binary: C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\opencode\\opencode.exe\r\n2026-03-29 19:13:38,529 - reveng.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\r\n2026-03-29 19:13:38,529 - reveng.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\r\n2026-03-29 19:13:38,529 - reveng.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\r\n2026-03-29 19:13:38,557 - reveng.analyzer - INFO - Detected file type: native/pe (confidence: 100.00%)\r\n2026-03-29 19:13:38,557 - reveng.analyzer - INFO - Analysis category: native_binary\r\n2026-03-29 19:13:38,821 - reveng.analyzer - INFO - Java 21 detected - fully compatible\r\nConfig file not found: C:\\Users\\oimir\\.reveng\\config.yaml, using defaults\r\n2026-03-29 19:13:38,824 - reveng.analyzer - INFO - All critical tools validated successfully\r\n",
+        "timed_out": false
+      },
+      "recompile_command": {
+        "command": [
+          "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+          "C:\\dev\\projects\\reveng-main\\reveng.py",
+          "--no-ollama-check",
+          "--output-dir",
+          ".reveng\\..\\reports\\source_binary_benchmarks\\opencode\\recompile",
+          "recompile",
+          ".reveng\\..\\external\\ga_binaries\\opencode\\opencode.exe",
+          "--ghidra-timeout",
+          "600"
+        ],
+        "returncode": 0,
+        "stdout_tail": "Detected Bun executable; routing recompile to Node SEA build.\r\nPreferred recompilation input: analysis_opencode\\opencode_bunfs\\root\\src\\index.js\r\nNormalized project workspace: analysis_opencode\\normalized_project\r\nSEA executable: analysis_opencode\\normalized_project\\bun-sea.exe\r\nBuild report: analysis_opencode\\bun_sea_build.json\r\n",
+        "stderr_tail": "",
+        "timed_out": false
+      },
+      "analyze_report_exists": false,
+      "recompile_report_exists": false,
+      "original_behavior": [],
+      "rebuilt_binary_path": null,
+      "rebuilt_behavior": [],
+      "behavior_comparisons": [],
+      "status": "rebuilt_binary_missing"
+    }
+  ]
+}

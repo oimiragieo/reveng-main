@@ -52,7 +52,7 @@
       "status": "pass",
       "steps": [
         {
-          "action": "Run pytest tests/poc/test_mcp_integration.py::test_tools_list_includes_forensic_tools -v --tb=long",
+          "action": "Run pytest tests/integration/test_mcp_integration.py::test_tools_list_includes_forensic_tools -v --tb=long",
           "expected": "tools/list response includes scan_yara, analyze_memory_dump, diff_binaries with correct schemas",
           "observed": "PASSED"
         },

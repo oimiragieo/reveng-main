@@ -21,6 +21,7 @@ from typing import Any, Dict
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+
 from reveng.integrations.ghidra.ghidra_http_client import GhidraHTTPClient
 
 # Configure logging

@@ -64,9 +64,7 @@ class BinaryValidator:
         }
 
         # Size comparison
-        report["comparison"]["size_match"] = (
-            report["original"]["size"] == report["rebuilt"]["size"]
-        )
+        report["comparison"]["size_match"] = report["original"]["size"] == report["rebuilt"]["size"]
         report["comparison"]["size_diff"] = abs(
             report["original"]["size"] - report["rebuilt"]["size"]
         )
@@ -78,9 +76,7 @@ class BinaryValidator:
 
         # Section comparison (if LIEF available)
         if HAS_LIEF and rebuilt_path.exists():
-            report["comparison"]["sections"] = self._compare_sections(
-                original_path, rebuilt_path
-            )
+            report["comparison"]["sections"] = self._compare_sections(original_path, rebuilt_path)
 
         # Run smoke tests
         if smoke_tests or (self.config and self.config.smoke_tests):
@@ -159,9 +155,7 @@ class BinaryValidator:
                 else:
                     # Compare sizes
                     size_match = orig_section.size == rebuilt_section.size
-                    section_matches[section_name] = (
-                        "match" if size_match else "size_mismatch"
-                    )
+                    section_matches[section_name] = "match" if size_match else "size_mismatch"
 
             return section_matches
 
@@ -259,14 +253,10 @@ class BinaryValidator:
         if size_diff > 0:
             pct_diff = (size_diff / report["original"]["size"]) * 100
             if pct_diff > 10:
-                verdict["warnings"].append(
-                    f"Size differs by {size_diff} bytes ({pct_diff:.1f}%)"
-                )
+                verdict["warnings"].append(f"Size differs by {size_diff} bytes ({pct_diff:.1f}%)")
                 verdict["confidence"] -= 0.2
             elif pct_diff > 1:
-                verdict["warnings"].append(
-                    f"Size differs by {size_diff} bytes ({pct_diff:.2f}%)"
-                )
+                verdict["warnings"].append(f"Size differs by {size_diff} bytes ({pct_diff:.2f}%)")
                 verdict["confidence"] -= 0.05
 
         # Checksum mismatch warning
@@ -289,21 +279,15 @@ class BinaryValidator:
                     )
                     verdict["confidence"] -= 0.3
                 elif tests_failed > 0:
-                    verdict["warnings"].append(
-                        f"{tests_failed}/{tests_run} smoke tests failed"
-                    )
+                    verdict["warnings"].append(f"{tests_failed}/{tests_run} smoke tests failed")
                     verdict["confidence"] -= 0.1 * (tests_failed / tests_run)
 
         # Section mismatches
         sections = report["comparison"].get("sections", {})
         if sections:
-            mismatches = [
-                name for name, status in sections.items() if status != "match"
-            ]
+            mismatches = [name for name, status in sections.items() if status != "match"]
             if mismatches:
-                verdict["warnings"].append(
-                    f"Section mismatches: {', '.join(mismatches[:3])}"
-                )
+                verdict["warnings"].append(f"Section mismatches: {', '.join(mismatches[:3])}")
                 verdict["confidence"] -= 0.05 * min(len(mismatches), 5)
 
         # Clamp confidence to [0, 1]

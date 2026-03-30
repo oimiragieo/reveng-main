@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, List
 
 # Import existing REVENG components
 try:
-    from ..config.config_manager import ConfigManager, get_config
+    from ..config.config_manager import get_config
     from ..languages.language_detector import LanguageDetector
 except ImportError as e:
     logging.warning(f"REVENG components not available: {e}")
@@ -129,9 +129,7 @@ class AIEnhancedAnalyzer:
         file_handler.setLevel(logging.DEBUG)
 
         # Create formatter
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
         file_handler.setFormatter(formatter)
 
         # Add handler to logger
@@ -158,9 +156,7 @@ class AIEnhancedAnalyzer:
             self.language_detector = LanguageDetector()
             self.file_type = self.language_detector.detect(self.binary_path)
 
-            logger.info(
-                f"Detected file type: {self.file_type.language}/{self.file_type.format}"
-            )
+            logger.info(f"Detected file type: {self.file_type.language}/{self.file_type.format}")
             logger.info(f"Detection confidence: {self.file_type.confidence:.2%}")
 
         except Exception as e:
@@ -260,9 +256,7 @@ class AIEnhancedAnalyzer:
             # Run analysis
             analysis_summary = reveng_analyzer.analyze_binary()
 
-            self.reveng_summary = (
-                analysis_summary if isinstance(analysis_summary, dict) else None
-            )
+            self.reveng_summary = analysis_summary if isinstance(analysis_summary, dict) else None
             self.reveng_results = (
                 (analysis_summary or {}).get("results", {})
                 if isinstance(analysis_summary, dict)
@@ -275,12 +269,9 @@ class AIEnhancedAnalyzer:
             )
 
             success = bool(
-                isinstance(analysis_summary, dict)
-                and analysis_summary.get("status") == "success"
+                isinstance(analysis_summary, dict) and analysis_summary.get("status") == "success"
             )
-            logger.info(
-                f"REVENG pipeline completed: {'success' if success else 'with errors'}"
-            )
+            logger.info(f"REVENG pipeline completed: {'success' if success else 'with errors'}")
 
         except Exception as e:
             logger.error(f"Error running REVENG pipeline: {e}")
@@ -335,9 +326,7 @@ class AIEnhancedAnalyzer:
                     "status": "completed",
                     "ml_predictions": [pred.__dict__ for pred in ml_predictions],
                     "prediction_count": len(ml_predictions),
-                    "high_confidence_count": len(
-                        [p for p in ml_predictions if p.confidence > 0.8]
-                    ),
+                    "high_confidence_count": len([p for p in ml_predictions if p.confidence > 0.8]),
                 }
 
                 logger.info(
@@ -467,12 +456,8 @@ class AIEnhancedAnalyzer:
                     "overview": code_summary.overview,
                     "algorithms_detected": code_summary.algorithms_used,
                     "design_patterns": code_summary.design_patterns,
-                    "documentation_suggestions": len(
-                        code_summary.documentation_suggestions
-                    ),
-                    "complexity_score": code_summary.complexity_analysis.get(
-                        "complexity_score", 0
-                    ),
+                    "documentation_suggestions": len(code_summary.documentation_suggestions),
+                    "complexity_score": code_summary.complexity_analysis.get("complexity_score", 0),
                 }
 
                 logger.info(
@@ -501,11 +486,7 @@ class AIEnhancedAnalyzer:
         file_info = FileInfo(
             path=self.binary_path,
             name=self.binary_name,
-            size=(
-                Path(self.binary_path).stat().st_size
-                if Path(self.binary_path).exists()
-                else 0
-            ),
+            size=(Path(self.binary_path).stat().st_size if Path(self.binary_path).exists() else 0),
             file_type=self.file_type.language if self.file_type else "unknown",
             format_type=self.file_type.format if self.file_type else "unknown",
             detection_confidence=self.file_type.confidence if self.file_type else 0.0,
@@ -569,9 +550,7 @@ class AIEnhancedAnalyzer:
             # Store detailed ML results for synthesis
             self.ml_pipeline_result = ml_result
 
-            logger.info(
-                f"ML pipeline completed: {len(ml_result.stages_completed)} stages"
-            )
+            logger.info(f"ML pipeline completed: {len(ml_result.stages_completed)} stages")
 
         except Exception as e:
             logger.error(f"Error in ML pipeline: {e}")
@@ -706,9 +685,7 @@ def main():
     """Main function for AI-Enhanced Analyzer"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="AI-Enhanced Universal Binary Analysis Engine"
-    )
+    parser = argparse.ArgumentParser(description="AI-Enhanced Universal Binary Analysis Engine")
     parser.add_argument("binary_path", nargs="?", help="Path to binary file")
     parser.add_argument("--config", help="Path to enhanced analysis config file")
     parser.add_argument(
@@ -716,18 +693,12 @@ def main():
         action="store_true",
         help="Disable corporate exposure analysis",
     )
-    parser.add_argument(
-        "--no-vuln", action="store_true", help="Disable vulnerability discovery"
-    )
-    parser.add_argument(
-        "--no-threat", action="store_true", help="Disable threat intelligence"
-    )
+    parser.add_argument("--no-vuln", action="store_true", help="Disable vulnerability discovery")
+    parser.add_argument("--no-threat", action="store_true", help="Disable threat intelligence")
     parser.add_argument(
         "--no-reconstruction", action="store_true", help="Disable binary reconstruction"
     )
-    parser.add_argument(
-        "--no-demo", action="store_true", help="Disable demonstration generation"
-    )
+    parser.add_argument("--no-demo", action="store_true", help="Disable demonstration generation")
 
     args = parser.parse_args()
 

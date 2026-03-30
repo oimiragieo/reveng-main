@@ -164,9 +164,7 @@ class CorporateExposureReport:
     business_impact: str = ""
     remediation_recommendations: List[str] = field(default_factory=list)
     confidence_score: float = 0.0
-    analysis_timestamp: float = field(
-        default_factory=lambda: datetime.now().timestamp()
-    )
+    analysis_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
 
 
 @dataclass
@@ -244,9 +242,7 @@ class VulnerabilityReport:
     info_count: int = 0
 
     memory_vulnerabilities: List[MemoryVulnerability] = field(default_factory=list)
-    injection_vulnerabilities: List[InjectionVulnerability] = field(
-        default_factory=list
-    )
+    injection_vulnerabilities: List[InjectionVulnerability] = field(default_factory=list)
     authentication_issues: List[AuthenticationIssue] = field(default_factory=list)
     cryptographic_weaknesses: List[CryptographicWeakness] = field(default_factory=list)
 
@@ -255,9 +251,7 @@ class VulnerabilityReport:
     remediation_priority: List[str] = field(default_factory=list)
     summary: str = ""
     confidence_score: float = 0.0
-    analysis_timestamp: float = field(
-        default_factory=lambda: datetime.now().timestamp()
-    )
+    analysis_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
 
 
 @dataclass
@@ -345,9 +339,7 @@ class ThreatIntelligenceReport:
     threat_level: RiskLevel = RiskLevel.UNKNOWN
     recommended_actions: List[str] = field(default_factory=list)
     confidence_score: float = 0.0
-    analysis_timestamp: float = field(
-        default_factory=lambda: datetime.now().timestamp()
-    )
+    analysis_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
 
 
 @dataclass
@@ -382,9 +374,7 @@ class UniversalAnalysisResult:
     # Core information
     file_info: FileInfo
     analysis_id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    analysis_timestamp: float = field(
-        default_factory=lambda: datetime.now().timestamp()
-    )
+    analysis_timestamp: float = field(default_factory=lambda: datetime.now().timestamp())
     analysis_duration: float = 0.0
 
     # Analysis results
@@ -525,9 +515,7 @@ class UniversalAnalysisSerializer:
         return ET.tostring(root, encoding="unicode")
 
     @staticmethod
-    def save_to_file(
-        result: UniversalAnalysisResult, file_path: str, format_type: str = "json"
-    ):
+    def save_to_file(result: UniversalAnalysisResult, file_path: str, format_type: str = "json"):
         """Save analysis result to file"""
         if format_type.lower() == "json":
             with open(file_path, "w", encoding="utf-8") as f:
@@ -539,9 +527,7 @@ class UniversalAnalysisSerializer:
             raise ValueError(f"Unsupported format: {format_type}")
 
     @staticmethod
-    def load_from_file(
-        file_path: str, format_type: str = "json"
-    ) -> UniversalAnalysisResult:
+    def load_from_file(file_path: str, format_type: str = "json") -> UniversalAnalysisResult:
         """Load analysis result from file"""
         if format_type.lower() == "json":
             with open(file_path, "r", encoding="utf-8") as f:
@@ -601,14 +587,11 @@ class EvidenceTracker:
             "total_evidence": len(self.evidence_chain),
             "evidence_types": list(set(e.type for e in self.evidence_chain)),
             "average_confidence": (
-                sum(e.confidence for e in self.evidence_chain)
-                / len(self.evidence_chain)
+                sum(e.confidence for e in self.evidence_chain) / len(self.evidence_chain)
                 if self.evidence_chain
                 else 0.0
             ),
-            "high_confidence_count": len(
-                [e for e in self.evidence_chain if e.confidence >= 0.8]
-            ),
+            "high_confidence_count": len([e for e in self.evidence_chain if e.confidence >= 0.8]),
             "evidence_sources": list(set(e.source for e in self.evidence_chain)),
             "evidence_timeline": sorted(
                 [(e.timestamp, e.type, e.confidence) for e in self.evidence_chain]
@@ -813,9 +796,7 @@ class CodeSummary:
     design_patterns: List[str] = field(default_factory=list)
     data_structures: List[str] = field(default_factory=list)
     complexity_analysis: Dict[str, Any] = field(default_factory=dict)
-    documentation_suggestions: List["DocumentationSuggestion"] = field(
-        default_factory=list
-    )
+    documentation_suggestions: List["DocumentationSuggestion"] = field(default_factory=list)
     semantic_analysis: Optional["SemanticAnalysis"] = None
     evidence: List["Evidence"] = field(default_factory=list)
 
@@ -928,16 +909,10 @@ class MLPipelineResult:
 
     pipeline_name: str
     stages_completed: List[str] = field(default_factory=list)
-    vulnerability_predictions: List[VulnerabilityPrediction] = field(
-        default_factory=list
-    )
-    malware_classifications: List[MLMalwareClassificationResult] = field(
-        default_factory=list
-    )
+    vulnerability_predictions: List[VulnerabilityPrediction] = field(default_factory=list)
+    malware_classifications: List[MLMalwareClassificationResult] = field(default_factory=list)
     code_summaries: List[CodeSummary] = field(default_factory=list)
-    performance_metrics: Dict[str, ModelPerformanceMetrics] = field(
-        default_factory=dict
-    )
+    performance_metrics: Dict[str, ModelPerformanceMetrics] = field(default_factory=dict)
     execution_time: float = 0.0
     success: bool = True
     error_messages: List[str] = field(default_factory=list)
@@ -956,9 +931,7 @@ class EnhancedUniversalAnalysisResult:
 
     # ML-enhanced results
     ml_pipeline_result: Optional[MLPipelineResult] = None
-    vulnerability_predictions: List[VulnerabilityPrediction] = field(
-        default_factory=list
-    )
+    vulnerability_predictions: List[VulnerabilityPrediction] = field(default_factory=list)
     malware_classification: Optional[MLMalwareClassificationResult] = None
     code_summary: Optional[CodeSummary] = None
     similarity_analysis: Optional[SimilarityAnalysis] = None

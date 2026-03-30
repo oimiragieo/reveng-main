@@ -58,9 +58,7 @@ class FunctionalCodeGenerator:
                 if ai_config.enable_ai:
                     self.ai_analyzer = OllamaAnalyzer(
                         model_name=(
-                            ai_config.ollama_model
-                            if ai_config.ollama_model != "auto"
-                            else None
+                            ai_config.ollama_model if ai_config.ollama_model != "auto" else None
                         ),
                         ollama_host=ai_config.ollama_host,
                         timeout=ai_config.ollama_timeout,
@@ -72,14 +70,10 @@ class FunctionalCodeGenerator:
                     )
                 else:
                     self.use_ai = False
-                    logger.info(
-                        "AI disabled in config, using template-based generation"
-                    )
+                    logger.info("AI disabled in config, using template-based generation")
             except Exception as e:
                 self.use_ai = False
-                logger.warning(
-                    f"Failed to initialize AI: {e}, using template-based generation"
-                )
+                logger.warning(f"Failed to initialize AI: {e}, using template-based generation")
         else:
             logger.info("Template-based code generation mode")
 
@@ -147,9 +141,7 @@ class FunctionalCodeGenerator:
         logger.info(f"Generating functional code for {function_name} using AI")
 
         # Build comprehensive prompt for code generation
-        prompt = self._build_code_generation_prompt(
-            function_name, disassembly, analysis
-        )
+        prompt = self._build_code_generation_prompt(function_name, disassembly, analysis)
 
         try:
             # Call Ollama for code generation
@@ -195,9 +187,7 @@ Confidence: {analysis.get("confidence", 0.0)}
 """
 
             if analysis.get("security_issues"):
-                prompt += (
-                    f"\nSecurity Issues Found: {len(analysis['security_issues'])}\n"
-                )
+                prompt += f"\nSecurity Issues Found: {len(analysis['security_issues'])}\n"
                 for issue in analysis["security_issues"][:3]:  # Show top 3
                     prompt += f"  - {issue.get('description', 'Unknown issue')}\n"
 
@@ -292,17 +282,11 @@ Generate the C code now:
         return_type = self._detect_return_type(disassembly, analysis)
 
         # Format parameters
-        param_str = (
-            ", ".join([f"{p['type']} {p['name']}" for p in params])
-            if params
-            else "void"
-        )
+        param_str = ", ".join([f"{p['type']} {p['name']}" for p in params]) if params else "void"
 
         # Generate body
         purpose = analysis.get("purpose", "Unknown") if analysis else "Unknown"
-        return_value = (
-            "0" if return_type == "int" else "NULL" if "*" in return_type else "0"
-        )
+        return_value = "0" if return_type == "int" else "NULL" if "*" in return_type else "0"
 
         body = template.format(
             purpose=purpose,
@@ -313,9 +297,7 @@ Generate the C code now:
         )
 
         # Build full function
-        code = self._add_header(
-            function_name, "Template-based implementation", analysis
-        )
+        code = self._add_header(function_name, "Template-based implementation", analysis)
         code += f"\n{return_type} {function_name}({param_str}) {{\n"
         code += body + "\n"
         code += "}\n"
@@ -336,9 +318,7 @@ Generate the C code now:
 
         return params[:3]  # Limit to first 3 params
 
-    def _detect_return_type(
-        self, disassembly: str, analysis: Optional[Dict[str, Any]]
-    ) -> str:
+    def _detect_return_type(self, disassembly: str, analysis: Optional[Dict[str, Any]]) -> str:
         """Detect return type from disassembly and analysis"""
         if analysis:
             category = analysis.get("category", "").lower()
@@ -365,9 +345,7 @@ Generate the C code now:
             header += f" * Confidence: {analysis.get('confidence', 0.0):.2f}\n"
 
             if analysis.get("security_issues"):
-                header += (
-                    f" * Security Issues: {len(analysis['security_issues'])} found\n"
-                )
+                header += f" * Security Issues: {len(analysis['security_issues'])} found\n"
 
         header += " */\n\n"
         header += "#include <stdio.h>\n"
@@ -383,16 +361,12 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
-    parser = argparse.ArgumentParser(
-        description="Generate functional C code from disassembly"
-    )
+    parser = argparse.ArgumentParser(description="Generate functional C code from disassembly")
     parser.add_argument("function_name", help="Name of the function")
     parser.add_argument("--disasm", required=True, help="Path to disassembly file")
     parser.add_argument("--analysis", help="Path to AI analysis JSON (optional)")
     parser.add_argument("--output", help="Output C file path")
-    parser.add_argument(
-        "--no-ai", action="store_true", help="Disable AI, use templates only"
-    )
+    parser.add_argument("--no-ai", action="store_true", help="Disable AI, use templates only")
     args = parser.parse_args()
 
     # Load disassembly

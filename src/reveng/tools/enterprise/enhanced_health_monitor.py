@@ -663,12 +663,8 @@ class EnhancedHealthMonitor:
 
         # Calculate uptime percentage
         total_checks = len(recent_health)
-        healthy_checks = len(
-            [h for h in recent_health if h.overall_status == "healthy"]
-        )
-        uptime_percentage = (
-            (healthy_checks / total_checks) * 100 if total_checks > 0 else 0
-        )
+        healthy_checks = len([h for h in recent_health if h.overall_status == "healthy"])
+        uptime_percentage = (healthy_checks / total_checks) * 100 if total_checks > 0 else 0
 
         # Component statistics
         component_stats = {}
@@ -680,9 +676,7 @@ class EnhancedHealthMonitor:
             ]
 
             if component_health_data:
-                healthy_count = len(
-                    [c for c in component_health_data if c.status == "healthy"]
-                )
+                healthy_count = len([c for c in component_health_data if c.status == "healthy"])
                 component_uptime = (healthy_count / len(component_health_data)) * 100
 
                 component_stats[component_name] = {
@@ -729,12 +723,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Enhanced Analysis Health Monitor")
-    parser.add_argument(
-        "--interval", type=int, default=60, help="Health check interval in seconds"
-    )
-    parser.add_argument(
-        "--check-once", action="store_true", help="Run health check once and exit"
-    )
+    parser.add_argument("--interval", type=int, default=60, help="Health check interval in seconds")
+    parser.add_argument("--check-once", action="store_true", help="Run health check once and exit")
     parser.add_argument("--export", help="Export health data to file")
     parser.add_argument(
         "--summary",

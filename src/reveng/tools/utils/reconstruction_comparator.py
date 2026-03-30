@@ -88,9 +88,7 @@ class ComparisonResult:
     security_analysis: Dict[str, Any] = field(default_factory=dict)
     performance_analysis: Dict[str, Any] = field(default_factory=dict)
     recommendations: List[str] = field(default_factory=list)
-    comparison_timestamp: str = field(
-        default_factory=lambda: time.strftime("%Y-%m-%d %H:%M:%S")
-    )
+    comparison_timestamp: str = field(default_factory=lambda: time.strftime("%Y-%m-%d %H:%M:%S"))
 
 
 class ReconstructionComparator:
@@ -100,9 +98,7 @@ class ReconstructionComparator:
 
     def __init__(self, temp_dir: Optional[Path] = None):
         """Initialize the comparator"""
-        self.temp_dir = temp_dir or Path(
-            tempfile.mkdtemp(prefix="reconstruction_comparison_")
-        )
+        self.temp_dir = temp_dir or Path(tempfile.mkdtemp(prefix="reconstruction_comparison_"))
         self.temp_dir.mkdir(exist_ok=True)
 
         # Check for available analysis tools
@@ -113,9 +109,7 @@ class ReconstructionComparator:
         self.has_diff = self._check_tool("diff")
 
         logger.info("Reconstruction Comparator initialized")
-        logger.info(
-            f"Available tools: objdump={self.has_objdump}, readelf={self.has_readelf}"
-        )
+        logger.info(f"Available tools: objdump={self.has_objdump}, readelf={self.has_readelf}")
 
     def _check_tool(self, tool_name: str) -> bool:
         """Check if a system tool is available"""
@@ -173,9 +167,7 @@ class ReconstructionComparator:
             )
 
             # 6. Calculate overall accuracy
-            result.metrics.overall_accuracy = self._calculate_overall_accuracy(
-                result.metrics
-            )
+            result.metrics.overall_accuracy = self._calculate_overall_accuracy(result.metrics)
             result.metrics.accuracy_level = self._determine_accuracy_level(
                 result.metrics.overall_accuracy
             )
@@ -223,9 +215,7 @@ class ReconstructionComparator:
 
             # Binary content comparison using hexdump
             if self.has_hexdump:
-                content_similarity = self._compare_binary_content(
-                    original, reconstructed
-                )
+                content_similarity = self._compare_binary_content(original, reconstructed)
                 similarity_score += content_similarity * 0.3
                 total_checks += 0.3
 
@@ -245,9 +235,7 @@ class ReconstructionComparator:
 
             # ELF/PE structure comparison
             if self.has_readelf:
-                structure_similarity = self._compare_binary_headers(
-                    original, reconstructed
-                )
+                structure_similarity = self._compare_binary_headers(original, reconstructed)
                 similarity_score += structure_similarity * 0.3
                 total_checks += 0.3
 
@@ -320,9 +308,7 @@ class ReconstructionComparator:
             )
 
             if result.returncode == 0:
-                return [
-                    s.strip() for s in result.stdout.split("\n") if len(s.strip()) > 3
-                ]
+                return [s.strip() for s in result.stdout.split("\n") if len(s.strip()) > 3]
             return []
 
         except Exception as e:
@@ -345,9 +331,9 @@ class ReconstructionComparator:
 
             common_fields = ["machine", "class", "data", "type"]
 
-            for field in common_fields:
-                if field in orig_headers and field in recon_headers:
-                    if orig_headers[field] == recon_headers[field]:
+            for field_name in common_fields:
+                if field_name in orig_headers and field_name in recon_headers:
+                    if orig_headers[field_name] == recon_headers[field_name]:
                         similarity_score += 1.0
                     total_fields += 1
 
@@ -410,7 +396,9 @@ class ReconstructionComparator:
                         test_case.passed = True
                         passed_tests += 1
                     else:
-                        test_case.error_message = f"Output mismatch: expected {orig_result}, got {recon_result}"
+                        test_case.error_message = (
+                            f"Output mismatch: expected {orig_result}, got {recon_result}"
+                        )
 
                 except Exception as e:
                     test_case.error_message = str(e)
@@ -429,23 +417,17 @@ class ReconstructionComparator:
 
         # Basic execution test
         test_cases.append(
-            BehavioralTest(
-                name="basic_execution", test_type="execution", input_data=None
-            )
+            BehavioralTest(name="basic_execution", test_type="execution", input_data=None)
         )
 
         # Help/usage test
         test_cases.append(
-            BehavioralTest(
-                name="help_output", test_type="argument", input_data=["--help"]
-            )
+            BehavioralTest(name="help_output", test_type="argument", input_data=["--help"])
         )
 
         # Version test
         test_cases.append(
-            BehavioralTest(
-                name="version_output", test_type="argument", input_data=["--version"]
-            )
+            BehavioralTest(name="version_output", test_type="argument", input_data=["--version"])
         )
 
         # Invalid argument test
@@ -459,9 +441,7 @@ class ReconstructionComparator:
 
         return test_cases
 
-    def _run_test_case(
-        self, binary_path: Path, test_case: BehavioralTest
-    ) -> Dict[str, Any]:
+    def _run_test_case(self, binary_path: Path, test_case: BehavioralTest) -> Dict[str, Any]:
         """Run a single test case on the binary"""
         try:
             start_time = time.time()
@@ -470,9 +450,7 @@ class ReconstructionComparator:
             if test_case.input_data:
                 cmd.extend(test_case.input_data)
 
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=10, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10, check=False)
 
             execution_time = time.time() - start_time
 
@@ -488,9 +466,7 @@ class ReconstructionComparator:
         except Exception as e:
             return {"error": str(e), "execution_time": 0.0}
 
-    def _compare_test_outputs(
-        self, expected: Dict[str, Any], actual: Dict[str, Any]
-    ) -> bool:
+    def _compare_test_outputs(self, expected: Dict[str, Any], actual: Dict[str, Any]) -> bool:
         """Compare test outputs for equivalence"""
         # Check for errors first
         if "error" in expected or "error" in actual:
@@ -526,16 +502,12 @@ class ReconstructionComparator:
 
             # Library dependency analysis
             if self.has_readelf:
-                lib_similarity = self._compare_library_dependencies(
-                    original, reconstructed
-                )
+                lib_similarity = self._compare_library_dependencies(original, reconstructed)
                 behavior_score += lib_similarity * 0.3
                 total_checks += 0.3
 
             # File access pattern analysis
-            file_access_similarity = self._compare_file_access_patterns(
-                original, reconstructed
-            )
+            file_access_similarity = self._compare_file_access_patterns(original, reconstructed)
             behavior_score += file_access_similarity * 0.3
             total_checks += 0.3
 
@@ -584,11 +556,7 @@ class ReconstructionComparator:
             if result.returncode == 0:
                 # Parse strace output to extract syscall names
                 for line in result.stderr.split("\n"):
-                    if (
-                        line.strip()
-                        and not line.startswith("%")
-                        and not line.startswith("-")
-                    ):
+                    if line.strip() and not line.startswith("%") and not line.startswith("-"):
                         parts = line.split()
                         if len(parts) > 5:
                             syscalls.append(parts[-1])
@@ -599,9 +567,7 @@ class ReconstructionComparator:
             logger.error(f"System call tracing failed: {e}")
             return []
 
-    def _compare_library_dependencies(
-        self, original: Path, reconstructed: Path
-    ) -> float:
+    def _compare_library_dependencies(self, original: Path, reconstructed: Path) -> float:
         """Compare library dependencies"""
         try:
             orig_libs = self._get_library_dependencies(original)
@@ -648,9 +614,7 @@ class ReconstructionComparator:
             logger.error(f"Library dependency extraction failed: {e}")
             return []
 
-    def _compare_file_access_patterns(
-        self, original: Path, reconstructed: Path
-    ) -> float:
+    def _compare_file_access_patterns(self, original: Path, reconstructed: Path) -> float:
         """Compare file access patterns"""
         # This is a simplified implementation
         # In practice, you might use more sophisticated monitoring
@@ -688,9 +652,7 @@ class ReconstructionComparator:
         try:
             start_time = time.time()
 
-            subprocess.run(
-                [str(binary_path)], capture_output=True, timeout=5, check=False
-            )
+            subprocess.run([str(binary_path)], capture_output=True, timeout=5, check=False)
 
             return time.time() - start_time
 
@@ -837,9 +799,7 @@ class ReconstructionComparator:
 
         return recommendations
 
-    def generate_comparison_report(
-        self, result: ComparisonResult, output_path: Path
-    ) -> None:
+    def generate_comparison_report(self, result: ComparisonResult, output_path: Path) -> None:
         """Generate comprehensive comparison report"""
         try:
             report_content = self._create_detailed_report(result)
@@ -962,12 +922,8 @@ def main():
 
     parser = argparse.ArgumentParser(description="Binary Reconstruction Comparator")
     parser.add_argument("--original", required=True, help="Original binary file")
-    parser.add_argument(
-        "--reconstructed", required=True, help="Reconstructed binary file"
-    )
-    parser.add_argument(
-        "--output", help="Output report file (default: comparison_report.md)"
-    )
+    parser.add_argument("--reconstructed", required=True, help="Reconstructed binary file")
+    parser.add_argument("--output", help="Output report file (default: comparison_report.md)")
     parser.add_argument("--json", help="Output JSON results file")
     args = parser.parse_args()
 

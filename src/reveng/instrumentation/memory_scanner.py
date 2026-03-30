@@ -5,25 +5,27 @@ Advanced memory scanning and pattern matching for runtime analysis.
 """
 
 import logging
-import struct
 import re
-from typing import List, Optional, Tuple, Dict, Any
+import struct
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class ScanType(Enum):
     """Memory scan types"""
-    EXACT = "exact"           # Exact byte match
-    PATTERN = "pattern"       # Pattern with wildcards
-    STRING = "string"         # String search
-    REGEX = "regex"           # Regex search
-    VALUE = "value"           # Numeric value search
+
+    EXACT = "exact"  # Exact byte match
+    PATTERN = "pattern"  # Pattern with wildcards
+    STRING = "string"  # String search
+    REGEX = "regex"  # Regex search
+    VALUE = "value"  # Numeric value search
 
 
 @dataclass
 class MemoryRegion:
     """Memory region information"""
+
     base: int
     size: int
     protection: str
@@ -33,6 +35,7 @@ class MemoryRegion:
 @dataclass
 class ScanResult:
     """Memory scan result"""
+
     address: int
     value: bytes
     region: MemoryRegion
@@ -66,8 +69,9 @@ class MemoryScanner:
         self.logger.info("Enumerating memory regions...")
         return self.regions
 
-    def scan_pattern(self, pattern: str,
-                    regions: Optional[List[MemoryRegion]] = None) -> List[ScanResult]:
+    def scan_pattern(
+        self, pattern: str, regions: Optional[List[MemoryRegion]] = None
+    ) -> List[ScanResult]:
         """
         Scan for byte pattern with wildcards.
 
@@ -98,9 +102,9 @@ class MemoryScanner:
         # This is a placeholder
         return results
 
-    def scan_string(self, search_string: str,
-                   encoding: str = "utf-8",
-                   case_sensitive: bool = True) -> List[ScanResult]:
+    def scan_string(
+        self, search_string: str, encoding: str = "utf-8", case_sensitive: bool = True
+    ) -> List[ScanResult]:
         """
         Scan for string in memory.
 
@@ -133,15 +137,14 @@ class MemoryScanner:
             List of matches
         """
         results = []
-        pattern = re.compile(regex_pattern.encode())
+        re.compile(regex_pattern.encode())
 
         self.logger.info(f"Scanning for regex: {regex_pattern}")
 
         # Implementation would scan memory regions
         return results
 
-    def scan_value(self, value: int, size: int = 4,
-                  signed: bool = False) -> List[ScanResult]:
+    def scan_value(self, value: int, size: int = 4, signed: bool = False) -> List[ScanResult]:
         """
         Scan for numeric value.
 
@@ -157,13 +160,13 @@ class MemoryScanner:
 
         # Pack value based on size
         fmt = {
-            1: 'b' if signed else 'B',
-            2: 'h' if signed else 'H',
-            4: 'i' if signed else 'I',
-            8: 'q' if signed else 'Q'
+            1: "b" if signed else "B",
+            2: "h" if signed else "H",
+            4: "i" if signed else "I",
+            8: "q" if signed else "Q",
         }[size]
 
-        search_bytes = struct.pack(fmt, value)
+        struct.pack(fmt, value)
         self.logger.info(f"Scanning for {size}-byte value: {value}")
 
         # Implementation would scan memory regions
@@ -185,13 +188,13 @@ class MemoryScanner:
 
         # Key size patterns
         key_sizes = {
-            "AES": [16, 24, 32],      # AES-128/192/256
-            "DES": [8],               # DES
-            "3DES": [24],             # Triple DES
-            "RSA": [256, 512, 1024, 2048, 4096]  # RSA (bytes)
+            "AES": [16, 24, 32],  # AES-128/192/256
+            "DES": [8],  # DES
+            "3DES": [24],  # Triple DES
+            "RSA": [256, 512, 1024, 2048, 4096],  # RSA (bytes)
         }
 
-        sizes = key_sizes.get(algorithm, [16, 32])
+        key_sizes.get(algorithm, [16, 32])
 
         self.logger.info(f"Scanning for {algorithm} keys...")
 
@@ -201,9 +204,9 @@ class MemoryScanner:
         # 3. Check for known crypto constants
         return results
 
-    def find_strings(self, min_length: int = 4,
-                    max_length: Optional[int] = None,
-                    encoding: str = "utf-8") -> List[Tuple[int, str]]:
+    def find_strings(
+        self, min_length: int = 4, max_length: Optional[int] = None, encoding: str = "utf-8"
+    ) -> List[Tuple[int, str]]:
         """
         Extract all strings from memory.
 

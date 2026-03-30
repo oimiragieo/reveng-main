@@ -5,8 +5,6 @@ MCP Client Implementation
 Client for communicating with MCP servers.
 """
 
-import asyncio
-import json
 from typing import Any, Dict, List, Optional
 
 

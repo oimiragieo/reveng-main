@@ -24,6 +24,7 @@ try:
         GhidraDataExtractor,
         GhidraEngine,
     )
+
     print("✅ PASS: GhidraEngine imported successfully")
 except ImportError as e:
     print(f"❌ FAIL: {e}")
@@ -32,11 +33,7 @@ except ImportError as e:
 # Test 2: Try to connect to Ghidra Analysis Server (expect failure - server not running)
 print("\n[TEST 2] Testing fail-fast connection (expecting failure)...")
 try:
-    ghidra = GhidraEngine(
-        server_url="http://127.0.0.1:1337",
-        timeout=2,
-        fail_fast=True
-    )
+    ghidra = GhidraEngine(server_url="http://127.0.0.1:1337", timeout=2, fail_fast=True)
     print("❌ FAIL: Should have raised GhidraConnectionError")
 except GhidraConnectionError as e:
     print("✅ PASS: GhidraConnectionError raised as expected")
@@ -48,9 +45,7 @@ except Exception as e:
 print("\n[TEST 3] Testing non-fail-fast mode...")
 try:
     ghidra = GhidraEngine(
-        server_url="http://127.0.0.1:1337",
-        timeout=2,
-        fail_fast=False  # Don't fail immediately
+        server_url="http://127.0.0.1:1337", timeout=2, fail_fast=False  # Don't fail immediately
     )
     print("✅ PASS: GhidraEngine created with fail_fast=False")
 
@@ -71,12 +66,12 @@ try:
         "functions": [{"address": "0x401000", "name": "main"}],
         "decompiled_code": {
             "0x401000": "void main(void) {\n  strcpy(buffer, input);\n  memcpy(dest, src, 100);\n}",
-            "0x401100": "void crypto_func(void) {\n  for (i = 0; i < len; i++) {\n    data[i] ^= key;\n  }\n}"
+            "0x401100": "void crypto_func(void) {\n  for (i = 0; i < len; i++) {\n    data[i] ^= key;\n  }\n}",
         },
         "strings": ["Hello", "World"],
         "imports": ["kernel32.dll!CreateFile"],
         "exports": [],
-        "xrefs": {}
+        "xrefs": {},
     }
 
     extractor = GhidraDataExtractor(mock_analysis_data)
@@ -103,6 +98,7 @@ try:
 except Exception as e:
     print(f"❌ FAIL: {e}")
     import traceback
+
     traceback.print_exc()
 
 # Summary

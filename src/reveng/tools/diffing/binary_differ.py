@@ -92,17 +92,11 @@ class BinaryDiffer:
         analysis_v2 = self._analyze_binary(binary_v2_path)
 
         # Match functions by name first
-        matched_by_name = self._match_by_name(
-            analysis_v1["functions"], analysis_v2["functions"]
-        )
+        matched_by_name = self._match_by_name(analysis_v1["functions"], analysis_v2["functions"])
 
         # Match remaining functions by code similarity
-        unmatched_v1 = set(analysis_v1["functions"].keys()) - set(
-            matched_by_name.keys()
-        )
-        unmatched_v2 = set(analysis_v2["functions"].keys()) - set(
-            matched_by_name.values()
-        )
+        unmatched_v1 = set(analysis_v1["functions"].keys()) - set(matched_by_name.keys())
+        unmatched_v2 = set(analysis_v2["functions"].keys()) - set(matched_by_name.values())
 
         matched_by_similarity = self._match_by_similarity(
             {k: analysis_v1["functions"][k] for k in unmatched_v1},
@@ -169,13 +163,9 @@ class BinaryDiffer:
         new = list(set(analysis_v2["functions"].keys()) - matched_v2)
 
         # Calculate overall similarity
-        total_functions = max(
-            len(analysis_v1["functions"]), len(analysis_v2["functions"])
-        )
+        total_functions = max(len(analysis_v1["functions"]), len(analysis_v2["functions"]))
         if total_functions > 0:
-            similarity_score = (
-                len(unchanged) + len(matched_by_similarity)
-            ) / total_functions
+            similarity_score = (len(unchanged) + len(matched_by_similarity)) / total_functions
         else:
             similarity_score = 0.0
 
@@ -315,14 +305,9 @@ class BinaryDiffer:
             best_similarity = 0.0
 
             for func_v2_name, func_v2_data in functions_v2.items():
-                similarity = self._calculate_function_similarity(
-                    func_v1_data, func_v2_data
-                )
+                similarity = self._calculate_function_similarity(func_v1_data, func_v2_data)
 
-                if (
-                    similarity > best_similarity
-                    and similarity >= self.similarity_threshold
-                ):
+                if similarity > best_similarity and similarity >= self.similarity_threshold:
                     best_similarity = similarity
                     best_match = func_v2_name
 
@@ -398,9 +383,7 @@ class BinaryDiffer:
                 opcodes = matcher.get_opcodes()
 
                 modifications = sum(
-                    1
-                    for tag, _, _, _, _ in opcodes
-                    if tag in ["replace", "insert", "delete"]
+                    1 for tag, _, _, _, _ in opcodes if tag in ["replace", "insert", "delete"]
                 )
                 changes.append(f"{modifications} code block(s) changed")
 
@@ -416,9 +399,7 @@ class BinaryDiffer:
             report += "## Summary\n\n"
             report += f"- **Overall Similarity:** {diff_result.similarity_score:.1%}\n"
             report += f"- **Total Functions (v1):** {diff_result.total_functions_v1}\n"
-            report += (
-                f"- **Total Functions (v2):** {diff_result.total_functions_v2}\n\n"
-            )
+            report += f"- **Total Functions (v2):** {diff_result.total_functions_v2}\n\n"
 
             report += "## Changes\n\n"
             report += "| Category | Count |\n"

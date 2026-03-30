@@ -121,9 +121,9 @@ class BaseSkill(ABC):
         required = schema.get("required", [])
 
         # Check required fields
-        for field in required:
-            if field not in args:
-                raise ValueError(f"Missing required argument: {field}")
+        for field_name in required:
+            if field_name not in args:
+                raise ValueError(f"Missing required argument: {field_name}")
 
     def get_info(self) -> Dict[str, Any]:
         """Get skill information"""

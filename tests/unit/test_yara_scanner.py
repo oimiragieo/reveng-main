@@ -7,11 +7,7 @@ import pytest
 from reveng.agent_sdk.mcp.servers.reveng_enterprise_server import REVENGEnterpriseServer
 from reveng.security.yara_scanner import YARAScanner
 
-
-EICAR_STRING = (
-    b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$"
-    b"EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
-)
+EICAR_STRING = b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$" b"EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
 
 
 def test_builtin_ruleset_contains_at_least_twenty_rules():

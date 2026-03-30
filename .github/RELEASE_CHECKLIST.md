@@ -1,262 +1,66 @@
 # REVENG Release Checklist
 
-This checklist ensures that all releases meet quality standards and are ready for public distribution.
+Use this checklist before cutting a customer-facing release.
 
-## 📋 Pre-Release Checklist
+## Product Scope
 
-### ✅ Code Quality
-- [ ] All tests passing (91% coverage target)
-- [ ] Code formatted with black and isort
-- [ ] Linting passes (pylint, flake8)
-- [ ] Type checking passes (mypy)
-- [ ] Security scan passes (bandit, safety)
-- [ ] No hardcoded secrets or credentials
-- [ ] All TODO comments resolved or documented
+- Confirm the supported workflows match the current support matrix and docs.
+- Remove or clearly mark any experimental claims that are not benchmarked.
+- Ensure release notes describe tracked evidence, not aspiration.
 
-### ✅ Documentation
-- [ ] README.md updated with latest features
-- [ ] INSTALLATION.md complete and accurate
-- [ ] API_REFERENCE.md up to date
-- [ ] ARCHITECTURE.md reflects current design
-- [ ] All documentation links working
-- [ ] Examples updated and tested
-- [ ] Changelog updated with all changes
+## Required Reports
 
-### ✅ Testing
-- [ ] Unit tests pass (45+ test cases)
-- [ ] Integration tests pass
-- [ ] Performance tests pass
-- [ ] Security tests pass
-- [ ] Examples run successfully
-- [ ] Cross-platform testing (Windows, Linux, macOS)
-- [ ] Docker images build successfully
-- [ ] Web interface works correctly
+- Run `make app-corpus`
+- Run `make verify-ga-baseline`
+- Run `make verify-ga-target`
+- Run `make skip-inventory`
+- Run `python scripts/generate_release_report.py`
+- Review `reports/ga_readiness_baseline.json`
+- Review `reports/ga_readiness_target.json`
+- Review `reports/release_report.json`
+- Review `reports/release_report.md`
+- Review `reports/skip_inventory.json`
+- Review `reports/skip_inventory.md`
+- Review `reports/app_reverse_engineering_corpus_report.json`
+- Review `reports/source_binary_benchmarks_report.json`
+- Review `reports/bun_sample_matrix.json`
 
-### ✅ Dependencies
-- [ ] All dependencies pinned to specific versions
-- [ ] No vulnerable dependencies (safety check)
-- [ ] Requirements files updated
-- [ ] Development dependencies current
-- [ ] Java dependencies verified
-- [ ] System requirements documented
+## Required Outcomes
 
-### ✅ Security
-- [ ] Security scan completed
-- [ ] No security vulnerabilities
-- [ ] Input validation implemented
-- [ ] Error handling secure
-- [ ] File permissions correct
-- [ ] No sensitive data in code
-- [ ] Security documentation updated
+- Baseline readiness report status is `pass`
+- App reverse-engineering corpus `summary.matrix_status` is `pass`
+- Native benchmark report exists and is current
+- Bun matrix report exists and is current
+- No release-blocking workflow regressions are unresolved
 
-### ✅ Performance
-- [ ] Memory usage optimized
-- [ ] Analysis speed acceptable
-- [ ] Large binary handling tested
-- [ ] Resource limits appropriate
-- [ ] Caching implemented where needed
-- [ ] Performance benchmarks documented
+## GA Audit
 
-## 🚀 Release Process
+- Verify the strict GA audit was generated from the strict `.ga.json` inputs
+- If the GA audit fails, do not market the release as GA
+- Any waiver must be explicit in release notes and internal approval records
 
-### 1. Version Management
-- [ ] Version number updated in VERSION file
-- [ ] Version updated in all relevant files
-- [ ] Git tag created for release
-- [ ] Release branch created if needed
+## CI / Docs
 
-### 2. Build Process
-- [ ] Clean build environment
-- [ ] All dependencies installed
-- [ ] Build process tested
-- [ ] Artifacts generated successfully
-- [ ] Build logs reviewed
+- CI workflows are green on the release candidate commit
+- Docs workflow builds successfully
+- Public docs and README wording match the verified platform state
+- Skipped lanes are documented and acceptable for the release scope
 
-### 3. Testing
-- [ ] Full test suite run
-- [ ] Manual testing completed
-- [ ] Edge cases tested
-- [ ] Error conditions tested
-- [ ] Performance testing completed
+## Packaging
 
-### 4. Documentation
-- [ ] Release notes written
-- [ ] Documentation updated
-- [ ] Examples tested
-- [ ] Installation guide verified
-- [ ] API documentation current
+- Build artifacts pass `python -m build`
+- `twine check dist/*` passes
+- Release evidence archive is generated and uploaded
+- Build artifacts are attested in CI
+- Version metadata, changelog, and release notes are aligned
 
-### 5. Distribution
-- [ ] GitHub release created
-- [ ] Release notes published
-- [ ] Assets uploaded
-- [ ] Announcement prepared
-- [ ] Community notified
+## External Tooling
 
-## 🔍 Quality Gates
+- Document whether `ilspycmd`, `pyi-archive_viewer`, Ghidra, and Java are required, optional, or unsupported for the release
+- Note any environment-aware tests that were skipped on CI
 
-### Code Quality Gate
-- **Coverage**: ≥ 90% test coverage
-- **Linting**: Zero linting errors
-- **Security**: Zero high/critical vulnerabilities
-- **Performance**: Analysis completes within time limits
-- **Documentation**: All public APIs documented
+## Final Approval
 
-### Security Gate
-- **Vulnerabilities**: Zero high/critical security issues
-- **Dependencies**: All dependencies scanned
-- **Secrets**: No hardcoded secrets
-- **Input Validation**: All inputs validated
-- **Error Handling**: Secure error handling
-
-### Performance Gate
-- **Memory**: Memory usage within limits
-- **Speed**: Analysis completes in reasonable time
-- **Scalability**: Handles large binaries
-- **Resource Usage**: Efficient resource utilization
-- **Caching**: Appropriate caching implemented
-
-### Documentation Gate
-- **Completeness**: All features documented
-- **Accuracy**: Documentation matches implementation
-- **Examples**: Working examples provided
-- **Links**: All links working
-- **Clarity**: Clear and understandable
-
-## 🧪 Testing Requirements
-
-### Automated Testing
-- [ ] Unit tests (45+ test cases)
-- [ ] Integration tests
-- [ ] Performance tests
-- [ ] Security tests
-- [ ] Cross-platform tests
-- [ ] Docker tests
-- [ ] Web interface tests
-
-### Manual Testing
-- [ ] Installation on clean systems
-- [ ] Basic functionality testing
-- [ ] Advanced features testing
-- [ ] Error handling testing
-- [ ] User experience testing
-- [ ] Documentation testing
-
-### Platform Testing
-- [ ] Windows 10/11
-- [ ] Ubuntu 20.04/22.04
-- [ ] macOS 12/13/14
-- [ ] Python 3.11/3.12
-- [ ] Docker containers
-- [ ] Kubernetes clusters
-
-## 📊 Release Metrics
-
-### Code Metrics
-- **Lines of Code**: 50,000+
-- **Test Coverage**: 91%
-- **Documentation Coverage**: 100%
-- **Examples**: 20+
-- **Tools**: 66+
-
-### Quality Metrics
-- **Security Score**: A+
-- **Performance Score**: A
-- **Documentation Score**: A+
-- **Usability Score**: A
-- **Maintainability Score**: A
-
-### Community Metrics
-- **Contributors**: 10+
-- **Issues Resolved**: 100%
-- **Feature Requests**: 90%+
-- **Documentation**: Complete
-- **Examples**: Comprehensive
-
-## 🚨 Release Blockers
-
-### Critical Issues
-- [ ] Security vulnerabilities
-- [ ] Data loss potential
-- [ ] System crashes
-- [ ] Performance degradation
-- [ ] Installation failures
-
-### High Priority Issues
-- [ ] Feature regressions
-- [ ] Documentation errors
-- [ ] Example failures
-- [ ] Cross-platform issues
-- [ ] User experience problems
-
-### Medium Priority Issues
-- [ ] Minor bugs
-- [ ] Documentation improvements
-- [ ] Performance optimizations
-- [ ] Code quality improvements
-- [ ] User interface enhancements
-
-## 📝 Release Notes Template
-
-### Version X.X.X - [Date]
-
-#### 🎉 New Features
-- Feature 1: Description
-- Feature 2: Description
-- Feature 3: Description
-
-#### 🐛 Bug Fixes
-- Fixed issue with X
-- Resolved problem with Y
-- Corrected behavior of Z
-
-#### 🔧 Improvements
-- Improved performance of X
-- Enhanced usability of Y
-- Better error handling for Z
-
-#### 📚 Documentation
-- Updated installation guide
-- Added new examples
-- Improved API documentation
-
-#### 🚀 Deployment
-- Docker images updated
-- Kubernetes manifests updated
-- Installation scripts improved
-
-## 🔄 Post-Release
-
-### Immediate Tasks
-- [ ] Monitor release for issues
-- [ ] Respond to user feedback
-- [ ] Update documentation if needed
-- [ ] Fix any critical issues
-- [ ] Plan next release
-
-### Follow-up Tasks
-- [ ] Analyze release metrics
-- [ ] Gather user feedback
-- [ ] Plan improvements
-- [ ] Update roadmap
-- [ ] Prepare next release
-
-## 📞 Support
-
-### Release Support
-- **GitHub Issues**: Monitor for release issues
-- **Discussions**: Respond to user questions
-- **Documentation**: Update if needed
-- **Examples**: Fix any broken examples
-- **Community**: Engage with users
-
-### Emergency Response
-- **Critical Issues**: Immediate response
-- **Security Issues**: 24-hour response
-- **User Issues**: 48-hour response
-- **Documentation**: 72-hour response
-- **Enhancements**: Next release cycle
-
----
-
-**Release Checklist** - Ensuring quality releases for REVENG
+- Support owner approves the release scope
+- Engineering owner approves the readiness reports
+- Security owner approves any open waivers or exceptions

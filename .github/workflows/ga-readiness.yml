@@ -1,0 +1,97 @@
+name: GA Readiness
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, develop]
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  baseline-gates:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Generate app corpus fixtures
+        run: python scripts/generate_app_corpus_fixtures.py
+
+      - name: Provision strict GA assets
+        run: python scripts/provision_ga_assets.py --output reports/ga_asset_provisioning_report.json
+
+      - name: Run app reverse-engineering corpus
+        run: python scripts/run_app_reverse_engineering_corpus.py --output reports/app_reverse_engineering_corpus_report.json
+
+      - name: Verify baseline readiness
+        run: python scripts/verify_ga_readiness.py --profile baseline --output reports/ga_readiness_baseline.json
+
+      - name: Upload readiness artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: ga-readiness-baseline
+          path: |
+            reports/app_reverse_engineering_corpus_report.json
+            reports/ga_readiness_baseline.json
+            reports/ga_asset_provisioning_report.json
+
+  ga-target-audit:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Generate app corpus fixtures
+        run: python scripts/generate_app_corpus_fixtures.py
+
+      - name: Provision strict GA assets
+        run: python scripts/provision_ga_assets.py --output reports/ga_asset_provisioning_report.json
+
+      - name: Run strict GA app corpus
+        run: python scripts/run_app_reverse_engineering_corpus.py --config .reveng/app_reverse_engineering_corpus.ga.json --output reports/app_reverse_engineering_corpus_report.json
+
+      - name: Run strict GA native benchmark corpus
+        run: python scripts/run_source_binary_benchmark.py --config .reveng/source_binary_benchmarks.ga.json --output reports/source_binary_benchmarks_report.json
+
+      - name: Run strict GA Bun matrix
+        run: python scripts/run_bun_sample_matrix.py --config .reveng/bun_sample_matrix.ga.json --output reports/bun_sample_matrix.json
+
+      - name: Audit strict GA readiness
+        run: python scripts/verify_ga_readiness.py --profile ga --output reports/ga_readiness_target.json
+
+      - name: Upload GA audit artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: ga-readiness-target
+          path: |
+            reports/app_reverse_engineering_corpus_report.json
+            reports/source_binary_benchmarks_report.json
+            reports/bun_sample_matrix.json
+            reports/ga_readiness_target.json
+            reports/ga_asset_provisioning_report.json

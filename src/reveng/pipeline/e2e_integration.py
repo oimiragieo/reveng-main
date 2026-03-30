@@ -28,6 +28,8 @@ class EndToEndPipelineRunner:
         enable_recompilation: bool = True,
         enable_forensics: bool = True,
         ghidra_url: str | None = None,
+        ghidra_timeout_seconds: int = 900,
+        ghidra_retry_count: int = 0,
         max_compilation_retries: int = 2,
         behavioral_duration_seconds: int = 1,
     ):
@@ -37,6 +39,8 @@ class EndToEndPipelineRunner:
         self.enable_recompilation = enable_recompilation
         self.enable_forensics = enable_forensics
         self.ghidra_url = ghidra_url
+        self.ghidra_timeout_seconds = max(60, ghidra_timeout_seconds)
+        self.ghidra_retry_count = max(0, ghidra_retry_count)
         self.max_compilation_retries = max(0, max_compilation_retries)
         self.behavioral_duration_seconds = max(1, behavioral_duration_seconds)
         self.pipeline_engine = AnalysisPipeline()
@@ -60,7 +64,8 @@ class EndToEndPipelineRunner:
                     "ghidra_url": self.ghidra_url,
                 },
                 dependencies=[],
-                timeout=300,
+                timeout=self.ghidra_timeout_seconds,
+                retry_count=self.ghidra_retry_count,
             ),
         )
 
@@ -171,9 +176,7 @@ class EndToEndPipelineRunner:
         loaded_report = json.loads(report_file.read_text(encoding="utf-8"))
         return loaded_report if isinstance(loaded_report, dict) else {}
 
-    def _save_pipeline_execution(
-        self, pipeline_result: PipelineResult, output_path: Path
-    ) -> None:
+    def _save_pipeline_execution(self, pipeline_result: PipelineResult, output_path: Path) -> None:
         serialized_result = {
             "pipeline_name": pipeline_result.pipeline_name,
             "binary_path": pipeline_result.binary_path,
@@ -190,4 +193,6 @@ class EndToEndPipelineRunner:
             ],
             "output": pipeline_result.output,
         }
-        output_path.write_text(json.dumps(serialized_result, indent=2, default=str), encoding="utf-8")
+        output_path.write_text(
+            json.dumps(serialized_result, indent=2, default=str), encoding="utf-8"
+        )

@@ -16,6 +16,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from reveng.utils.security import safe_extract_tar, safe_extract_zip
 
+from ..core.dependency_manager import ToolStatus
+
 logger = logging.getLogger(__name__)
 
 
@@ -134,9 +136,7 @@ class BaseInstaller(ABC):
             logger.error(f"Failed to download {filename}: {e}")
             raise
 
-    def _extract_archive(
-        self, archive_path: Path, extract_to: Optional[Path] = None
-    ) -> Path:
+    def _extract_archive(self, archive_path: Path, extract_to: Optional[Path] = None) -> Path:
         """
         Extract archive file safely (prevents path traversal attacks)
 
@@ -161,9 +161,7 @@ class BaseInstaller(ABC):
             logger.error(f"Failed to extract {archive_path}: {e}")
             raise
 
-    def _run_command(
-        self, command: List[str], cwd: Optional[Path] = None
-    ) -> Tuple[bool, str]:
+    def _run_command(self, command: List[str], cwd: Optional[Path] = None) -> Tuple[bool, str]:
         """Run command and return success status and output"""
         try:
             result = subprocess.run(
@@ -203,7 +201,7 @@ class BaseInstaller(ABC):
                     [str(executable_path), "--help"], capture_output=True, timeout=10
                 )
                 return result.returncode == 0
-            except:
+            except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError):
                 return False
 
     def _get_platform_specific_path(self, base_path: Path) -> Path:
@@ -252,7 +250,3 @@ class BaseInstaller(ABC):
                     return exe_path
 
         return None
-
-
-# Import ToolStatus from dependency_manager to avoid circular imports
-from ..core.dependency_manager import ToolStatus

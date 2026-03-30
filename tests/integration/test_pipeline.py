@@ -4,12 +4,10 @@ Basic Pipeline Test Harness
 Tests critical stages of the REVENG binary analysis pipeline
 """
 
-import sys
 import unittest
 from pathlib import Path
 
 from reveng.tools.binary.validation_config import (
-    BinaryValidator,
     ValidationConfig,
     ValidationMode,
 )

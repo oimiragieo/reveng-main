@@ -5,7 +5,6 @@ Claude SDK Client
 Main client for interacting with Claude API with enterprise features.
 """
 
-import asyncio
 import os
 from typing import Any, AsyncIterator, Dict, List, Optional
 

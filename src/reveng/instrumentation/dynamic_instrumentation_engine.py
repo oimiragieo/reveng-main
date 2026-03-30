@@ -8,42 +8,31 @@ and security control bypass.
 Based on "The Modern Hacker's Playbook" - Part 2.1: Dynamic Instrumentation
 """
 
-import os
-import sys
 import logging
-import subprocess
-import json
-import tempfile
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Callable, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-import re
+from typing import Any, Callable, Dict, List, Optional
 
 try:
     import frida
+
     FRIDA_AVAILABLE = True
 except ImportError:
     FRIDA_AVAILABLE = False
     logging.warning("Frida not available. Install with: pip install frida frida-tools")
 
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
-    logging.warning("psutil not available. Install with: pip install psutil")
-
 
 class InstrumentationMode(Enum):
     """Instrumentation attachment modes"""
+
     ATTACH = "attach"  # Attach to running process
-    SPAWN = "spawn"    # Spawn process with instrumentation
+    SPAWN = "spawn"  # Spawn process with instrumentation
     REMOTE = "remote"  # Remote device instrumentation
 
 
 class TargetPlatform(Enum):
     """Supported target platforms"""
+
     WINDOWS = "windows"
     LINUX = "linux"
     ANDROID = "android"
@@ -54,6 +43,7 @@ class TargetPlatform(Enum):
 @dataclass
 class InstrumentationTarget:
     """Target process information"""
+
     pid: Optional[int] = None
     process_name: Optional[str] = None
     package_name: Optional[str] = None  # For mobile apps
@@ -65,6 +55,7 @@ class InstrumentationTarget:
 @dataclass
 class HookResult:
     """Result from a hook execution"""
+
     function_name: str
     args: List[Any]
     return_value: Any
@@ -77,9 +68,10 @@ class HookResult:
 @dataclass
 class InstrumentationSession:
     """Active instrumentation session"""
+
     target: InstrumentationTarget
     session: Any  # Frida session object
-    script: Any   # Frida script object
+    script: Any  # Frida script object
     hooks: Dict[str, Callable] = field(default_factory=dict)
     intercepted_data: List[HookResult] = field(default_factory=list)
 
@@ -140,7 +132,9 @@ class DynamicInstrumentationEngine:
                 matched = [p for p in processes if target.process_name.lower() in p.name.lower()]
 
                 if matched:
-                    self.logger.info(f"Attaching to existing process: {matched[0].name} (PID {matched[0].pid})")
+                    self.logger.info(
+                        f"Attaching to existing process: {matched[0].name} (PID {matched[0].pid})"
+                    )
                     session = device.attach(matched[0].pid)
                 else:
                     # Spawn new process
@@ -160,9 +154,7 @@ class DynamicInstrumentationEngine:
 
             # Create session
             instrumentation_session = InstrumentationSession(
-                target=target,
-                session=session,
-                script=None
+                target=target, session=session, script=None
             )
 
             session_id = f"session_{id(session)}"
@@ -179,7 +171,7 @@ class DynamicInstrumentationEngine:
         """Get appropriate Frida device based on target platform"""
         if target.platform == TargetPlatform.ANDROID:
             devices = frida.enumerate_devices()
-            android_devices = [d for d in devices if 'usb' in d.id or 'emulator' in d.id]
+            android_devices = [d for d in devices if "usb" in d.id or "emulator" in d.id]
             if android_devices:
                 return android_devices[0]
             return frida.get_usb_device()
@@ -190,8 +182,12 @@ class DynamicInstrumentationEngine:
         else:
             return frida.get_local_device()
 
-    def execute_script(self, session: InstrumentationSession, script_code: str,
-                      message_handler: Optional[Callable] = None) -> bool:
+    def execute_script(
+        self,
+        session: InstrumentationSession,
+        script_code: str,
+        message_handler: Optional[Callable] = None,
+    ) -> bool:
         """
         Execute a Frida JavaScript script in the target process.
 
@@ -207,9 +203,9 @@ class DynamicInstrumentationEngine:
             script = session.session.create_script(script_code)
 
             if message_handler:
-                script.on('message', message_handler)
+                script.on("message", message_handler)
             else:
-                script.on('message', self._default_message_handler)
+                script.on("message", self._default_message_handler)
 
             script.load()
             session.script = script
@@ -223,9 +219,9 @@ class DynamicInstrumentationEngine:
 
     def _default_message_handler(self, message: Dict, data: Optional[bytes]):
         """Default handler for script messages"""
-        if message['type'] == 'send':
+        if message["type"] == "send":
             self.logger.info(f"[Script] {message['payload']}")
-        elif message['type'] == 'error':
+        elif message["type"] == "error":
             self.logger.error(f"[Script Error] {message['stack']}")
 
     # ========== OFFENSIVE BYPASS TECHNIQUES ==========
@@ -487,8 +483,9 @@ class DynamicInstrumentationEngine:
 
         return self.execute_script(session, script)
 
-    def dump_crypto_keys(self, session: InstrumentationSession,
-                        algorithm: str = "AES") -> List[Dict[str, Any]]:
+    def dump_crypto_keys(
+        self, session: InstrumentationSession, algorithm: str = "AES"
+    ) -> List[Dict[str, Any]]:
         """
         Dump cryptographic keys and plaintext data from memory.
 
@@ -505,10 +502,10 @@ class DynamicInstrumentationEngine:
         extracted_data = []
 
         def message_handler(message, data):
-            if message['type'] == 'send':
-                payload = message['payload']
-                if 'crypto_data' in payload:
-                    extracted_data.append(payload['crypto_data'])
+            if message["type"] == "send":
+                payload = message["payload"]
+                if "crypto_data" in payload:
+                    extracted_data.append(payload["crypto_data"])
                     self.logger.info(f"[Crypto] Extracted: {payload['crypto_data']['operation']}")
 
         script = f"""
@@ -579,8 +576,9 @@ class DynamicInstrumentationEngine:
         self.execute_script(session, script, message_handler)
         return extracted_data
 
-    def trace_api_calls(self, session: InstrumentationSession,
-                       pattern: Optional[str] = None) -> List[HookResult]:
+    def trace_api_calls(
+        self, session: InstrumentationSession, pattern: Optional[str] = None
+    ) -> List[HookResult]:
         """
         Trace all API calls, optionally filtered by pattern.
 
@@ -594,17 +592,19 @@ class DynamicInstrumentationEngine:
         traced_calls = []
 
         def message_handler(message, data):
-            if message['type'] == 'send':
-                payload = message['payload']
-                if 'api_call' in payload:
-                    call_data = payload['api_call']
-                    traced_calls.append(HookResult(
-                        function_name=call_data['name'],
-                        args=call_data.get('args', []),
-                        return_value=call_data.get('return'),
-                        timestamp=call_data.get('timestamp', 0),
-                        backtrace=call_data.get('backtrace')
-                    ))
+            if message["type"] == "send":
+                payload = message["payload"]
+                if "api_call" in payload:
+                    call_data = payload["api_call"]
+                    traced_calls.append(
+                        HookResult(
+                            function_name=call_data["name"],
+                            args=call_data.get("args", []),
+                            return_value=call_data.get("return"),
+                            timestamp=call_data.get("timestamp", 0),
+                            backtrace=call_data.get("backtrace"),
+                        )
+                    )
 
         filter_pattern = pattern or ".*"
 
@@ -633,7 +633,7 @@ class DynamicInstrumentationEngine:
                             onLeave: function(retval) {{
                                 var call = {{
                                     api_call: {{
-                                        name: "{exp.name}",
+                                        name: exp.name,
                                         args: this.args,
                                         return: retval.toString(),
                                         timestamp: this.startTime,
@@ -654,8 +654,9 @@ class DynamicInstrumentationEngine:
         self.execute_script(session, script, message_handler)
         return traced_calls
 
-    def inject_code(self, session: InstrumentationSession,
-                   code: str, language: str = "javascript") -> bool:
+    def inject_code(
+        self, session: InstrumentationSession, code: str, language: str = "javascript"
+    ) -> bool:
         """
         Inject and execute custom code in the target process.
 
@@ -672,7 +673,7 @@ class DynamicInstrumentationEngine:
         elif language == "native":
             # For native code injection, we'd use Frida's Memory API
             # This is a simplified example
-            wrapper_script = f"""
+            wrapper_script = """
             var nativeCode = Memory.alloc(Process.pageSize);
             Memory.protect(nativeCode, Process.pageSize, 'rwx');
             // Write machine code here

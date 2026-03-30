@@ -2,7 +2,7 @@
 Tool registry for managing available tools.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from ..exceptions import ToolError
 from .base import BaseTool

@@ -35,14 +35,16 @@ def test_process_memory_forensics_tasks_batches_by_batch_size():
         "processed:region-4",
         "processed:region-5",
     ]
-    assert [
-        dispatch.batch_size
-        for dispatch in accelerator.memory_forensics_dispatch_history
-    ] == [2, 2, 1]
-    assert [
-        dispatch.trigger
-        for dispatch in accelerator.memory_forensics_dispatch_history
-    ] == ["batch_size_limit", "batch_size_limit", "flush"]
+    assert [dispatch.batch_size for dispatch in accelerator.memory_forensics_dispatch_history] == [
+        2,
+        2,
+        1,
+    ]
+    assert [dispatch.trigger for dispatch in accelerator.memory_forensics_dispatch_history] == [
+        "batch_size_limit",
+        "batch_size_limit",
+        "flush",
+    ]
 
 
 def test_dispatch_ready_memory_forensics_tasks_flushes_on_wait_window(
@@ -107,10 +109,10 @@ def test_memory_forensics_extract_artifacts_uses_batched_gpu_dispatch():
     artifacts = forensics._extract_memory_artifacts(memory_regions)
 
     assert [artifact.address for artifact in artifacts] == [0x1000, 0x2000, 0x3000]
-    assert [
-        dispatch.batch_size
-        for dispatch in accelerator.memory_forensics_dispatch_history
-    ] == [2, 1]
+    assert [dispatch.batch_size for dispatch in accelerator.memory_forensics_dispatch_history] == [
+        2,
+        1,
+    ]
 
 
 def test_memory_forensics_dispatch_history_is_capped():
@@ -128,9 +130,10 @@ def test_memory_forensics_dispatch_history_is_capped():
     )
 
     assert len(accelerator.memory_forensics_dispatch_history) == 2
-    assert [
-        dispatch.results for dispatch in accelerator.memory_forensics_dispatch_history
-    ] == [["processed:region-2"], ["processed:region-3"]]
+    assert [dispatch.results for dispatch in accelerator.memory_forensics_dispatch_history] == [
+        ["processed:region-2"],
+        ["processed:region-3"],
+    ]
 
 
 def test_gpu_accelerator_defaults_to_cpu_without_device_metadata(

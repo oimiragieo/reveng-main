@@ -5,10 +5,8 @@ MCP Server Implementation
 Base classes for creating MCP servers that extend agent capabilities.
 """
 
-import asyncio
-import json
 from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
@@ -33,14 +31,18 @@ class MCPTool:
     description: str
     input_schema: Dict[str, Any]
     handler: Optional[Callable] = None
+    annotations: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to MCP protocol format"""
-        return {
+        payload = {
             "name": self.name,
             "description": self.description,
             "inputSchema": self.input_schema,
         }
+        if self.annotations:
+            payload["annotations"] = self.annotations
+        return payload
 
 
 @dataclass

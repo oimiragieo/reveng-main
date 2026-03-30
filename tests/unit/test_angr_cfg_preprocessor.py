@@ -27,9 +27,7 @@ def test_extract_cfg_payload_raises_for_missing_binary(tmp_path: Path):
         preprocessor.extract_cfg_payload(str(tmp_path / "missing.exe"))
 
 
-def test_extract_cfg_payload_wraps_angr_failures(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_extract_cfg_payload_wraps_angr_failures(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     binary_path = tmp_path / "sample.exe"
     binary_path.write_bytes(b"MZ" + b"\x00" * 128)
 
@@ -45,9 +43,7 @@ def test_extract_cfg_payload_wraps_angr_failures(
         preprocessor.extract_cfg_payload(str(binary_path))
 
 
-def test_extract_cfg_payload_rejects_empty_cfg(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-):
+def test_extract_cfg_payload_rejects_empty_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     binary_path = tmp_path / "sample.exe"
     binary_path.write_bytes(b"MZ" + b"\x00" * 128)
 

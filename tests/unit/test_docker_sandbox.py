@@ -75,7 +75,14 @@ def test_docker_sandbox_executes_python_slim_container_with_strace(
     result = sandbox.execute(str(binary_path))
 
     command = captured["command"]
-    assert command[:6] == ["docker", "run", "--rm", "--network=none", "--name", result.container_name]
+    assert command[:6] == [
+        "docker",
+        "run",
+        "--rm",
+        "--network=none",
+        "--name",
+        result.container_name,
+    ]
     assert any("python:3.11-slim" in arg for arg in command)
     assert any(arg.endswith(":/target:ro") for arg in command)
     assert result.sandbox_available is True
@@ -113,8 +120,8 @@ def test_behavioral_monitor_uses_docker_sandbox_and_never_enumerates_host_proces
                 trace_output="\n".join(
                     [
                         '1234 openat(AT_FDCWD, "/tmp/reveng-target.bin", O_RDONLY) = 3',
-                        '1234 socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) = 4',
-                        '1234 connect(4, {sa_family=AF_INET, sin_port=htons(443)}, 16) = 0',
+                        "1234 socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) = 4",
+                        "1234 connect(4, {sa_family=AF_INET, sin_port=htons(443)}, 16) = 0",
                         '1234 execve("/tmp/reveng-target.bin", ["/tmp/reveng-target.bin"], 0x7ffc) = 0',
                     ]
                 ),
@@ -188,8 +195,8 @@ def test_behavioral_monitor_parses_trace_output_into_behavioral_events(tmp_path:
             [
                 '1234 openat(AT_FDCWD, "/etc/hosts", O_RDONLY) = 3',
                 '1234 unlink("/tmp/dropper.tmp") = 0',
-                '1234 socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) = 4',
-                '1234 connect(4, {sa_family=AF_INET, sin_port=htons(80)}, 16) = 0',
+                "1234 socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) = 4",
+                "1234 connect(4, {sa_family=AF_INET, sin_port=htons(80)}, 16) = 0",
                 '1234 execve("/tmp/reveng-target.bin", ["/tmp/reveng-target.bin"], 0x7ffc) = 0',
             ]
         ),

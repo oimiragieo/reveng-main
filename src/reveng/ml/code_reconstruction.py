@@ -12,7 +12,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-
 from ..core.errors import REVENGError
 from ..core.logger import get_logger
 
@@ -169,9 +168,7 @@ class MLCodeReconstruction:
                     try:
                         self._load_local_model(model_type, config)
                     except Exception as e:
-                        self.logger.warning(
-                            f"Failed to load local model {model_type}: {e}"
-                        )
+                        self.logger.warning(f"Failed to load local model {model_type}: {e}")
 
             # Check for API models
             for model_type, config in self.model_configs.items():
@@ -179,9 +176,7 @@ class MLCodeReconstruction:
                     try:
                         self._load_api_model(model_type, config)
                     except Exception as e:
-                        self.logger.warning(
-                            f"Failed to load API model {model_type}: {e}"
-                        )
+                        self.logger.warning(f"Failed to load API model {model_type}: {e}")
 
             self.logger.info(f"Loaded {len(self.models)} ML models")
 
@@ -217,9 +212,7 @@ class MLCodeReconstruction:
             # Check for API key
             api_key = config.get("api_key")
             if api_key and api_key not in os.environ:
-                self.logger.warning(
-                    f"API key {api_key} not found for model {model_type}"
-                )
+                self.logger.warning(f"API key {api_key} not found for model {model_type}")
                 return
 
             model_info = {
@@ -255,18 +248,14 @@ class MLCodeReconstruction:
             if model_type not in self.models:
                 raise REVENGError(f"Model {model_type.value} not available")
 
-            self.logger.info(
-                f"Reconstructing code using {model_type.value} for task {task.value}"
-            )
+            self.logger.info(f"Reconstructing code using {model_type.value} for task {task.value}")
 
             # Prepare input
             input_text = self._prepare_input(fragment, task)
 
             # Generate reconstruction
             start_time = time.time()
-            reconstructed_code = self._generate_reconstruction(
-                input_text, task, model_type
-            )
+            reconstructed_code = self._generate_reconstruction(input_text, task, model_type)
             processing_time = time.time() - start_time
 
             # Calculate confidence
@@ -287,9 +276,7 @@ class MLCodeReconstruction:
                 },
             )
 
-            self.logger.info(
-                f"Code reconstruction completed: {confidence:.2f} confidence"
-            )
+            self.logger.info(f"Code reconstruction completed: {confidence:.2f} confidence")
             return result
 
         except Exception as e:
@@ -335,9 +322,7 @@ class MLCodeReconstruction:
                 ],
             }
 
-            preferred_models = task_models.get(
-                task, [ModelType.CODEBERT, ModelType.CODET5]
-            )
+            preferred_models = task_models.get(task, [ModelType.CODEBERT, ModelType.CODET5])
 
             # Select first available model
             for model_type in preferred_models:
@@ -359,7 +344,9 @@ class MLCodeReconstruction:
 
         try:
             if task == ReconstructionTask.DECOMPILATION:
-                return f"Decompile this assembly code:\n{fragment.assembly_code}\n\nDecompiled C code:"
+                return (
+                    f"Decompile this assembly code:\n{fragment.assembly_code}\n\nDecompiled C code:"
+                )
 
             elif task == ReconstructionTask.FUNCTION_RECONSTRUCTION:
                 return f"Reconstruct this function from assembly:\n{fragment.assembly_code}\n\nReconstructed function:"
@@ -396,13 +383,9 @@ class MLCodeReconstruction:
             config = model_info["config"]
 
             if model_info["local"]:
-                return self._generate_local_reconstruction(
-                    input_text, task, model_type, config
-                )
+                return self._generate_local_reconstruction(input_text, task, model_type, config)
             else:
-                return self._generate_api_reconstruction(
-                    input_text, task, model_type, config
-                )
+                return self._generate_api_reconstruction(input_text, task, model_type, config)
 
         except Exception as e:
             self.logger.error(f"Failed to generate reconstruction: {e}")
@@ -525,27 +508,23 @@ int reconstructed_function(int param1, int param2) {
 // - Potential malware behavior
 // - Risk level: MEDIUM"""
 
-    def _mock_gpt_reconstruction(
-        self, input_text: str, task: ReconstructionTask
-    ) -> str:
+    def _mock_gpt_reconstruction(self, input_text: str, task: ReconstructionTask) -> str:
         """Mock GPT reconstruction result"""
-        return f"// GPT-3.5 reconstruction for {task.value}:\n{self._mock_decompilation(input_text)}"
+        return (
+            f"// GPT-3.5 reconstruction for {task.value}:\n{self._mock_decompilation(input_text)}"
+        )
 
-    def _mock_claude_reconstruction(
-        self, input_text: str, task: ReconstructionTask
-    ) -> str:
+    def _mock_claude_reconstruction(self, input_text: str, task: ReconstructionTask) -> str:
         """Mock Claude reconstruction result"""
-        return f"// Claude-3 reconstruction for {task.value}:\n{self._mock_decompilation(input_text)}"
+        return (
+            f"// Claude-3 reconstruction for {task.value}:\n{self._mock_decompilation(input_text)}"
+        )
 
-    def _mock_api_reconstruction(
-        self, input_text: str, task: ReconstructionTask
-    ) -> str:
+    def _mock_api_reconstruction(self, input_text: str, task: ReconstructionTask) -> str:
         """Mock API reconstruction result"""
         return f"// API reconstruction for {task.value}:\n{self._mock_decompilation(input_text)}"
 
-    def _calculate_confidence(
-        self, reconstructed_code: str, fragment: CodeFragment
-    ) -> float:
+    def _calculate_confidence(self, reconstructed_code: str, fragment: CodeFragment) -> float:
         """Calculate confidence score for reconstruction"""
 
         try:
@@ -655,9 +634,7 @@ int reconstructed_function(int param1, int param2) {
                     )
                     threat_intelligence.append(threat_intel)
 
-            self.logger.info(
-                f"Generated {len(threat_intelligence)} threat intelligence items"
-            )
+            self.logger.info(f"Generated {len(threat_intelligence)} threat intelligence items")
             return threat_intelligence
 
         except Exception as e:
@@ -691,9 +668,7 @@ int reconstructed_function(int param1, int param2) {
                 "summary": {
                     "total_results": len(results),
                     "average_confidence": (
-                        sum(r.confidence for r in results) / len(results)
-                        if results
-                        else 0
+                        sum(r.confidence for r in results) / len(results) if results else 0
                     ),
                     "total_processing_time": sum(r.processing_time for r in results),
                     "models_used": list(set(r.model_used.value for r in results)),
@@ -740,19 +715,12 @@ int reconstructed_function(int param1, int param2) {
                         "CRITICAL": sum(
                             1 for ti in threat_intelligence if ti.severity == "CRITICAL"
                         ),
-                        "HIGH": sum(
-                            1 for ti in threat_intelligence if ti.severity == "HIGH"
-                        ),
-                        "MEDIUM": sum(
-                            1 for ti in threat_intelligence if ti.severity == "MEDIUM"
-                        ),
-                        "LOW": sum(
-                            1 for ti in threat_intelligence if ti.severity == "LOW"
-                        ),
+                        "HIGH": sum(1 for ti in threat_intelligence if ti.severity == "HIGH"),
+                        "MEDIUM": sum(1 for ti in threat_intelligence if ti.severity == "MEDIUM"),
+                        "LOW": sum(1 for ti in threat_intelligence if ti.severity == "LOW"),
                     },
                     "average_confidence": (
-                        sum(ti.confidence for ti in threat_intelligence)
-                        / len(threat_intelligence)
+                        sum(ti.confidence for ti in threat_intelligence) / len(threat_intelligence)
                         if threat_intelligence
                         else 0
                     ),

@@ -11,15 +11,15 @@ Based on research:
 - Most production sites accidentally ship source maps
 """
 
-import os
-import re
 import json
 import logging
-import requests
-from typing import List, Dict, Optional
+import re
 from dataclasses import dataclass
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from typing import Dict, List, Optional
+from urllib.parse import urljoin
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class SourceMapRecoverer:
                 if response.status_code == 200:
                     if map_url_direct not in maps:
                         maps.append(map_url_direct)
-            except:
+            except requests.RequestException:
                 pass
 
         except Exception as e:

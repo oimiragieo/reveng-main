@@ -15,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
+from .bun_extractor import BunExecutableExtractor
 from .packer_detector import PackerDetector, PackerInfo
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ class UnpackResult:
     unpacked_hash: Optional[str]
     error_message: Optional[str]
     packer_info: PackerInfo
+    artifacts: Optional[List[str]] = None
 
 
 class UniversalUnpacker:
@@ -46,6 +48,7 @@ class UniversalUnpacker:
     def __init__(self):
         """Initialize universal unpacker"""
         self.detector = PackerDetector()
+        self.bun_extractor = BunExecutableExtractor()
         logger.info("Universal unpacker initialized")
 
     def unpack(
@@ -108,9 +111,7 @@ class UniversalUnpacker:
                     )
                     return result
 
-        if (method == "auto" or method == "generic") and not (
-            result and result.success
-        ):
+        if (method == "auto" or method == "generic") and not (result and result.success):
             # Try generic unpacking
             result = self._generic_unpack(packed_binary, output_path)
 
@@ -145,14 +146,15 @@ class UniversalUnpacker:
         elif packer_name == "MPRESS":
             return self._unpack_mpress(packed_binary, output_path, original_hash)
 
+        elif packer_name == "Bun":
+            return self._unpack_bun(packed_binary, output_path, original_hash)
+
         # Other packers would need specialized tools
         else:
             logger.warning(f"No specialized unpacker available for {packer_name}")
             return None
 
-    def _unpack_upx(
-        self, packed_binary: str, output_path: str, original_hash: str
-    ) -> UnpackResult:
+    def _unpack_upx(self, packed_binary: str, output_path: str, original_hash: str) -> UnpackResult:
         """Unpack UPX-packed binary"""
         try:
             # First, copy to output path
@@ -221,6 +223,44 @@ class UniversalUnpacker:
             packer_info=self.detector.detect(packed_binary),
         )
 
+    def _unpack_bun(self, packed_binary: str, output_path: str, original_hash: str) -> UnpackResult:
+        """Extract bundled JavaScript from a Bun single-file executable."""
+        target_path = Path(output_path)
+        if target_path.suffix.lower() == Path(packed_binary).suffix.lower():
+            target_path = target_path.with_suffix(".js")
+
+        result = self.bun_extractor.extract_javascript(packed_binary, str(target_path))
+        if result.success:
+            artifacts = [result.output_path] if result.output_path else []
+            bunfs_dir = target_path.parent / f"{target_path.stem}_bunfs"
+            recovery = self.bun_extractor.recover_virtual_files(packed_binary, str(bunfs_dir))
+            if recovery.success:
+                artifacts.extend(recovery.recovered_files)
+            else:
+                logger.warning("Bun virtual filesystem recovery failed: %s", recovery.error_message)
+
+            return UnpackResult(
+                success=True,
+                unpacked_path=result.output_path,
+                method_used="bun",
+                original_hash=original_hash,
+                unpacked_hash=result.extracted_hash,
+                error_message=None,
+                packer_info=self.detector.detect(packed_binary),
+                artifacts=artifacts,
+            )
+
+        return UnpackResult(
+            success=False,
+            unpacked_path=None,
+            method_used="bun",
+            original_hash=original_hash,
+            unpacked_hash=None,
+            error_message=result.error_message,
+            packer_info=self.detector.detect(packed_binary),
+            artifacts=None,
+        )
+
     def _generic_unpack(self, packed_binary: str, output_path: str) -> UnpackResult:
         """
         Generic unpacking via memory dumping.
@@ -272,9 +312,7 @@ class UniversalUnpacker:
                 sha256_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
-    def batch_unpack(
-        self, packed_binaries: List[str], output_dir: str
-    ) -> List[UnpackResult]:
+    def batch_unpack(self, packed_binaries: List[str], output_dir: str) -> List[UnpackResult]:
         """
         Unpack multiple binaries.
 
@@ -303,9 +341,7 @@ class UniversalUnpacker:
                 logger.error(f"Failed to unpack {packed_binary}: {e}")
 
         success_count = sum(1 for r in results if r.success)
-        logger.info(
-            f"Batch unpacking complete: {success_count}/{len(results)} successful"
-        )
+        logger.info(f"Batch unpacking complete: {success_count}/{len(results)} successful")
 
         return results
 
@@ -338,6 +374,12 @@ class UniversalUnpacker:
             if result.unpacked_path:
                 report += f"**Unpacked File:** `{result.unpacked_path}`\n\n"
 
+            if result.artifacts:
+                report += "**Artifacts:**\n"
+                for artifact in result.artifacts:
+                    report += f"- `{artifact}`\n"
+                report += "\n"
+
             if result.error_message:
                 report += f"**Error:** {result.error_message}\n"
 
@@ -368,6 +410,12 @@ class UniversalUnpacker:
 
             if result.unpacked_path:
                 report += f"Unpacked File: {result.unpacked_path}\n\n"
+
+            if result.artifacts:
+                report += "Artifacts:\n"
+                for artifact in result.artifacts:
+                    report += f"  - {artifact}\n"
+                report += "\n"
 
             if result.error_message:
                 report += f"Error: {result.error_message}\n"

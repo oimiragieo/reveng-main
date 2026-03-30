@@ -127,13 +127,9 @@ class YARAGenerator:
             strings.extend([s.decode("ascii") for s in ascii_strings])
 
             # Extract Unicode strings
-            unicode_pattern = (
-                rb"(?:[\x20-\x7E]\x00){" + str(min_length).encode() + rb",}"
-            )
+            unicode_pattern = rb"(?:[\x20-\x7E]\x00){" + str(min_length).encode() + rb",}"
             unicode_strings = re.findall(unicode_pattern, data)
-            strings.extend(
-                [s.decode("utf-16le", errors="ignore") for s in unicode_strings]
-            )
+            strings.extend([s.decode("utf-16le", errors="ignore") for s in unicode_strings])
 
         except Exception as e:
             logger.error(f"Failed to extract strings: {e}")
@@ -179,17 +175,11 @@ class YARAGenerator:
 
         for string in strings:
             # Skip if matches exclude patterns
-            if any(
-                re.search(pattern, string, re.IGNORECASE)
-                for pattern in exclude_patterns
-            ):
+            if any(re.search(pattern, string, re.IGNORECASE) for pattern in exclude_patterns):
                 continue
 
             # Prioritize interesting patterns
-            if any(
-                re.search(pattern, string, re.IGNORECASE)
-                for pattern in interesting_patterns
-            ):
+            if any(re.search(pattern, string, re.IGNORECASE) for pattern in interesting_patterns):
                 unique.append(string)
                 continue
 
@@ -450,9 +440,7 @@ class YARAGenerator:
 
         rule.strings = optimized_strings
 
-        logger.info(
-            f"Optimized rule {rule.rule_name}: {len(optimized_strings)} unique strings"
-        )
+        logger.info(f"Optimized rule {rule.rule_name}: {len(optimized_strings)} unique strings")
         return rule
 
 

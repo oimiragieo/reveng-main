@@ -2,7 +2,6 @@
 Base classes for tools in REVENG Agent SDK.
 """
 
-import asyncio
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
