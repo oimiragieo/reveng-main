@@ -25,16 +25,23 @@ License: MIT
 import json
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 from reveng.core.error_codes import ErrorCode, REVENGError
+from reveng.result_contracts import AnalyzerCapabilitiesContract, make_trace_reference
 
 # Lazy imports for performance optimization
 # Heavy modules imported only when needed
 
 logger = logging.getLogger(__name__)
+
+
+def _utc_timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 if not logger.handlers:
     logger.setLevel(logging.INFO)
     logger.propagate = False
@@ -276,7 +283,28 @@ class REVENGAnalyzer:
             logger.debug(f"Could not check tool availability: {e}")
             capabilities["tools"] = {}
 
-        return capabilities
+        return AnalyzerCapabilitiesContract(
+            result_type="analyzer_capabilities",
+            version=capabilities["version"],
+            core_features=capabilities["core_features"],
+            enhanced_modules=capabilities["enhanced_modules"],
+            tools=capabilities["tools"],
+            ml_models=capabilities["ml_models"],
+            provenance={
+                "inputs": [],
+                "artifacts": [],
+                "stages": ["capability_enumeration", "result_contract_serialization"],
+                "references": [
+                    make_trace_reference(
+                        "describes",
+                        "reveng.analyzer.capabilities",
+                        trace_id="capabilities:reveng-analyzer",
+                        confidence=1.0,
+                    )
+                ],
+                "tools": ["dependency_manager"] if capabilities["tools"] else [],
+            },
+        ).to_dict()
 
     def _check_module_available(self, module_path: str) -> bool:
         """Check if a Python module is importable"""
@@ -289,7 +317,7 @@ class REVENGAnalyzer:
     def _check_ghidra_available(self) -> bool:
         """Check if Ghidra is available"""
         try:
-            from reveng.tools.config.ghidra_engine import GhidraEngine
+            from reveng.integrations.ghidra.ghidra_engine import GhidraEngine
 
             # Quick connection check (don't fail fast)
             GhidraEngine(server_url="http://127.0.0.1:13370", timeout=2, fail_fast=False)
@@ -309,8 +337,8 @@ class REVENGAnalyzer:
 
         try:
             # Check for Java (required for Ghidra and Java bytecode analysis)
-            import subprocess
             import re
+            import subprocess
 
             try:
                 result = subprocess.run(
@@ -505,7 +533,7 @@ class REVENGAnalyzer:
                 "binary_path": str(self.binary_path) if self.binary_path else None,
                 "binary_name": self.binary_name,
                 "analysis_folder": str(self.analysis_folder),
-                "started_at": datetime.utcnow().isoformat() + "Z",
+                "started_at": _utc_timestamp(),
             },
         )
 
@@ -814,7 +842,7 @@ class REVENGAnalyzer:
                 logger.info("Audit session ended with error")
 
             self.results.setdefault("errors", []).append(error.to_dict())
-            self.results["metadata"]["finished_at"] = datetime.utcnow().isoformat() + "Z"
+            self.results["metadata"]["finished_at"] = _utc_timestamp()
             self.results["metadata"]["duration_seconds"] = time.time() - start_time
 
             return {
@@ -830,7 +858,7 @@ class REVENGAnalyzer:
                 "enhanced_results": self.enhanced_results,
             }
 
-        self.results["metadata"]["finished_at"] = datetime.utcnow().isoformat() + "Z"
+        self.results["metadata"]["finished_at"] = _utc_timestamp()
         self.results["metadata"]["duration_seconds"] = time.time() - start_time
 
         file_type_info = None
@@ -1030,10 +1058,10 @@ class REVENGAnalyzer:
         Following Gemini's blueprint: "Ghidra is not a tool, it is the database."
         """
         try:
-            from reveng.tools.config.ghidra_engine import (
-                GhidraEngine,
+            from reveng.integrations.ghidra.ghidra_engine import (
                 GhidraConnectionError,
                 GhidraDataExtractor,
+                GhidraEngine,
             )
 
             logger.info("=" * 70)
@@ -1080,7 +1108,6 @@ class REVENGAnalyzer:
 
                 try:
                     from reveng.integrations.local_disassembler import (
-                        LocalDisassembler,
                         get_local_disassembler,
                     )
 
@@ -1096,18 +1123,23 @@ class REVENGAnalyzer:
 
                             # Create a compatible data extractor
                             from reveng.integrations.ghidra.ghidra_engine import GhidraDataExtractor
+
                             self.ghidra_extractor = GhidraDataExtractor(analysis_data)
 
                             logger.info("=" * 70)
                             logger.info("LOCAL ANALYSIS COMPLETE (Limited - No Decompilation)")
                             logger.info("=" * 70)
                             logger.info(f"Format: {local_result.binary_format}")
-                            logger.info(f"Architecture: {local_result.architecture} ({local_result.bits}-bit)")
+                            logger.info(
+                                f"Architecture: {local_result.architecture} ({local_result.bits}-bit)"
+                            )
                             logger.info(f"Functions detected: {len(local_result.functions)}")
                             logger.info(f"Strings extracted: {len(local_result.strings)}")
                             logger.info(f"Imports: {len(local_result.imports)}")
                             logger.info(f"Exports: {len(local_result.exports)}")
-                            logger.info("⚠️  NOTE: No decompilation available. Start Ghidra for full analysis.")
+                            logger.info(
+                                "⚠️  NOTE: No decompilation available. Start Ghidra for full analysis."
+                            )
                             logger.info("=" * 70)
 
                             self.results["step2"] = {
@@ -1141,7 +1173,9 @@ class REVENGAnalyzer:
                     "details": error.details,
                 }
 
-                logger.warning("Analysis continues without disassembly - functionality will be very limited")
+                logger.warning(
+                    "Analysis continues without disassembly - functionality will be very limited"
+                )
                 return
 
             # Ghidra is available - perform comprehensive analysis
@@ -1854,6 +1888,21 @@ class REVENGAnalyzer:
                 ),
             },
         }
+
+        try:
+            from reveng.security.yara_scanner import YARAScanner
+
+            yara_enrichment = YARAScanner().enrich_analysis({}, file_path=self.binary_path)
+            report["yara_matches"] = yara_enrichment.get("yara_matches", [])
+            report["malware_classification"] = yara_enrichment.get("malware_classification", {})
+        except Exception as exc:
+            report["yara_matches"] = []
+            report["malware_classification"] = {
+                "family": "YARA unavailable",
+                "confidence": 0.0,
+                "matched_rules": [],
+                "indicators": [str(exc)],
+            }
 
         # Save report
         report_file = self.analysis_folder / "universal_analysis_report.json"

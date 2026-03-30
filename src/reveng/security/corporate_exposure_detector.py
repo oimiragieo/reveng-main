@@ -71,9 +71,7 @@ class CredentialDetector:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    def scan_for_credentials(
-        self, code: str, file_path: str = ""
-    ) -> List[CorporateExposure]:
+    def scan_for_credentials(self, code: str, file_path: str = "") -> List[CorporateExposure]:
         """Scan code for embedded credentials and secrets"""
         exposures = []
         patterns = {
@@ -135,9 +133,7 @@ class CredentialDetector:
 
         return exposures
 
-    def scan_database_connections(
-        self, code: str, file_path: str = ""
-    ) -> List[CorporateExposure]:
+    def scan_database_connections(self, code: str, file_path: str = "") -> List[CorporateExposure]:
         """Scan for database connection strings"""
         exposures = []
         db_patterns = {
@@ -188,9 +184,7 @@ class CredentialDetector:
 
     def _sanitize_connection_string(self, conn_string: str) -> str:
         """Sanitize database connection strings"""
-        sanitized = re.sub(
-            r"(password|pwd)=[^;]+", r"\1=***", conn_string, flags=re.IGNORECASE
-        )
+        sanitized = re.sub(r"(password|pwd)=[^;]+", r"\1=***", conn_string, flags=re.IGNORECASE)
         return re.sub(r"(user|uid)=[^;]+", r"\1=***", sanitized, flags=re.IGNORECASE)
 
 
@@ -200,9 +194,7 @@ class BusinessLogicAnalyzer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    def extract_pricing_algorithms(
-        self, code: str, file_path: str = ""
-    ) -> List[CorporateExposure]:
+    def extract_pricing_algorithms(self, code: str, file_path: str = "") -> List[CorporateExposure]:
         """Extract pricing algorithms and business rules from decompiled code"""
         exposures = []
         patterns = {
@@ -379,9 +371,7 @@ class NetworkTopologyAnalyzer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    def discover_api_endpoints(
-        self, code: str, file_path: str = ""
-    ) -> List[CorporateExposure]:
+    def discover_api_endpoints(self, code: str, file_path: str = "") -> List[CorporateExposure]:
         """Discover API endpoints and network communication patterns"""
         exposures = []
         patterns = {
@@ -497,19 +487,13 @@ class NetworkTopologyAnalyzer:
 
         return exposures
 
-    def identify_network_topology(
-        self, code: str, file_path: str = ""
-    ) -> List[CorporateExposure]:
+    def identify_network_topology(self, code: str, file_path: str = "") -> List[CorporateExposure]:
         """Identify internal network topology and service dependencies"""
         exposures = []
 
         # Simple network topology analysis
-        network_indicators = len(
-            re.findall(r"(?:server|host|port|endpoint)", code, re.IGNORECASE)
-        )
-        service_indicators = len(
-            re.findall(r"(?:mysql|postgres|redis|api)", code, re.IGNORECASE)
-        )
+        network_indicators = len(re.findall(r"(?:server|host|port|endpoint)", code, re.IGNORECASE))
+        service_indicators = len(re.findall(r"(?:mysql|postgres|redis|api)", code, re.IGNORECASE))
 
         if network_indicators > 3 or service_indicators > 2:
             evidence = ExposureEvidence(
@@ -550,9 +534,7 @@ class NetworkTopologyAnalyzer:
             r"127\.0\.0\.1",
             r"\.(?:internal|local|corp|lan)",
         ]
-        return any(
-            re.search(pattern, endpoint, re.IGNORECASE) for pattern in internal_patterns
-        )
+        return any(re.search(pattern, endpoint, re.IGNORECASE) for pattern in internal_patterns)
 
     def _sanitize_endpoint(self, endpoint: str) -> str:
         """Sanitize endpoint for reporting"""
@@ -560,9 +542,7 @@ class NetworkTopologyAnalyzer:
             parts = endpoint.split("@")
             if len(parts) == 2:
                 protocol_creds, domain_path = parts
-                protocol = (
-                    protocol_creds.split("://")[0] if "://" in protocol_creds else ""
-                )
+                protocol = protocol_creds.split("://")[0] if "://" in protocol_creds else ""
                 return f"{protocol}://***@{domain_path}"
         return endpoint
 
@@ -603,15 +583,11 @@ class CorporateExposureDetector:
 
         try:
             # Scan for credentials and secrets
-            credential_exposures = self.credential_detector.scan_for_credentials(
-                code, file_path
-            )
+            credential_exposures = self.credential_detector.scan_for_credentials(code, file_path)
             exposures.extend(credential_exposures)
 
             # Scan for database connections
-            db_exposures = self.credential_detector.scan_database_connections(
-                code, file_path
-            )
+            db_exposures = self.credential_detector.scan_database_connections(code, file_path)
             exposures.extend(db_exposures)
 
             # Extract pricing algorithms and business rules
@@ -621,25 +597,19 @@ class CorporateExposureDetector:
             exposures.extend(pricing_exposures)
 
             # Identify licensing validation mechanisms
-            licensing_exposures = (
-                self.business_logic_analyzer.identify_licensing_mechanisms(
-                    code, file_path
-                )
+            licensing_exposures = self.business_logic_analyzer.identify_licensing_mechanisms(
+                code, file_path
             )
             exposures.extend(licensing_exposures)
 
             # Analyze proprietary algorithms
-            algorithm_exposures = (
-                self.business_logic_analyzer.analyze_proprietary_algorithms(
-                    code, file_path
-                )
+            algorithm_exposures = self.business_logic_analyzer.analyze_proprietary_algorithms(
+                code, file_path
             )
             exposures.extend(algorithm_exposures)
 
             # Discover API endpoints and network topology
-            endpoint_exposures = self.network_analyzer.discover_api_endpoints(
-                code, file_path
-            )
+            endpoint_exposures = self.network_analyzer.discover_api_endpoints(code, file_path)
             exposures.extend(endpoint_exposures)
 
             # Extract authentication mechanisms
@@ -649,23 +619,17 @@ class CorporateExposureDetector:
             exposures.extend(auth_exposures)
 
             # Identify network topology and service dependencies
-            topology_exposures = self.network_analyzer.identify_network_topology(
-                code, file_path
-            )
+            topology_exposures = self.network_analyzer.identify_network_topology(code, file_path)
             exposures.extend(topology_exposures)
 
-            self.logger.info(
-                f"Found {len(exposures)} corporate data exposures in {file_path}"
-            )
+            self.logger.info(f"Found {len(exposures)} corporate data exposures in {file_path}")
 
         except Exception as e:
             self.logger.error(f"Error analyzing code for corporate exposure: {e}")
 
         return exposures
 
-    def generate_exposure_report(
-        self, exposures: List[CorporateExposure]
-    ) -> Dict[str, Any]:
+    def generate_exposure_report(self, exposures: List[CorporateExposure]) -> Dict[str, Any]:
         """Generate comprehensive exposure report"""
         if not exposures:
             return {
@@ -692,9 +656,7 @@ class CorporateExposureDetector:
             "total_exposures": len(exposures),
             "severity_breakdown": severity_counts,
             "risk_score": risk_score,
-            "business_impact_assessment": self._assess_overall_business_impact(
-                exposures
-            ),
+            "business_impact_assessment": self._assess_overall_business_impact(exposures),
             "recommended_actions": self._get_recommended_actions(exposures),
             "exposures": [self._serialize_exposure(exp) for exp in exposures],
         }
@@ -720,13 +682,9 @@ class CorporateExposureDetector:
 
         return min(10.0, (total_score / max_possible) * 10)
 
-    def _assess_overall_business_impact(
-        self, exposures: List[CorporateExposure]
-    ) -> str:
+    def _assess_overall_business_impact(self, exposures: List[CorporateExposure]) -> str:
         """Assess overall business impact"""
-        critical_count = sum(
-            1 for exp in exposures if exp.severity == SeverityLevel.CRITICAL
-        )
+        critical_count = sum(1 for exp in exposures if exp.severity == SeverityLevel.CRITICAL)
         high_count = sum(1 for exp in exposures if exp.severity == SeverityLevel.HIGH)
 
         if critical_count > 0:
@@ -747,9 +705,7 @@ class CorporateExposureDetector:
             1 for exp in exposures if exp.exposure_type == ExposureType.CREDENTIAL
         )
         db_count = sum(
-            1
-            for exp in exposures
-            if exp.exposure_type == ExposureType.DATABASE_CONNECTION
+            1 for exp in exposures if exp.exposure_type == ExposureType.DATABASE_CONNECTION
         )
         business_count = sum(
             1 for exp in exposures if exp.exposure_type == ExposureType.BUSINESS_LOGIC

@@ -1,0 +1,14 @@
+{
+  "group": "group-full-suite",
+  "testedAt": "2026-03-14T12:00:00Z",
+  "assertions": {
+    "VAL-CROSS-001": {
+      "status": "pass",
+      "evidence": "pytest summary: 325 passed, 20 skipped, 18 warnings, 4 subtests passed in 53.85s — exit code 0. See evidence file: test-quality/group-full-suite/VAL-CROSS-001-pytest-summary.txt",
+      "reason": "325 passed >= 307 threshold, 0 failures, exit code 0. Full test suite is regression-free."
+    }
+  },
+  "frictions": [],
+  "blockers": [],
+  "toolsUsed": ["pytest"]
+}

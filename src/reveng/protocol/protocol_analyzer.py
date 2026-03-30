@@ -5,7 +5,7 @@ Traditional protocol analysis techniques complementing AI-based reversing.
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 class ProtocolAnalyzer:
@@ -23,10 +23,10 @@ class ProtocolAnalyzer:
         self.logger.info(f"Analyzing {len(messages)} messages...")
 
         analysis = {
-            'message_count': len(messages),
-            'unique_lengths': len(set(len(m) for m in messages)),
-            'min_length': min(len(m) for m in messages) if messages else 0,
-            'max_length': max(len(m) for m in messages) if messages else 0,
+            "message_count": len(messages),
+            "unique_lengths": len(set(len(m) for m in messages)),
+            "min_length": min(len(m) for m in messages) if messages else 0,
+            "max_length": max(len(m) for m in messages) if messages else 0,
         }
 
         return analysis

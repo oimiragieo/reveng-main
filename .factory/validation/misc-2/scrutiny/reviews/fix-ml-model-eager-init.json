@@ -1,0 +1,34 @@
+{
+  "featureId": "fix-ml-model-eager-init",
+  "reviewedAt": "2026-03-13T19:30:00.000Z",
+  "commitId": "cdf5fb5428059b9f4305f9b1d3fcdf54f7d5ed25",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The implementation correctly replaces eager per-instantiation Isolation Forest training with a thread-safe per-class singleton cache in `_IsolationForestFeatureModel`. The double-checked locking pattern in both `__new__` and `__init__` is correctly implemented: `__new__` checks the `_instances` class-var dict first without a lock (safe for CPython dict reads), then acquires `_instance_lock` and rechecks before creating; `__init__` guards with a `_initialized` flag using the same double-check+lock strategy, ensuring that concurrent threads block until training completes rather than retraining. All three concrete model subclasses (`BehavioralAnomalyModel`, `MemoryArtifactAnomalyModel`, `MemoryProcessAnomalyModel`) inherit this behavior transparently since their `__init__` just calls `super().__init__()`. The new parametrized regression test properly validates singleton semantics by clearing the cache, monkey-patching `Pipeline.fit` to count calls, instantiating twice, and asserting `fit_calls == 1` and `first_model is second_model`. No bugs or edge-case gaps were found.",
+    "issues": [
+      {
+        "file": "src/reveng/ml/forensics_anomaly_models.py",
+        "line": 34,
+        "severity": "non_blocking",
+        "description": "The `_instances` dict and `_instance_lock` are shared ClassVars on the base class, meaning all subclasses share one dict and one lock. This is correct for the current 3-subclass usage, but if many more subclasses were added, the single lock could become a contention point during process startup. Not a real concern at current scale."
+      },
+      {
+        "file": "src/reveng/ml/forensics_anomaly_models.py",
+        "line": 38,
+        "severity": "non_blocking",
+        "description": "There is no public API to invalidate the model cache (e.g., for testing or forced retraining). The test works around this with `_instances.pop(model_cls, None)`. This is fine given the requirement is 'once per process lifetime', but a `reset()` classmethod would be slightly cleaner for tests."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The worker used the `_instances` class-variable singleton pattern for caching models. This is a novel caching/singleton convention in the codebase. AGENTS.md doesn't document any preferred pattern for singleton or process-lifetime caching. If future features need similar caching, documenting this as the preferred approach would avoid inconsistency.",
+      "evidence": "src/reveng/ml/forensics_anomaly_models.py:32-55 introduces _instances ClassVar dict + _instance_lock + __new__ double-checked locking, which is the first usage of this pattern in the codebase."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Pass. The singleton cache implementation is correct, thread-safe, and fully addresses the eager-init performance issue. The three forensics anomaly model classes now train their Isolation Forest pipelines exactly once per process lifetime. The regression test validates this with a Pipeline.fit spy. Both non-blocking observations are minor style/scalability notes, not correctness issues. Worker followed the skill procedure (TDD, lint, typecheck, focused test verification) and documented all changes in the library file."
+}

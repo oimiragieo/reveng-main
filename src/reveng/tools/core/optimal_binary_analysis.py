@@ -20,7 +20,6 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List
 
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -48,9 +47,7 @@ class UniversalOptimalBinaryAnalysis:
     def __init__(self, binary_path: str = None):
         """Initialize the universal optimal binary analysis system"""
         self.binary_path = binary_path or self._find_binary()
-        self.binary_name = (
-            Path(self.binary_path).stem if self.binary_path else "unknown"
-        )
+        self.binary_name = Path(self.binary_path).stem if self.binary_path else "unknown"
         self.src_folder = Path(f"src_optimal_analysis_{self.binary_name}")
         self.mcp_server_url = "http://localhost:13337/mcp"
         self.ghidra_connected = False
@@ -801,11 +798,7 @@ class UniversalOptimalBinaryAnalysis:
 
         # Combine all functions
         all_functions = (
-            core_functions
-            + js_functions
-            + memory_functions
-            + file_functions
-            + network_functions
+            core_functions + js_functions + memory_functions + file_functions + network_functions
         )
 
         logger.info(f"Extracted {len(all_functions)} functions with optimal quality")
@@ -988,9 +981,7 @@ def main():
 
     print("[ROCKET] UNIVERSAL OPTIMAL BINARY ANALYSIS SYSTEM")
     print("=" * 60)
-    print(
-        "This provides optimal analysis for ANY binary with maximum quality and coverage!"
-    )
+    print("This provides optimal analysis for ANY binary with maximum quality and coverage!")
     print("=" * 60)
 
     # Get binary path from command line or auto-detect
@@ -1010,9 +1001,7 @@ def main():
         print("Or place a binary file in the current directory")
         return
 
-    print(
-        f"Target: {analysis.binary_path} ({Path(analysis.binary_path).stat().st_size:,} bytes)"
-    )
+    print(f"Target: {analysis.binary_path} ({Path(analysis.binary_path).stat().st_size:,} bytes)")
     print()
 
     results = analysis.run_optimal_analysis()

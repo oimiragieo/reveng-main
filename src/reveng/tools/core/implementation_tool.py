@@ -785,12 +785,7 @@ module.exports.default = {clean_name.title().replace("_", "")}Requirement;
                 import_match = re.search(r"^import\s+", content, re.MULTILINE)
                 if import_match:
                     insert_pos = import_match.start()
-                    content = (
-                        content[:insert_pos]
-                        + imports_to_add
-                        + "\n"
-                        + content[insert_pos:]
-                    )
+                    content = content[:insert_pos] + imports_to_add + "\n" + content[insert_pos:]
                 else:
                     # Add at the beginning if no imports found
                     content = imports_to_add + "\n" + content
@@ -810,9 +805,7 @@ module.exports.default = {clean_name.title().replace("_", "")}Requirement;
 
         for feature in self.implemented_features:
             clean_name = feature.replace(" ", "_").replace("-", "_").lower()
-            imports.append(
-                f"import {{ {clean_name} }} from './implementations/{clean_name}.js';"
-            )
+            imports.append(f"import {{ {clean_name} }} from './implementations/{clean_name}.js';")
 
         return "\n".join(imports)
 
@@ -888,9 +881,7 @@ def main():
     print(f"  - Missing Requirements: {len(tool.missing_features['requirements'])}")
     print(f"  - Implemented Features: {len(tool.implemented_features)}")
     print()
-    print(
-        "[FOLDER] Implementation files created in cursor-agent/implementations/ folder:"
-    )
+    print("[FOLDER] Implementation files created in cursor-agent/implementations/ folder:")
     print("  - [function].js (implemented functions)")
     print("  - [feature].js (implemented features)")
     print("  - requirement_[name].js (implemented requirements)")

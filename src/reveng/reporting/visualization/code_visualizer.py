@@ -149,7 +149,9 @@ class CallGraphBuilder:
         class_name = class_match.group(1)
 
         # Extract methods
-        method_pattern = r"(?:public|private|protected)?\s+(?:static\s+)?(?:[\w<>]+)\s+(\w+)\s*\(([^)]*)\)\s*\{"
+        method_pattern = (
+            r"(?:public|private|protected)?\s+(?:static\s+)?(?:[\w<>]+)\s+(\w+)\s*\(([^)]*)\)\s*\{"
+        )
         for match in re.finditer(method_pattern, content):
             method_name = match.group(1)
             full_name = (
@@ -566,9 +568,7 @@ class GraphVisualizer:
     def _generate_json(self, graph: nx.DiGraph, name: str):
         """Generate JSON representation of graph"""
         graph_data = {
-            "nodes": [
-                {"id": node_id, **graph.nodes[node_id]} for node_id in graph.nodes()
-            ],
+            "nodes": [{"id": node_id, **graph.nodes[node_id]} for node_id in graph.nodes()],
             "edges": [
                 {"source": source, "target": target, **graph.edges[source, target]}
                 for source, target in graph.edges()
@@ -593,9 +593,7 @@ class GraphVisualizer:
             "edges": len(graph.edges),
             "density": nx.density(graph),
             "average_degree": (
-                sum(dict(graph.degree()).values()) / len(graph.nodes)
-                if graph.nodes
-                else 0
+                sum(dict(graph.degree()).values()) / len(graph.nodes) if graph.nodes else 0
             ),
         }
 
@@ -649,9 +647,7 @@ def main():
         default="visualizations",
         help="Output directory for visualizations",
     )
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 
@@ -686,16 +682,12 @@ def main():
         if args.format == "java":
             call_graph = call_graph_builder.build_from_java_analysis(args.analysis_dir)
         else:
-            call_graph = call_graph_builder.build_from_ghidra_analysis(
-                args.analysis_dir
-            )
+            call_graph = call_graph_builder.build_from_ghidra_analysis(args.analysis_dir)
 
         visualizer.render_call_graph(call_graph, "call_graph")
 
     if args.type in ["dependency", "both"] and args.format == "java":
-        dependency_graph = dependency_builder.build_from_java_analysis(
-            args.analysis_dir
-        )
+        dependency_graph = dependency_builder.build_from_java_analysis(args.analysis_dir)
         visualizer.render_call_graph(dependency_graph, "dependency_graph")
 
     print(f"\nVisualizations saved to: {args.output}")

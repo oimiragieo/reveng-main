@@ -6,12 +6,18 @@ This directory contains sample files for testing REVENG functionality.
 
 ### Java Samples
 - **`HelloWorld.java`** - Simple Java program for basic testing
+- **`HelloWorld.class`** - Compiled class fixture for JVM bytecode flows
+- **`HelloWorld.jar`** - Reproducible JAR fixture for packaged JVM flows
 - **`ObfuscatedExample.java`** - Obfuscated Java code for advanced testing
 
-### Binary Samples (Not Included)
+### Python Samples
+- **`sample_app.py`** - Source sample for Python adapter smoke tests
+- **`sample_app.pyc`** - Reproducible bytecode fixture generated from `sample_app.py`
+- **`sample_app.pyz`** - Reproducible zipapp fixture generated from `sample_app.py`
+
+### Binary Samples
 - **Windows PE executables** - `.exe` files for Windows testing
 - **Linux ELF binaries** - ELF files for Linux testing
-- **Java JAR files** - Compiled Java applications
 - **C# assemblies** - .NET executables
 
 ## 🧪 Testing Usage
@@ -60,8 +66,13 @@ python reveng_analyzer.py test_samples/HelloWorld.java --corporate-exposure --vu
 ### Binary Samples
 1. **Windows**: Create `.exe` files (not included in repo)
 2. **Linux**: Create ELF binaries (not included in repo)
-3. **Java**: Create `.jar` files (not included in repo)
+3. **Java**: Run `python scripts/generate_app_corpus_fixtures.py` to regenerate `.jar` fixtures
 4. **C#**: Create `.exe` files (not included in repo)
+
+### Regenerating Reproducible Fixtures
+```bash
+python scripts/generate_app_corpus_fixtures.py
+```
 
 ### Sample Requirements
 - **Size**: Keep samples under 10MB

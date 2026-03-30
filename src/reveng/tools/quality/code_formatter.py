@@ -153,9 +153,7 @@ class CodeFormatter:
             logger.error(f"Error formatting {file_path}: {e}")
             return False, str(e)
 
-    def format_directory(
-        self, directory: Path, file_pattern: str = "*.c"
-    ) -> Dict[str, any]:
+    def format_directory(self, directory: Path, file_pattern: str = "*.c") -> Dict[str, any]:
         """Format all files in a directory"""
         logger.info(f"Formatting directory: {directory} (pattern: {file_pattern})")
 
@@ -231,9 +229,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Format generated code")
     parser.add_argument("directory", help="Directory to format")
-    parser.add_argument(
-        "--pattern", default="*.c", help="File pattern to match (default: *.c)"
-    )
+    parser.add_argument("--pattern", default="*.c", help="File pattern to match (default: *.c)")
     args = parser.parse_args()
 
     # Create formatter

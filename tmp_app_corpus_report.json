@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0",
+  "result_type": "app_reverse_engineering_corpus_report",
+  "generated_at": "2026-03-29T20:30:30.705670Z",
+  "output_dir": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus",
+  "summary": {
+    "total_entries": 7,
+    "completed_entries": 7,
+    "failed_entries": 0,
+    "required_failed_entries": 0,
+    "matrix_status": "pass"
+  },
+  "rows": [
+    {
+      "name": "java-helloworld",
+      "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.java",
+      "language": "jvm",
+      "requested_language": "jvm",
+      "required": true,
+      "tags": [
+        "smoke",
+        "jvm",
+        "source"
+      ],
+      "status": "completed",
+      "validation_grade": "evidence_backed",
+      "result_type": "app_reverse_engineering_result",
+      "analysis_file": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\analysis.json",
+      "source_count": 1,
+      "warning_count": 0
+    },
+    {
+      "name": "java-helloworld-jar",
+      "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.jar",
+      "language": "jvm",
+      "requested_language": "jvm",
+      "required": true,
+      "tags": [
+        "smoke",
+        "jvm",
+        "packaged",
+        "compiled"
+      ],
+      "status": "completed",
+      "validation_grade": "partial_recovery",
+      "result_type": "app_reverse_engineering_result",
+      "analysis_file": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld-jar\\analysis.json",
+      "source_count": 1,
+      "warning_count": 0
+    },
+    {
+      "name": "python-sample-app",
+      "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.py",
+      "language": "python",
+      "requested_language": "python",
+      "required": true,
+      "tags": [
+        "smoke",
+        "python",
+        "source"
+      ],
+      "status": "completed",
+      "validation_grade": "evidence_backed",
+      "result_type": "app_reverse_engineering_result",
+      "analysis_file": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\python-sample-app\\analysis.json",
+      "source_count": 1,
+      "warning_count": 0
+    },
+    {
+      "name": "python-sample-bytecode",
+      "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyc",
+      "language": "python",
+      "requested_language": "python",
+      "required": true,
+      "tags": [
+        "smoke",
+        "python",
+        "compiled",
+        "bytecode"
+      ],
+      "status": "completed",
+      "validation_grade": "evidence_backed",
+      "result_type": "app_reverse_engineering_result",
+      "analysis_file": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\python-sample-bytecode\\analysis.json",
+      "source_count": 1,
+      "warning_count": 0
+    },
+    {
+      "name": "python-sample-zipapp",
+      "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyz",
+      "language": "python",
+      "requested_language": "python",
+      "required": true,
+      "tags": [
+        "smoke",
+        "python",
+        "packaged"
+      ],
+      "status": "completed",
+      "validation_grade": "evidence_backed",
+      "result_type": "app_reverse_engineering_result",
+      "analysis_file": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\python-sample-zipapp\\analysis.json",
+      "source_count": 2,
+      "warning_count": 0
+    },
+    {
+      "name": "javascript-sample-app",
+      "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_bundle.js",
+      "language": "javascript",
+      "requested_language": "javascript",
+      "required": true,
+      "tags": [
+        "smoke",
+        "javascript",
+        "bundle"
+      ],
+      "status": "completed",
+      "validation_grade": "evidence_backed",
+      "result_type": "app_reverse_engineering_result",
+      "analysis_file": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-sample-app\\analysis.json",
+      "source_count": 1,
+      "warning_count": 0
+    },
+    {
+      "name": "dotnet-winsw-app",
+      "input_path": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\winsw\\WinSW-x64.exe",
+      "language": "dotnet",
+      "requested_language": "dotnet",
+      "required": true,
+      "tags": [
+        "smoke",
+        "dotnet",
+        "release",
+        "managed"
+      ],
+      "status": "completed",
+      "validation_grade": "partial_recovery",
+      "result_type": "app_reverse_engineering_result",
+      "analysis_file": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\dotnet-winsw-app\\analysis.json",
+      "source_count": 1,
+      "warning_count": 1
+    }
+  ],
+  "config_path": ".reveng\\app_reverse_engineering_corpus.ga.json",
+  "notes": [
+    "This stricter corpus mirrors the smoke corpus but replaces the synthetic .NET row with a public release-backed managed executable.",
+    "The real .NET sample is provisioned on demand by scripts/provision_ga_assets.py."
+  ],
+  "selected_entry_count": 7
+}

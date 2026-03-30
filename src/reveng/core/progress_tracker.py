@@ -90,16 +90,10 @@ class ProgressTracker:
 
                 self.analyses[analysis_id].update(
                     {
-                        "status": (
-                            AnalysisStatus.COMPLETED
-                            if success
-                            else AnalysisStatus.FAILED
-                        ),
+                        "status": (AnalysisStatus.COMPLETED if success else AnalysisStatus.FAILED),
                         "end_time": end_time,
                         "duration": duration,
-                        "progress": (
-                            100.0 if success else self.analyses[analysis_id]["progress"]
-                        ),
+                        "progress": (100.0 if success else self.analyses[analysis_id]["progress"]),
                     }
                 )
 
@@ -138,17 +132,12 @@ class ProgressTracker:
         with self._lock:
             if analysis_id in self.analyses:
                 for stage in self.analyses[analysis_id]["stages"]:
-                    if (
-                        stage.name == stage_name
-                        and stage.status == AnalysisStatus.RUNNING
-                    ):
+                    if stage.name == stage_name and stage.status == AnalysisStatus.RUNNING:
                         end_time = time.time()
                         stage.end_time = end_time
                         stage.duration = end_time - stage.start_time
                         stage.status = (
-                            AnalysisStatus.COMPLETED
-                            if success
-                            else AnalysisStatus.FAILED
+                            AnalysisStatus.COMPLETED if success else AnalysisStatus.FAILED
                         )
                         stage.message = message
                         break
@@ -170,9 +159,7 @@ class ProgressTracker:
                             stage.message = message
                         break
 
-    def log_tool_execution(
-        self, analysis_id: str, tool_name: str, command: List[str]
-    ) -> None:
+    def log_tool_execution(self, analysis_id: str, tool_name: str, command: List[str]) -> None:
         """Log tool execution start"""
         with self._lock:
             if analysis_id in self.analyses:
@@ -204,9 +191,7 @@ class ProgressTracker:
                         execution.error = error
                         break
 
-    def log_error(
-        self, analysis_id: str, error_message: str, error_type: str = "unknown"
-    ) -> None:
+    def log_error(self, analysis_id: str, error_message: str, error_type: str = "unknown") -> None:
         """Log error"""
         with self._lock:
             if analysis_id in self.analyses:
@@ -249,17 +234,13 @@ class ProgressTracker:
             total_stages = len(analysis["stages"])
             if total_stages > 0:
                 completed_stages = sum(
-                    1
-                    for stage in analysis["stages"]
-                    if stage.status == AnalysisStatus.COMPLETED
+                    1 for stage in analysis["stages"] if stage.status == AnalysisStatus.COMPLETED
                 )
                 analysis["progress"] = (completed_stages / total_stages) * 100
 
             # Count tools and errors
             tools_count = len(analysis["tools_used"])
-            successful_tools = sum(
-                1 for tool in analysis["tools_used"] if tool.success is True
-            )
+            successful_tools = sum(1 for tool in analysis["tools_used"] if tool.success is True)
             errors_count = len(analysis["errors"])
 
             return {
@@ -329,9 +310,7 @@ class ProgressTracker:
                 "completed": completed,
                 "failed": failed,
                 "running": running,
-                "success_rate": (
-                    (completed / total_analyses * 100) if total_analyses > 0 else 0
-                ),
+                "success_rate": ((completed / total_analyses * 100) if total_analyses > 0 else 0),
                 "total_duration": total_duration,
                 "average_duration": total_duration / completed if completed > 0 else 0,
             }

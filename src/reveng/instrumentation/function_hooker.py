@@ -5,23 +5,25 @@ Advanced function hooking and manipulation capabilities.
 """
 
 import logging
-from typing import Dict, List, Optional, Callable, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 
 class HookStrategy(Enum):
     """Hook implementation strategies"""
-    INLINE = "inline"                   # Inline code modification
-    IAT = "iat"                        # Import Address Table hooking
-    TRAMPOLINE = "trampoline"          # Trampoline/detour
-    VTABLE = "vtable"                  # Virtual table hooking
-    GOT_PLT = "got_plt"                # GOT/PLT hooking (Linux)
+
+    INLINE = "inline"  # Inline code modification
+    IAT = "iat"  # Import Address Table hooking
+    TRAMPOLINE = "trampoline"  # Trampoline/detour
+    VTABLE = "vtable"  # Virtual table hooking
+    GOT_PLT = "got_plt"  # GOT/PLT hooking (Linux)
 
 
 @dataclass
 class FunctionSignature:
     """Function signature information"""
+
     name: str
     address: int
     module: Optional[str] = None
@@ -33,6 +35,7 @@ class FunctionSignature:
 @dataclass
 class HookInfo:
     """Hook installation information"""
+
     function: FunctionSignature
     strategy: HookStrategy
     original_bytes: Optional[bytes] = None
@@ -56,9 +59,13 @@ class FunctionHooker:
         self.hooks: Dict[str, HookInfo] = {}
         self.trampolines: Dict[int, bytes] = {}
 
-    def hook_function(self, function_name: str, address: int,
-                     callback: Callable,
-                     strategy: HookStrategy = HookStrategy.INLINE) -> bool:
+    def hook_function(
+        self,
+        function_name: str,
+        address: int,
+        callback: Callable,
+        strategy: HookStrategy = HookStrategy.INLINE,
+    ) -> bool:
         """
         Hook a function with specified strategy.
 
@@ -92,18 +99,13 @@ class FunctionHooker:
             return False
 
         if success:
-            hook_info = HookInfo(
-                function=signature,
-                strategy=strategy,
-                active=True
-            )
+            hook_info = HookInfo(function=signature, strategy=strategy, active=True)
             self.hooks[function_name] = hook_info
             self.logger.info(f"Hooked function: {function_name} @ 0x{address:x}")
 
         return success
 
-    def _install_inline_hook(self, signature: FunctionSignature,
-                           callback: Callable) -> bool:
+    def _install_inline_hook(self, signature: FunctionSignature, callback: Callable) -> bool:
         """
         Install inline hook by overwriting function prologue.
 
@@ -122,8 +124,7 @@ class FunctionHooker:
             self.logger.error(f"Failed to install inline hook: {e}")
             return False
 
-    def _install_iat_hook(self, signature: FunctionSignature,
-                        callback: Callable) -> bool:
+    def _install_iat_hook(self, signature: FunctionSignature, callback: Callable) -> bool:
         """
         Hook via Import Address Table modification.
 
@@ -142,8 +143,7 @@ class FunctionHooker:
             self.logger.error(f"Failed to install IAT hook: {e}")
             return False
 
-    def _install_trampoline_hook(self, signature: FunctionSignature,
-                                callback: Callable) -> bool:
+    def _install_trampoline_hook(self, signature: FunctionSignature, callback: Callable) -> bool:
         """
         Install trampoline/detour hook.
 
@@ -163,8 +163,7 @@ class FunctionHooker:
             self.logger.error(f"Failed to install trampoline hook: {e}")
             return False
 
-    def _install_vtable_hook(self, signature: FunctionSignature,
-                           callback: Callable) -> bool:
+    def _install_vtable_hook(self, signature: FunctionSignature, callback: Callable) -> bool:
         """
         Hook C++ virtual function via vtable modification.
         """
@@ -180,8 +179,7 @@ class FunctionHooker:
             self.logger.error(f"Failed to install vtable hook: {e}")
             return False
 
-    def _install_got_plt_hook(self, signature: FunctionSignature,
-                            callback: Callable) -> bool:
+    def _install_got_plt_hook(self, signature: FunctionSignature, callback: Callable) -> bool:
         """
         Hook via GOT/PLT modification (Linux/ELF).
         """
@@ -232,9 +230,9 @@ class FunctionHooker:
             self.logger.error(f"Failed to unhook: {e}")
             return False
 
-    def hook_api_set(self, api_names: List[str],
-                    callback: Callable,
-                    module: Optional[str] = None) -> int:
+    def hook_api_set(
+        self, api_names: List[str], callback: Callable, module: Optional[str] = None
+    ) -> int:
         """
         Hook multiple API functions at once.
 
@@ -271,17 +269,21 @@ class FunctionHooker:
         """
         crypto_apis = [
             # Windows Crypto API
-            "CryptEncrypt", "CryptDecrypt",
-            "CryptGenKey", "CryptDeriveKey",
+            "CryptEncrypt",
+            "CryptDecrypt",
+            "CryptGenKey",
+            "CryptDeriveKey",
             "CryptHashData",
-
             # OpenSSL
-            "AES_encrypt", "AES_decrypt",
-            "RSA_public_encrypt", "RSA_private_decrypt",
-            "EVP_EncryptInit", "EVP_DecryptInit",
-
+            "AES_encrypt",
+            "AES_decrypt",
+            "RSA_public_encrypt",
+            "RSA_private_decrypt",
+            "EVP_EncryptInit",
+            "EVP_DecryptInit",
             # BCrypt (Windows)
-            "BCryptEncrypt", "BCryptDecrypt",
+            "BCryptEncrypt",
+            "BCryptDecrypt",
             "BCryptGenerateSymmetricKey",
         ]
 
@@ -299,17 +301,26 @@ class FunctionHooker:
         """
         network_apis = [
             # Windows Socket API
-            "send", "recv", "sendto", "recvfrom",
-            "WSASend", "WSARecv",
-            "connect", "bind", "listen", "accept",
-
+            "send",
+            "recv",
+            "sendto",
+            "recvfrom",
+            "WSASend",
+            "WSARecv",
+            "connect",
+            "bind",
+            "listen",
+            "accept",
             # HTTP APIs
-            "HttpSendRequest", "InternetReadFile",
-            "WinHttpSendRequest", "WinHttpReadData",
-
+            "HttpSendRequest",
+            "InternetReadFile",
+            "WinHttpSendRequest",
+            "WinHttpReadData",
             # SSL/TLS
-            "SSL_read", "SSL_write",
-            "PR_Read", "PR_Write",  # NSS
+            "SSL_read",
+            "SSL_write",
+            "PR_Read",
+            "PR_Write",  # NSS
         ]
 
         return self.hook_api_set(network_apis, callback)
@@ -326,13 +337,21 @@ class FunctionHooker:
         """
         file_apis = [
             # Windows File API
-            "CreateFileA", "CreateFileW",
-            "ReadFile", "WriteFile",
-            "DeleteFileA", "DeleteFileW",
-
+            "CreateFileA",
+            "CreateFileW",
+            "ReadFile",
+            "WriteFile",
+            "DeleteFileA",
+            "DeleteFileW",
             # POSIX
-            "open", "read", "write", "close",
-            "fopen", "fread", "fwrite", "fclose",
+            "open",
+            "read",
+            "write",
+            "close",
+            "fopen",
+            "fread",
+            "fwrite",
+            "fclose",
         ]
 
         return self.hook_api_set(file_apis, callback)
@@ -348,10 +367,14 @@ class FunctionHooker:
             Number of hooked functions
         """
         registry_apis = [
-            "RegOpenKeyExA", "RegOpenKeyExW",
-            "RegQueryValueExA", "RegQueryValueExW",
-            "RegSetValueExA", "RegSetValueExW",
-            "RegDeleteValueA", "RegDeleteValueW",
+            "RegOpenKeyExA",
+            "RegOpenKeyExW",
+            "RegQueryValueExA",
+            "RegQueryValueExW",
+            "RegSetValueExA",
+            "RegSetValueExW",
+            "RegDeleteValueA",
+            "RegDeleteValueW",
         ]
 
         return self.hook_api_set(registry_apis, callback)
@@ -359,16 +382,16 @@ class FunctionHooker:
     def get_hook_status(self) -> Dict[str, Any]:
         """Get status of all hooks"""
         return {
-            'total_hooks': len(self.hooks),
-            'active_hooks': sum(1 for h in self.hooks.values() if h.active),
-            'hooks': {
+            "total_hooks": len(self.hooks),
+            "active_hooks": sum(1 for h in self.hooks.values() if h.active),
+            "hooks": {
                 name: {
-                    'address': f"0x{info.function.address:x}",
-                    'strategy': info.strategy.value,
-                    'active': info.active
+                    "address": f"0x{info.function.address:x}",
+                    "strategy": info.strategy.value,
+                    "active": info.active,
                 }
                 for name, info in self.hooks.items()
-            }
+            },
         }
 
     def unhook_all(self):
@@ -380,19 +403,24 @@ class FunctionHooker:
 # Pre-defined hook sets for common scenarios
 MALWARE_ANALYSIS_HOOKS = [
     # Process/Thread
-    "CreateProcessA", "CreateProcessW",
-    "CreateThread", "CreateRemoteThread",
-
+    "CreateProcessA",
+    "CreateProcessW",
+    "CreateThread",
+    "CreateRemoteThread",
     # File Operations
-    "CreateFileA", "CreateFileW",
-    "DeleteFileA", "WriteFile",
-
+    "CreateFileA",
+    "CreateFileW",
+    "DeleteFileA",
+    "WriteFile",
     # Registry
-    "RegSetValueExA", "RegSetValueExW",
-
+    "RegSetValueExA",
+    "RegSetValueExW",
     # Network
-    "send", "recv", "connect",
-    "InternetOpenUrlA", "HttpSendRequestA",
+    "send",
+    "recv",
+    "connect",
+    "InternetOpenUrlA",
+    "HttpSendRequestA",
 ]
 
 ANTI_ANALYSIS_DETECTION_HOOKS = [
@@ -400,22 +428,21 @@ ANTI_ANALYSIS_DETECTION_HOOKS = [
     "IsDebuggerPresent",
     "CheckRemoteDebuggerPresent",
     "NtQueryInformationProcess",
-
     # VM Detection
     "GetSystemFirmwareTable",
-
     # Timing
-    "GetTickCount", "QueryPerformanceCounter",
+    "GetTickCount",
+    "QueryPerformanceCounter",
 ]
 
 CREDENTIAL_THEFT_HOOKS = [
     # Windows Credentials
     "LsaEnumerateLogonSessions",
-    "CredReadA", "CredReadW",
-
+    "CredReadA",
+    "CredReadW",
     # Browser Credentials
     "CryptUnprotectData",  # DPAPI
-
     # Network Credentials
-    "HttpQueryInfoA", "InternetReadFile",
+    "HttpQueryInfoA",
+    "InternetReadFile",
 ]

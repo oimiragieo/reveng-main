@@ -1,0 +1,56 @@
+{
+  "featureId": "e2e-pipeline-integration",
+  "reviewedAt": "2026-03-13T18:30:00.000Z",
+  "commitId": "144134b075f87eb364e74286e908c2e056f57304",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation wiring the async pipeline, recompilation engine, and ML forensics into the CLI `reveng analyze` command. The new `EndToEndPipelineRunner` builds a five-stage DAG (disassembly → recompilation → behavioral/memory forensics → unified report), with dependency outputs propagated between stages via thread-local context. The CLI routes through the new e2e path and reports pipeline status including anomaly scores. Graceful degradation works well: Ghidra falls back to local Capstone, recompilation failures don't crash the pipeline, and `partial_success` is treated as a success at the CLI level. Two focused unit tests verify dependency propagation into the unified report and the CLI handler output. The worker followed TDD procedure, ran lint/mypy, and manually verified on Windows.",
+    "issues": [
+      {
+        "file": "src/reveng/pipeline/pipeline_engine.py",
+        "line": 680,
+        "severity": "non_blocking",
+        "description": "The `_execute_recompilation` stage calls `asyncio.run()` to invoke `full_reconstruction_pipeline`. This works because `_dispatch_stage_execution` runs inside `asyncio.to_thread()` (a threadpool thread with no running loop), but the pattern is subtle and easy to break if someone later calls `_dispatch_stage_execution` from an async context directly. A brief inline comment documenting why this is safe would prevent future regressions."
+      },
+      {
+        "file": "tests/unit/test_e2e_pipeline_integration.py",
+        "line": 1,
+        "severity": "non_blocking",
+        "description": "Only 2 test cases for a 925-line change. Missing edge-case coverage: (a) all stages failing, (b) forensics disabled via `enable_forensics=False`, (c) recompilation disabled, (d) invalid/missing binary path. Not blocking because the existing tests cover the primary success and partial-success paths, and the worker verified manually on Windows."
+      },
+      {
+        "file": "src/reveng/pipeline/pipeline_engine.py",
+        "line": 971,
+        "severity": "non_blocking",
+        "description": "In `_execute_malware_analysis` behavioral_forensics mode, the code calls `time.sleep(max(1.1, float(monitor_duration)))` which introduces a minimum 1.1-second wall-clock wait per pipeline execution. This is fine for real analysis but will slow down any future integration tests that exercise the real behavioral_forensics path. Not blocking since current tests monkeypatch the handlers."
+      },
+      {
+        "file": "src/reveng/pipeline/pipeline_engine.py",
+        "line": 622,
+        "severity": "non_blocking",
+        "description": "`_candidate_ghidra_urls` hardcodes fallback URLs `http://127.0.0.1:5000` and `http://127.0.0.1:13370`. The port 13370 is not documented in `.factory/services.yaml` or `AGENTS.md`. If this is a known alternative Ghidra port, it should be documented; if not, it may cause confusion or unexpected connection attempts."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The recompilation stage uses `asyncio.run()` inside a function dispatched via `asyncio.to_thread()`, creating a nested event loop pattern. This works correctly but is non-obvious. AGENTS.md does not document this pattern for future workers who may modify the pipeline engine.",
+      "evidence": "src/reveng/pipeline/pipeline_engine.py:680 — `asyncio.run(recompilation_engine.full_reconstruction_pipeline(...))` called from `_execute_recompilation`, which is dispatched by `_dispatch_stage_execution` running inside `asyncio.to_thread()`."
+    },
+    {
+      "area": "services",
+      "observation": "The e2e Ghidra disassembly handler tries port 13370 as a fallback Ghidra URL, but `.factory/services.yaml` only lists port 5000 for the Ghidra service.",
+      "evidence": "src/reveng/pipeline/pipeline_engine.py:622 — `_candidate_ghidra_urls` returns `['http://127.0.0.1:5000', 'http://127.0.0.1:13370']`. services.yaml only has `port: 5000` under the ghidra service."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The worker documented the e2e integration notes thoroughly in `.factory/library/ai-forensics.md`, including all stage modes, validation commands, and fallback behavior. This is well done and matches the library documentation convention in AGENTS.md.",
+      "evidence": ".factory/library/ai-forensics.md — 'E2E pipeline integration notes' section added with complete documentation of all stage handlers, validation commands, and Windows CLI behavior."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The e2e-pipeline-integration feature correctly wires the CLI `reveng analyze` command through a five-stage async DAG (disassembly → recompilation → behavioral forensics → memory forensics → unified report). Dependency outputs propagate between stages without data loss, and the pipeline degrades gracefully when components are unavailable. The implementation is clean, well-structured, and follows project conventions. Four non-blocking issues were noted: (1) a subtle nested asyncio.run() pattern that deserves an inline comment, (2) thin test coverage relative to the change size, (3) a minimum 1.1s sleep in behavioral forensics, and (4) an undocumented fallback Ghidra port. None are blocking."
+}

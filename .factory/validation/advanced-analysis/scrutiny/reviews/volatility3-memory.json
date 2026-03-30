@@ -1,0 +1,39 @@
+{
+  "featureId": "volatility3-memory",
+  "reviewedAt": "2026-03-14T05:30:00Z",
+  "commitId": "57d73f1055e7d1e90d0e772a154fcd15c26caf39",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Clean, well-structured implementation that fully satisfies all 7 feature requirements. Created volatility_analyzer.py (240 lines) wrapping PsList, CmdLine, and NetScan plugins. Updated memory_forensics.py to route .dmp/.mem files through VolatilityAnalyzer instead of WMIC. SKIP_VOLATILITY env var provides CI-safe mock. MCP analyze_memory_dump tool works end-to-end through the existing handler since MemoryForensics now delegates dump analysis internally. ML anomaly scoring preserved on both dump and live paths. Tests are solid with 4 focused cases covering dump routing, mock fallback, MCP integration, and missing-file rejection.",
+    "issues": [
+      {
+        "file": "src/reveng/malware/volatility_analyzer.py",
+        "line": 91,
+        "severity": "non_blocking",
+        "description": "Uses deprecated `dt.datetime.utcnow()` (deprecated since Python 3.12, PEP 670). Should use `dt.datetime.now(dt.timezone.utc)` for consistency with memory_forensics.py which already uses the timezone-aware variant. Same issue on line 221."
+      },
+      {
+        "file": "src/reveng/malware/volatility_analyzer.py",
+        "line": 240,
+        "severity": "non_blocking",
+        "description": "`str | None` union syntax in _progress_callback type hint requires Python 3.10+ at runtime. Mitigated by `from __future__ import annotations` at top of file, so annotations are evaluated as strings. Works correctly on 3.9+ but could confuse static analysis tools targeting 3.9."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Worker used deprecated `datetime.utcnow()` in the new volatility_analyzer.py while the existing memory_forensics.py (also modified in this commit) correctly uses `datetime.now(timezone.utc)`. AGENTS.md doesn't document a preference for timezone-aware datetime construction, which could prevent future inconsistencies.",
+      "evidence": "src/reveng/malware/volatility_analyzer.py lines 91 and 221 use `dt.datetime.utcnow()`, while src/reveng/malware/memory_forensics.py line 209 uses `datetime.now(timezone.utc)` — inconsistent within the same commit."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Worker correctly documented Volatility3 integration details in .factory/library/ai-forensics.md including the SKIP_VOLATILITY env var, validation commands, and architecture notes. This is thorough and actionable for future workers.",
+      "evidence": ".factory/library/ai-forensics.md appended with 'Volatility3 memory forensics notes' section covering analyzer location, dump routing, CI mock, and requirements.txt pin."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. All 7 feature requirements met: (1) volatility3>=2.27.0 added to requirements.txt, (2) already in init.sh, (3) volatility_analyzer.py created with PsList/CmdLine/NetScan plugins, (4) memory_forensics.py routes .dmp/.mem through VolatilityAnalyzer, (5) ML anomaly scoring preserved on Volatility output, (6) SKIP_VOLATILITY env var returns minimal mock, (7) MCP analyze_memory_dump tool works end-to-end. Two non-blocking style issues found: deprecated utcnow() usage and str|None union syntax. Tests are comprehensive and verify WMIC is not called for dump analysis."
+}

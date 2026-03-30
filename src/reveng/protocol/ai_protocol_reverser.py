@@ -12,15 +12,14 @@ Reference: "The Modern Hacker's Playbook" - Part 4.2
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
-from enum import Enum
-import struct
+from typing import Any, Dict, List, Optional, Tuple
 
 
 @dataclass
 class ProtocolField:
     """Identified protocol field"""
+
     name: str
     offset: int
     length: int
@@ -32,6 +31,7 @@ class ProtocolField:
 @dataclass
 class ProtocolMessage:
     """Parsed protocol message"""
+
     message_type: str
     fields: List[ProtocolField]
     raw_data: bytes
@@ -65,7 +65,8 @@ class AIProtocolReverser:
         self.messages: List[bytes] = []
 
         try:
-            import torch
+            __import__("torch")
+
             self.torch_available = True
         except ImportError:
             self.torch_available = False
@@ -154,11 +155,16 @@ class AIProtocolReverser:
 
         # Heuristic semantic labeling
         common_semantics = [
-            "message_id", "length", "timestamp", "checksum",
-            "source_address", "destination_address", "payload"
+            "message_id",
+            "length",
+            "timestamp",
+            "checksum",
+            "source_address",
+            "destination_address",
+            "payload",
         ]
 
-        for i, semantic in enumerate(common_semantics[:len(fields[0])] if fields else []):
+        for i, semantic in enumerate(common_semantics[: len(fields[0])] if fields else []):
             semantics[i] = semantic
 
         return semantics
@@ -168,29 +174,26 @@ class AIProtocolReverser:
         # In real implementation, would use Siamese network
 
         clusters = {
-            'type_a': [],
-            'type_b': [],
+            "type_a": [],
+            "type_b": [],
         }
 
         for i, msg in enumerate(self.messages):
             # Simple clustering by length
             if len(msg) < 32:
-                clusters['type_a'].append(i)
+                clusters["type_a"].append(i)
             else:
-                clusters['type_b'].append(i)
+                clusters["type_b"].append(i)
 
         return clusters
 
     def _generate_specification(self, fields, semantics, clusters) -> Dict[str, Any]:
         """Generate protocol specification"""
         spec = {
-            'protocol_name': 'unknown_protocol',
-            'message_types': {},
-            'fields': semantics,
-            'statistics': {
-                'total_messages': len(self.messages),
-                'unique_patterns': len(clusters)
-            }
+            "protocol_name": "unknown_protocol",
+            "message_types": {},
+            "fields": semantics,
+            "statistics": {"total_messages": len(self.messages), "unique_patterns": len(clusters)},
         }
 
         return spec
@@ -206,10 +209,10 @@ class AIProtocolReverser:
             length_distribution[length] = length_distribution.get(length, 0) + 1
 
         spec = {
-            'protocol_name': 'unknown_protocol',
-            'total_messages': len(self.messages),
-            'length_distribution': length_distribution,
-            'method': 'heuristic'
+            "protocol_name": "unknown_protocol",
+            "total_messages": len(self.messages),
+            "length_distribution": length_distribution,
+            "method": "heuristic",
         }
 
         return spec
@@ -224,11 +227,16 @@ local proto = Proto("{spec.get('protocol_name', 'unknown')}", "Unknown Protocol"
 -- Fields
 """
 
-        for field_name in spec.get('fields', {}).values():
-            lua_code += f"local f_{field_name} = ProtoField.bytes(\"proto.{field_name}\", \"{field_name}\")\n"
+        for field_name in spec.get("fields", {}).values():
+            lua_code += (
+                f'local f_{field_name} = ProtoField.bytes("proto.{field_name}", "{field_name}")\n'
+            )
 
-        lua_code += """
-proto.fields = { """ + ", ".join([f"f_{f}" for f in spec.get('fields', {}).values()]) + """ }
+        lua_code += (
+            """
+proto.fields = { """
+            + ", ".join([f"f_{f}" for f in spec.get("fields", {}).values()])
+            + """ }
 
 function proto.dissector(buffer, pinfo, tree)
     pinfo.cols.protocol = proto.name
@@ -240,8 +248,9 @@ end
 local tcp_table = DissectorTable.get("tcp.port")
 tcp_table:add(8000, proto)  -- Adjust port as needed
 """
+        )
 
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             f.write(lua_code)
 
         self.logger.info(f"Exported Wireshark dissector to {output_file}")
@@ -252,12 +261,12 @@ AI_MODELS = {
     "PREIUD": {
         "description": "Industrial Control System protocol reverser",
         "year": 2023,
-        "approach": "Deep neural networks + unsupervised learning"
+        "approach": "Deep neural networks + unsupervised learning",
     },
     "DL-ProS2": {
         "description": "Deep Learning Protocol Structure and Semantics",
         "year": 2024,
         "approach": "U-Net + BiLSTM-CRF + Siamese networks",
-        "training_data": "ChatGPT-augmented RFC documents"
-    }
+        "training_data": "ChatGPT-augmented RFC documents",
+    },
 }

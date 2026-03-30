@@ -1,0 +1,96 @@
+{
+  "milestone": "mcp-tools",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc --tb=short -q",
+      "exitCode": 1,
+      "note": "58 failures are ALL known pre-existing (documented in AGENTS.md): test_automated_pipeline (API drift), test_cli integration (CLI structure), test_documentation (UnicodeDecodeError), test_ml_workflow (MLIntegrationConfig), test_analyzer/test_installation (path assertions), test_pipeline (import error). No NEW failures introduced by mcp-tools features. Passed count increased from baseline ~179 to 199 (20 new passing tests from mcp-tools work)."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "note": "15 errors all pre-existing: 14 missing types-requests stubs, 1 angr pattern matching syntax issue. No new type errors from mcp-tools features."
+    },
+    "lint": {
+      "passed": true,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203",
+      "exitCode": 1,
+      "note": "All lint issues are pre-existing (F401 unused imports, F403 star imports, E722 bare excepts, etc.). No new lint issues from mcp-tools features."
+    }
+  },
+  "reviewsSummary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Updated .factory/library/re-platform.md MCP Server section: replaced '5 stub tools' with detailed descriptions of all implemented tools (decompile_binary, recompile_binary, classify_malware, ask_ai_about_binary, ai_code_reconstruction), documented remaining stub (generate_exploit), added dual-argument pattern documentation, and noted OllamaRepairEngine adapter and pipeline integration patterns.",
+      "sourceFeature": "mcp-decompile-binary, mcp-recompile-binary, mcp-ai-query, mcp-classify-malware"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add coding convention: 'Use asyncio.get_running_loop() instead of asyncio.get_event_loop() (deprecated in Python 3.10+) when running inside async contexts.'",
+      "evidence": "mcp-decompile-binary worker replaced 3 instances of get_event_loop() with get_running_loop() in reveng_enterprise_server.py (analyze_binary, decompile_binary, find_vulnerabilities handlers).",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add coding convention: 'MCP tool handlers should accept both the canonical argument name and legacy aliases via the _resolve_binary_argument() helper for backward compatibility.'",
+      "evidence": "All 4 mcp-tools features use _resolve_binary_argument() to accept both 'binary_path' (canonical) and 'path' (legacy). This pattern was independently adopted by all workers.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add boundary: 'Avoid calling private methods (underscore-prefixed) from other modules. If private engine methods are needed, add a public wrapper method to the engine class instead.'",
+      "evidence": "mcp-recompile-binary worker calls engine._phase1_decompilation() and engine._compile_with_feedback_loop() (private methods of BinaryRecompilationEngine) directly from reveng_enterprise_server.py. This creates brittle coupling.",
+      "isSystemic": false
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Clarify Ollama convention: 'When a feature description explicitly specifies an integration method (e.g., HTTP API), that takes precedence over the default AGENTS.md convention (use ollama Python package).'",
+      "evidence": "mcp-ai-query worker used direct HTTP requests.post to Ollama API as specified by feature description, while AGENTS.md says 'Use the ollama Python package when available.' mcp-recompile-binary used the ollama package. This inconsistency should be clarified.",
+      "isSystemic": true
+    },
+    {
+      "target": "skills",
+      "suggestion": "In python-developer skill step 4 ('Write tests first'), add exception: 'When replacing stub handlers that return hardcoded strings, you may implement the handler first to establish the return schema, then write tests against the real schema.'",
+      "evidence": "mcp-ai-query worker deviated from TDD because existing handlers were pure stubs. Creating the real return shape first was more practical for writing stable tests.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Document the LLM adapter duck-typing interface: 'LLM adapters used by BinaryRecompilationEngine must implement _generate_async(prompt: str) -> str and is_available() -> bool methods, matching GeminiEngine's interface.'",
+      "evidence": "mcp-recompile-binary worker created OllamaRepairEngine implementing _generate_async() and is_available() to duck-type GeminiEngine. This interface is not documented anywhere, making future LLM backend additions harder.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "re-platform.md library file was already updated by mcp-decompile-binary worker to document decompile_binary as working",
+      "reason": "already-documented — no additional action needed"
+    },
+    {
+      "observation": "mcp-recompile-binary worker followed skill procedure faithfully (informational only)",
+      "reason": "informational — no action needed"
+    },
+    {
+      "observation": "AGENTS.md already documents YARA convention correctly (rules in yara_rules/, loaded by YARAScanner)",
+      "reason": "already-documented — worker followed convention precisely"
+    },
+    {
+      "observation": "mcp-classify-malware worker correctly created malware-classification.md library entry",
+      "reason": "already-documented — no additional action needed"
+    }
+  ],
+  "previousRound": null
+}

@@ -1,0 +1,29 @@
+{
+  "featureId": "consolidate-gpu-accelerator",
+  "milestone": "module-consolidation",
+  "reviewedAt": "2026-03-15T00:00:00.000Z",
+  "commitId": "1a77be157a8763cbc1904035670042ba5e8bbdb1",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReviewIssues": [
+    {
+      "severity": "non_blocking",
+      "description": "Leftover import in examples/advanced/v4_0_features_demo.py:164 still references `from reveng.performance.gpu_accelerator import BatchProcessor`. The file gpu_accelerator.py was deleted from performance/, and the compatibility re-export in performance/__init__.py does not include BatchProcessor (which doesn't exist in the canonical ML module either — it was replaced by BatchDecompiler). This demo file would fail if executed. The feature description explicitly scoped the import search to src/ and tests/, so this is out of scope but worth noting for a follow-up."
+    }
+  ],
+  "sharedStateObservations": [
+    {
+      "target": "AGENTS.md",
+      "description": "The feature description scoped the import search to `src/` and `tests/` only. The `examples/` directory was not searched, leaving a stale import at examples/advanced/v4_0_features_demo.py:164. AGENTS.md should document that cleanup consolidation features must also search `examples/` for stale imports.",
+      "evidence": "examples/advanced/v4_0_features_demo.py:164 — `from reveng.performance.gpu_accelerator import BatchProcessor` still references the deleted module path and a class (BatchProcessor) that doesn't exist in the canonical module."
+    },
+    {
+      "target": "skills",
+      "description": "Worker deviated from the skill procedure by running scoped lint/mypy instead of repo-wide, which is the correct approach per the updated skill docs (step 6 now says to scope lint/mypy to touched files). The skill feedback confirms the deviation was justified and the skill was subsequently updated to document this pattern. No further action needed.",
+      "evidence": "Handoff skillFeedback.followedProcedure=false with deviation: 'After observing that the repository-wide flake8 and mypy commands fail for unrelated pre-existing issues, I additionally ran scoped lint and type checks on the edited files.'"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The GPU accelerator consolidation was correctly implemented. Only one copy of gpu_accelerator.py remains tracked (src/reveng/ml/gpu_accelerator.py), all imports in src/ and tests/ now point to the canonical location, and compatibility re-exports were added in performance/__init__.py and tools/enterprise/__init__.py. Tests passed with 306 passed, 0 failed. One non-blocking issue: a stale import in examples/advanced/v4_0_features_demo.py was not updated because the feature description scoped the search to src/ and tests/ only."
+}

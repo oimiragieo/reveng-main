@@ -1,0 +1,21 @@
+commands:
+  install: pip install -r requirements.txt && pip install yara-python ollama volatility3 pytest-xdist
+  test: pytest tests/unit/ tests/integration/ tests/performance -n 4 --ignore=tests/poc
+  lint: flake8 src/reveng/ --extend-ignore=E501,F811,E203
+  typecheck: python -m mypy src/reveng/ --ignore-missing-imports
+  ghidra-install: python scripts/install_ghidra.py
+
+services:
+  ghidra:
+    start: python external/ghidra-server/ghidra_http_server.py
+    stop: curl -s http://localhost:13370/shutdown 2>nul || taskkill /F /FI "IMAGENAME eq python.exe" 2>nul
+    healthcheck: curl -sf http://localhost:13370/health
+    port: 13370
+    depends_on: []
+
+  ollama:
+    start: ollama serve
+    stop: taskkill /F /IM ollama.exe /T
+    healthcheck: curl -sf http://localhost:11434/api/tags
+    port: 11434
+    depends_on: []

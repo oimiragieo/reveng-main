@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     from tools.config_manager import get_config
-    from tools.ollama_analyzer import AnalysisResult, OllamaAnalyzer
+    from tools.ollama_analyzer import OllamaAnalyzer
     from tools.progress_reporter import get_progress_reporter
 
     HAS_OLLAMA = True
@@ -127,9 +127,7 @@ class EnhancedAIAnalyzer:
         )
 
         # Analyze each function
-        for i, func in enumerate(
-            self.progress.step(functions, "AI Analysis", unit="func")
-        ):
+        for i, func in enumerate(self.progress.step(functions, "AI Analysis", unit="func")):
             func_name = func["name"]
 
             if self.ai_analyzer:
@@ -246,9 +244,7 @@ class EnhancedAIAnalyzer:
             "ai_enabled": self.ai_analyzer is not None,
             "ai_provider": self.ai_config.provider if self.ai_analyzer else "none",
             "ai_model": (
-                self.ai_config.ollama_model
-                if self.ai_config.provider == "ollama"
-                else None
+                self.ai_config.ollama_model if self.ai_config.provider == "ollama" else None
             ),
             "average_confidence": round(avg_confidence, 2),
             "category_distribution": categories,
@@ -256,9 +252,7 @@ class EnhancedAIAnalyzer:
             "security_issues_count": len(security_issues),
             "security_issues": security_issues[:10],  # Top 10
             "high_confidence_functions": [
-                name
-                for name, analysis in results.items()
-                if analysis.get("confidence", 0) >= 0.8
+                name for name, analysis in results.items() if analysis.get("confidence", 0) >= 0.8
             ],
         }
 
@@ -332,9 +326,7 @@ class EnhancedAIAnalyzer:
                     f.write(f"- **Complexity**: {analysis['complexity']}\n")
                     f.write(f"- **Confidence**: {analysis['confidence']:.2f}\n")
                     if analysis.get("suggested_name"):
-                        f.write(
-                            f"- **Suggested Name**: `{analysis['suggested_name']}`\n"
-                        )
+                        f.write(f"- **Suggested Name**: `{analysis['suggested_name']}`\n")
                     f.write("\n")
 
     def generate_implementations(
@@ -351,9 +343,7 @@ class EnhancedAIAnalyzer:
             Number of implementations generated
         """
         if not self.ai_analyzer:
-            logger.warning(
-                "AI analyzer not available - cannot generate implementations"
-            )
+            logger.warning("AI analyzer not available - cannot generate implementations")
             return 0
 
         if output_folder is None:
@@ -418,9 +408,7 @@ if __name__ == "__main__":
         with open(func_file, "r", encoding="utf-8") as f:
             code = f.read()
 
-        functions.append(
-            {"name": func_file.stem, "code": code, "address": "0x1000"}
-        )  # Placeholder
+        functions.append({"name": func_file.stem, "code": code, "address": "0x1000"})  # Placeholder
 
     print(f"Found {len(functions)} functions")
     print()
@@ -441,9 +429,7 @@ if __name__ == "__main__":
     print(f"Average confidence: {report['average_confidence']:.2f}")
     print()
     print("Category distribution:")
-    for category, count in sorted(
-        report["category_distribution"].items(), key=lambda x: -x[1]
-    ):
+    for category, count in sorted(report["category_distribution"].items(), key=lambda x: -x[1]):
         print(f"  {category}: {count}")
     print()
     print(f"Security issues found: {report['security_issues_count']}")

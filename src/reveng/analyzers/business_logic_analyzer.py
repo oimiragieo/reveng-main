@@ -273,11 +273,8 @@ class BusinessLogicAnalyzer:
             with open(binary_path, "rb") as f:
                 content = f.read()
 
-            # Convert to string for pattern matching (handle encoding issues)
-            try:
-                text_content = content.decode("utf-8", errors="ignore")
-            except:
-                text_content = str(content)
+            # Convert to string for pattern matching while tolerating invalid bytes.
+            text_content = content.decode("utf-8", errors="ignore")
 
             # Score each domain
             domain_scores = {}
@@ -325,9 +322,7 @@ class BusinessLogicAnalyzer:
 
         return matches / total_patterns if total_patterns > 0 else 0.0
 
-    def _extract_domain_indicators(
-        self, content: str, domain: ApplicationDomain
-    ) -> List[str]:
+    def _extract_domain_indicators(self, content: str, domain: ApplicationDomain) -> List[str]:
         """Extract specific indicators for the domain"""
 
         indicators = []
@@ -339,9 +334,7 @@ class BusinessLogicAnalyzer:
 
         return indicators[:10]  # Limit to top 10 indicators
 
-    def _extract_domain_patterns(
-        self, content: str, domain: ApplicationDomain
-    ) -> List[str]:
+    def _extract_domain_patterns(self, content: str, domain: ApplicationDomain) -> List[str]:
         """Extract domain-specific patterns"""
 
         patterns = []
@@ -455,10 +448,7 @@ class BusinessLogicAnalyzer:
         flows = []
 
         # Check for network patterns
-        if any(
-            pattern in content.lower()
-            for pattern in ["http", "tcp", "socket", "connect"]
-        ):
+        if any(pattern in content.lower() for pattern in ["http", "tcp", "socket", "connect"]):
             if ".xml" in content.lower() or ".json" in content.lower():
                 flows.append(
                     DataFlow(
@@ -478,10 +468,7 @@ class BusinessLogicAnalyzer:
         flows = []
 
         # Check for database patterns
-        if any(
-            pattern in content.lower()
-            for pattern in ["sql", "database", "query", "select"]
-        ):
+        if any(pattern in content.lower() for pattern in ["sql", "database", "query", "select"]):
             if ".xlsx" in content.lower() or ".csv" in content.lower():
                 flows.append(
                     DataFlow(
@@ -510,9 +497,7 @@ class BusinessLogicAnalyzer:
 
             # Check for file patterns
             for pattern_name, patterns in self.file_patterns.items():
-                matches = sum(
-                    1 for pattern in patterns if pattern.lower() in text_content.lower()
-                )
+                matches = sum(1 for pattern in patterns if pattern.lower() in text_content.lower())
                 if matches > 0:
                     file_operations.append(
                         FileOperation(
@@ -582,9 +567,7 @@ class BusinessLogicAnalyzer:
             ]
 
             matches = sum(
-                1
-                for indicator in report_indicators
-                if indicator.lower() in text_content.lower()
+                1 for indicator in report_indicators if indicator.lower() in text_content.lower()
             )
             confidence = matches / len(report_indicators)
 
@@ -618,9 +601,7 @@ class BusinessLogicAnalyzer:
 
                 report_info["libraries_used"] = libraries
 
-            self.logger.info(
-                f"Report generation detected: {report_info['has_report_generation']}"
-            )
+            self.logger.info(f"Report generation detected: {report_info['has_report_generation']}")
             return report_info
 
         except Exception as e:
@@ -701,8 +682,7 @@ class BusinessLogicAnalyzer:
 
             # File operations
             if any(
-                pattern in api_lower
-                for pattern in ["file", "read", "write", "create", "delete"]
+                pattern in api_lower for pattern in ["file", "read", "write", "create", "delete"]
             ):
                 behavior_map["file_operations"].append(api)
 
@@ -723,42 +703,35 @@ class BusinessLogicAnalyzer:
 
             # Process operations
             if any(
-                pattern in api_lower
-                for pattern in ["process", "thread", "create", "terminate"]
+                pattern in api_lower for pattern in ["process", "thread", "create", "terminate"]
             ):
                 behavior_map["process_operations"].append(api)
 
             # Registry operations
-            if any(
-                pattern in api_lower for pattern in ["reg", "registry", "key", "value"]
-            ):
+            if any(pattern in api_lower for pattern in ["reg", "registry", "key", "value"]):
                 behavior_map["registry_operations"].append(api)
 
             # Cryptographic operations
             if any(
-                pattern in api_lower
-                for pattern in ["crypt", "encrypt", "decrypt", "hash", "sign"]
+                pattern in api_lower for pattern in ["crypt", "encrypt", "decrypt", "hash", "sign"]
             ):
                 behavior_map["cryptographic_operations"].append(api)
 
             # Memory operations
             if any(
-                pattern in api_lower
-                for pattern in ["virtual", "heap", "memory", "alloc", "free"]
+                pattern in api_lower for pattern in ["virtual", "heap", "memory", "alloc", "free"]
             ):
                 behavior_map["memory_operations"].append(api)
 
             # GUI operations
             if any(
-                pattern in api_lower
-                for pattern in ["window", "gui", "form", "control", "button"]
+                pattern in api_lower for pattern in ["window", "gui", "form", "control", "button"]
             ):
                 behavior_map["gui_operations"].append(api)
 
             # System operations
             if any(
-                pattern in api_lower
-                for pattern in ["system", "time", "tick", "version", "info"]
+                pattern in api_lower for pattern in ["system", "time", "tick", "version", "info"]
             ):
                 behavior_map["system_operations"].append(api)
 

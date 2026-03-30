@@ -4,15 +4,14 @@ Basic Pipeline Test Harness
 Tests critical stages of the REVENG binary analysis pipeline
 """
 
-import sys
 import unittest
 from pathlib import Path
 
-# Add tools to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
-
-from c_type_parser import CTypeParser
-from validation_config import BinaryValidator, ValidationConfig, ValidationMode
+from reveng.tools.binary.validation_config import (
+    ValidationConfig,
+    ValidationMode,
+)
+from reveng.tools.quality.c_type_parser import CTypeParser
 
 
 class TestValidationDefaults(unittest.TestCase):

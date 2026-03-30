@@ -1,0 +1,34 @@
+{
+  "featureId": "consolidate-docs",
+  "milestone": "junk-removal",
+  "reviewedAt": "2026-03-14T23:50:00.000Z",
+  "commitId": "a1133cf1129b77dba158cc4e683e62cb83ea1b37",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Worker reduced docs/ from 52 tracked markdown files to 12, well under the ≤20 target. The surviving docs (README index, architecture overview, API reference, developer guide, getting-started, CLI usage, deployment, privacy, MCP README, and 3 changelogs) are well-structured, genuinely useful engineering references that absorbed the best content from the deleted guides. docs/mcp/README.md was preserved untouched (zero diff). The test_documentation.py integration test was updated to validate the new layout and all 306 tests pass with 0 failures. The commit is a single clean diff removing 49 files and ~19,246 lines of redundant/AI-padded content.",
+    "issues": [
+      {
+        "file": "tests/integration/test_documentation.py",
+        "line": null,
+        "severity": "non_blocking",
+        "description": "The test suite now reports 306 passed vs the mission baseline of 307 passed. The handoff notes this as a pre-existing discrepancy, not introduced by this feature. No test was deleted by this commit — the count difference predates this work."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "target": "skills",
+      "description": "Worker deviated from codebase-cleaner skill step 1.2 (Initialize Environment) by attempting to run .factory/init.sh with the wrong interpreter on Windows. The skill's init step should explicitly note that init.sh is bash-only and Windows workers should read it and apply commands manually.",
+      "evidence": "Handoff skillFeedback.deviations[0]: 'Attempted to run .factory/init.sh with Python once, then read the script and followed its Windows note by using direct commands instead of rerunning the shell script.'"
+    },
+    {
+      "target": "conventions",
+      "description": "AGENTS.md baseline expectation says '≥ 307 passed, 0 failures' but actual baseline is now 306 passed. This predates this feature but the convention doc should be updated to reflect the current baseline.",
+      "evidence": "Test output: '306 passed, 94 skipped, 18 warnings'. Handoff discoveredIssues notes: 'the current baseline test summary is 306 passed, 94 skipped, while the mission brief still cites 307 passed'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The consolidate-docs feature successfully reduced docs/ from 52 to 12 markdown files (well under the ≤20 target). All surviving docs are high-quality engineering references. docs/mcp/README.md was preserved untouched. The documentation integration test was properly updated to match the new layout. The full test suite passes (306 passed, 0 failures). The commit is clean and well-scoped. No blocking issues found."
+}

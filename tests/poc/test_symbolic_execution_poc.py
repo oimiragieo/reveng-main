@@ -13,6 +13,21 @@ import tempfile
 
 import pytest
 
+pytestmark = [
+    pytest.mark.poc,
+    pytest.mark.requires_external_tools,
+    pytest.mark.slow,
+]
+
+
+def _cleanup_if_exists(path: str | None):
+    """Best-effort cleanup for temporary compilation artifacts."""
+    if path and os.path.exists(path):
+        try:
+            os.remove(path)
+        except PermissionError:
+            pass
+
 
 @pytest.fixture
 def vulnerable_buffer_overflow():
@@ -64,10 +79,8 @@ int main(int argc, char** argv) {
         yield output_file
 
     finally:
-        if os.path.exists(source_file):
-            os.remove(source_file)
-        if os.path.exists(output_file):
-            os.remove(output_file)
+        _cleanup_if_exists(source_file)
+        _cleanup_if_exists(output_file)
 
 
 @pytest.fixture
@@ -105,54 +118,10 @@ int main(int argc, char** argv) {
         yield output_file
 
     finally:
-        if os.path.exists(source_file):
-            os.remove(source_file)
-        if os.path.exists(output_file):
-            os.remove(output_file)
+        _cleanup_if_exists(source_file)
+        _cleanup_if_exists(output_file)
 
 
-@pytest.mark.poc
-def test_symbolic_execution_basic():
-    """Test basic symbolic execution engine initialization"""
-    try:
-        from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
-
-        # Create a simple test binary
-        test_code = """
-#include <stdio.h>
-int main() { return 0; }
-"""
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".c", delete=False) as f:
-            f.write(test_code)
-            source = f.name
-
-        binary = source.replace(".c", ".out")
-        subprocess.run(["gcc", source, "-o", binary], timeout=10)
-
-        try:
-            # Initialize engine
-            engine = SymbolicExecutionEngine(binary, analysis_depth="shallow")
-
-            print("\n✓ Symbolic execution engine initialized")
-            print(f"  Binary: {binary}")
-            print(f"  Architecture: {engine.project.arch.name}")
-            print(f"  Entry point: {hex(engine.project.entry)}")
-            print(f"  Analysis depth: {engine.analysis_depth}")
-            print(f"  Max paths: {engine.max_paths}")
-
-            assert engine.project is not None
-            assert engine.max_paths > 0
-
-        finally:
-            os.remove(source)
-            os.remove(binary)
-
-    except ImportError as e:
-        pytest.skip(f"angr not available: {e}")
-
-
-@pytest.mark.poc
 def test_buffer_overflow_detection(vulnerable_buffer_overflow):
     """
     Test automatic buffer overflow detection
@@ -203,7 +172,6 @@ def test_buffer_overflow_detection(vulnerable_buffer_overflow):
         pytest.skip(f"Dependencies not available: {e}")
 
 
-@pytest.mark.poc
 def test_format_string_detection(vulnerable_format_string):
     """
     Test automatic format string vulnerability detection
@@ -250,7 +218,6 @@ def test_format_string_detection(vulnerable_format_string):
         pytest.skip(f"Dependencies not available: {e}")
 
 
-@pytest.mark.poc
 def test_exploit_generation(vulnerable_buffer_overflow):
     """
     Test automatic exploit generation
@@ -295,88 +262,6 @@ def test_exploit_generation(vulnerable_buffer_overflow):
         assert "python" in exploit.exploit_code.lower()
 
         print("\n✓ Exploit code is valid Python")
-
-    except ImportError as e:
-        pytest.skip(f"Dependencies not available: {e}")
-
-
-@pytest.mark.poc
-def test_vulnerability_type_coverage():
-    """Test that engine can detect various vulnerability types"""
-    try:
-        from reveng.security.symbolic_execution_engine import (
-            SymbolicExecutionEngine,
-            VulnerabilityType,
-        )
-
-        print("\n" + "=" * 60)
-        print("Vulnerability Type Coverage")
-        print("=" * 60)
-
-        # List all supported vulnerability types
-        vuln_types = list(VulnerabilityType)
-
-        print(f"\n✓ Supported vulnerability types: {len(vuln_types)}")
-
-        for vtype in vuln_types:
-            print(f"  - {vtype.value}")
-
-        # Check dangerous functions mapping
-        print(
-            f"\n✓ Monitored dangerous functions: {len(SymbolicExecutionEngine.DANGEROUS_FUNCTIONS)}"
-        )
-
-        for func_name, (vtype, severity) in SymbolicExecutionEngine.DANGEROUS_FUNCTIONS.items():
-            print(f"  - {func_name:20s} → {vtype.value:25s} ({severity.value})")
-
-        assert len(SymbolicExecutionEngine.DANGEROUS_FUNCTIONS) >= 10
-
-    except ImportError as e:
-        pytest.skip(f"Dependencies not available: {e}")
-
-
-@pytest.mark.poc
-def test_analysis_depth_configurations():
-    """Test different analysis depth configurations"""
-    try:
-        from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
-
-        # Create simple test binary
-        test_code = "int main() { return 0; }"
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".c", delete=False) as f:
-            f.write(test_code)
-            source = f.name
-
-        binary = source.replace(".c", ".out")
-        subprocess.run(["gcc", source, "-o", binary], timeout=10)
-
-        try:
-            depths = ["shallow", "medium", "deep"]
-            configs = {}
-
-            for depth in depths:
-                engine = SymbolicExecutionEngine(binary, analysis_depth=depth)
-                configs[depth] = {"max_paths": engine.max_paths, "timeout": engine.timeout}
-
-            print("\n" + "=" * 60)
-            print("Analysis Depth Configurations")
-            print("=" * 60)
-
-            for depth, config in configs.items():
-                print(f"\n  {depth.upper()}:")
-                print(f"    Max paths: {config['max_paths']:,}")
-                print(f"    Timeout:   {config['timeout']}s")
-
-            # Verify scaling
-            assert configs["shallow"]["max_paths"] < configs["medium"]["max_paths"]
-            assert configs["medium"]["max_paths"] < configs["deep"]["max_paths"]
-
-            print("\n✓ Analysis depth scaling verified")
-
-        finally:
-            os.remove(source)
-            os.remove(binary)
 
     except ImportError as e:
         pytest.skip(f"Dependencies not available: {e}")

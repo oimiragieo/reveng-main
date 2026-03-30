@@ -113,9 +113,7 @@ class HexEditor:
             return HexView(data=data, offset=0, length=len(data), encoding="utf-8")
 
         except Exception as e:
-            context = create_error_context(
-                "hex_editor", "open_binary", binary_path=binary_path
-            )
+            context = create_error_context("hex_editor", "open_binary", binary_path=binary_path)
             raise AnalysisFailureError(
                 "hex_editor_open", binary_path, context=context, original_exception=e
             )
@@ -222,9 +220,7 @@ class HexEditor:
             self.logger.warning(f"Failed to find embedded executables: {e}")
             return []
 
-    def extract_strings_advanced(
-        self, hex_view: HexView, min_length: int = 4
-    ) -> List[str]:
+    def extract_strings_advanced(self, hex_view: HexView, min_length: int = 4) -> List[str]:
         """Advanced string extraction with encoding detection"""
         try:
             strings = []
@@ -364,9 +360,7 @@ class HexEditor:
             return result
 
         except Exception as e:
-            context = create_error_context(
-                "hex_editor", "analyze_binary", binary_path=binary_path
-            )
+            context = create_error_context("hex_editor", "analyze_binary", binary_path=binary_path)
             raise AnalysisFailureError(
                 "hex_analysis", binary_path, context=context, original_exception=e
             )

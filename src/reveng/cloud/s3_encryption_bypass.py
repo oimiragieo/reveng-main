@@ -8,9 +8,9 @@ Based on "The Modern Hacker's Playbook" - Part 4.3, TTP 2
 """
 
 import logging
-from typing import Optional, List
+from typing import Optional
+
 from Crypto.Cipher import AES
-import base64
 
 
 class S3EncryptionBypass:
@@ -35,8 +35,7 @@ class S3EncryptionBypass:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    def decrypt_s3_object(self, encrypted_data: bytes,
-                         key: bytes, iv: bytes) -> Optional[bytes]:
+    def decrypt_s3_object(self, encrypted_data: bytes, key: bytes, iv: bytes) -> Optional[bytes]:
         """
         Decrypt S3 object using extracted key.
 

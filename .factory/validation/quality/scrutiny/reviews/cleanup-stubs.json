@@ -1,0 +1,26 @@
+{
+  "featureId": "cleanup-stubs",
+  "reviewedAt": "2026-03-14T18:10:00.000Z",
+  "commitId": "afe66e5fdd66386fc4b1fdb01484d9e8a0fdc67e",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Feature cleanup-stubs was completed across two worker sessions. Session d37e2075 performed the substantive work: rewriting 8 stale test suites to align with current APIs (tests/unit/test_analyzer.py, test_installation.py, tests/integration/test_ml_workflow.py, test_documentation.py, test_automated_pipeline.py, test_cli.py, test_examples.py, test_pipeline.py) and patching src/reveng/pipelines/automated_analysis.py to fix error-handling kwargs (removing invalid `details=` and `original_error=` args from AnalysisFailureError, adding proper `from e` chaining, and re-raising AnalysisFailureError before wrapping generic exceptions) and to serialize PipelineStage enum keys to strings in JSON/HTML report generation. Session 0e75d35a (the reviewed session) performed validation-only: confirmed full-repo mypy at 15 errors (within the 14-15 baseline, below the >20 regression threshold), zero 'coming soon' matches in the MCP server file, and a fully green scoped baseline (306 passed, 0 failed). All expectedBehavior items are satisfied: no 'coming soon' stubs remain, test_ml_workflow.py passes without AttributeError, test_analyzer.py path assertion is fixed, and the scoped baseline failure count is 0 (well below 20). Code changes in automated_analysis.py are correct — the AnalysisFailureError constructor indeed lacks `details` and `original_error` parameters, so removing those kwargs prevents TypeError at runtime. The PipelineStage enum serialization fix is also correct, preventing JSON serialization failures when stage_results dict keys are enum values.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Worker 0e75d35a deviated from step 4 of the python-developer skill ('Write tests first (red)') because the feature was validation-only — no code changes were needed. The skill procedure does not explicitly accommodate validation-only or confirmation-pass features. Both worker sessions suggested adding a no-edit/no-new-test path for validation features to the skill.",
+      "evidence": "Handoff skillFeedback.followedProcedure=false, deviation on step '4. Write tests first (red)', suggestion: 'For validation-only features, the skill could explicitly allow a no-edit / no-new-test path when prior worker output is being confirmed rather than extended.'"
+    },
+    {
+      "area": "conventions",
+      "observation": "AGENTS.md 'Known Pre-Existing Test Failures' section listed ~58 failing tests as the starting baseline, but by the time cleanup-stubs ran the baseline was already 306 passed / 0 failed. The section is now stale — all listed failures have been resolved. This could confuse future workers.",
+      "evidence": "AGENTS.md lists test_automated_analysis_pipeline.py, test_cli.py, test_documentation.py, test_ml_workflow.py, test_analyzer.py, test_installation.py as pre-existing failures, but scoped baseline now shows 306 passed, 0 failed per both handoffs."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The cleanup-stubs feature is fully satisfied. Session d37e2075 performed the heavy lifting (rewriting 8 stale test suites and fixing automated_analysis.py error handling and report serialization), achieving a green 306-passed baseline. Session 0e75d35a (reviewed) validated that all acceptance criteria hold: mypy at 15 errors (within baseline), no 'coming soon' stubs in MCP server, and 306 passed / 0 failed in the scoped test suite. No blocking code issues found."
+}

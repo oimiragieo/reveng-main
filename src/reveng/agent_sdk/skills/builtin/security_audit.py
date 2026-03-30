@@ -69,6 +69,7 @@ class SecurityAuditSkill(BaseSkill):
                 "binary_analysis": analysis_result.data,
                 "vulnerabilities": [],
                 "malware_detected": False,
+                "malware_scan_requested": check_malware,
                 "risk_score": 0,
                 "recommendations": [],
             }

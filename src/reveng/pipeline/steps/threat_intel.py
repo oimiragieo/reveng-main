@@ -27,9 +27,7 @@ def run_threat_intelligence(analyzer: "REVENGAnalyzer") -> None:
         if getattr(analyzer, "ghidra_extractor", None):
             logger.info("Using Ghidra behavioral analysis for threat intelligence")
             crypto_candidates = analyzer.ghidra_extractor.get_crypto_candidates()
-            logger.info(
-                "Found %d potential cryptographic functions", len(crypto_candidates)
-            )
+            logger.info("Found %d potential cryptographic functions", len(crypto_candidates))
             for crypto in crypto_candidates[:5]:
                 logger.info(
                     "  - Function at %s (crypto score: %s)",
@@ -37,9 +35,7 @@ def run_threat_intelligence(analyzer: "REVENGAnalyzer") -> None:
                     crypto["crypto_score"],
                 )
 
-        threat_report = analyzer.threat_intelligence_correlator.analyze_file(
-            analyzer.binary_path
-        )
+        threat_report = analyzer.threat_intelligence_correlator.analyze_file(analyzer.binary_path)
 
         logger.info(
             "Threat intelligence correlation completed - threat level: %s",

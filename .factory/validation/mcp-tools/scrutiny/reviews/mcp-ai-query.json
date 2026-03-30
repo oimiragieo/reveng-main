@@ -1,0 +1,56 @@
+{
+  "featureId": "mcp-ai-query",
+  "reviewedAt": "2026-03-14T04:00:00.000Z",
+  "commitId": "5f4c4bc9734db4e6687f97cfdbd59d159efa6c7a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Both `ask_ai_about_binary` and `ai_code_reconstruction` are fully implemented, replacing their 'coming soon' stubs with real Ollama-backed logic. The implementation correctly: (1) decompiles the binary via GhidraEngine, (2) builds a contextual prompt from decompiled code/metadata, (3) calls Ollama at http://localhost:11434/api/chat with model qwen2.5-coder:32b-instruct, (4) returns the expected structured JSON response schema, and (5) handles timeouts gracefully with structured 504 error responses containing deterministic fallback content derived from the decompiled context. The `ai_code_reconstruction` tool additionally extracts CFG context via AngrCFGPreprocessor and includes it in the reconstruction prompt. Tests cover both success and timeout paths for each tool. The code is well-structured with clear helper method decomposition (_build_binary_question_context, _build_code_reconstruction_prompt, _query_ollama_chat, _post_ollama_chat, etc.).",
+    "issues": [
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 1279,
+        "severity": "non_blocking",
+        "description": "binary_path is assigned from args.get() on line 1279 then reassigned by _resolve_binary_argument() on line 1284. The first assignment is only for error-reporting fallback if _resolve_binary_argument raises, which is reasonable, but both assignments use slightly different logic (str(args.get('binary_path') or args.get('path') or '') vs _resolve_binary_argument). Consider using a single default sentinel or documenting the intent more clearly."
+      },
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 2075,
+        "severity": "non_blocking",
+        "description": "The timeout is applied twice: once by asyncio.wait_for(timeout=timeout) and once by requests.post(timeout=timeout) inside _post_ollama_chat. In practice this is harmless (the inner requests.Timeout is caught and re-raised as TimeoutError, and asyncio.wait_for catches asyncio.TimeoutError), but the double-timeout could cause the effective timeout to be slightly less than 90 seconds if the thread context-switch overhead is significant."
+      },
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 42,
+        "severity": "non_blocking",
+        "description": "The implementation uses direct `requests.post` HTTP calls to Ollama rather than the existing `OllamaHelper` class (line 118) which wraps the `ollama` Python package. The AGENTS.md convention says 'Use the ollama Python package when available. Fallback: direct HTTP.' However, the feature description explicitly requires calling `http://localhost:11434/api/chat`, which justifies the direct HTTP approach. This is a design choice, not a bug, but future tools should consider using OllamaHelper for consistency."
+      },
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 1371,
+        "severity": "non_blocking",
+        "description": "ai_code_reconstruction does not validate that the binary file actually exists before passing it to decompile_binary and _extract_cfg_context. The decompile_binary handler may return an error dict, but _extract_cfg_context calls AngrCFGPreprocessor.extract_cfg_payload which could raise an uncaught exception if the file doesn't exist. This is mitigated by the broad except Exception handler, but an early file-existence check would provide a clearer error message."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "The `.factory/library/re-platform.md` file still lists `ask_ai_about_binary` and `ai_code_reconstruction` as stub tools ('5 stub tools (return coming soon): recompile_binary, generate_exploit, classify_malware, ask_ai_about_binary / query_ai, ai_code_reconstruction / reconstruct_code_with_ai'). These two tools are now fully implemented and should be removed from the stub list.",
+      "evidence": "`.factory/library/re-platform.md` line 26 still says '5 stub tools' but after this feature and the earlier mcp-decompile-binary, only 2 remain as stubs (generate_exploit, classify_malware — though classify_malware was also implemented in a separate feature)."
+    },
+    {
+      "area": "conventions",
+      "observation": "The AGENTS.md convention says 'Use the ollama Python package when available. Fallback: direct HTTP to http://localhost:11434/api/chat.' The worker used direct HTTP exclusively (via requests.post) without attempting the ollama package first. The feature description explicitly required the HTTP endpoint, creating a tension with AGENTS.md guidance. AGENTS.md could clarify that feature descriptions override the default convention when they specify a specific integration method.",
+      "evidence": "AGENTS.md Coding Conventions section says 'Use the ollama Python package when available. Fallback: direct HTTP.' Feature description says 'Both tools must call Ollama at http://localhost:11434/api/chat'. Worker used requests.post at line 2113 of reveng_enterprise_server.py."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker deviated from TDD by implementing the handlers first, then adding tests. The skillFeedback acknowledges this and provides a reasonable justification: existing handlers were pure stubs, so creating the callable surface first was more practical. The skill's step 4 ('Write tests first (red)') could add an exception for stub-replacement work where the test surface doesn't exist yet.",
+      "evidence": "Handoff skillFeedback.followedProcedure=false, deviations[0].step='4. Write tests first (red)', deviations[0].why='existing handlers were pure stubs, so defining the real return shape...first made it faster to add stable targeted tests'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. Both ask_ai_about_binary and ai_code_reconstruction are fully implemented with real Ollama integration, proper 90-second timeout handling, structured JSON responses, and comprehensive test coverage (4 tests covering success + timeout for both tools). The implementation satisfies all expectedBehavior criteria: answers >= 50 chars, reconstructed code >= 100 chars with function definitions, both use qwen2.5-coder:32b-instruct, and timeouts return error JSON rather than unhandled exceptions. Minor non-blocking issues include redundant binary_path initialization, double timeout application, and the library file not being updated to reflect these tools are no longer stubs."
+}

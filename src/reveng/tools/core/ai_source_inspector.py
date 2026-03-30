@@ -79,9 +79,7 @@ class AISourceInspector:
 
         logger.info("AI Source Inspector initialized")
         logger.info(f"Source folder: {self.source_folder}")
-        logger.info(
-            "This provides deep AI-powered source code analysis with extra thinking!"
-        )
+        logger.info("This provides deep AI-powered source code analysis with extra thinking!")
 
     def analyze_binary(self, binary_path: str):
         """
@@ -316,9 +314,7 @@ class AISourceInspector:
         if "init" in func_name.lower():
             insights.append("This appears to be an initialization function")
         if "alloc" in func_name.lower():
-            insights.append(
-                "Memory management function with potential for optimization"
-            )
+            insights.append("Memory management function with potential for optimization")
         if "network" in func_name.lower():
             insights.append("Network communication function requiring security review")
 
@@ -328,9 +324,7 @@ class AISourceInspector:
 
         return insights
 
-    def _generate_improvement_suggestions(
-        self, func_name: str, content: str
-    ) -> List[str]:
+    def _generate_improvement_suggestions(self, func_name: str, content: str) -> List[str]:
         """Generate improvement suggestions"""
         suggestions = []
 
@@ -449,9 +443,7 @@ class AISourceInspector:
         security_issues = set()
         for func_name in functions:
             if func_name in self.inspection_results:
-                security = self.inspection_results[func_name].get(
-                    "security_implications", []
-                )
+                security = self.inspection_results[func_name].get("security_implications", [])
                 security_issues.update(security)
         return list(security_issues)
 
@@ -543,9 +535,7 @@ class AISourceInspector:
         for func_name, analysis in self.inspection_results.items():
             complexity = analysis.get("complexity", "Low")
             if complexity in ["High", "Very High"]:
-                performance_issues.append(
-                    f"{func_name}: High complexity may impact performance"
-                )
+                performance_issues.append(f"{func_name}: High complexity may impact performance")
         return performance_issues
 
     def _generate_specifications(self):

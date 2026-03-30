@@ -14,13 +14,14 @@ import hashlib
 import json
 import logging
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+VALIDATION_SCHEMA_VERSION = "1.0"
 
 
 class ValidationMode(Enum):
@@ -42,14 +43,33 @@ class SmokeTest:
     timeout: int = 5
     description: str = "Basic smoke test"
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize smoke test to a stable dictionary format."""
+        return {
+            "args": list(self.args),
+            "expected_exit_code": self.expected_exit_code,
+            "expected_output": self.expected_output,
+            "timeout": self.timeout,
+            "description": self.description,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "SmokeTest":
+        """Create a smoke test from dictionary data."""
+        return cls(
+            args=list(data.get("args", [])),
+            expected_exit_code=data.get("expected_exit_code"),
+            expected_output=data.get("expected_output"),
+            timeout=data.get("timeout", 5),
+            description=data.get("description", "Basic smoke test"),
+        )
+
 
 @dataclass
 class ValidationConfig:
     """Binary validation configuration"""
 
-    mode: ValidationMode = (
-        ValidationMode.CHECKSUM
-    )  # Default to checksum (most reliable)
+    mode: ValidationMode = ValidationMode.CHECKSUM  # Default to checksum (most reliable)
     smoke_tests: List[SmokeTest] = None  # Optional CLI tests, empty by default
     checksum_algorithm: str = "sha256"
     sandbox_enabled: bool = False
@@ -71,13 +91,96 @@ class ValidationConfig:
                     expected_exit_code=None,
                     description="Try --help flag",
                 ),
-                SmokeTest(
-                    args=["-h"], expected_exit_code=None, description="Try -h flag"
-                ),
+                SmokeTest(args=["-h"], expected_exit_code=None, description="Try -h flag"),
             ]
         elif self.smoke_tests is None:
             # For other modes, no default smoke tests
             self.smoke_tests = []
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize validation config to a versioned schema dictionary."""
+        return {
+            "schema_version": VALIDATION_SCHEMA_VERSION,
+            "mode": self.mode.value,
+            "smoke_tests": [test.to_dict() for test in self.smoke_tests],
+            "checksum_algorithm": self.checksum_algorithm,
+            "sandbox_enabled": self.sandbox_enabled,
+            "allow_network": self.allow_network,
+            "max_runtime": self.max_runtime,
+        }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ValidationConfig":
+        """Create validation config from serialized dictionary data."""
+        mode_value = data.get("mode", ValidationMode.CHECKSUM.value)
+        if isinstance(mode_value, ValidationMode):
+            mode = mode_value
+        else:
+            mode = ValidationMode(mode_value.lower())
+
+        smoke_tests_data = data.get("smoke_tests")
+        smoke_tests = None
+        if smoke_tests_data is not None:
+            smoke_tests = [SmokeTest.from_dict(test) for test in smoke_tests_data]
+
+        return cls(
+            mode=mode,
+            smoke_tests=smoke_tests,
+            checksum_algorithm=data.get("checksum_algorithm", "sha256"),
+            sandbox_enabled=data.get("sandbox_enabled", False),
+            allow_network=data.get("allow_network", False),
+            max_runtime=data.get("max_runtime", 10),
+        )
+
+
+@dataclass
+class ValidationResult:
+    """Versioned validation result contract."""
+
+    valid: bool = True
+    mode: str = ValidationMode.CHECKSUM.value
+    tests_passed: int = 0
+    tests_failed: int = 0
+    warnings: List[str] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+    details: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize validation result to a versioned dictionary."""
+        data = {
+            "schema_version": VALIDATION_SCHEMA_VERSION,
+            "valid": self.valid,
+            "mode": self.mode,
+            "tests_passed": self.tests_passed,
+            "tests_failed": self.tests_failed,
+            "warnings": list(self.warnings),
+            "errors": list(self.errors),
+        }
+        data.update(self.details)
+        return data
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ValidationResult":
+        """Hydrate a validation result from dictionary data."""
+        base_keys = {
+            "schema_version",
+            "valid",
+            "mode",
+            "tests_passed",
+            "tests_failed",
+            "warnings",
+            "errors",
+        }
+        details = {key: value for key, value in data.items() if key not in base_keys}
+        return cls(
+            valid=data.get("valid", True),
+            mode=data.get("mode", ValidationMode.CHECKSUM.value),
+            tests_passed=data.get("tests_passed", 0),
+            tests_failed=data.get("tests_failed", 0),
+            warnings=list(data.get("warnings", [])),
+            errors=list(data.get("errors", [])),
+            details=details,
+        )
 
 
 class BinaryValidator:
@@ -103,43 +206,49 @@ class BinaryValidator:
         Returns:
             Dictionary with validation results
         """
-        result = {
-            "valid": True,
-            "mode": self.config.mode.value,
-            "tests_passed": 0,
-            "tests_failed": 0,
-            "warnings": [],
-            "errors": [],
-        }
+        result = ValidationResult(mode=self.config.mode.value)
 
         # Basic existence check
         if not binary.exists():
-            result["valid"] = False
-            result["errors"].append("Binary file not found")
-            return result
+            result.valid = False
+            result.errors.append("Binary file not found")
+            return result.to_dict()
 
         if binary.stat().st_size == 0:
-            result["valid"] = False
-            result["errors"].append("Binary file is empty")
-            return result
+            result.valid = False
+            result.errors.append("Binary file is empty")
+            return result.to_dict()
 
         # Mode-specific validation
         if self.config.mode == ValidationMode.CHECKSUM:
             checksum_result = self._validate_checksum(binary, original)
-            result.update(checksum_result)
+            self._merge_result(result, checksum_result)
 
         elif self.config.mode == ValidationMode.SMOKE_TEST:
             smoke_result = self._validate_smoke_tests(binary)
-            result.update(smoke_result)
+            self._merge_result(result, smoke_result)
 
         elif self.config.mode == ValidationMode.SANDBOXED:
             sandbox_result = self._validate_sandboxed(binary)
-            result.update(sandbox_result)
+            self._merge_result(result, sandbox_result)
 
         elif self.config.mode == ValidationMode.NONE:
-            result["warnings"].append("Validation skipped (mode=NONE)")
+            result.warnings.append("Validation skipped (mode=NONE)")
 
-        return result
+        return result.to_dict()
+
+    def _merge_result(self, result: ValidationResult, update: Dict[str, Any]) -> None:
+        """Merge mode-specific validation details into the versioned result."""
+        warnings = list(update.pop("warnings", []))
+        errors = list(update.pop("errors", []))
+
+        result.warnings.extend(warnings)
+        result.errors.extend(errors)
+        result.tests_passed = update.get("tests_passed", result.tests_passed)
+        result.tests_failed = update.get("tests_failed", result.tests_failed)
+        if "valid" in update:
+            result.valid = update.pop("valid")
+        result.details.update(update)
 
     def _validate_checksum(self, binary: Path, original: Optional[Path]) -> Dict:
         """Validate using checksum comparison"""
@@ -278,15 +387,11 @@ class BinaryValidator:
         # - Windows Sandbox on Windows
         # - VM-based execution
 
-        logger.warning(
-            "Sandboxed validation not implemented, falling back to smoke tests"
-        )
+        logger.warning("Sandboxed validation not implemented, falling back to smoke tests")
         return self._validate_smoke_tests(binary)
 
     @classmethod
-    def load_config(
-        cls, config_file: Path, binary_name: Optional[str] = None
-    ) -> "BinaryValidator":
+    def load_config(cls, config_file: Path, binary_name: Optional[str] = None) -> "BinaryValidator":
         """
         Load validator configuration from JSON policy file
 
@@ -309,27 +414,15 @@ class BinaryValidator:
             logger.info("Using default validation policy")
 
         # Parse configuration
-        mode = ValidationMode[config_dict.get("mode", "CHECKSUM").upper()]
-
-        smoke_tests = []
-        for test_dict in config_dict.get("smoke_tests", []):
-            smoke_tests.append(
-                SmokeTest(
-                    args=test_dict["args"],
-                    expected_exit_code=test_dict.get("expected_exit_code"),
-                    expected_output=test_dict.get("expected_output"),
-                    timeout=test_dict.get("timeout", 5),
-                    description=test_dict.get("description", "Custom test"),
-                )
-            )
-
-        config = ValidationConfig(
-            mode=mode,
-            smoke_tests=smoke_tests if smoke_tests else None,
-            checksum_algorithm=config_dict.get("checksum_algorithm", "sha256"),
-            sandbox_enabled=config_dict.get("sandbox", {}).get("enabled", False),
-            allow_network=config_dict.get("sandbox", {}).get("allow_network", False),
-            max_runtime=config_dict.get("timeout", 30),
+        config = ValidationConfig.from_dict(
+            {
+                "mode": config_dict.get("mode", "checksum"),
+                "smoke_tests": config_dict.get("smoke_tests"),
+                "checksum_algorithm": config_dict.get("checksum_algorithm", "sha256"),
+                "sandbox_enabled": config_dict.get("sandbox", {}).get("enabled", False),
+                "allow_network": config_dict.get("sandbox", {}).get("allow_network", False),
+                "max_runtime": config_dict.get("timeout", 30),
+            }
         )
 
         return cls(config)
@@ -338,7 +431,8 @@ class BinaryValidator:
     def create_default_config(cls, output_path: Path):
         """Create default validation config file"""
         config = {
-            "mode": "SMOKE_TEST",
+            "schema_version": VALIDATION_SCHEMA_VERSION,
+            "mode": "smoke_test",
             "smoke_tests": [
                 {
                     "args": ["--version"],

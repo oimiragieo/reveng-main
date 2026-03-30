@@ -17,13 +17,12 @@ Handles advanced obfuscation:
 - API hashing
 """
 
+import json
 import logging
 import os
-import json
-from typing import List, Dict, Optional, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -78,9 +77,7 @@ class LLMDeobfuscator:
         api_key: Optional[str] = None,
     ):
         self.provider = provider
-        self.api_key = (
-            api_key or os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
-        )
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
 
     async def deobfuscate_function(
         self, code: str, language: str = "c", context: Optional[str] = None
@@ -172,8 +169,7 @@ class LLMDeobfuscator:
             1
             for line in lines
             if any(
-                pattern in line
-                for pattern in ["nop", "mov eax, eax", "xor eax, eax; xor eax, eax"]
+                pattern in line for pattern in ["nop", "mov eax, eax", "xor eax, eax; xor eax, eax"]
             )
         )
         if junk_indicators > len(lines) * 0.2:
@@ -325,9 +321,7 @@ Format your response as JSON:
             # Fallback: treat entire response as explanation
             return {"code": "", "explanation": response, "malicious_behaviors": []}
 
-    def _estimate_confidence(
-        self, original: str, deobfuscated: Dict, raw_response: str
-    ) -> float:
+    def _estimate_confidence(self, original: str, deobfuscated: Dict, raw_response: str) -> float:
         """Estimate confidence in deobfuscation"""
         confidence = 0.5
 
@@ -435,7 +429,7 @@ Convert this back to natural control flow with if/else statements and loops.
                     if candidate.decode("utf-8").isprintable():
                         decrypted[name] = candidate.decode("utf-8")
                         break
-                except:
+                except UnicodeDecodeError:
                     continue
 
             # Try XOR with repeating key

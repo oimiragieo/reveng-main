@@ -222,8 +222,7 @@ int {clean_name}() {{
                     continue
                 # Skip Windows-only API calls and headers
                 if any(
-                    x in stripped
-                    for x in ["GetLastError", "ERROR_SUCCESS", "#include <windows.h>"]
+                    x in stripped for x in ["GetLastError", "ERROR_SUCCESS", "#include <windows.h>"]
                 ):
                     continue
                 # Track braces to avoid orphaned closing braces
@@ -545,12 +544,8 @@ def main():
     """Main function"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Convert to human readable code (FIXED)"
-    )
-    parser.add_argument(
-        "--source", default="src_optimal_analysis_droid", help="Source folder"
-    )
+    parser = argparse.ArgumentParser(description="Convert to human readable code (FIXED)")
+    parser.add_argument("--source", default="src_optimal_analysis_droid", help="Source folder")
     parser.add_argument("--output", default="human_readable_code", help="Output folder")
     args = parser.parse_args()
 

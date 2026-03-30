@@ -19,19 +19,13 @@ Version: 1.0
 
 import hashlib
 import logging
-import os
 import re
-
-# Import our data models
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import requests
-
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from reveng.agents.ai.ai_enhanced_data_models import (
     IOC,
@@ -104,18 +98,16 @@ class ThreatIntelligenceCorrelator:
                 for code_file in source_path.rglob("*.c"):
                     try:
                         decompiled_code += (
-                            code_file.read_text(encoding="utf-8", errors="ignore")
-                            + "\n"
+                            code_file.read_text(encoding="utf-8", errors="ignore") + "\n"
                         )
-                    except:
+                    except OSError:
                         pass
                 for code_file in source_path.rglob("*.h"):
                     try:
                         decompiled_code += (
-                            code_file.read_text(encoding="utf-8", errors="ignore")
-                            + "\n"
+                            code_file.read_text(encoding="utf-8", errors="ignore") + "\n"
                         )
-                    except:
+                    except OSError:
                         pass
                 if decompiled_code:
                     break
@@ -135,20 +127,14 @@ class ThreatIntelligenceCorrelator:
             "md5": re.compile(r"\b[a-fA-F0-9]{32}\b"),
             "sha1": re.compile(r"\b[a-fA-F0-9]{40}\b"),
             "sha256": re.compile(r"\b[a-fA-F0-9]{64}\b"),
-            "registry_key": re.compile(
-                r"HKEY_[A-Z_]+\\[^\\]+(?:\\[^\\]+)*", re.IGNORECASE
-            ),
-            "file_path": re.compile(
-                r'[A-Za-z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*'
-            ),
+            "registry_key": re.compile(r"HKEY_[A-Z_]+\\[^\\]+(?:\\[^\\]+)*", re.IGNORECASE),
+            "file_path": re.compile(r'[A-Za-z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*'),
             "mutex": re.compile(r"Global\\[A-Za-z0-9_\-]+|Local\\[A-Za-z0-9_\-]+"),
             "service_name": re.compile(
                 r"(?:sc|net)\s+(?:create|start)\s+([A-Za-z0-9_\-]+)", re.IGNORECASE
             ),
             "bitcoin_address": re.compile(r"\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b"),
-            "cryptocurrency_address": re.compile(
-                r"\b(?:bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}\b"
-            ),
+            "cryptocurrency_address": re.compile(r"\b(?:bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}\b"),
         }
 
     def _init_mitre_attack_data(self):
@@ -456,9 +442,7 @@ class ThreatIntelligenceCorrelator:
         try:
             # Extract IOCs from file content
             if decompiled_code:
-                iocs.extend(
-                    self._extract_iocs_from_text(decompiled_code, "decompiled_code")
-                )
+                iocs.extend(self._extract_iocs_from_text(decompiled_code, "decompiled_code"))
 
             if strings_data:
                 for string_item in strings_data:
@@ -528,12 +512,8 @@ class ThreatIntelligenceCorrelator:
             sha256_hash = hashlib.sha256(content).hexdigest()
             hashlib.sha512(content).hexdigest()
             # Keep MD5/SHA1 only for compatibility with existing databases
-            md5_hash = hashlib.md5(
-                content
-            ).hexdigest()  # nosec B303 - Compatibility only
-            sha1_hash = hashlib.sha1(
-                content
-            ).hexdigest()  # nosec B303 - Compatibility only
+            md5_hash = hashlib.md5(content).hexdigest()  # nosec B303 - Compatibility only
+            sha1_hash = hashlib.sha1(content).hexdigest()  # nosec B303 - Compatibility only
 
             iocs.extend(
                 [
@@ -688,9 +668,7 @@ class ThreatIntelligenceCorrelator:
                         )
 
                 except Exception as e:
-                    self.logger.error(
-                        f"Error querying VirusTotal for {ioc.value}: {str(e)}"
-                    )
+                    self.logger.error(f"Error querying VirusTotal for {ioc.value}: {str(e)}")
 
         return vt_results
 
@@ -739,9 +717,7 @@ class ThreatIntelligenceCorrelator:
 
         self.last_vt_request = time.time()
 
-    def integrate_with_misp(
-        self, iocs: List[IOC], event_info: str = None
-    ) -> Dict[str, Any]:
+    def integrate_with_misp(self, iocs: List[IOC], event_info: str = None) -> Dict[str, Any]:
         """
         Integrate with MISP (Malware Information Sharing Platform)
 
@@ -849,9 +825,7 @@ class ThreatIntelligenceCorrelator:
             if response.status_code == 200:
                 return response.json()
             else:
-                self.logger.error(
-                    f"Failed to create MISP event: {response.status_code}"
-                )
+                self.logger.error(f"Failed to create MISP event: {response.status_code}")
                 return {"error": f"HTTP {response.status_code}"}
 
         except Exception as e:
@@ -923,16 +897,12 @@ class ThreatIntelligenceCorrelator:
                 self._merge_technique_matches(technique_matches, api_matches)
 
             # 3. Behavioral pattern detection
-            behavioral_matches = self._detect_by_behavioral_patterns_enhanced(
-                analysis_context
-            )
+            behavioral_matches = self._detect_by_behavioral_patterns_enhanced(analysis_context)
             self._merge_technique_matches(technique_matches, behavioral_matches)
 
             # 4. Registry pattern detection
             if registry_keys:
-                registry_matches = self._detect_by_registry_patterns_enhanced(
-                    registry_keys
-                )
+                registry_matches = self._detect_by_registry_patterns_enhanced(registry_keys)
                 self._merge_technique_matches(technique_matches, registry_matches)
 
             # 5. File pattern detection
@@ -958,8 +928,7 @@ class ThreatIntelligenceCorrelator:
                     "tactics_count": len(mapping.tactics),
                     "kill_chain_phases": len(mapping.kill_chain_phases),
                     "avg_confidence": (
-                        sum(mapping.confidence_scores.values())
-                        / len(mapping.confidence_scores)
+                        sum(mapping.confidence_scores.values()) / len(mapping.confidence_scores)
                         if mapping.confidence_scores
                         else 0
                     ),
@@ -1091,9 +1060,7 @@ class ThreatIntelligenceCorrelator:
                 evidence.metadata,
             )
 
-            self.logger.info(
-                f"Mapped {len(mapping.techniques)} MITRE ATT&CK techniques"
-            )
+            self.logger.info(f"Mapped {len(mapping.techniques)} MITRE ATT&CK techniques")
             return mapping
 
         except Exception as e:
@@ -1165,9 +1132,7 @@ class ThreatIntelligenceCorrelator:
 
         return matches
 
-    def _detect_by_api_patterns_enhanced(
-        self, api_calls: List[str]
-    ) -> Dict[str, Dict[str, Any]]:
+    def _detect_by_api_patterns_enhanced(self, api_calls: List[str]) -> Dict[str, Dict[str, Any]]:
         """Enhanced API call pattern detection with sequence analysis"""
         matches = {}
         api_text = " ".join(api_calls).lower()
@@ -1344,9 +1309,7 @@ class ThreatIntelligenceCorrelator:
 
         return matches
 
-    def _detect_by_file_patterns_enhanced(
-        self, file_paths: List[str]
-    ) -> Dict[str, Dict[str, Any]]:
+    def _detect_by_file_patterns_enhanced(self, file_paths: List[str]) -> Dict[str, Dict[str, Any]]:
         """Enhanced file pattern detection"""
         matches = {}
 
@@ -1409,15 +1372,11 @@ class ThreatIntelligenceCorrelator:
                     target[technique_id]["detection_methods"] = [
                         target[technique_id]["detection_method"]
                     ]
-                target[technique_id]["detection_methods"].append(
-                    match_data["detection_method"]
-                )
+                target[technique_id]["detection_methods"].append(match_data["detection_method"])
             else:
                 target[technique_id] = match_data.copy()
 
-    def _build_enhanced_mapping(
-        self, technique_matches: Dict[str, Dict[str, Any]]
-    ) -> MITREMapping:
+    def _build_enhanced_mapping(self, technique_matches: Dict[str, Dict[str, Any]]) -> MITREMapping:
         """Build enhanced MITRE mapping from technique matches"""
         mapping = MITREMapping()
 
@@ -1578,8 +1537,7 @@ class ThreatIntelligenceCorrelator:
                 "total_tactics": len(mapping.tactics),
                 "kill_chain_phases": len(mapping.kill_chain_phases),
                 "avg_confidence": (
-                    sum(mapping.confidence_scores.values())
-                    / len(mapping.confidence_scores)
+                    sum(mapping.confidence_scores.values()) / len(mapping.confidence_scores)
                     if mapping.confidence_scores
                     else 0.0
                 ),
@@ -1603,15 +1561,9 @@ class ThreatIntelligenceCorrelator:
                         "tactic": technique_data["tactic"],
                         "description": technique_data["description"],
                         "confidence": mapping.confidence_scores.get(technique_id, 0.0),
-                        "evidence": technique_details.get(
-                            "evidence", "No evidence available"
-                        ),
-                        "detection_methods": technique_details.get(
-                            "detection_methods", []
-                        ),
-                        "matched_indicators": technique_details.get(
-                            "matched_indicators", {}
-                        ),
+                        "evidence": technique_details.get("evidence", "No evidence available"),
+                        "detection_methods": technique_details.get("detection_methods", []),
+                        "matched_indicators": technique_details.get("matched_indicators", {}),
                         "risk_level": self._calculate_technique_risk_level(
                             technique_id,
                             mapping.confidence_scores.get(technique_id, 0.0),
@@ -1643,8 +1595,7 @@ class ThreatIntelligenceCorrelator:
             # Calculate average confidence per tactic
             for tactic, stats in tactic_stats.items():
                 confidences = [
-                    mapping.confidence_scores.get(tid, 0.0)
-                    for tid in stats["techniques"]
+                    mapping.confidence_scores.get(tid, 0.0) for tid in stats["techniques"]
                 ]
                 stats["avg_confidence"] = (
                     sum(confidences) / len(confidences) if confidences else 0.0
@@ -1679,9 +1630,7 @@ class ThreatIntelligenceCorrelator:
                     "critical_path": self._identify_critical_attack_path(
                         mapping.attack_chain, mapping.confidence_scores
                     ),
-                    "progression_completeness": len(mapping.attack_chain.phases)
-                    / 12
-                    * 100,
+                    "progression_completeness": len(mapping.attack_chain.phases) / 12 * 100,
                 }
 
             # Enhanced recommendations
@@ -1730,9 +1679,7 @@ class ThreatIntelligenceCorrelator:
 
         return distribution
 
-    def _calculate_technique_risk_level(
-        self, technique_id: str, confidence: float
-    ) -> str:
+    def _calculate_technique_risk_level(self, technique_id: str, confidence: float) -> str:
         """Calculate risk level for a technique based on ID and confidence"""
         # High-risk techniques (commonly used in advanced attacks)
         high_risk_techniques = ["T1055", "T1003", "T1112", "T1140", "T1486"]
@@ -1813,9 +1760,7 @@ class ThreatIntelligenceCorrelator:
             techniques = attack_chain.techniques_by_phase.get(phase, [])
             if techniques:
                 # Find the highest confidence technique in this phase
-                best_technique = max(
-                    techniques, key=lambda t: confidence_scores.get(t, 0.0)
-                )
+                best_technique = max(techniques, key=lambda t: confidence_scores.get(t, 0.0))
                 best_confidence = confidence_scores.get(best_technique, 0.0)
 
                 technique_data = self.mitre_techniques.get(best_technique)
@@ -1980,9 +1925,7 @@ class ThreatIntelligenceCorrelator:
                     "priority_score": final_priority,
                     "risk_level": self._calculate_tactic_risk_level(stats),
                     "mitigations": tactic_data["mitigations"],
-                    "implementation_priority": self._get_implementation_priority(
-                        final_priority
-                    ),
+                    "implementation_priority": self._get_implementation_priority(final_priority),
                     "estimated_effort": self._estimate_implementation_effort(
                         tactic, stats["technique_count"]
                     ),
@@ -2125,14 +2068,10 @@ class ThreatIntelligenceCorrelator:
                 # Build attribution reasons
                 reasons = []
                 if attribution.matching_ttps:
-                    reasons.append(
-                        f"Matching TTPs: {', '.join(attribution.matching_ttps)}"
-                    )
+                    reasons.append(f"Matching TTPs: {', '.join(attribution.matching_ttps)}")
 
                 # Check for tool indicators
-                matching_tools = self._find_matching_tools(
-                    group_data, decompiled_code, iocs
-                )
+                matching_tools = self._find_matching_tools(group_data, decompiled_code, iocs)
                 if matching_tools:
                     reasons.append(f"Tool indicators: {', '.join(matching_tools)}")
 
@@ -2187,9 +2126,7 @@ class ThreatIntelligenceCorrelator:
 
         # TTP matching (30% weight)
         ttp_weight = 0.3
-        matching_ttps = [
-            ttp for ttp in group_data["ttps"] if ttp in mitre_mapping.techniques
-        ]
+        matching_ttps = [ttp for ttp in group_data["ttps"] if ttp in mitre_mapping.techniques]
         if group_data["ttps"]:
             ttp_score = len(matching_ttps) / len(group_data["ttps"])
             score += ttp_score * ttp_weight
@@ -2230,9 +2167,7 @@ class ThreatIntelligenceCorrelator:
 
         # Code similarity analysis (10% weight)
         similarity_weight = 0.1
-        similarity_score = self._calculate_code_similarity_score(
-            group_data, decompiled_code, iocs
-        )
+        similarity_score = self._calculate_code_similarity_score(group_data, decompiled_code, iocs)
         score += similarity_score * similarity_weight
         total_weight += similarity_weight
 
@@ -2258,9 +2193,7 @@ class ThreatIntelligenceCorrelator:
 
         return list(set(matches))  # Remove duplicates
 
-    def _find_matching_c2_patterns(
-        self, group_data: Dict[str, Any], iocs: List[IOC]
-    ) -> List[str]:
+    def _find_matching_c2_patterns(self, group_data: Dict[str, Any], iocs: List[IOC]) -> List[str]:
         """Find matching C&C patterns"""
         matches = []
 
@@ -2478,9 +2411,7 @@ class ThreatIntelligenceCorrelator:
                 if similarity_score > 0.3:  # Threshold for potential variant
                     similarity_results["family_matches"][group_name] = {
                         "similarity_score": similarity_score,
-                        "confidence_level": self._get_confidence_level(
-                            similarity_score
-                        ),
+                        "confidence_level": self._get_confidence_level(similarity_score),
                         "matching_patterns": self._get_matching_patterns(
                             group_name, decompiled_code
                         ),
@@ -2495,13 +2426,11 @@ class ThreatIntelligenceCorrelator:
                 similarity_results["variant_confidence"] = max_score
 
             # Identify code reuse indicators
-            similarity_results["code_reuse_indicators"] = self._identify_code_reuse(
-                decompiled_code
-            )
+            similarity_results["code_reuse_indicators"] = self._identify_code_reuse(decompiled_code)
 
             # Identify evolutionary markers
-            similarity_results["evolutionary_markers"] = (
-                self._identify_evolutionary_markers(decompiled_code)
+            similarity_results["evolutionary_markers"] = self._identify_evolutionary_markers(
+                decompiled_code
             )
 
             # Add evidence
@@ -2513,9 +2442,7 @@ class ThreatIntelligenceCorrelator:
                 metadata={
                     "family_matches": len(similarity_results["family_matches"]),
                     "max_similarity": similarity_results["variant_confidence"],
-                    "code_reuse_count": len(
-                        similarity_results["code_reuse_indicators"]
-                    ),
+                    "code_reuse_count": len(similarity_results["code_reuse_indicators"]),
                 },
             )
             self.evidence_tracker.add_evidence(
@@ -2547,9 +2474,7 @@ class ThreatIntelligenceCorrelator:
         else:
             return "VERY_LOW"
 
-    def _get_matching_patterns(
-        self, group_name: str, decompiled_code: str
-    ) -> List[str]:
+    def _get_matching_patterns(self, group_name: str, decompiled_code: str) -> List[str]:
         """Get list of matching patterns for a group"""
         matching_patterns = []
 
@@ -2566,9 +2491,9 @@ class ThreatIntelligenceCorrelator:
         # Check encryption patterns
         group_xor_key = self._get_group_xor_key(group_name.lower())
         if group_xor_key:
-            xor_keys = self.code_similarity_signatures["encryption_patterns"][
-                "xor_keys"
-            ].get(group_xor_key, [])
+            xor_keys = self.code_similarity_signatures["encryption_patterns"]["xor_keys"].get(
+                group_xor_key, []
+            )
             for key in xor_keys:
                 if key in decompiled_code:
                     matching_patterns.append(f"xor_key: {key}")
@@ -2591,9 +2516,7 @@ class ThreatIntelligenceCorrelator:
         for pattern in reuse_patterns:
             matches = re.findall(pattern, decompiled_code, re.IGNORECASE)
             if len(matches) > 5:  # Threshold for significant reuse
-                indicators.append(
-                    f"Generic naming pattern: {pattern} ({len(matches)} instances)"
-                )
+                indicators.append(f"Generic naming pattern: {pattern} ({len(matches)} instances)")
 
         return indicators
 
@@ -2643,9 +2566,7 @@ class ThreatIntelligenceCorrelator:
                 # Generate campaign ID based on group and timeframe
                 current_date = datetime.now().strftime("%Y-%m")
                 correlation.campaign_id = f"{apt_attribution.group_name}_{current_date}"
-                correlation.campaign_name = (
-                    f"{apt_attribution.group_name} Campaign {current_date}"
-                )
+                correlation.campaign_name = f"{apt_attribution.group_name} Campaign {current_date}"
                 correlation.confidence = (
                     apt_attribution.confidence * 0.8
                 )  # Slightly lower confidence
@@ -2686,9 +2607,7 @@ class ThreatIntelligenceCorrelator:
                     evidence.metadata,
                 )
 
-            self.logger.info(
-                f"Campaign correlation: {correlation.campaign_name or 'Unknown'}"
-            )
+            self.logger.info(f"Campaign correlation: {correlation.campaign_name or 'Unknown'}")
             return correlation
 
         except Exception as e:
@@ -2723,18 +2642,10 @@ class ThreatIntelligenceCorrelator:
             # Vulnerability-based risk (40% weight)
             if vulnerabilities:
                 critical_vulns = len(
-                    [
-                        v
-                        for v in vulnerabilities
-                        if getattr(v, "severity", None) == "CRITICAL"
-                    ]
+                    [v for v in vulnerabilities if getattr(v, "severity", None) == "CRITICAL"]
                 )
                 high_vulns = len(
-                    [
-                        v
-                        for v in vulnerabilities
-                        if getattr(v, "severity", None) == "HIGH"
-                    ]
+                    [v for v in vulnerabilities if getattr(v, "severity", None) == "HIGH"]
                 )
                 vuln_risk = min((critical_vulns * 0.5 + high_vulns * 0.3) / 5.0, 1.0)
                 risk_score += vuln_risk * 0.4
@@ -2787,42 +2698,30 @@ class ThreatIntelligenceCorrelator:
 
         try:
             # Extract IOCs
-            iocs = self.extract_iocs_from_binary(
-                file_path, decompiled_code, strings_data
-            )
+            iocs = self.extract_iocs_from_binary(file_path, decompiled_code, strings_data)
             report.iocs_extracted = iocs
 
             # Correlate with VirusTotal
             vt_results = self.correlate_with_virustotal(iocs)
 
             # Map to MITRE ATT&CK
-            mitre_mapping = self.map_to_mitre_attack(
-                decompiled_code, function_calls, api_calls
-            )
+            mitre_mapping = self.map_to_mitre_attack(decompiled_code, function_calls, api_calls)
             report.mitre_attack_mapping = mitre_mapping
 
             # APT attribution
-            apt_attribution = self.correlate_with_apt_groups(
-                iocs, mitre_mapping, decompiled_code
-            )
+            apt_attribution = self.correlate_with_apt_groups(iocs, mitre_mapping, decompiled_code)
             report.apt_attribution = apt_attribution
 
             # Campaign correlation
-            campaign_correlation = self.correlate_campaign(
-                iocs, apt_attribution, file_path
-            )
+            campaign_correlation = self.correlate_campaign(iocs, apt_attribution, file_path)
             report.campaign_correlation = campaign_correlation
 
             # Malware classification
-            malware_classification = self._classify_malware(
-                iocs, mitre_mapping, apt_attribution
-            )
+            malware_classification = self._classify_malware(iocs, mitre_mapping, apt_attribution)
             report.malware_classification = malware_classification
 
             # Assess threat level
-            threat_level = self.assess_threat_level(
-                iocs, vulnerabilities or [], apt_attribution
-            )
+            threat_level = self.assess_threat_level(iocs, vulnerabilities or [], apt_attribution)
             report.threat_level = threat_level
 
             # Generate recommendations
@@ -2833,9 +2732,7 @@ class ThreatIntelligenceCorrelator:
             # Calculate overall confidence
             confidence_scores = []
             if iocs:
-                confidence_scores.append(
-                    sum(ioc.confidence for ioc in iocs) / len(iocs)
-                )
+                confidence_scores.append(sum(ioc.confidence for ioc in iocs) / len(iocs))
             if apt_attribution.confidence > 0:
                 confidence_scores.append(apt_attribution.confidence)
             if mitre_mapping.confidence_scores:
@@ -2845,9 +2742,7 @@ class ThreatIntelligenceCorrelator:
                 )
 
             report.confidence_score = (
-                sum(confidence_scores) / len(confidence_scores)
-                if confidence_scores
-                else 0.0
+                sum(confidence_scores) / len(confidence_scores) if confidence_scores else 0.0
             )
 
             # Set analysis timestamp
@@ -3011,9 +2906,7 @@ if __name__ == "__main__":
     CreateRemoteThread(hProcess, NULL, 0, lpStartAddress, lpParameter, 0, &dwThreadId);
     """
 
-    iocs = correlator.extract_iocs_from_binary(
-        "test.exe", test_code, ["malicious-domain.com"]
-    )
+    iocs = correlator.extract_iocs_from_binary("test.exe", test_code, ["malicious-domain.com"])
     print(f"Extracted {len(iocs)} IOCs")
 
     # Test MITRE mapping
@@ -3021,9 +2914,7 @@ if __name__ == "__main__":
     print(f"Mapped {len(mitre_mapping.techniques)} MITRE techniques")
 
     # Test APT attribution
-    apt_attribution = correlator.correlate_with_apt_groups(
-        iocs, mitre_mapping, test_code
-    )
+    apt_attribution = correlator.correlate_with_apt_groups(iocs, mitre_mapping, test_code)
     print(f"APT attribution: {apt_attribution.group_name or 'Unknown'}")
 
     # Generate comprehensive report

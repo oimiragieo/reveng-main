@@ -1,0 +1,26 @@
+{
+  "featureId": "fix-pipeline-yaml-serialization",
+  "reviewedAt": "2026-03-14T17:10:00.000Z",
+  "commitId": "7bf3bcc73790dc00561c0fb0dfe720e8e939ca84",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Clean, focused fix that correctly addresses the StageType enum YAML serialization bug. save_pipeline() now overrides the stage_type field with stage.stage_type.value (a plain string) before writing with yaml.safe_dump(), and load_pipeline() reconstructs the enum via StageType(stage['stage_type']). The switch from yaml.dump to yaml.safe_dump is a security improvement. UTF-8 encoding is explicitly specified on both read and write paths (good Windows compatibility). The round-trip test is thorough: it creates a multi-stage pipeline with different StageType values, verifies the raw YAML contains string stage types, and asserts full Pipeline equality after load. No regressions — all 23 tests in the suite pass.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Worker skipped step 9 (manual verification with test_samples/sample.exe) because this feature only changes YAML serialization and does not affect binary analysis. The deviation is justified, but the skill's procedure could explicitly note that sample-binary verification may be skipped for persistence-only or serialization-only fixes.",
+      "evidence": "Handoff skillFeedback.followedProcedure=false, deviation: 'Skipped the sample-binary end-to-end check and verified the YAML persistence path directly with unit tests plus lint.'"
+    },
+    {
+      "area": "knowledge",
+      "observation": "The .factory/library/pipeline-upgrade.md file documents the async DAG pipeline changes but does not mention the YAML serialization fix or the convention that StageType must be serialized as .value for safe_dump compatibility. Future workers modifying save_pipeline/load_pipeline would benefit from knowing this.",
+      "evidence": "pipeline-upgrade.md lists async pipeline details but has no mention of YAML enum serialization. The fix is in commit 7bf3bcc7."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The implementation correctly fixes StageType enum YAML serialization by writing .value strings in save_pipeline() and reconstructing enums in load_pipeline(). Uses yaml.safe_dump/safe_load with explicit UTF-8 encoding. The round-trip test comprehensively verifies both the serialized YAML shape and full Pipeline equality. All 23 unit tests pass. No issues found."
+}

@@ -11,11 +11,10 @@ Reference: "The Modern Hacker's Playbook" - Part 3.2, Technique 1
 """
 
 import logging
+import os
 import subprocess
 import tempfile
-import os
-from typing import Optional, Dict, Any
-from pathlib import Path
+from typing import Any, Dict, Optional
 
 
 class LLVMFlattener:
@@ -48,18 +47,14 @@ class LLVMFlattener:
     def _find_llvm(self) -> Optional[str]:
         """Find LLVM installation"""
         # Try common locations
-        llvm_bins = ['opt', 'llc', 'clang']
+        llvm_bins = ["opt", "llc", "clang"]
 
         for bin_name in llvm_bins:
             try:
-                result = subprocess.run(
-                    ['which', bin_name],
-                    capture_output=True,
-                    text=True
-                )
+                result = subprocess.run(["which", bin_name], capture_output=True, text=True)
                 if result.returncode == 0:
                     return os.path.dirname(result.stdout.strip())
-            except:
+            except (OSError, subprocess.SubprocessError):
                 pass
 
         return None
@@ -124,26 +119,24 @@ entry:
 
         try:
             # Write IR to temporary file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ll', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".ll", delete=False) as f:
                 f.write(llvm_ir)
                 input_file = f.name
 
-            output_file = input_file.replace('.ll', '.opt.ll')
+            output_file = input_file.replace(".ll", ".opt.ll")
 
             # Run opt with optimizations
             opt_cmd = [
-                os.path.join(self.llvm_path, 'opt'),
-                f'-O{optimization_level}',
+                os.path.join(self.llvm_path, "opt"),
+                f"-O{optimization_level}",
                 input_file,
-                '-S',  # Output as text
-                '-o', output_file
+                "-S",  # Output as text
+                "-o",
+                output_file,
             ]
 
             result = subprocess.run(
-                opt_cmd,
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minute timeout
+                opt_cmd, capture_output=True, text=True, timeout=300  # 5 minute timeout
             )
 
             if result.returncode != 0:
@@ -151,7 +144,7 @@ entry:
                 return None
 
             # Read optimized IR
-            with open(output_file, 'r') as f:
+            with open(output_file, "r") as f:
                 optimized_ir = f.read()
 
             # Clean up
@@ -183,32 +176,23 @@ entry:
 
         try:
             # Write IR to file
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.ll', delete=False) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".ll", delete=False) as f:
                 f.write(llvm_ir)
                 input_file = f.name
 
-            output_file = input_file.replace('.ll', '.s')
+            output_file = input_file.replace(".ll", ".s")
 
             # Run llc (LLVM compiler)
-            llc_cmd = [
-                os.path.join(self.llvm_path, 'llc'),
-                input_file,
-                '-o', output_file
-            ]
+            llc_cmd = [os.path.join(self.llvm_path, "llc"), input_file, "-o", output_file]
 
-            result = subprocess.run(
-                llc_cmd,
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
+            result = subprocess.run(llc_cmd, capture_output=True, text=True, timeout=60)
 
             if result.returncode != 0:
                 self.logger.error(f"Lowering failed: {result.stderr}")
                 return None
 
             # Read assembly
-            with open(output_file, 'r') as f:
+            with open(output_file, "r") as f:
                 assembly = f.read()
 
             # Clean up
@@ -234,36 +218,36 @@ entry:
         # Step 1: Lift to LLVM IR
         llvm_ir = self.lift_to_llvm(binary_data)
         if not llvm_ir:
-            return {'success': False, 'error': 'Lifting failed'}
+            return {"success": False, "error": "Lifting failed"}
 
         # Step 2: Optimize (devirtualize)
         optimized_ir = self.optimize(llvm_ir)
         if not optimized_ir:
-            return {'success': False, 'error': 'Optimization failed'}
+            return {"success": False, "error": "Optimization failed"}
 
         # Step 3: Lower to assembly
         assembly = self.lower_to_assembly(optimized_ir)
         if not assembly:
-            return {'success': False, 'error': 'Lowering failed'}
+            return {"success": False, "error": "Lowering failed"}
 
         return {
-            'success': True,
-            'llvm_ir_original': llvm_ir,
-            'llvm_ir_optimized': optimized_ir,
-            'assembly': assembly,
-            'method': 'llvm_flattening'
+            "success": True,
+            "llvm_ir_original": llvm_ir,
+            "llvm_ir_optimized": optimized_ir,
+            "assembly": assembly,
+            "method": "llvm_flattening",
         }
 
 
 # Optimization pass configuration for devirtualization
 DEVIRTUALIZATION_PASSES = [
-    'instcombine',      # Instruction combining
-    'inline',           # Function inlining (inlines VM handlers)
-    'simplifycfg',      # Simplify CFG (removes dispatcher complexity)
-    'sccp',             # Sparse conditional constant propagation
-    'dce',              # Dead code elimination
-    'loop-unroll',      # Unroll dispatcher loop
-    'gvn',              # Global value numbering
-    'mem2reg',          # Promote memory to registers
-    'constprop',        # Constant propagation
+    "instcombine",  # Instruction combining
+    "inline",  # Function inlining (inlines VM handlers)
+    "simplifycfg",  # Simplify CFG (removes dispatcher complexity)
+    "sccp",  # Sparse conditional constant propagation
+    "dce",  # Dead code elimination
+    "loop-unroll",  # Unroll dispatcher loop
+    "gvn",  # Global value numbering
+    "mem2reg",  # Promote memory to registers
+    "constprop",  # Constant propagation
 ]

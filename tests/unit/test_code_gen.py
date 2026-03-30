@@ -22,9 +22,7 @@ def test_generator_initialises_without_ai(sample_disassembly, sample_analysis):
     assert generator is not None
     assert isinstance(generator.use_ai, bool)
 
-    code = generator.generate_functional_code(
-        "init_reg", sample_disassembly, sample_analysis
-    )
+    code = generator.generate_functional_code("init_reg", sample_disassembly, sample_analysis)
     assert "init_reg" in code
     assert "TODO" in code or "return" in code
 

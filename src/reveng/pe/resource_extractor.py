@@ -300,9 +300,7 @@ class PEResourceExtractor:
         dm = DependencyManager()
         return dm.get_tool_path("resource_hacker")
 
-    def _extract_icons_with_rh(
-        self, binary_path: str, rh_path: str
-    ) -> List[IconResource]:
+    def _extract_icons_with_rh(self, binary_path: str, rh_path: str) -> List[IconResource]:
         """Extract icons using Resource Hacker"""
         try:
             icons = []
@@ -356,9 +354,7 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to extract icons manually: {e}")
             return []
 
-    def _extract_bitmaps_with_rh(
-        self, binary_path: str, rh_path: str
-    ) -> List[IconResource]:
+    def _extract_bitmaps_with_rh(self, binary_path: str, rh_path: str) -> List[IconResource]:
         """Extract bitmaps using Resource Hacker"""
         try:
             bitmaps = []
@@ -412,9 +408,7 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to extract bitmaps manually: {e}")
             return []
 
-    def _extract_strings_with_rh(
-        self, binary_path: str, rh_path: str
-    ) -> List[StringResource]:
+    def _extract_strings_with_rh(self, binary_path: str, rh_path: str) -> List[StringResource]:
         """Extract strings using Resource Hacker"""
         try:
             strings = []
@@ -466,9 +460,7 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to extract strings manually: {e}")
             return []
 
-    def _extract_manifests_with_rh(
-        self, binary_path: str, rh_path: str
-    ) -> List[ManifestResource]:
+    def _extract_manifests_with_rh(self, binary_path: str, rh_path: str) -> List[ManifestResource]:
         """Extract manifests using Resource Hacker"""
         try:
             manifests = []
@@ -493,16 +485,12 @@ class PEResourceExtractor:
 
             if result.returncode == 0:
                 # Parse extracted manifests
-                manifests = self._parse_extracted_manifests(
-                    self.temp_dir / "manifests.rc"
-                )
+                manifests = self._parse_extracted_manifests(self.temp_dir / "manifests.rc")
 
             return manifests
 
         except Exception as e:
-            self.logger.warning(
-                f"Failed to extract manifests with Resource Hacker: {e}"
-            )
+            self.logger.warning(f"Failed to extract manifests with Resource Hacker: {e}")
             return []
 
     def _extract_manifests_manual(self, binary_path: str) -> List[ManifestResource]:
@@ -524,9 +512,7 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to extract manifests manually: {e}")
             return []
 
-    def _extract_version_with_rh(
-        self, binary_path: str, rh_path: str
-    ) -> Optional[VersionResource]:
+    def _extract_version_with_rh(self, binary_path: str, rh_path: str) -> Optional[VersionResource]:
         """Extract version info using Resource Hacker"""
         try:
             # Run Resource Hacker to extract version info
@@ -549,17 +535,13 @@ class PEResourceExtractor:
 
             if result.returncode == 0:
                 # Parse extracted version info
-                version_info = self._parse_extracted_version(
-                    self.temp_dir / "version.rc"
-                )
+                version_info = self._parse_extracted_version(self.temp_dir / "version.rc")
                 return version_info
 
             return None
 
         except Exception as e:
-            self.logger.warning(
-                f"Failed to extract version info with Resource Hacker: {e}"
-            )
+            self.logger.warning(f"Failed to extract version info with Resource Hacker: {e}")
             return None
 
     def _extract_version_manual(self, binary_path: str) -> Optional[VersionResource]:
@@ -580,9 +562,7 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to extract version info manually: {e}")
             return None
 
-    def _extract_custom_with_rh(
-        self, binary_path: str, rh_path: str
-    ) -> List[CustomResource]:
+    def _extract_custom_with_rh(self, binary_path: str, rh_path: str) -> List[CustomResource]:
         """Extract custom resources using Resource Hacker"""
         try:
             custom_resources = []
@@ -607,16 +587,12 @@ class PEResourceExtractor:
 
             if result.returncode == 0:
                 # Parse extracted custom resources
-                custom_resources = self._parse_extracted_custom(
-                    self.temp_dir / "custom.rc"
-                )
+                custom_resources = self._parse_extracted_custom(self.temp_dir / "custom.rc")
 
             return custom_resources
 
         except Exception as e:
-            self.logger.warning(
-                f"Failed to extract custom resources with Resource Hacker: {e}"
-            )
+            self.logger.warning(f"Failed to extract custom resources with Resource Hacker: {e}")
             return []
 
     def _extract_custom_manual(self, binary_path: str) -> List[CustomResource]:
@@ -638,9 +614,7 @@ class PEResourceExtractor:
             self.logger.warning(f"Failed to extract custom resources manually: {e}")
             return []
 
-    def _analyze_resources_for_embedded_files(
-        self, data: bytes
-    ) -> List[CustomResource]:
+    def _analyze_resources_for_embedded_files(self, data: bytes) -> List[CustomResource]:
         """Analyze resources for embedded files"""
         try:
             embedded_files = []

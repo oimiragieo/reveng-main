@@ -9,6 +9,8 @@ import struct
 from dataclasses import dataclass
 from typing import List, Optional
 
+from .bun_extractor import BunExecutableExtractor
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,6 +74,7 @@ class PackerDetector:
 
     def __init__(self):
         """Initialize packer detector"""
+        self.bun_extractor = BunExecutableExtractor()
         logger.info("Packer detector initialized")
 
     def detect(self, file_path: str) -> PackerInfo:
@@ -114,6 +117,17 @@ class PackerDetector:
 
             # 3. Check PE characteristics (if PE file)
             if data[:2] == b"MZ":
+                bun_info = self.bun_extractor.detect(file_path)
+                if bun_info.is_bun_executable:
+                    packer_name = "Bun"
+                    indicators = [
+                        indicator
+                        for indicator in indicators
+                        if not indicator.startswith("Signature match:")
+                    ]
+                    indicators.extend(bun_info.indicators)
+                    confidence = max(confidence, 0.9)
+
                 pe_indicators = self._check_pe_indicators(data)
                 indicators.extend(pe_indicators)
                 if pe_indicators:
@@ -129,7 +143,7 @@ class PackerDetector:
             packed = confidence > 0.3 or entropy > 7.2
 
             # Determine unpacking method
-            if packer_name in ["UPX", "MPRESS"]:
+            if packer_name in ["UPX", "MPRESS", "Bun"]:
                 unpacking_method = "specialized"
             elif packed:
                 unpacking_method = "generic"
@@ -214,9 +228,9 @@ class PackerDetector:
 
             # Read number of sections
             num_sections_offset = pe_offset + 6
-            num_sections = struct.unpack(
-                "<H", data[num_sections_offset : num_sections_offset + 2]
-            )[0]
+            num_sections = struct.unpack("<H", data[num_sections_offset : num_sections_offset + 2])[
+                0
+            ]
 
             # Very few sections can indicate packing
             if num_sections <= 2:
@@ -257,9 +271,7 @@ class PackerDetector:
 
         for section in suspicious_sections:
             if section in data:
-                indicators.append(
-                    f"Suspicious section: {section.decode('ascii', errors='ignore')}"
-                )
+                indicators.append(f"Suspicious section: {section.decode('ascii', errors='ignore')}")
 
         return indicators
 

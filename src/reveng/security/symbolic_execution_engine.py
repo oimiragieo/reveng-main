@@ -16,7 +16,8 @@ Accuracy: 90%+ vulnerability detection (up from 60% with heuristics)
 """
 
 import logging
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional, Tuple
 
@@ -76,6 +77,41 @@ class ExploitTemplate:
     exploit_code: str  # Python code to trigger vulnerability
     description: str
     success_rate: float  # Estimated success rate (0.0-1.0)
+
+
+@dataclass
+class ExploitInput:
+    """Generated exploit input for compatibility symbolic path exploration APIs."""
+
+    vulnerability_type: str
+    input_data: bytes
+    expected_outcome: str
+    constraints: List[str] = field(default_factory=list)
+    confidence: float = 0.0
+
+
+@dataclass
+class SymbolicVulnerability:
+    """Vulnerability discovered through symbolic path exploration."""
+
+    type: str
+    address: int
+    function_name: str
+    description: str
+    exploit_input: Optional[ExploitInput] = None
+    severity: str = "medium"
+    cwe_id: Optional[str] = None
+
+
+@dataclass
+class PathExplorationResult:
+    """Results from compatibility symbolic path exploration."""
+
+    paths_explored: int
+    vulnerabilities: List[SymbolicVulnerability]
+    code_coverage: float
+    execution_time: float
+    constraints_solved: int
 
 
 class SymbolicExecutionEngine:
@@ -148,6 +184,13 @@ class SymbolicExecutionEngine:
         self.timeout = self._get_timeout()
 
         self.vulnerabilities: List[Vulnerability] = []
+        self._cfg = None
+
+    def run_cfg_fast(self):
+        """Build and cache the angr CFGFast analysis for reuse across checks."""
+        if self._cfg is None:
+            self._cfg = self.project.analyses.CFGFast()
+        return self._cfg
 
     def _get_max_paths(self) -> int:
         """Get maximum paths to explore based on analysis depth"""
@@ -206,13 +249,88 @@ class SymbolicExecutionEngine:
         logger.info(f"Discovery complete: {len(self.vulnerabilities)} vulnerabilities found")
         return self.vulnerabilities
 
+    async def explore_paths(
+        self,
+        target_function: Optional[str] = None,
+        max_depth: int = 100,
+        timeout: int = 300,
+    ) -> PathExplorationResult:
+        """Compatibility wrapper for the legacy async symbolic execution API."""
+        start_time = time.time()
+
+        if target_function:
+            cfg = self.run_cfg_fast()
+            func = next(
+                (
+                    function
+                    for function in cfg.kb.functions.values()
+                    if function.name == target_function
+                ),
+                None,
+            )
+            if func is None:
+                logger.error("Function %s not found", target_function)
+                return PathExplorationResult(
+                    paths_explored=0,
+                    vulnerabilities=[],
+                    code_coverage=0.0,
+                    execution_time=0.0,
+                    constraints_solved=0,
+                )
+            state = self.project.factory.call_state(func.addr)
+        else:
+            state = self.project.factory.entry_state()
+
+        simgr = self.project.factory.simulation_manager(state)
+        vulnerabilities: List[SymbolicVulnerability] = []
+        seen_vulnerabilities = set()
+        steps = 0
+
+        try:
+            while simgr.active and steps < max_depth and time.time() - start_time < timeout:
+                simgr.step()
+                steps += 1
+
+                for sim_state in list(simgr.active) + list(simgr.deadended):
+                    for vuln in self._check_state_for_symbolic_vulnerabilities(sim_state):
+                        key = (vuln.type, vuln.address)
+                        if key not in seen_vulnerabilities:
+                            seen_vulnerabilities.add(key)
+                            vulnerabilities.append(vuln)
+
+                if len(simgr.active) > min(self.max_paths, 100):
+                    logger.warning("Too many active states, pruning...")
+                    simgr.prune()
+
+        except Exception as e:
+            logger.error("Symbolic path exploration error: %s", e)
+
+        execution_time = time.time() - start_time
+        paths_explored = len(simgr.active) + len(simgr.deadended)
+        coverage = self._calculate_coverage(simgr)
+
+        logger.info(
+            "Path exploration complete: %s paths, %s vulnerabilities, %.1f%% coverage",
+            paths_explored,
+            len(vulnerabilities),
+            coverage * 100,
+        )
+
+        return PathExplorationResult(
+            paths_explored=paths_explored,
+            vulnerabilities=vulnerabilities,
+            code_coverage=coverage,
+            execution_time=execution_time,
+            constraints_solved=paths_explored,
+        )
+
     def _find_dangerous_calls(self) -> List[Tuple[int, str]]:
         """Find calls to dangerous functions"""
-        dangerous_calls = []
+        dangerous_calls: List[Tuple[int, str]] = []
 
         # Get CFG (Control Flow Graph)
         try:
-            cfg = self.project.analyses.CFGFast()
+            cfg = self.run_cfg_fast()
         except Exception as e:
             logger.error(f"Failed to generate CFG: {e}")
             return dangerous_calls
@@ -284,6 +402,126 @@ class SymbolicExecutionEngine:
             logger.debug(f"Failed to analyze {func_name}: {e}")
             return None
 
+    def _check_state_for_symbolic_vulnerabilities(self, state) -> List[SymbolicVulnerability]:
+        """Detect legacy symbolic path-exploration vulnerabilities for compatibility APIs."""
+        vulnerabilities: List[SymbolicVulnerability] = []
+
+        try:
+            if self._is_symbolic_buffer_overflow(state):
+                vulnerabilities.append(
+                    SymbolicVulnerability(
+                        type="buffer_overflow",
+                        address=state.addr,
+                        function_name=self._get_containing_function(state.addr),
+                        description="Potential buffer overflow detected",
+                        exploit_input=self._generate_symbolic_exploit_input(
+                            state, "buffer_overflow"
+                        ),
+                        severity="critical",
+                        cwe_id="CWE-120",
+                    )
+                )
+
+            if self._is_symbolic_null_deref(state):
+                vulnerabilities.append(
+                    SymbolicVulnerability(
+                        type="null_pointer_dereference",
+                        address=state.addr,
+                        function_name=self._get_containing_function(state.addr),
+                        description="Null pointer dereference detected",
+                        exploit_input=self._generate_symbolic_exploit_input(state, "null_deref"),
+                        severity="high",
+                        cwe_id="CWE-476",
+                    )
+                )
+
+            if self._is_symbolic_divide_by_zero(state):
+                vulnerabilities.append(
+                    SymbolicVulnerability(
+                        type="division_by_zero",
+                        address=state.addr,
+                        function_name=self._get_containing_function(state.addr),
+                        description="Division by zero detected",
+                        severity="medium",
+                        cwe_id="CWE-369",
+                    )
+                )
+
+        except Exception as e:
+            logger.debug("Compatibility symbolic state check failed: %s", e)
+
+        return vulnerabilities
+
+    def _is_symbolic_buffer_overflow(self, state) -> bool:
+        """Detect potential buffer overflows during path exploration."""
+        try:
+            if state.solver.symbolic(state.regs.pc) and state.solver.satisfiable():
+                return True
+
+            stack_pointer = getattr(state.regs, "sp", None)
+            if stack_pointer is not None and state.solver.symbolic(stack_pointer):
+                return state.solver.satisfiable()
+
+        except Exception:
+            pass
+
+        return False
+
+    def _is_symbolic_null_deref(self, state) -> bool:
+        """Detect potential NULL dereferences during path exploration."""
+        try:
+            for action in state.history.actions:
+                if (
+                    getattr(action, "type", None) == "mem"
+                    and getattr(action, "action", None) == "read"
+                ):
+                    addr = getattr(action, "addr", None)
+                    if addr is not None and state.solver.satisfiable(extra_constraints=[addr == 0]):
+                        return True
+
+        except Exception:
+            pass
+
+        return False
+
+    def _is_symbolic_divide_by_zero(self, state) -> bool:
+        """Detect potential division-by-zero during path exploration."""
+        try:
+            for action in state.history.actions:
+                if getattr(action, "type", None) == "operation" and getattr(
+                    action, "action", None
+                ) in {"Div", "Mod"}:
+                    args = getattr(action, "args", ())
+                    if len(args) > 1 and state.solver.satisfiable(extra_constraints=[args[1] == 0]):
+                        return True
+
+        except Exception:
+            pass
+
+        return False
+
+    def _generate_symbolic_exploit_input(self, state, vuln_type: str) -> ExploitInput:
+        """Generate a concrete input for the compatibility symbolic execution API."""
+        try:
+            if state.solver.satisfiable():
+                return ExploitInput(
+                    vulnerability_type=vuln_type,
+                    input_data=state.posix.dumps(0),
+                    expected_outcome="crash" if vuln_type == "buffer_overflow" else "undefined",
+                    constraints=[str(constraint) for constraint in state.solver.constraints[:5]],
+                    confidence=0.8,
+                )
+
+        except Exception as e:
+            logger.debug("Failed to generate symbolic exploit input: %s", e)
+
+        return ExploitInput(
+            vulnerability_type=vuln_type,
+            input_data=b"A" * 100,
+            expected_outcome="unknown",
+            confidence=0.3,
+        )
+
     def _check_exploitability(
         self, state: angr.SimState, func_name: str, vuln_type: VulnerabilityType
     ) -> Tuple[bool, Optional[bytes]]:
@@ -351,14 +589,32 @@ class SymbolicExecutionEngine:
     def _get_containing_function(self, address: int) -> str:
         """Get name of function containing address"""
         try:
-            cfg = self.project.analyses.CFGFast()
+            cfg = self.run_cfg_fast()
             func = cfg.kb.functions.floor_func(address)
             if func:
-                return func.name
+                return str(func.name)
         except Exception:
             pass
 
         return f"function_at_{hex(address)}"
+
+    def _calculate_coverage(self, simgr) -> float:
+        """Calculate the code coverage achieved during compatibility path exploration."""
+        try:
+            visited_addrs = set()
+
+            for stash_name in ("active", "deadended", "found"):
+                for sim_state in getattr(simgr, stash_name, []):
+                    visited_addrs.update(sim_state.history.bbl_addrs)
+
+            total_blocks = len(self.run_cfg_fast().nodes())
+            if total_blocks == 0:
+                return 0.0
+
+            return len(visited_addrs) / total_blocks
+
+        except Exception:
+            return 0.0
 
     def _get_cwe_id(self, vuln_type: VulnerabilityType) -> int:
         """Get CWE identifier for vulnerability type"""
@@ -536,3 +792,102 @@ print("Exploit template - requires manual implementation")
             description=f"Generic {vuln.type.value} exploit template",
             success_rate=0.3,
         )
+
+    async def generate_test_cases(
+        self, coverage_target: float = 0.95, max_cases: int = 100
+    ) -> List[bytes]:
+        """Generate symbolic test inputs for compatibility with the legacy API."""
+        logger.info(
+            "Generating symbolic test cases (target coverage: %.0f%%)", coverage_target * 100
+        )
+
+        test_cases: List[bytes] = []
+        covered_blocks = set()
+        simgr = self.project.factory.simulation_manager(self.project.factory.entry_state())
+
+        while len(test_cases) < max_cases:
+            simgr.run(n=10)
+
+            for sim_state in list(simgr.deadended) + list(simgr.active):
+                if len(test_cases) >= max_cases:
+                    break
+
+                try:
+                    if sim_state.solver.satisfiable():
+                        input_data = sim_state.posix.dumps(0)
+                        if input_data not in test_cases:
+                            test_cases.append(input_data)
+                        covered_blocks.update(sim_state.history.bbl_addrs)
+                except Exception:
+                    continue
+
+            total_blocks = len(self.run_cfg_fast().nodes())
+            if total_blocks > 0 and (len(covered_blocks) / total_blocks) >= coverage_target:
+                break
+
+            if not simgr.active:
+                break
+
+        logger.info("Generated %s symbolic test cases", len(test_cases))
+        return test_cases
+
+    async def deobfuscate_function(self, function_name: str) -> Optional[str]:
+        """Deobfuscate a function using symbolic constraints for compatibility with the legacy API."""
+        logger.info("Deobfuscating function: %s", function_name)
+
+        function = next(
+            (
+                candidate
+                for candidate in self.run_cfg_fast().kb.functions.values()
+                if candidate.name == function_name
+            ),
+            None,
+        )
+        if function is None:
+            logger.error("Function %s not found", function_name)
+            return None
+
+        try:
+            state = self.project.factory.call_state(function.addr)
+            simgr = self.project.factory.simulation_manager(state)
+            simgr.run()
+
+            constraints = []
+            for sim_state in simgr.deadended:
+                constraints.extend(sim_state.solver.constraints)
+
+            simplified = self._simplify_constraints(constraints)
+            return self._constraints_to_pseudocode(simplified)
+
+        except Exception as e:
+            logger.error("Deobfuscation failed: %s", e)
+            return None
+
+    def _simplify_constraints(self, constraints: List) -> List:
+        """Simplify symbolic constraints via Z3 when available."""
+        try:
+            import z3
+
+            simplified = []
+            for constraint in constraints[:10]:
+                try:
+                    simplified.append(z3.simplify(constraint))
+                except Exception:
+                    simplified.append(constraint)
+            return simplified
+
+        except ImportError:
+            logger.warning("Z3 not available for constraint simplification")
+            return constraints
+
+    def _constraints_to_pseudocode(self, constraints: List) -> str:
+        """Convert symbolic constraints to readable pseudocode."""
+        pseudocode = "// Deobfuscated logic:\n\n"
+
+        for index, constraint in enumerate(constraints, start=1):
+            pseudocode += f"// Constraint {index}:\n"
+            pseudocode += f"if ({constraint}) {{\n"
+            pseudocode += f"  // Path {index}\n"
+            pseudocode += "}\n\n"
+
+        return pseudocode

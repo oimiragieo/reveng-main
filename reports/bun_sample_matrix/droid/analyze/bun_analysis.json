@@ -1,0 +1,2006 @@
+{
+  "route": "bun",
+  "binary_path": "C:\\dev\\droid.exe",
+  "bundle_output": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bundle.js",
+  "bundle_hash": "c396e60b0e9dc79ea702c77c06954f426d5884c252766eae4a5e22c3c7840bc5",
+  "javascript_size": 66593663,
+  "canonical_recompilation_input": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\droid.exe",
+  "canonical_recompilation_reason": "Recovered Bun virtual file excludes appended bundle metadata",
+  "report_severity": {
+    "dimension": "reconstruction_risk",
+    "level": "high",
+    "score": 100,
+    "summary": "High reconstruction risk; 7 attention factors detected.",
+    "factors": [
+      {
+        "level": "high",
+        "source": "native_stub",
+        "message": "Native startup looks runtime-driven and may require dynamic observation or staged dumping."
+      },
+      {
+        "level": "medium",
+        "source": "native_stub",
+        "message": "Loader-style imports are present in the startup profile: CreateProcessW, GetProcAddress, LoadLibraryA, LoadLibraryW"
+      },
+      {
+        "level": "high",
+        "source": "dump_guidance",
+        "message": "Static recovery alone may be incomplete; dump/import reconstruction guidance was triggered."
+      },
+      {
+        "level": "medium",
+        "source": "semantic_checks",
+        "message": "Dependency versions were not inferred; install and pin recovered packages manually"
+      },
+      {
+        "level": "medium",
+        "source": "semantic_checks",
+        "message": "Dependency inference ignored embedded package-name strings that were not used by direct import/require sites"
+      },
+      {
+        "level": "medium",
+        "source": "semantic_checks",
+        "message": "Node built-in modules were detected and excluded from package installation guidance"
+      },
+      {
+        "level": "medium",
+        "source": "semantic_checks",
+        "message": "Recovered source uses await semantics that may require ESM-aware packaging"
+      }
+    ]
+  },
+  "runtime_escalation": {
+    "dimension": "runtime_escalation",
+    "recommended": true,
+    "status": "targeted_runtime_observation",
+    "confidence": "medium",
+    "summary": "Targeted runtime observation is recommended before making stronger fidelity claims.",
+    "reasons": [
+      "Native startup looks runtime-driven, so static recovery may miss late materialization.",
+      "Dump/import-reconstruction guidance was triggered by Bun handoff or loader-style startup evidence.",
+      "Overall reconstruction risk is high, which justifies runtime validation before overclaiming fidelity."
+    ],
+    "next_steps": [
+      {
+        "priority": 1,
+        "kind": "set_breakpoints",
+        "title": "Set targeted startup breakpoints",
+        "summary": "Use the recommended entrypoint/TLS/callsite breakpoints before later startup stages hide useful evidence.",
+        "evidence": [
+          "breakpoints:entrypoint, tls_callback[0], tls_callback[1]"
+        ]
+      },
+      {
+        "priority": 3,
+        "kind": "reconstruct_imports",
+        "title": "Trace and reconstruct dynamic imports",
+        "summary": "Instrument import-resolution callsites when loader-style APIs dominate the startup path.",
+        "evidence": [
+          "dump_guidance:import_reconstruction"
+        ]
+      }
+    ],
+    "evidence": {
+      "report_severity_level": "high",
+      "report_severity_score": 100,
+      "dump_guidance_recommended": true,
+      "breakpoint_count": 9,
+      "dump_point_count": 0,
+      "differential_status": null,
+      "verification_status": null
+    }
+  },
+  "bundle_info": {
+    "section_name": ".bun",
+    "bundle_size": 50341335,
+    "javascript_start_offset": 23,
+    "indicators": [
+      "Bun PE section detected: .bun",
+      "Bun bundle size prefix detected: 8 bytes",
+      "Bun JavaScript marker detected"
+    ]
+  },
+  "bunfs_recovery": {
+    "success": true,
+    "mode": "module_graph",
+    "module_layout": "full",
+    "output_dir": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs",
+    "manifest_path": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\module_graph.json",
+    "recovered_files": [
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\droid.exe",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\droid.exe.bunmap",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\librust_pty-0ydm4m2h.dylib",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\librust_pty-6h2x94h6.so",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\librust_pty_arm64-b7hv765h.dylib",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\librust_pty_arm64-kkpzdzzv.so",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\rust_pty-fazdxkv2.dll",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\keytar-hqpjzrak.",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\rg-56avgsjb.",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\fx-ack01-rq3rjepv.wav",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\fx-ok01-rhh925cm.wav",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\agent-browser-dt534260.",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\browser.js-fkwgsswp.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\encryption.js-6garpcff.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\protocol.js-9p4zsyeq.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\auth-cli.js-eacq5f6n.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\diff.js-bt8ysgvr.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\daemon.js-1q1bd8jd.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\ios-actions.js-qnmag2pd.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\ios-manager.js-hg61qtdx.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\state-utils.js-mftatd5a.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\action-policy.js-9pz6fjmj.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\domain-filter.js-wprxqhjz.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\types.js-9bdjgxhp.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\snapshot.js-67c87b2e.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\actions.js-fqevp0cr.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\confirmation.js-8vkz295p.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\auth-vault.js-k3xms9n4.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\stream-server.js-vpsmrcas.asset",
+      "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\module_graph.json"
+    ],
+    "error_message": null
+  },
+  "normalized_project": {
+    "success": true,
+    "output_dir": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\normalized_project",
+    "entrypoint_path": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\normalized_project\\droid.mjs",
+    "sea_entrypoint_path": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\normalized_project\\sea-entry.cjs",
+    "sea_config_path": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\normalized_project\\sea-config.json",
+    "package_json_path": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\normalized_project\\package.json",
+    "manifest_path": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\normalized_project\\normalization_manifest.json",
+    "inferred_dependencies": [
+      "ws",
+      "vscode",
+      "async_hooks",
+      "node-fetch",
+      "abort-controller"
+    ],
+    "runtime_features": [
+      "bun_import_meta_require",
+      "import_meta_url",
+      "await_usage",
+      "bun_global_usage"
+    ],
+    "shims_applied": [
+      "bun global bootstrap",
+      "createRequire import",
+      "import.meta.require replacement",
+      "bun:ffi replacement"
+    ],
+    "semantic_checks": [
+      {
+        "check": "dependency_import_sanity",
+        "severity": "warning",
+        "message": "Dependency versions were not inferred; install and pin recovered packages manually"
+      },
+      {
+        "check": "embedded_package_strings",
+        "severity": "warning",
+        "message": "Dependency inference ignored embedded package-name strings that were not used by direct import/require sites"
+      },
+      {
+        "check": "builtin_module_usage",
+        "severity": "warning",
+        "message": "Node built-in modules were detected and excluded from package installation guidance"
+      },
+      {
+        "check": "esm_await_packaging",
+        "severity": "warning",
+        "message": "Recovered source uses await semantics that may require ESM-aware packaging"
+      },
+      {
+        "check": "bun_require_shim",
+        "severity": "info",
+        "message": "Bun-specific runtime constructs were rewritten during normalization"
+      }
+    ],
+    "postprocessing_hooks": [
+      {
+        "tool": "webcrack",
+        "category": "debundling",
+        "reason": "Recovered JavaScript shows bundling/module-wrapper patterns that may be debundled into clearer modules.",
+        "suggested_input": "normalized entrypoint",
+        "command_template": "npx webcrack <normalized-entrypoint> -o <debundled-output-dir>"
+      },
+      {
+        "tool": "bundle-breaker",
+        "category": "debundling",
+        "reason": "Recovered JavaScript contains bundle-style structure that may be split into a module tree by a dedicated debundler.",
+        "suggested_input": "normalized entrypoint",
+        "command_template": "npx bundle-breaker <normalized-entrypoint> --out-dir <bundle-breaker-output-dir>"
+      },
+      {
+        "tool": "wakaru",
+        "category": "readability_normalization",
+        "reason": "Recovered JavaScript may benefit from readability-oriented deobfuscation or normalization after Bun-specific shims.",
+        "suggested_input": "normalized entrypoint",
+        "command_template": "npx wakaru <normalized-entrypoint> -o <wakaru-output>"
+      },
+      {
+        "tool": "restringer",
+        "category": "deobfuscation",
+        "reason": "Recovered JavaScript shows patterns where a general JavaScript deobfuscator may recover cleaner control flow or string structure.",
+        "suggested_input": "normalized entrypoint",
+        "command_template": "npx restringer <normalized-entrypoint> > <restringer-output>"
+      }
+    ],
+    "warnings": [
+      "Dependency versions were not inferred; install and pin recovered packages manually",
+      "Dependency inference ignored embedded package-name strings that were not used by direct import/require sites",
+      "Node built-in modules were detected and excluded from package installation guidance",
+      "Recovered source uses await semantics that may require ESM-aware packaging"
+    ],
+    "error_message": null
+  },
+  "native_stub": {
+    "container": "pe",
+    "machine": "0x8664",
+    "entry_point_rva": 59102424,
+    "image_base": 5368709120,
+    "entry_point_section": ".text",
+    "entry_point_preview": [
+      {
+        "address": 5427811544,
+        "mnemonic": "sub",
+        "op_str": "rsp, 0x28",
+        "target_address": null,
+        "target_rva": null,
+        "target_section": null,
+        "import_target": null,
+        "rip_relative_address": null,
+        "rip_relative_section": null
+      },
+      {
+        "address": 5427811548,
+        "mnemonic": "call",
+        "op_str": "0x14385dd0c",
+        "target_address": 5427813644,
+        "target_rva": 59104524,
+        "target_section": ".text",
+        "import_target": null,
+        "rip_relative_address": null,
+        "rip_relative_section": null
+      },
+      {
+        "address": 5427811553,
+        "mnemonic": "add",
+        "op_str": "rsp, 0x28",
+        "target_address": null,
+        "target_rva": null,
+        "target_section": null,
+        "import_target": null,
+        "rip_relative_address": null,
+        "rip_relative_section": null
+      },
+      {
+        "address": 5427811557,
+        "mnemonic": "jmp",
+        "op_str": "0x14385d35c",
+        "target_address": 5427811164,
+        "target_rva": 59102044,
+        "target_section": ".text",
+        "import_target": null,
+        "rip_relative_address": null,
+        "rip_relative_section": null
+      },
+      {
+        "address": 5427811562,
+        "mnemonic": "int3",
+        "op_str": "",
+        "target_address": null,
+        "target_rva": null,
+        "target_section": null,
+        "import_target": null,
+        "rip_relative_address": null,
+        "rip_relative_section": null
+      },
+      {
+        "address": 5427811563,
+        "mnemonic": "int3",
+        "op_str": "",
+        "target_address": null,
+        "target_rva": null,
+        "target_section": null,
+        "import_target": null,
+        "rip_relative_address": null,
+        "rip_relative_section": null
+      },
+      {
+        "address": 5427811564,
+        "mnemonic": "mov",
+        "op_str": "qword ptr [rsp + 8], rbx",
+        "target_address": null,
+        "target_rva": null,
+        "target_section": null,
+        "import_target": null,
+        "rip_relative_address": null,
+        "rip_relative_section": null
+      },
+      {
+        "address": 5427811569,
+        "mnemonic": "push",
+        "op_str": "rdi",
+        "target_address": null,
+        "target_rva": null,
+        "target_section": null,
+        "import_target": null,
+        "rip_relative_address": null,
+        "rip_relative_section": null
+      }
+    ],
+    "section_names": [
+      ".text",
+      ".rdata",
+      ".data",
+      ".pdata",
+      ".fptable",
+      ".tls",
+      "_RDATA",
+      "__DATA,_",
+      "__DATA,_",
+      ".rsrc",
+      ".reloc",
+      ".bun"
+    ],
+    "tls_directory_rva": 104397104,
+    "tls_callback_vas": [
+      5408240096,
+      5407266992,
+      5425976800,
+      5425976976
+    ],
+    "tls_callbacks": [
+      {
+        "virtual_address": 5408240096,
+        "rva": 39530976,
+        "section_name": ".text",
+        "file_offset": 39527904,
+        "instruction_preview": [
+          {
+            "address": 5408240096,
+            "mnemonic": "push",
+            "op_str": "rbp",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240097,
+            "mnemonic": "push",
+            "op_str": "rsi",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240098,
+            "mnemonic": "push",
+            "op_str": "rdi",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240099,
+            "mnemonic": "sub",
+            "op_str": "rsp, 0x30",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240103,
+            "mnemonic": "lea",
+            "op_str": "rbp, [rsp + 0x30]",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240108,
+            "mnemonic": "mov",
+            "op_str": "qword ptr [rbp - 8], 0xfffffffffffffffe",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240116,
+            "mnemonic": "cmp",
+            "op_str": "edx, 3",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240119,
+            "mnemonic": "je",
+            "op_str": "0x1425b3201",
+            "target_address": 5408240129,
+            "target_rva": 39531009,
+            "target_section": ".text",
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          }
+        ]
+      },
+      {
+        "virtual_address": 5407266992,
+        "rva": 38557872,
+        "section_name": ".text",
+        "file_offset": 38554800,
+        "instruction_preview": [
+          {
+            "address": 5407266992,
+            "mnemonic": "push",
+            "op_str": "r15",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5407266994,
+            "mnemonic": "push",
+            "op_str": "r14",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5407266996,
+            "mnemonic": "push",
+            "op_str": "r13",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5407266998,
+            "mnemonic": "push",
+            "op_str": "r12",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5407267000,
+            "mnemonic": "push",
+            "op_str": "rsi",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5407267001,
+            "mnemonic": "push",
+            "op_str": "rdi",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5407267002,
+            "mnemonic": "push",
+            "op_str": "rbx",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5407267003,
+            "mnemonic": "sub",
+            "op_str": "rsp, 0x30",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          }
+        ]
+      },
+      {
+        "virtual_address": 5425976800,
+        "rva": 57267680,
+        "section_name": ".text",
+        "file_offset": 57264608,
+        "instruction_preview": [
+          {
+            "address": 5425976800,
+            "mnemonic": "cmp",
+            "op_str": "edx, 2",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976803,
+            "mnemonic": "jne",
+            "op_str": "0x14369d645",
+            "target_address": 5425976901,
+            "target_rva": 57267781,
+            "target_section": ".text",
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976805,
+            "mnemonic": "mov",
+            "op_str": "qword ptr [rsp + 8], rbx",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976810,
+            "mnemonic": "push",
+            "op_str": "rdi",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976811,
+            "mnemonic": "sub",
+            "op_str": "rsp, 0x20",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976815,
+            "mnemonic": "mov",
+            "op_str": "ecx, dword ptr [rip + 0x320a623]",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": 5478448152,
+            "rip_relative_section": ".data"
+          },
+          {
+            "address": 5425976821,
+            "mnemonic": "mov",
+            "op_str": "rax, qword ptr gs:[0x58]",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976830,
+            "mnemonic": "mov",
+            "op_str": "r8d, 0x4bdda4",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          }
+        ]
+      },
+      {
+        "virtual_address": 5425976976,
+        "rva": 57267856,
+        "section_name": ".text",
+        "file_offset": 57264784,
+        "instruction_preview": [
+          {
+            "address": 5425976976,
+            "mnemonic": "mov",
+            "op_str": "rax, rsp",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976979,
+            "mnemonic": "mov",
+            "op_str": "qword ptr [rax + 8], rbx",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976983,
+            "mnemonic": "mov",
+            "op_str": "qword ptr [rax + 0x10], rbp",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976987,
+            "mnemonic": "mov",
+            "op_str": "qword ptr [rax + 0x18], rsi",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976991,
+            "mnemonic": "mov",
+            "op_str": "qword ptr [rax + 0x20], rdi",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976995,
+            "mnemonic": "push",
+            "op_str": "r14",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976997,
+            "mnemonic": "sub",
+            "op_str": "rsp, 0x20",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425977001,
+            "mnemonic": "cmp",
+            "op_str": "edx, 3",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          }
+        ]
+      }
+    ],
+    "import_dlls": [
+      "ntdll.dll",
+      "KERNEL32.dll",
+      "SHELL32.dll",
+      "USERENV.dll",
+      "USER32.dll",
+      "api-ms-win-core-synch-l1-2-0.dll"
+    ],
+    "imported_functions": [
+      "NtAllocateVirtualMemory",
+      "NtClose",
+      "NtCreateFile",
+      "NtCreateNamedPipeFile",
+      "NtDeviceIoControlFile",
+      "NtFreeVirtualMemory",
+      "NtLockFile",
+      "NtQueryAttributesFile",
+      "NtQueryDirectoryFile",
+      "NtQueryInformationFile",
+      "NtQueryInformationProcess",
+      "NtQueryObject",
+      "NtQueryVolumeInformationFile",
+      "NtReadFile",
+      "NtSetInformationFile",
+      "NtWriteFile",
+      "RtlAddFunctionTable",
+      "RtlCaptureContext",
+      "RtlCaptureStackBackTrace",
+      "RtlDeleteFunctionTable",
+      "RtlEqualUnicodeString",
+      "RtlExitUserProcess",
+      "RtlGetFullPathName_U",
+      "RtlGetSystemTimePrecise",
+      "RtlGetVersion",
+      "RtlLookupFunctionEntry",
+      "RtlNtStatusToDosError",
+      "RtlPcToFileHeader",
+      "RtlQueryPerformanceCounter",
+      "RtlQueryPerformanceFrequency",
+      "RtlSetCurrentDirectory_U",
+      "RtlUnwind",
+      "RtlUnwindEx",
+      "RtlUpcaseUnicodeChar",
+      "RtlVirtualUnwind",
+      "RtlWaitOnAddress",
+      "RtlWakeAddressAll",
+      "RtlWakeAddressSingle",
+      "VerSetConditionMask",
+      "AcquireSRWLockExclusive",
+      "AcquireSRWLockShared",
+      "AddVectoredExceptionHandler",
+      "AreFileApisANSI",
+      "AssignProcessToJobObject",
+      "BeginUpdateResourceW",
+      "CancelIo",
+      "CancelIoEx",
+      "CancelSynchronousIo",
+      "CloseHandle",
+      "CompareStringEx",
+      "CompareStringOrdinal",
+      "CompareStringW",
+      "ConnectNamedPipe",
+      "CopyFileW",
+      "CreateDirectoryExW",
+      "CreateDirectoryW",
+      "CreateEventA",
+      "CreateFileA",
+      "CreateFileMappingA",
+      "CreateFileMappingW",
+      "CreateFileW",
+      "CreateHardLinkW",
+      "CreateIoCompletionPort",
+      "CreateJobObjectA",
+      "CreateJobObjectW",
+      "CreateMutexA",
+      "CreateMutexW",
+      "CreateNamedPipeA",
+      "CreateNamedPipeW",
+      "CreateProcessW",
+      "CreateSemaphoreA",
+      "CreateSymbolicLinkW",
+      "CreateThread",
+      "DebugBreak",
+      "DecodePointer",
+      "DeleteCriticalSection",
+      "DeleteFileA",
+      "DeleteFileW",
+      "DeviceIoControl",
+      "DiscardVirtualMemory",
+      "DuplicateHandle",
+      "EncodePointer",
+      "EndUpdateResourceW",
+      "EnterCriticalSection",
+      "EnumResourceLanguagesW",
+      "EnumResourceNamesW",
+      "EnumSystemLocalesW",
+      "ExitProcess",
+      "ExitThread",
+      "ExpandEnvironmentStringsA",
+      "FileTimeToSystemTime",
+      "FillConsoleOutputAttribute",
+      "FillConsoleOutputCharacterW",
+      "FindClose",
+      "FindFirstFileExW",
+      "FindFirstFileW",
+      "FindNextFileW",
+      "FindResourceExW",
+      "FindResourceW",
+      "FlsAlloc",
+      "FlsFree",
+      "FlsGetValue",
+      "FlsSetValue",
+      "FlushFileBuffers",
+      "FlushViewOfFile",
+      "FormatMessageA",
+      "FormatMessageW",
+      "FreeEnvironmentStringsW",
+      "FreeLibrary",
+      "FreeLibraryAndExitThread",
+      "FreeResource",
+      "GetACP",
+      "GetCPInfo",
+      "GetCommandLineA",
+      "GetCommandLineW",
+      "GetComputerNameA",
+      "GetConsoleCP",
+      "GetConsoleCursorInfo",
+      "GetConsoleMode",
+      "GetConsoleOutputCP",
+      "GetConsoleScreenBufferInfo",
+      "GetConsoleTitleW",
+      "GetCurrencyFormatEx",
+      "GetCurrentDirectoryA",
+      "GetCurrentDirectoryW",
+      "GetCurrentProcess",
+      "GetCurrentProcessId",
+      "GetCurrentProcessorNumber",
+      "GetCurrentThread",
+      "GetCurrentThreadId",
+      "GetCurrentThreadStackLimits",
+      "GetDateFormatEx",
+      "GetDateFormatW",
+      "GetDiskFreeSpaceA",
+      "GetDiskFreeSpaceW",
+      "GetDriveTypeW",
+      "GetDynamicTimeZoneInformation",
+      "GetEnvironmentStringsW",
+      "GetEnvironmentVariableA",
+      "GetEnvironmentVariableW",
+      "GetExitCodeProcess",
+      "GetFileAttributesA",
+      "GetFileAttributesExW",
+      "GetFileAttributesW",
+      "GetFileInformationByHandle",
+      "GetFileInformationByHandleEx",
+      "GetFileSize",
+      "GetFileSizeEx",
+      "GetFileType",
+      "GetFinalPathNameByHandleW",
+      "GetFullPathNameA",
+      "GetFullPathNameW",
+      "GetGeoInfoW",
+      "GetLargePageMinimum",
+      "GetLastError",
+      "GetLocaleInfoEx",
+      "GetLocaleInfoW",
+      "GetLongPathNameW",
+      "GetModuleFileNameW",
+      "GetModuleHandleA",
+      "GetModuleHandleExW",
+      "GetModuleHandleW",
+      "GetNamedPipeClientProcessId",
+      "GetNamedPipeHandleStateA",
+      "GetNamedPipeServerProcessId",
+      "GetNativeSystemInfo",
+      "GetNumaHighestNodeNumber",
+      "GetNumaNodeProcessorMask",
+      "GetNumberFormatEx",
+      "GetNumberOfConsoleInputEvents",
+      "GetOEMCP",
+      "GetOverlappedResult",
+      "GetPriorityClass",
+      "GetProcAddress",
+      "GetProcessAffinityMask",
+      "GetProcessHeap",
+      "GetProcessId",
+      "GetProcessIoCounters",
+      "GetProcessTimes",
+      "GetQueuedCompletionStatus",
+      "GetQueuedCompletionStatusEx",
+      "GetShortPathNameW",
+      "GetStartupInfoW",
+      "GetStdHandle",
+      "GetStringTypeW",
+      "GetSystemDirectoryA",
+      "GetSystemDirectoryW",
+      "GetSystemInfo",
+      "GetSystemTime",
+      "GetSystemTimeAsFileTime",
+      "GetSystemTimePreciseAsFileTime",
+      "GetTempPathA",
+      "GetTempPathW",
+      "GetThreadContext",
+      "GetThreadDescription",
+      "GetThreadTimes",
+      "GetTickCount",
+      "GetTickCount64",
+      "GetTimeFormatEx",
+      "GetTimeFormatW",
+      "GetTimeZoneInformation",
+      "GetTimeZoneInformationForYear",
+      "GetUserDefaultLCID",
+      "GetUserDefaultUILanguage",
+      "GetUserGeoID",
+      "GlobalMemoryStatusEx",
+      "HeapAlloc",
+      "HeapCompact",
+      "HeapCreate",
+      "HeapDestroy",
+      "HeapFree",
+      "HeapReAlloc",
+      "HeapSize",
+      "HeapValidate",
+      "InitOnceBeginInitialize",
+      "InitOnceComplete",
+      "InitOnceExecuteOnce",
+      "InitializeConditionVariable",
+      "InitializeCriticalSection",
+      "InitializeCriticalSectionAndSpinCount",
+      "InitializeCriticalSectionEx",
+      "InitializeProcThreadAttributeList",
+      "InitializeSListHead",
+      "InitializeSRWLock",
+      "InterlockedPushEntrySList",
+      "IsDebuggerPresent",
+      "IsProcessInJob",
+      "IsProcessorFeaturePresent",
+      "IsValidCodePage",
+      "IsValidLocale",
+      "K32EnumProcessModules",
+      "K32GetModuleBaseNameW",
+      "K32GetModuleFileNameExA",
+      "K32GetProcessMemoryInfo",
+      "LCIDToLocaleName",
+      "LCMapStringEx",
+      "LCMapStringW",
+      "LeaveCriticalSection",
+      "LoadLibraryA",
+      "LoadLibraryExA",
+      "LoadLibraryExW",
+      "LoadLibraryW",
+      "LoadResource",
+      "LocalFree",
+      "LocaleNameToLCID",
+      "LockFile",
+      "LockFileEx",
+      "LockResource",
+      "MapViewOfFile",
+      "MoveFileExW",
+      "MultiByteToWideChar",
+      "NeedCurrentDirectoryForExePathW",
+      "OpenProcess",
+      "OutputDebugStringA",
+      "OutputDebugStringW",
+      "PeekNamedPipe",
+      "PostQueuedCompletionStatus",
+      "QueryMemoryResourceNotification",
+      "QueryPerformanceCounter",
+      "QueryPerformanceFrequency",
+      "QueueUserWorkItem",
+      "RaiseException",
+      "ReOpenFile",
+      "ReadConsoleInputW",
+      "ReadConsoleW",
+      "ReadDirectoryChangesW",
+      "ReadFile",
+      "RegisterWaitForSingleObject",
+      "ReleaseMutex",
+      "ReleaseSRWLockExclusive",
+      "ReleaseSRWLockShared",
+      "ReleaseSemaphore",
+      "RemoveDirectoryW",
+      "RemoveVectoredExceptionHandler",
+      "ResetEvent",
+      "ResolveLocaleName",
+      "ResumeThread",
+      "SetConsoleCP",
+      "SetConsoleCtrlHandler",
+      "SetConsoleCursorInfo",
+      "SetConsoleCursorPosition",
+      "SetConsoleMode",
+      "SetConsoleOutputCP",
+      "SetConsoleTextAttribute",
+      "SetConsoleTitleW",
+      "SetCurrentDirectoryW",
+      "SetEndOfFile",
+      "SetEnvironmentVariableW",
+      "SetErrorMode",
+      "SetEvent",
+      "SetFileAttributesW",
+      "SetFileCompletionNotificationModes",
+      "SetFileInformationByHandle",
+      "SetFilePointer",
+      "SetFilePointerEx",
+      "SetFileTime",
+      "SetHandleInformation",
+      "SetInformationJobObject",
+      "SetLastError",
+      "SetNamedPipeHandleState",
+      "SetPriorityClass",
+      "SetStdHandle",
+      "SetThreadAffinityMask",
+      "SetUnhandledExceptionFilter",
+      "SizeofResource",
+      "Sleep",
+      "SleepConditionVariableCS",
+      "SleepConditionVariableSRW",
+      "SuspendThread",
+      "SwitchToThread",
+      "SystemTimeToFileTime",
+      "SystemTimeToTzSpecificLocalTime",
+      "TerminateProcess",
+      "TlsAlloc",
+      "TlsFree",
+      "TlsGetValue",
+      "TlsSetValue",
+      "TryAcquireSRWLockExclusive",
+      "TryAcquireSRWLockShared",
+      "TryEnterCriticalSection",
+      "UnhandledExceptionFilter",
+      "UnlockFile",
+      "UnlockFileEx",
+      "UnmapViewOfFile",
+      "UnregisterWait",
+      "UnregisterWaitEx",
+      "UpdateProcThreadAttribute",
+      "UpdateResourceW",
+      "VerifyVersionInfoW",
+      "VirtualAlloc",
+      "VirtualFree",
+      "VirtualProtect",
+      "VirtualQuery",
+      "VirtualUnlock",
+      "WaitForMultipleObjects",
+      "WaitForSingleObject",
+      "WaitForSingleObjectEx",
+      "WaitNamedPipeW",
+      "WakeAllConditionVariable",
+      "WakeConditionVariable",
+      "WideCharToMultiByte",
+      "WriteConsoleA",
+      "WriteConsoleInputW",
+      "WriteConsoleW",
+      "WriteFile",
+      "lstrlenW",
+      "CommandLineToArgvW",
+      "SHGetKnownFolderPath",
+      "GetUserProfileDirectoryW",
+      "DispatchMessageA",
+      "GetMessageA",
+      "GetSystemMetrics",
+      "MapVirtualKeyW",
+      "TranslateMessage",
+      "UnregisterClassW",
+      "WaitOnAddress",
+      "WakeByAddressAll",
+      "WakeByAddressSingle"
+    ],
+    "suspicious_imports": [
+      "CreateProcessW",
+      "GetProcAddress",
+      "LoadLibraryA",
+      "LoadLibraryW",
+      "ResumeThread",
+      "VirtualAlloc",
+      "VirtualProtect"
+    ],
+    "startup_classification": "runtime_bootstrap_likely",
+    "startup_reasons": [
+      "Entrypoint is located in the executable .text section",
+      "TLS callbacks are present (4)",
+      "Entrypoint preview matches a thin thunk pattern",
+      "Loader-style imports are present in the import table"
+    ],
+    "runtime_readiness": {
+      "breakpoints": [
+        {
+          "label": "entrypoint",
+          "kind": "breakpoint",
+          "address": 5427811544,
+          "section": ".text",
+          "reason": "Catch the earliest native stub execution before loader/runtime fan-out"
+        },
+        {
+          "label": "tls_callback[0]",
+          "kind": "breakpoint",
+          "address": 5408240096,
+          "section": ".text",
+          "reason": "Observe loader-triggered TLS initialization before process startup settles"
+        },
+        {
+          "label": "tls_callback[1]",
+          "kind": "breakpoint",
+          "address": 5407266992,
+          "section": ".text",
+          "reason": "Observe loader-triggered TLS initialization before process startup settles"
+        },
+        {
+          "label": "tls_callback[2]",
+          "kind": "breakpoint",
+          "address": 5425976800,
+          "section": ".text",
+          "reason": "Observe loader-triggered TLS initialization before process startup settles"
+        },
+        {
+          "label": "tls_callback[3]",
+          "kind": "breakpoint",
+          "address": 5425976976,
+          "section": ".text",
+          "reason": "Observe loader-triggered TLS initialization before process startup settles"
+        },
+        {
+          "label": "text_rva_0385dd0c",
+          "kind": "breakpoint",
+          "address": 5427813644,
+          "section": ".text",
+          "reason": "Observe first-hop startup target execution when static control-flow becomes ambiguous"
+        },
+        {
+          "label": "text_rva_0385d35c",
+          "kind": "breakpoint",
+          "address": 5427811164,
+          "section": ".text",
+          "reason": "Observe first-hop startup target execution when static control-flow becomes ambiguous"
+        },
+        {
+          "label": "text_rva_025b3201",
+          "kind": "breakpoint",
+          "address": 5408240129,
+          "section": ".text",
+          "reason": "Observe first-hop startup target execution when static control-flow becomes ambiguous"
+        },
+        {
+          "label": "text_rva_0369d645",
+          "kind": "breakpoint",
+          "address": 5425976901,
+          "section": ".text",
+          "reason": "Observe first-hop startup target execution when static control-flow becomes ambiguous"
+        }
+      ],
+      "dump_points": [],
+      "notes": [
+        "TLS callbacks are present; attach before normal process resume if you need the earliest loader-triggered state.",
+        "Strong Bun handoff evidence is present; prioritize breakpoints that transition into .bun-backed targets."
+      ]
+    },
+    "dump_guidance": {
+      "recommended": true,
+      "actions": [
+        {
+          "kind": "import_reconstruction",
+          "summary": "Trace dynamic import resolution and reconstruct imports from runtime callsites if the stub stays opaque.",
+          "trigger": "Dynamic import-resolution signals are present in the startup path."
+        },
+        {
+          "kind": "early_attach",
+          "summary": "Attach at entrypoint/TLS breakpoints before later startup stages overwrite useful evidence.",
+          "trigger": "The startup profile looks dominated by runtime/bootstrap behavior."
+        }
+      ]
+    },
+    "cross_references": [
+      {
+        "kind": "resource_section",
+        "value": ".rsrc",
+        "section": ".rsrc",
+        "file_offset": 114296832,
+        "source": "section_table"
+      },
+      {
+        "kind": "manifest_xml",
+        "value": "manifest string fragment",
+        "section": ".rsrc",
+        "file_offset": 114568495,
+        "source": "string_scan"
+      },
+      {
+        "kind": "requested_execution_level",
+        "value": "requestedExecutionLevel",
+        "section": ".rsrc",
+        "file_offset": 114568723,
+        "source": "string_scan"
+      },
+      {
+        "kind": "bun_virtual_path",
+        "value": "B:/~BUN/",
+        "section": ".text",
+        "file_offset": 951780,
+        "source": "string_scan"
+      },
+      {
+        "kind": "bunfs_virtual_path",
+        "value": "/$bunfs/",
+        "section": ".rdata",
+        "file_offset": 60722438,
+        "source": "string_scan"
+      },
+      {
+        "kind": "source_map_marker",
+        "value": "sourceMappingURL=",
+        "section": ".rdata",
+        "file_offset": 60336150,
+        "source": "string_scan"
+      },
+      {
+        "kind": "compile_argv",
+        "value": "--compile",
+        "section": ".rdata",
+        "file_offset": 60716657,
+        "source": "string_scan"
+      },
+      {
+        "kind": "bundled_javascript",
+        "value": "// @bun",
+        "section": ".rdata",
+        "file_offset": 61109740,
+        "source": "string_scan"
+      }
+    ],
+    "handoff_signals": [
+      {
+        "kind": "embedded_bun_section",
+        "source": "section_table",
+        "message": "PE section table exposes an embedded .bun payload section",
+        "confidence": "high"
+      },
+      {
+        "kind": "bun_bundle_trailer",
+        "source": "bundle_bytes",
+        "message": "Embedded Bun trailer marker is present in the payload bytes",
+        "confidence": "high"
+      },
+      {
+        "kind": "bun_virtual_path_marker",
+        "source": "bundle_strings",
+        "message": "Recovered Bun virtual-path marker B:/~BUN/H9",
+        "confidence": "high"
+      },
+      {
+        "kind": "bundled_javascript_marker",
+        "source": "bundle_strings",
+        "message": "Embedded payload contains Bun/JavaScript source markers",
+        "confidence": "high"
+      }
+    ],
+    "startup_targets": [
+      {
+        "source": "entrypoint",
+        "instruction_address": 5427811548,
+        "instruction_mnemonic": "call",
+        "target_address": 5427813644,
+        "target_rva": 59104524,
+        "target_section": ".text",
+        "symbolic_label": "text_rva_0385dd0c",
+        "target_resolution": "direct",
+        "import_target": null,
+        "target_preview": [
+          {
+            "address": 5427813644,
+            "mnemonic": "mov",
+            "op_str": "qword ptr [rsp + 0x18], rbx",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427813649,
+            "mnemonic": "push",
+            "op_str": "rbp",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427813650,
+            "mnemonic": "mov",
+            "op_str": "rbp, rsp",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427813653,
+            "mnemonic": "sub",
+            "op_str": "rsp, 0x30",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427813657,
+            "mnemonic": "mov",
+            "op_str": "rax, qword ptr [rip + 0x2e66e20]",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": 5476469568,
+            "rip_relative_section": ".data"
+          },
+          {
+            "address": 5427813664,
+            "mnemonic": "movabs",
+            "op_str": "rbx, 0x2b992ddfa232",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427813674,
+            "mnemonic": "cmp",
+            "op_str": "rax, rbx",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427813677,
+            "mnemonic": "jne",
+            "op_str": "0x14385dda6",
+            "target_address": 5427813798,
+            "target_rva": 59104678,
+            "target_section": ".text",
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          }
+        ]
+      },
+      {
+        "source": "entrypoint",
+        "instruction_address": 5427811557,
+        "instruction_mnemonic": "jmp",
+        "target_address": 5427811164,
+        "target_rva": 59102044,
+        "target_section": ".text",
+        "symbolic_label": "text_rva_0385d35c",
+        "target_resolution": "direct",
+        "import_target": null,
+        "target_preview": [
+          {
+            "address": 5427811164,
+            "mnemonic": "mov",
+            "op_str": "qword ptr [rsp + 8], rbx",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427811169,
+            "mnemonic": "mov",
+            "op_str": "qword ptr [rsp + 0x10], rsi",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427811174,
+            "mnemonic": "push",
+            "op_str": "rdi",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427811175,
+            "mnemonic": "sub",
+            "op_str": "rsp, 0x30",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427811179,
+            "mnemonic": "mov",
+            "op_str": "ecx, 1",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427811184,
+            "mnemonic": "call",
+            "op_str": "0x1436bec0c",
+            "target_address": 5426113548,
+            "target_rva": 57404428,
+            "target_section": ".text",
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427811189,
+            "mnemonic": "test",
+            "op_str": "al, al",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5427811191,
+            "mnemonic": "je",
+            "op_str": "0x14385d4b3",
+            "target_address": 5427811507,
+            "target_rva": 59102387,
+            "target_section": ".text",
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          }
+        ]
+      },
+      {
+        "source": "tls_callback[0]",
+        "instruction_address": 5408240119,
+        "instruction_mnemonic": "je",
+        "target_address": 5408240129,
+        "target_rva": 39531009,
+        "target_section": ".text",
+        "symbolic_label": "text_rva_025b3201",
+        "target_resolution": "direct",
+        "import_target": null,
+        "target_preview": [
+          {
+            "address": 5408240129,
+            "mnemonic": "mov",
+            "op_str": "eax, dword ptr [rip + 0x42f4a11]",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": 5478448152,
+            "rip_relative_section": ".data"
+          },
+          {
+            "address": 5408240135,
+            "mnemonic": "mov",
+            "op_str": "rcx, qword ptr gs:[0x58]",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240144,
+            "mnemonic": "mov",
+            "op_str": "rax, qword ptr [rcx + rax*8]",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240148,
+            "mnemonic": "cmp",
+            "op_str": "qword ptr [rax + 0x4bdd70], 0",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240156,
+            "mnemonic": "jne",
+            "op_str": "0x1425b3267",
+            "target_address": 5408240231,
+            "target_rva": 39531111,
+            "target_section": ".text",
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240158,
+            "mnemonic": "lea",
+            "op_str": "rdi, [rax + 0x4bdd70]",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240165,
+            "mnemonic": "nop",
+            "op_str": "word ptr cs:[rax + rax]",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5408240176,
+            "mnemonic": "mov",
+            "op_str": "qword ptr [rdi], 0xffffffffffffffff",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          }
+        ]
+      },
+      {
+        "source": "tls_callback[2]",
+        "instruction_address": 5425976803,
+        "instruction_mnemonic": "jne",
+        "target_address": 5425976901,
+        "target_rva": 57267781,
+        "target_section": ".text",
+        "symbolic_label": "text_rva_0369d645",
+        "target_resolution": "direct",
+        "import_target": null,
+        "target_preview": [
+          {
+            "address": 5425976901,
+            "mnemonic": "ret",
+            "op_str": "",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976902,
+            "mnemonic": "int3",
+            "op_str": "",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976903,
+            "mnemonic": "int3",
+            "op_str": "",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976904,
+            "mnemonic": "xor",
+            "op_str": "r8d, r8d",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976907,
+            "mnemonic": "xor",
+            "op_str": "ecx, ecx",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976909,
+            "mnemonic": "lea",
+            "op_str": "edx, [r8 + 2]",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976913,
+            "mnemonic": "jmp",
+            "op_str": "0x14369d5e0",
+            "target_address": 5425976800,
+            "target_rva": 57267680,
+            "target_section": ".text",
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          },
+          {
+            "address": 5425976918,
+            "mnemonic": "int3",
+            "op_str": "",
+            "target_address": null,
+            "target_rva": null,
+            "target_section": null,
+            "import_target": null,
+            "rip_relative_address": null,
+            "rip_relative_section": null
+          }
+        ]
+      },
+      {
+        "source": "tls_callback[2]",
+        "instruction_address": 5425976815,
+        "instruction_mnemonic": "mov",
+        "target_address": 5478448152,
+        "target_rva": 109739032,
+        "target_section": ".data",
+        "symbolic_label": "data_rva_068a7c18",
+        "target_resolution": "rip_relative",
+        "import_target": null,
+        "target_preview": []
+      }
+    ],
+    "startup_graph": {
+      "roots": [
+        "entrypoint",
+        "tls_callback[0]",
+        "tls_callback[1]",
+        "tls_callback[2]",
+        "tls_callback[3]"
+      ],
+      "nodes": [
+        {
+          "label": "entrypoint",
+          "node_type": "root",
+          "address": 5427811544,
+          "rva": 59102424,
+          "section": ".text",
+          "source": "entrypoint",
+          "target_resolution": "root",
+          "import_target": null
+        },
+        {
+          "label": "tls_callback[0]",
+          "node_type": "root",
+          "address": 5408240096,
+          "rva": 39530976,
+          "section": ".text",
+          "source": "tls_callback[0]",
+          "target_resolution": "root",
+          "import_target": null
+        },
+        {
+          "label": "tls_callback[1]",
+          "node_type": "root",
+          "address": 5407266992,
+          "rva": 38557872,
+          "section": ".text",
+          "source": "tls_callback[1]",
+          "target_resolution": "root",
+          "import_target": null
+        },
+        {
+          "label": "tls_callback[2]",
+          "node_type": "root",
+          "address": 5425976800,
+          "rva": 57267680,
+          "section": ".text",
+          "source": "tls_callback[2]",
+          "target_resolution": "root",
+          "import_target": null
+        },
+        {
+          "label": "tls_callback[3]",
+          "node_type": "root",
+          "address": 5425976976,
+          "rva": 57267856,
+          "section": ".text",
+          "source": "tls_callback[3]",
+          "target_resolution": "root",
+          "import_target": null
+        },
+        {
+          "label": "text_rva_0385dd0c",
+          "node_type": "target",
+          "address": 5427813644,
+          "rva": 59104524,
+          "section": ".text",
+          "source": "entrypoint",
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "label": "data_rva_066c4b40",
+          "node_type": "target",
+          "address": 5476469568,
+          "rva": 107760448,
+          "section": ".data",
+          "source": "text_rva_0385dd0c",
+          "target_resolution": "rip_relative",
+          "import_target": null
+        },
+        {
+          "label": "text_rva_0385dda6",
+          "node_type": "target",
+          "address": 5427813798,
+          "rva": 59104678,
+          "section": ".text",
+          "source": "text_rva_0385dd0c",
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "label": "text_rva_0385d35c",
+          "node_type": "target",
+          "address": 5427811164,
+          "rva": 59102044,
+          "section": ".text",
+          "source": "entrypoint",
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "label": "text_rva_036bec0c",
+          "node_type": "target",
+          "address": 5426113548,
+          "rva": 57404428,
+          "section": ".text",
+          "source": "text_rva_0385d35c",
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "label": "text_rva_0385d4b3",
+          "node_type": "target",
+          "address": 5427811507,
+          "rva": 59102387,
+          "section": ".text",
+          "source": "text_rva_0385d35c",
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "label": "text_rva_025b3201",
+          "node_type": "target",
+          "address": 5408240129,
+          "rva": 39531009,
+          "section": ".text",
+          "source": "tls_callback[0]",
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "label": "data_rva_068a7c18",
+          "node_type": "target",
+          "address": 5478448152,
+          "rva": 109739032,
+          "section": ".data",
+          "source": "text_rva_025b3201",
+          "target_resolution": "rip_relative",
+          "import_target": null
+        },
+        {
+          "label": "text_rva_025b3267",
+          "node_type": "target",
+          "address": 5408240231,
+          "rva": 39531111,
+          "section": ".text",
+          "source": "text_rva_025b3201",
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "label": "text_rva_0369d645",
+          "node_type": "target",
+          "address": 5425976901,
+          "rva": 57267781,
+          "section": ".text",
+          "source": "tls_callback[2]",
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "label": "text_rva_0369d5e0",
+          "node_type": "target",
+          "address": 5425976800,
+          "rva": 57267680,
+          "section": ".text",
+          "source": "text_rva_0369d645",
+          "target_resolution": "direct",
+          "import_target": null
+        }
+      ],
+      "edges": [
+        {
+          "source_label": "entrypoint",
+          "target_label": "text_rva_0385dd0c",
+          "instruction_mnemonic": "call",
+          "instruction_address": 5427811548,
+          "depth": 1,
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "source_label": "text_rva_0385dd0c",
+          "target_label": "data_rva_066c4b40",
+          "instruction_mnemonic": "mov",
+          "instruction_address": 5427813657,
+          "depth": 2,
+          "target_resolution": "rip_relative",
+          "import_target": null
+        },
+        {
+          "source_label": "text_rva_0385dd0c",
+          "target_label": "text_rva_0385dda6",
+          "instruction_mnemonic": "jne",
+          "instruction_address": 5427813677,
+          "depth": 2,
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "source_label": "entrypoint",
+          "target_label": "text_rva_0385d35c",
+          "instruction_mnemonic": "jmp",
+          "instruction_address": 5427811557,
+          "depth": 1,
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "source_label": "text_rva_0385d35c",
+          "target_label": "text_rva_036bec0c",
+          "instruction_mnemonic": "call",
+          "instruction_address": 5427811184,
+          "depth": 2,
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "source_label": "text_rva_0385d35c",
+          "target_label": "text_rva_0385d4b3",
+          "instruction_mnemonic": "je",
+          "instruction_address": 5427811191,
+          "depth": 2,
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "source_label": "tls_callback[0]",
+          "target_label": "text_rva_025b3201",
+          "instruction_mnemonic": "je",
+          "instruction_address": 5408240119,
+          "depth": 1,
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "source_label": "text_rva_025b3201",
+          "target_label": "data_rva_068a7c18",
+          "instruction_mnemonic": "mov",
+          "instruction_address": 5408240129,
+          "depth": 2,
+          "target_resolution": "rip_relative",
+          "import_target": null
+        },
+        {
+          "source_label": "text_rva_025b3201",
+          "target_label": "text_rva_025b3267",
+          "instruction_mnemonic": "jne",
+          "instruction_address": 5408240156,
+          "depth": 2,
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "source_label": "tls_callback[2]",
+          "target_label": "text_rva_0369d645",
+          "instruction_mnemonic": "jne",
+          "instruction_address": 5425976803,
+          "depth": 1,
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "source_label": "text_rva_0369d645",
+          "target_label": "text_rva_0369d5e0",
+          "instruction_mnemonic": "jmp",
+          "instruction_address": 5425976913,
+          "depth": 2,
+          "target_resolution": "direct",
+          "import_target": null
+        },
+        {
+          "source_label": "tls_callback[2]",
+          "target_label": "data_rva_068a7c18",
+          "instruction_mnemonic": "mov",
+          "instruction_address": 5425976815,
+          "depth": 1,
+          "target_resolution": "rip_relative",
+          "import_target": null
+        }
+      ],
+      "truncated": false
+    },
+    "indicators": [
+      "Embedded Bun payload section present",
+      "Entrypoint located in PE section .text",
+      "TLS callbacks present: 4",
+      "Stub imports include loader-style APIs: CreateProcessW, GetProcAddress, LoadLibraryA, LoadLibraryW, ResumeThread, VirtualAlloc",
+      "Startup graph summarized: 16 nodes / 12 edges",
+      "Cross-linked PE clues: 8",
+      "Runtime observation guidance available: 9 breakpoints / 0 dump points",
+      "Escalation guidance available: import_reconstruction, early_attach",
+      "Bun handoff signals detected: embedded_bun_section, bun_bundle_trailer, bun_virtual_path_marker, bundled_javascript_marker",
+      "Startup classification: runtime_bootstrap_likely"
+    ]
+  }
+}

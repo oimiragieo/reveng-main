@@ -22,9 +22,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 # Import REVENG components
-from ..tools.ai.ai_enhanced.instant_triage import InstantTriageEngine, ThreatLevel
-from ..tools.ai.ai_enhanced.nl_interface import NaturalLanguageInterface, NLResponse
-from ..tools.translation import generate_translation_guide, generate_translation_hints
+from .agents.ai.ai_enhanced.instant_triage import InstantTriageEngine, ThreatLevel
+from .agents.ai.ai_enhanced.nl_interface import NaturalLanguageInterface, NLResponse
+from .result_contracts import (
+    AIBinaryAnalysisContract,
+    make_evidence_item,
+    make_trace_reference,
+)
+from .tools.translation import generate_translation_guide, generate_translation_hints
 
 logger = logging.getLogger(__name__)
 
@@ -414,7 +419,14 @@ class REVENG_AI_API:
         Returns:
             Dictionary with comprehensive analysis results
         """
-        results = {}
+        results = {
+            "schema_version": "1.0",
+            "result_type": "ai_binary_analysis",
+            "version": "4.0.0",
+            "mode": mode.value,
+            "triage": {},
+            "errors": [],
+        }
 
         # Always start with triage
         logger.info(f"Triaging {binary_path}...")
@@ -423,7 +435,14 @@ class REVENG_AI_API:
 
         if mode == AnalysisMode.QUICK:
             # Triage only
-            return results
+            return AIBinaryAnalysisContract(
+                result_type="ai_binary_analysis",
+                version="4.0.0",
+                mode=mode.value,
+                triage=results["triage"],
+                errors=results.get("errors", []),
+                provenance=self._build_analysis_provenance(binary_path, mode.value),
+            ).to_dict()
 
         # Standard analysis
         logger.info(f"Performing {mode.value} analysis...")
@@ -473,7 +492,81 @@ class REVENG_AI_API:
                 json.dump(results, f, indent=2)
             logger.info(f"Results saved to {output_file}")
 
-        return results
+        return AIBinaryAnalysisContract(
+            result_type="ai_binary_analysis",
+            version="4.0.0",
+            mode=mode.value,
+            triage=results.get("triage", {}),
+            reveng_summary=results.get("reveng_summary", {}),
+            full_analysis=results.get("full_analysis", {}),
+            translation_hints=results.get("translation_hints", []),
+            errors=results.get("errors", []),
+            provenance=self._build_analysis_provenance(
+                binary_path,
+                mode.value,
+                report_loaded=bool(results.get("full_analysis")),
+                translation_hints=results.get("translation_hints", []),
+            ),
+        ).to_dict()
+
+    def _build_analysis_provenance(
+        self,
+        binary_path: str,
+        mode: str,
+        report_loaded: bool = False,
+        translation_hints: Optional[List[Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
+        binary_name = Path(binary_path).stem
+        analysis_dir = Path(f"analysis_{binary_name}")
+        binary_trace_id = f"binary:{Path(binary_path).name}"
+        references = [
+            make_trace_reference(
+                "derived_from",
+                str(analysis_dir),
+                trace_id=f"{binary_trace_id}:analysis-folder",
+                metadata={"kind": "analysis_folder"},
+            )
+        ]
+        if report_loaded:
+            references.append(
+                make_trace_reference(
+                    "documents",
+                    str(analysis_dir / "universal_analysis_report.json"),
+                    trace_id=f"{binary_trace_id}:analysis-report",
+                    confidence=0.9,
+                    metadata={"kind": "analysis_report"},
+                )
+            )
+
+        artifacts = []
+        for index, hint in enumerate(translation_hints or [], start=1):
+            artifacts.append(
+                make_evidence_item(
+                    "translation_hint",
+                    path=hint.get("file", ""),
+                    trace_id=f"{binary_trace_id}:translation-hint:{index}",
+                    evidence_kind="generated_hint",
+                    confidence=0.7,
+                    source_result_type="ai_binary_analysis",
+                )
+            )
+
+        return {
+            "inputs": [
+                make_evidence_item(
+                    "binary_input",
+                    path=binary_path,
+                    trace_id=binary_trace_id,
+                    evidence_kind="input_binary",
+                    confidence=1.0,
+                    source_result_type="ai_binary_analysis",
+                )
+            ],
+            "artifacts": artifacts,
+            "stages": ["triage", mode, "result_contract_serialization"],
+            "references": references,
+            "tools": ["instant_triage", "reveng_analyzer"],
+        }
 
     def explain_binary(self, binary_path: str, detail_level: str = "standard") -> NLResponse:
         """

@@ -94,9 +94,7 @@ class PEAnalyzerPlugin(AnalysisPlugin):
             for section in pe.sections:
                 sections.append(
                     {
-                        "name": section.Name.decode("utf-8", errors="ignore").rstrip(
-                            "\x00"
-                        ),
+                        "name": section.Name.decode("utf-8", errors="ignore").rstrip("\x00"),
                         "virtual_address": hex(section.VirtualAddress),
                         "virtual_size": section.Misc_VirtualSize,
                         "raw_address": hex(section.PointerToRawData),
@@ -116,9 +114,7 @@ class PEAnalyzerPlugin(AnalysisPlugin):
                             imports.append(
                                 {
                                     "dll": dll_name,
-                                    "function": imp.name.decode(
-                                        "utf-8", errors="ignore"
-                                    ),
+                                    "function": imp.name.decode("utf-8", errors="ignore"),
                                     "address": hex(imp.address),
                                 }
                             )
@@ -170,9 +166,7 @@ class PEAnalyzerPlugin(AnalysisPlugin):
                                     "type": type_name,
                                     "id": id_name,
                                     "language": resource_lang.id,
-                                    "address": hex(
-                                        resource_lang.data.struct.OffsetToData
-                                    ),
+                                    "address": hex(resource_lang.data.struct.OffsetToData),
                                     "size": resource_lang.data.struct.Size,
                                 }
                             )

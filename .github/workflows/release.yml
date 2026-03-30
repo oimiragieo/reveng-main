@@ -8,6 +8,10 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
 
     steps:
     - uses: actions/checkout@v6
@@ -21,12 +25,59 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install build twine
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Generate app corpus fixtures
+      run: python scripts/generate_app_corpus_fixtures.py
+
+    - name: Provision strict GA assets
+      run: python scripts/provision_ga_assets.py --output reports/ga_asset_provisioning_report.json
+
+    - name: Run strict GA app reverse-engineering corpus
+      run: python scripts/run_app_reverse_engineering_corpus.py --config .reveng/app_reverse_engineering_corpus.ga.json --output reports/app_reverse_engineering_corpus_report.json
+
+    - name: Run strict GA native benchmark corpus
+      run: python scripts/run_source_binary_benchmark.py --config .reveng/source_binary_benchmarks.ga.json --output reports/source_binary_benchmarks_report.json
+
+    - name: Run strict GA Bun matrix
+      run: python scripts/run_bun_sample_matrix.py --config .reveng/bun_sample_matrix.ga.json --output reports/bun_sample_matrix.json
+
+    - name: Verify strict GA readiness
+      run: python scripts/verify_ga_readiness.py --profile ga --output reports/ga_readiness_target.json
+
+    - name: Generate skip inventory
+      run: python scripts/generate_skip_inventory.py --json-output reports/skip_inventory.json --markdown-output reports/skip_inventory.md
+
+    - name: Generate release report
+      run: python scripts/generate_release_report.py --skip-inventory reports/skip_inventory.json --json-output reports/release_report.json --markdown-output reports/release_report.md
 
     - name: Build package
       run: python -m build
 
     - name: Check package
       run: twine check dist/*
+
+    - name: Package release evidence
+      run: |
+        tar -czf dist/reveng-release-evidence.tar.gz \
+          reports/ga_readiness_target.json \
+          reports/ga_readiness_baseline.json \
+          reports/source_binary_benchmarks_report.json \
+          reports/bun_sample_matrix.json \
+          reports/skip_inventory.json \
+          reports/skip_inventory.md \
+          reports/app_reverse_engineering_corpus_report.json \
+          reports/release_report.json \
+          reports/release_report.md \
+          docs/support_matrix.json \
+          .github/RELEASE_CHECKLIST.md
+
+    - name: Attest build provenance
+      uses: actions/attest-build-provenance@v3
+      with:
+        subject-path: |
+          dist/*
 
     - name: Publish to PyPI
       env:
@@ -43,3 +94,20 @@ jobs:
         release_name: Release ${{ github.ref }}
         draft: false
         prerelease: false
+
+    - name: Upload readiness artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: release-readiness
+        path: |
+          reports/app_reverse_engineering_corpus_report.json
+          reports/source_binary_benchmarks_report.json
+          reports/bun_sample_matrix.json
+          reports/ga_readiness_target.json
+          reports/skip_inventory.json
+          reports/skip_inventory.md
+          reports/release_report.json
+          reports/release_report.md
+          reports/ga_asset_provisioning_report.json
+          dist/reveng-release-evidence.tar.gz
+          .github/RELEASE_CHECKLIST.md

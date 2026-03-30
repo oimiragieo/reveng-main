@@ -40,9 +40,7 @@ class CompilationTester:
         # Check MSVC (Windows only)
         if self.platform == "Windows":
             try:
-                result = subprocess.run(
-                    ["cl"], capture_output=True, text=True, timeout=5
-                )
+                result = subprocess.run(["cl"], capture_output=True, text=True, timeout=5)
                 if "Microsoft" in result.stderr or "Microsoft" in result.stdout:
                     compilers["msvc"] = "cl"
             except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -61,9 +59,7 @@ class CompilationTester:
 
         # Check GCC (Linux/macOS)
         try:
-            result = subprocess.run(
-                ["gcc", "--version"], capture_output=True, text=True, timeout=5
-            )
+            result = subprocess.run(["gcc", "--version"], capture_output=True, text=True, timeout=5)
             if result.returncode == 0 and "gcc" in result.stdout.lower():
                 compilers["gcc"] = "gcc"
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -142,9 +138,7 @@ class CompilationTester:
             )
 
             # Parse output
-            errors, warnings = self._parse_compiler_output(
-                result.stdout + result.stderr, compiler
-            )
+            errors, warnings = self._parse_compiler_output(result.stdout + result.stderr, compiler)
 
             return {
                 "status": "success" if result.returncode == 0 else "failed",
@@ -262,14 +256,10 @@ class CompilationTester:
 
         # Run linking
         try:
-            result = subprocess.run(
-                link_cmd, capture_output=True, text=True, timeout=60
-            )
+            result = subprocess.run(link_cmd, capture_output=True, text=True, timeout=60)
 
             # Parse output
-            errors, warnings = self._parse_compiler_output(
-                result.stdout + result.stderr, compiler
-            )
+            errors, warnings = self._parse_compiler_output(result.stdout + result.stderr, compiler)
 
             return {
                 "status": "success" if result.returncode == 0 else "failed",
@@ -322,9 +312,7 @@ class CompilationTester:
     ) -> List[str]:
         """Build link command for compiler"""
         if compiler == "msvc":
-            cmd = ["link", "/OUT:" + str(output_binary)] + [
-                str(f) for f in object_files
-            ]
+            cmd = ["link", "/OUT:" + str(output_binary)] + [str(f) for f in object_files]
         elif compiler in ["mingw", "gcc", "clang"]:
             cmd = [self.compilers[compiler], "-o", str(output_binary)] + [
                 str(f) for f in object_files
@@ -338,9 +326,7 @@ class CompilationTester:
 
         return cmd
 
-    def _parse_compiler_output(
-        self, output: str, compiler: str
-    ) -> Tuple[List[Dict], List[Dict]]:
+    def _parse_compiler_output(self, output: str, compiler: str) -> Tuple[List[Dict], List[Dict]]:
         """
         Parse compiler output to extract errors and warnings
 

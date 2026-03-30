@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "notes": [
+    "This corpus is a checked-in smoke gate for the shared app reverse-engineering framework.",
+    "It is intentionally smaller than the broader world-class corpus gate and currently focuses on source-available anchors in this checkout."
+  ],
+  "entries": [
+    {
+      "name": "java-helloworld",
+      "input_path": "..\\test_samples\\HelloWorld.java",
+      "language": "jvm",
+      "required": true,
+      "tags": ["smoke", "jvm", "source"]
+    },
+    {
+      "name": "java-helloworld-jar",
+      "input_path": "..\\test_samples\\HelloWorld.jar",
+      "language": "jvm",
+      "required": true,
+      "tags": ["smoke", "jvm", "packaged", "compiled"]
+    },
+    {
+      "name": "python-sample-app",
+      "input_path": "..\\test_samples\\sample_app.py",
+      "language": "python",
+      "required": true,
+      "tags": ["smoke", "python", "source"]
+    },
+    {
+      "name": "python-sample-bytecode",
+      "input_path": "..\\test_samples\\sample_app.pyc",
+      "language": "python",
+      "required": true,
+      "tags": ["smoke", "python", "compiled", "bytecode"]
+    },
+    {
+      "name": "python-sample-zipapp",
+      "input_path": "..\\test_samples\\sample_app.pyz",
+      "language": "python",
+      "required": true,
+      "tags": ["smoke", "python", "packaged"]
+    },
+    {
+      "name": "javascript-sample-app",
+      "input_path": "..\\test_samples\\sample_bundle.js",
+      "language": "javascript",
+      "required": true,
+      "tags": ["smoke", "javascript", "bundle"]
+    },
+    {
+      "name": "dotnet-sample-app",
+      "input_path": "..\\test_samples\\sample_dotnet.dll",
+      "language": "dotnet",
+      "required": true,
+      "tags": ["smoke", "dotnet", "synthetic"]
+    }
+  ]
+}

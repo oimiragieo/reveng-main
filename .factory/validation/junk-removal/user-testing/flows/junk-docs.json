@@ -1,0 +1,25 @@
+{
+  "groupId": "junk-docs",
+  "testedAt": "2026-03-14T19:31:00Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "platform": "Windows 10 (PowerShell)",
+    "branch": "main"
+  },
+  "toolsUsed": ["git", "Test-Path"],
+  "assertions": {
+    "VAL-JUNK-004": {
+      "status": "pass",
+      "evidence": "junk-removal/junk-docs/VAL-JUNK-004-git-ls-files.txt",
+      "reason": "git ls-files returned empty output for all five files (START_HERE.md, QUICK_START.md, GETTING_STARTED.md, FEATURE_IMPLEMENTATION_STATUS_MATRIX.md, validate-mcp.py). Test-Path confirmed none exist on disk."
+    },
+    "VAL-JUNK-005": {
+      "status": "pass",
+      "evidence": "junk-removal/junk-docs/VAL-JUNK-005-git-ls-files.txt",
+      "reason": "git ls-files docs/audits/ returned empty output. Test-Path confirmed docs\\audits directory does not exist on disk."
+    }
+  },
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 2 assertions: 2 passed. All vanity docs and the docs/audits/ directory are confirmed absent from both the git index and the working tree."
+}

@@ -1,0 +1,314 @@
+{
+  "language": "python",
+  "adapter_name": "python_app_workflow",
+  "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyz",
+  "input_root": "C:\\dev\\projects\\reveng-main\\test_samples",
+  "output_dir": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp",
+  "source_origin": "archive",
+  "source_count": 2,
+  "imports": [
+    "argparse",
+    "pathlib"
+  ],
+  "functions": [
+    "helper",
+    "main"
+  ],
+  "classes": [],
+  "entrypoints": [
+    "__main__",
+    "__main__.py",
+    "main"
+  ],
+  "cli_signals": [
+    "argparse"
+  ],
+  "io_signals": [
+    "pathlib"
+  ],
+  "archive_entries": [
+    "__main__.py",
+    "pkg/helpers.py"
+  ],
+  "packaging": "zipapp",
+  "bytecode": {},
+  "frozen_python": {},
+  "topic_match_counts": {
+    "project_structure": 2,
+    "cli_and_entrypoints": 2,
+    "dependencies_and_imports": 1,
+    "state_and_io": 1,
+    "runtime_and_packaging": 1
+  },
+  "warnings": [],
+  "schema_version": "1.0",
+  "result_type": "app_reverse_engineering_result",
+  "validation": {
+    "grade": "evidence_backed",
+    "summary": "Recovered 2 source artifact(s), 7 topic evidence snippet(s), and 1 primary artifact(s); warnings=0.",
+    "evidence_count": 13,
+    "topic_evidence_count": 7,
+    "artifact_count": 1,
+    "warning_count": 0
+  },
+  "evidence": [
+    {
+      "kind": "input_sample",
+      "path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyz",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "input_app"
+    },
+    {
+      "kind": "analysis_summary",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\analysis.json",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "analysis_summary",
+      "metadata": {
+        "source_count": 2
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\01-project-structure.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "project_structure",
+        "match_count": 2
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\02-cli-and-entrypoints.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "cli_and_entrypoints",
+        "match_count": 2
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\03-dependencies-and-imports.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "dependencies_and_imports",
+        "match_count": 1
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\04-state-and-io.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "state_and_io",
+        "match_count": 1
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\05-runtime-and-packaging.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "runtime_and_packaging",
+        "match_count": 1
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\domains\\project-structure.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "project_structure"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\domains\\cli-and-entrypoints.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "cli_and_entrypoints"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\domains\\dependencies-and-imports.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "dependencies_and_imports"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\domains\\state-and-io.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "state_and_io"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\domains\\runtime-and-packaging.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "runtime_and_packaging"
+      }
+    },
+    {
+      "kind": "primary_artifact",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\artifacts\\extracted_sources",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "primary_artifact",
+      "metadata": {
+        "artifact_name": "extracted_sources"
+      }
+    }
+  ],
+  "provenance": {
+    "inputs": [
+      {
+        "kind": "app_input",
+        "path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyz",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "input_app",
+        "metadata": {
+          "input_root": "C:\\dev\\projects\\reveng-main\\test_samples"
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "kind": "analysis_summary",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\analysis.json",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "analysis_summary"
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\01-project-structure.md",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "project_structure"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\02-cli-and-entrypoints.md",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "cli_and_entrypoints"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\03-dependencies-and-imports.md",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "dependencies_and_imports"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\04-state-and-io.md",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "state_and_io"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\05-runtime-and-packaging.md",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "runtime_and_packaging"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\domains\\project-structure.md",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "project_structure"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\domains\\cli-and-entrypoints.md",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "cli_and_entrypoints"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\domains\\dependencies-and-imports.md",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "dependencies_and_imports"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\domains\\state-and-io.md",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "state_and_io"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\SPECS\\domains\\runtime-and-packaging.md",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "runtime_and_packaging"
+        }
+      },
+      {
+        "kind": "primary_artifact",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp\\artifacts\\extracted_sources",
+        "trace_id": "app-re::python::analysis",
+        "evidence_kind": "primary_artifact",
+        "metadata": {
+          "artifact_name": "extracted_sources"
+        }
+      }
+    ],
+    "stages": [
+      "input_inventory",
+      "spec_generation",
+      "domain_split",
+      "analysis_summary_serialization"
+    ],
+    "references": [
+      {
+        "relationship": "analyzed_under",
+        "target": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_packaged_test\\python-sample-zipapp",
+        "trace_id": "app-re::python::analysis",
+        "metadata": {
+          "adapter_name": "python_app_workflow"
+        }
+      }
+    ],
+    "tools": [
+      "python_app_workflow"
+    ]
+  }
+}

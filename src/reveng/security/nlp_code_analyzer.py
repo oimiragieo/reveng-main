@@ -16,10 +16,7 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 try:
-    from sklearn.cluster import KMeans
-    from sklearn.decomposition import LatentDirichletAllocation
     from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-    from sklearn.metrics.pairwise import cosine_similarity
 
     SKLEARN_AVAILABLE = True
 except ImportError:
@@ -31,8 +28,7 @@ try:
     import nltk
     from nltk.corpus import stopwords
     from nltk.stem import PorterStemmer, WordNetLemmatizer
-    from nltk.tag import pos_tag
-    from nltk.tokenize import sent_tokenize, word_tokenize
+    from nltk.tokenize import word_tokenize
 
     NLTK_AVAILABLE = True
 except ImportError:
@@ -43,9 +39,7 @@ try:
     from .ai_enhanced_data_models import (
         CodeSummary,
         DocumentationSuggestion,
-        Evidence,
         EvidenceTracker,
-        SemanticAnalysis,
     )
 except ImportError:
     from ..ai.ai_enhanced_data_models import (
@@ -232,9 +226,7 @@ class CodeTokenizer:
         # Filter out language keywords
         lang_keywords = self.keywords.get(language, [])
         filtered_identifiers = [
-            token
-            for token in identifiers
-            if token.lower() not in lang_keywords and len(token) > 1
+            token for token in identifiers if token.lower() not in lang_keywords and len(token) > 1
         ]
 
         # Split camelCase and snake_case identifiers
@@ -297,9 +289,7 @@ class CodeTokenizer:
             try:
                 tokens = word_tokenize(text.lower())
                 # Remove punctuation and short words
-                tokens = [
-                    token for token in tokens if token.isalpha() and len(token) > 2
-                ]
+                tokens = [token for token in tokens if token.isalpha() and len(token) > 2]
                 # Remove stop words
                 tokens = [token for token in tokens if token not in self.stop_words]
                 # Stem words
@@ -322,12 +312,8 @@ class SemanticAnalyzer:
 
         # Initialize vectorizers
         if SKLEARN_AVAILABLE:
-            self.tfidf_vectorizer = TfidfVectorizer(
-                max_features=1000, ngram_range=(1, 2), min_df=2
-            )
-            self.count_vectorizer = CountVectorizer(
-                max_features=500, ngram_range=(1, 2)
-            )
+            self.tfidf_vectorizer = TfidfVectorizer(max_features=1000, ngram_range=(1, 2), min_df=2)
+            self.count_vectorizer = CountVectorizer(max_features=500, ngram_range=(1, 2))
 
         # Semantic dictionaries
         self.algorithm_keywords = {
@@ -419,9 +405,7 @@ class SemanticAnalyzer:
             # Calculate quality metrics
             semantics.complexity_score = self._calculate_complexity(code)
             semantics.readability_score = self._calculate_readability(code, tokens)
-            semantics.maintainability_score = self._calculate_maintainability(
-                code, tokens
-            )
+            semantics.maintainability_score = self._calculate_maintainability(code, tokens)
 
             # Analyze documentation quality
             semantics.comment_coverage = self._calculate_comment_coverage(code)
@@ -498,29 +482,19 @@ class SemanticAnalyzer:
         # Common function purpose patterns
         if any(part in ["init", "initialize", "setup"] for part in name_parts):
             return "Initialization function"
-        elif any(
-            part in ["create", "make", "build", "construct"] for part in name_parts
-        ):
+        elif any(part in ["create", "make", "build", "construct"] for part in name_parts):
             return "Constructor/Factory function"
-        elif any(
-            part in ["destroy", "cleanup", "free", "delete"] for part in name_parts
-        ):
+        elif any(part in ["destroy", "cleanup", "free", "delete"] for part in name_parts):
             return "Destructor/Cleanup function"
         elif any(part in ["get", "fetch", "retrieve", "find"] for part in name_parts):
             return "Getter/Accessor function"
         elif any(part in ["set", "update", "modify", "change"] for part in name_parts):
             return "Setter/Mutator function"
-        elif any(
-            part in ["process", "handle", "execute", "run"] for part in name_parts
-        ):
+        elif any(part in ["process", "handle", "execute", "run"] for part in name_parts):
             return "Processing function"
-        elif any(
-            part in ["validate", "check", "verify", "test"] for part in name_parts
-        ):
+        elif any(part in ["validate", "check", "verify", "test"] for part in name_parts):
             return "Validation function"
-        elif any(
-            part in ["parse", "decode", "convert", "transform"] for part in name_parts
-        ):
+        elif any(part in ["parse", "decode", "convert", "transform"] for part in name_parts):
             return "Parsing/Conversion function"
         elif any(part in ["send", "transmit", "communicate"] for part in name_parts):
             return "Communication function"
@@ -617,9 +591,7 @@ class SemanticAnalyzer:
     def _calculate_complexity(self, code: str) -> float:
         """Calculate code complexity score"""
         # Cyclomatic complexity approximation
-        decision_points = len(
-            re.findall(r"\b(if|else|while|for|switch|case|catch)\b", code)
-        )
+        decision_points = len(re.findall(r"\b(if|else|while|for|switch|case|catch)\b", code))
         lines = len(code.split("\n"))
 
         if lines == 0:
@@ -638,12 +610,8 @@ class SemanticAnalyzer:
             return 0.0
 
         # Factors affecting readability
-        avg_line_length = sum(len(line) for line in non_empty_lines) / len(
-            non_empty_lines
-        )
-        comment_lines = len(
-            [line for line in lines if line.strip().startswith(("//", "#", "/*"))]
-        )
+        avg_line_length = sum(len(line) for line in non_empty_lines) / len(non_empty_lines)
+        comment_lines = len([line for line in lines if line.strip().startswith(("//", "#", "/*"))])
         comment_ratio = comment_lines / len(non_empty_lines) if non_empty_lines else 0
 
         # Readability score (0-10, higher is better)
@@ -697,9 +665,7 @@ class SemanticAnalyzer:
         """Calculate comment coverage percentage"""
         lines = code.split("\n")
         total_lines = len([line for line in lines if line.strip()])
-        comment_lines = len(
-            [line for line in lines if line.strip().startswith(("//", "#", "/*"))]
-        )
+        comment_lines = len([line for line in lines if line.strip().startswith(("//", "#", "/*"))])
 
         if total_lines == 0:
             return 0.0
@@ -839,9 +805,7 @@ class DocumentationGenerator:
         lines = len(code.split("\n"))
         functions = len(semantics.function_purposes)
 
-        summary_parts.append(
-            f"This code contains {lines} lines with {functions} functions."
-        )
+        summary_parts.append(f"This code contains {lines} lines with {functions} functions.")
 
         # Algorithms and patterns
         if semantics.algorithms_detected:
@@ -858,32 +822,20 @@ class DocumentationGenerator:
 
         # Quality assessment
         if semantics.complexity_score > 7:
-            summary_parts.append(
-                "The code has high complexity and may be difficult to maintain."
-            )
+            summary_parts.append("The code has high complexity and may be difficult to maintain.")
         elif semantics.complexity_score < 3:
-            summary_parts.append(
-                "The code has low complexity and should be easy to understand."
-            )
+            summary_parts.append("The code has low complexity and should be easy to understand.")
 
         if semantics.comment_coverage < 10:
-            summary_parts.append(
-                "The code lacks sufficient documentation and comments."
-            )
+            summary_parts.append("The code lacks sufficient documentation and comments.")
         elif semantics.comment_coverage > 30:
-            summary_parts.append(
-                "The code is well-documented with good comment coverage."
-            )
+            summary_parts.append("The code is well-documented with good comment coverage.")
 
         # Function purposes
         if semantics.function_purposes:
             main_functions = list(semantics.function_purposes.items())[:3]
-            func_descriptions = [
-                f"{name} ({purpose})" for name, purpose in main_functions
-            ]
-            summary_parts.append(
-                f"Key functions include: {', '.join(func_descriptions)}."
-            )
+            func_descriptions = [f"{name} ({purpose})" for name, purpose in main_functions]
+            summary_parts.append(f"Key functions include: {', '.join(func_descriptions)}.")
 
         return " ".join(summary_parts)
 
@@ -1003,9 +955,7 @@ def main():
     print(f"Overview: {summary.overview}")
     print(f"Algorithms: {summary.algorithms_used}")
     print(f"Key Functions: {summary.key_functions}")
-    print(
-        f"Complexity Score: {summary.complexity_analysis.get('complexity_score', 0):.2f}"
-    )
+    print(f"Complexity Score: {summary.complexity_analysis.get('complexity_score', 0):.2f}")
     print(f"Documentation Suggestions: {len(summary.documentation_suggestions)}")
 
     for suggestion in summary.documentation_suggestions:

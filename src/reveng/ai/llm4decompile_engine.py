@@ -8,13 +8,12 @@ Provides 20-40% improvement in re-executability through:
 - Standardized benchmarking via Decompile-Bench
 """
 
+import logging
 import os
 import re
-import logging
 import subprocess
-from typing import Optional, Dict, List
 from dataclasses import dataclass
-from pathlib import Path
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +41,7 @@ class LLM4DecompileEngine:
     - 64.94% re-executability rate (vs 40% for general LLMs)
     """
 
-    def __init__(
-        self, model_name: str = "albertan017/LLM4Decompile-9B-v2", device: str = "auto"
-    ):
+    def __init__(self, model_name: str = "albertan017/LLM4Decompile-9B-v2", device: str = "auto"):
         self.model_name = model_name
         self.device = device
         self.model = None
@@ -70,9 +67,7 @@ class LLM4DecompileEngine:
                 trust_remote_code=True,
             )
 
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                self.model_name, trust_remote_code=True
-            )
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, trust_remote_code=True)
 
             self.model_loaded = True
             logger.info("LLM4Decompile model loaded successfully")
@@ -153,9 +148,7 @@ class LLM4DecompileEngine:
         for func_name, asm_code in functions.items():
             logger.info(f"Decompiling function: {func_name}")
 
-            result = await self.decompile_function(
-                asm_code, optimization_level, func_name
-            )
+            result = await self.decompile_function(asm_code, optimization_level, func_name)
 
             results[func_name] = result
 
@@ -186,9 +179,9 @@ Decompiled C code:
         import torch
 
         # Tokenize
-        inputs = self.tokenizer(
-            prompt, return_tensors="pt", truncation=True, max_length=4096
-        ).to(self.model.device)
+        inputs = self.tokenizer(prompt, return_tensors="pt", truncation=True, max_length=4096).to(
+            self.model.device
+        )
 
         # Generate
         with torch.no_grad():
@@ -214,9 +207,7 @@ Decompiled C code:
             return match.group(1)
 
         # Fallback: extract everything after "Decompiled C code:"
-        match = re.search(
-            r"Decompiled C code:\s*```c?\n(.*)", generated_text, re.DOTALL
-        )
+        match = re.search(r"Decompiled C code:\s*```c?\n(.*)", generated_text, re.DOTALL)
         if match:
             code = match.group(1)
             # Remove trailing ```
@@ -380,7 +371,7 @@ Decompiled C code:
         # Cleanup recompiled binary
         try:
             os.remove(recompiled)
-        except:
+        except Exception:
             pass
 
         if total == 0:
@@ -415,13 +406,11 @@ class MultiModelEnsemble:
                 from reveng.ai.gemini_engine import GeminiEngine
 
                 self.gemini = GeminiEngine()
-            except:
+            except Exception:
                 pass
         return self.gemini
 
-    async def decompile_with_ensemble(
-        self, binary: str, optimization_level: str = "O2"
-    ) -> str:
+    async def decompile_with_ensemble(self, binary: str, optimization_level: str = "O2") -> str:
         """
         Use ensemble for best decompilation results
 
@@ -435,9 +424,7 @@ class MultiModelEnsemble:
 
         # Try LLM4Decompile
         logger.info("Trying LLM4Decompile...")
-        llm4d_results = await self.llm4decompile.decompile_binary(
-            binary, optimization_level
-        )
+        llm4d_results = await self.llm4decompile.decompile_binary(binary, optimization_level)
 
         # Combine all functions
         llm4d_code = self._combine_functions(llm4d_results)
@@ -450,7 +437,7 @@ class MultiModelEnsemble:
             try:
                 gemini_code = await gemini.decompile(binary)
                 results.append(("Gemini", gemini_code))
-            except:
+            except Exception:
                 pass
 
         # Evaluate quality of each result
@@ -469,9 +456,7 @@ class MultiModelEnsemble:
         else:
             return llm4d_code  # Fallback to first result
 
-    def _combine_functions(
-        self, function_results: Dict[str, DecompilationResult]
-    ) -> str:
+    def _combine_functions(self, function_results: Dict[str, DecompilationResult]) -> str:
         """Combine function decompilations into single source file"""
         functions_code = []
 
@@ -488,9 +473,7 @@ class MultiModelEnsemble:
 
         return header + "\n\n".join(functions_code)
 
-    async def _evaluate_quality(
-        self, code: str, original_binary: str, opt_level: str
-    ) -> float:
+    async def _evaluate_quality(self, code: str, original_binary: str, opt_level: str) -> float:
         """
         Evaluate code quality
 
@@ -505,9 +488,7 @@ class MultiModelEnsemble:
             return 0.0  # Doesn't compile
 
         # Test equivalence
-        equivalence = await self.llm4decompile._test_equivalence(
-            original_binary, recompiled
-        )
+        equivalence = await self.llm4decompile._test_equivalence(original_binary, recompiled)
 
         # 50% for compiling, 50% for equivalence
         score = 0.5 + (0.5 * equivalence)

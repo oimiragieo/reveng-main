@@ -1,0 +1,31 @@
+{
+  "status": "completed",
+  "total_functions": 7,
+  "completed_functions": 7,
+  "stage": "completed",
+  "elapsed_seconds": 0.149,
+  "source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+  "current_stage_elapsed_seconds": 0.0,
+  "stage_timings": {
+    "whole_source_normalization": 0.023,
+    "prototype_relaxation": 0.001,
+    "integer_pointer_access_normalization": 0.001,
+    "non_code_pointer_retargeting": 0.0,
+    "uintptr_bridge_normalization": 0.005,
+    "void_prototype_relaxation": 0.001,
+    "uintptr_param_normalization": 0.002,
+    "prototype_alignment": 0.002,
+    "void_return_relaxation": 0.001,
+    "bare_return_normalization": 0.001,
+    "helper_alias_qualification": 0.006,
+    "void_pointer_index_normalization": 0.001,
+    "late_pointer_param_normalization": 0.002,
+    "late_uintptr_param_normalization": 0.001,
+    "late_void_pointer_index_normalization": 0.001,
+    "late_pointer_integer_assignment_normalization": 0.006,
+    "late_non_code_pointer_retargeting": 0.001,
+    "generated_prelude_build": 0.031,
+    "final_helper_alias_qualification": 0.004,
+    "final_void_pointer_index_normalization": 0.0
+  }
+}

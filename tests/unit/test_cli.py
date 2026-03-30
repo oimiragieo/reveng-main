@@ -1,362 +1,461 @@
-"""
-Unit Tests for REVENG CLI
-========================
+"""Unit tests for the current REVENG CLI surface."""
 
-Test the command-line interface functionality.
+from __future__ import annotations
 
-Author: REVENG Development Team
-Version: 2.1.0
-"""
-
-from unittest.mock import Mock, patch
+import os
+import subprocess
+import sys
+from argparse import Namespace
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 
-from reveng.cli import (
-    create_parser,
-    handle_analyze_command,
-    handle_serve_command,
-    main,
-)
+import reveng.cli as cli
+from reveng.app_reverse_engineering.models import AppReverseEngineeringResult
+from reveng.version import get_version_string
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+CLI_SCRIPT = REPO_ROOT / "src" / "reveng" / "cli" / "reveng.py"
 
 
-@pytest.mark.skip(reason="CLI API changed - many options removed/renamed")
+def make_analyze_args(binary_path: str, **overrides: object) -> Namespace:
+    """Build a Namespace matching the analyze command surface."""
+    defaults = {
+        "binary_path": binary_path,
+        "no_ollama_check": True,
+        "config": None,
+        "no_enhanced": False,
+        "no_corporate": False,
+        "no_vuln": False,
+        "no_threat": False,
+        "no_reconstruction": False,
+        "no_demo": False,
+        "output_dir": None,
+        "verbose": False,
+        "quiet": False,
+        "log_file": None,
+        "ghidra_timeout": 900,
+        "ghidra_retries": 0,
+    }
+    defaults.update(overrides)
+    return Namespace(**defaults)
+
+
+def run_cli(*args: str, timeout: int = 30) -> subprocess.CompletedProcess[str]:
+    """Execute the real CLI wrapper as a subprocess."""
+    env = os.environ.copy()
+    env["PYTHONIOENCODING"] = "utf-8"
+    return subprocess.run(
+        [sys.executable, str(CLI_SCRIPT), *args],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        env=env,
+        timeout=timeout,
+    )
+
+
 class TestCLIParser:
-    """Test the CLI argument parser."""
+    """Test parser construction for the current CLI."""
 
     def test_create_parser(self):
-        """Test parser creation."""
-        parser = create_parser()
+        parser = cli.create_parser()
 
         assert parser.prog == "reveng"
-        assert "REVENG - Universal Reverse Engineering Platform" in parser.description
+        assert parser.description == "REVENG - Universal Reverse Engineering Platform"
 
-    def test_parser_help(self):
-        """Test parser help output."""
-        parser = create_parser()
-        help_text = parser.format_help()
+    def test_parser_help_lists_current_commands(self):
+        help_text = cli.create_parser().format_help()
 
-        assert "REVENG - Universal Reverse Engineering Platform" in help_text
         assert "analyze" in help_text
-        assert "serve" in help_text
+        assert "reverse-engineer-app" in help_text
+        assert "decompile" in help_text
+        assert "generate-exploit" in help_text
         assert "--version" in help_text
 
-    def test_parser_analyze_command(self):
-        """Test analyze command parsing."""
-        parser = create_parser()
-        args = parser.parse_args(["analyze", "test.exe"])
+    def test_parser_analyze_command_accepts_current_global_flags(self):
+        args = cli.create_parser().parse_args(
+            [
+                "--no-enhanced",
+                "--no-ollama-check",
+                "--output-dir",
+                "analysis_out",
+                "analyze",
+                "sample.exe",
+            ]
+        )
 
         assert args.command == "analyze"
-        assert args.binary_path == "test.exe"
+        assert args.binary_path == "sample.exe"
+        assert args.no_enhanced is True
+        assert args.no_ollama_check is True
+        assert args.output_dir == "analysis_out"
 
     def test_parser_serve_command(self):
-        """Test serve command parsing."""
-        parser = create_parser()
-        args = parser.parse_args(["serve", "--host", "0.0.0.0", "--port", "3001"])
+        args = cli.create_parser().parse_args(
+            ["serve", "--host", "0.0.0.0", "--port", "13370", "--reload"]
+        )
 
         assert args.command == "serve"
         assert args.host == "0.0.0.0"
-        assert args.port == 3001
+        assert args.port == 13370
+        assert args.reload is True
 
-    def test_parser_enhanced_options(self):
-        """Test enhanced analysis options."""
-        parser = create_parser()
-        args = parser.parse_args(
-            ["analyze", "test.exe", "--no-enhanced", "--no-corporate", "--no-vuln"]
+    def test_parser_decompile_command(self):
+        args = cli.create_parser().parse_args(
+            ["decompile", "sample.exe", "--language", "python", "--enhance"]
         )
 
-        assert args.no_enhanced is True
-        assert args.no_corporate is True
-        assert args.no_vuln is True
+        assert args.command == "decompile"
+        assert args.binary_path == "sample.exe"
+        assert args.language == "python"
+        assert args.enhance is True
 
-    def test_parser_config_option(self):
-        """Test configuration file option."""
-        parser = create_parser()
-        args = parser.parse_args(["analyze", "test.exe", "--config", "config.yaml"])
-
-        assert args.config == "config.yaml"
-
-    def test_parser_logging_options(self):
-        """Test logging options."""
-        parser = create_parser()
-        args = parser.parse_args(
-            ["analyze", "test.exe", "--verbose", "--log-file", "test.log"]
+    def test_parser_reverse_engineer_app_command(self):
+        args = cli.create_parser().parse_args(
+            [
+                "--output-dir",
+                "analysis_out",
+                "reverse-engineer-app",
+                "test_samples/HelloWorld.java",
+                "--language",
+                "jvm",
+                "--skip-pattern",
+                "sentry",
+            ]
         )
 
-        assert args.verbose is True
-        assert args.log_file == "test.log"
+        assert args.command == "reverse-engineer-app"
+        assert args.input_path == "test_samples/HelloWorld.java"
+        assert args.language == "jvm"
+        assert args.output_dir == "analysis_out"
+        assert args.skip_pattern == ["sentry"]
+
+    def test_parser_reverse_engineer_app_command_accepts_python_language(self):
+        args = cli.create_parser().parse_args(
+            [
+                "reverse-engineer-app",
+                "sample.py",
+                "--language",
+                "python",
+            ]
+        )
+
+        assert args.command == "reverse-engineer-app"
+        assert args.input_path == "sample.py"
+        assert args.language == "python"
+
+    def test_parser_reverse_engineer_app_command_accepts_dotnet_language(self):
+        args = cli.create_parser().parse_args(
+            [
+                "reverse-engineer-app",
+                "sample.dll",
+                "--language",
+                "dotnet",
+            ]
+        )
+
+        assert args.command == "reverse-engineer-app"
+        assert args.input_path == "sample.dll"
+        assert args.language == "dotnet"
 
 
-@pytest.mark.skip(reason="CLI API changed - handlers modified")
 class TestCLIHandlers:
-    """Test CLI command handlers."""
+    """Test direct command handlers with current behavior."""
 
-    @patch("reveng.cli.REVENGAnalyzer")
     def test_handle_analyze_command_success(
-        self, mock_analyzer_class, mock_binary_file
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ):
-        """Test successful analyze command."""
-        # Mock analyzer
-        mock_analyzer = Mock()
-        mock_analyzer.analyze_binary.return_value = True
-        mock_analyzer._count_enabled_modules.return_value = 3
-        mock_analyzer_class.return_value = mock_analyzer
+        binary_path = tmp_path / "sample.exe"
+        binary_path.write_bytes(b"MZ" + b"\0" * 64)
+        analysis_dir = tmp_path / "analysis_out"
+        analyzer = SimpleNamespace(binary_path=str(binary_path), analysis_folder=analysis_dir)
 
-        # Mock args
-        args = Mock()
-        args.binary_path = str(mock_binary_file)
-        args.no_ollama_check = False
-        args.config = None
-        args.no_enhanced = False
-        args.no_corporate = False
-        args.no_vuln = False
-        args.no_threat = False
-        args.no_reconstruction = False
-        args.no_demo = False
+        with (
+            patch.object(cli, "REVENGAnalyzer", return_value=analyzer) as mock_analyzer_class,
+            patch.object(
+                cli,
+                "run_end_to_end_analysis",
+                return_value={
+                    "status": "success",
+                    "output_dir": str(analysis_dir),
+                    "report_path": str(analysis_dir / "report.json"),
+                    "summary": {
+                        "behavioral_anomaly_score": 0.25,
+                        "memory_anomaly_score": 0.5,
+                    },
+                },
+            ) as mock_runner,
+        ):
+            result = cli.handle_analyze_command(make_analyze_args(str(binary_path)))
 
-        result = handle_analyze_command(args)
-
+        captured = capsys.readouterr().out
         assert result == 0
+        assert "REVENG analysis completed successfully" in captured
         mock_analyzer_class.assert_called_once()
-        mock_analyzer.analyze_binary.assert_called_once()
+        mock_runner.assert_called_once()
+        call_kwargs = mock_runner.call_args.kwargs
+        assert call_kwargs["binary_path"] == str(binary_path)
+        assert call_kwargs["output_dir"] == str(analysis_dir)
+        assert call_kwargs["enhanced_features"].enable_enhanced_analysis is True
 
-    @patch("reveng.cli.REVENGAnalyzer")
-    def test_handle_analyze_command_binary_not_found(self, mock_analyzer_class):
-        """Test analyze command when binary not found."""
-        # Mock analyzer
-        mock_analyzer = Mock()
-        mock_analyzer.binary_path = "nonexistent.exe"
-        mock_analyzer_class.return_value = mock_analyzer
+    def test_handle_analyze_command_missing_binary(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ):
+        missing_binary = tmp_path / "missing.exe"
+        analyzer = SimpleNamespace(
+            binary_path=str(missing_binary), analysis_folder=tmp_path / "analysis"
+        )
 
-        # Mock Path.exists to return False
-        with patch("reveng.cli.Path") as mock_path:
-            mock_path.return_value.exists.return_value = False
+        with patch.object(cli, "REVENGAnalyzer", return_value=analyzer):
+            result = cli.handle_analyze_command(make_analyze_args(str(missing_binary)))
 
-            args = Mock()
-            args.binary_path = "nonexistent.exe"
-            args.no_ollama_check = False
-            args.config = None
-            args.no_enhanced = False
-            args.no_corporate = False
-            args.no_vuln = False
-            args.no_threat = False
-            args.no_reconstruction = False
-            args.no_demo = False
+        captured = capsys.readouterr().out
+        assert result == 1
+        assert "Binary not found" in captured
+        assert str(missing_binary) in captured
 
-            result = handle_analyze_command(args)
-
-            assert result == 1
-
-    @patch("reveng.cli.REVENGAnalyzer")
     def test_handle_analyze_command_failure(
-        self, mock_analyzer_class, mock_binary_file
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
     ):
-        """Test analyze command failure."""
-        # Mock analyzer
-        mock_analyzer = Mock()
-        mock_analyzer.analyze_binary.return_value = False
-        mock_analyzer_class.return_value = mock_analyzer
-
-        args = Mock()
-        args.binary_path = str(mock_binary_file)
-        args.no_ollama_check = False
-        args.config = None
-        args.no_enhanced = False
-        args.no_corporate = False
-        args.no_vuln = False
-        args.no_threat = False
-        args.no_reconstruction = False
-        args.no_demo = False
-
-        result = handle_analyze_command(args)
-
-        assert result == 1
-
-    @patch("reveng.cli.start_server")
-    def test_handle_serve_command_success(self, mock_start_server):
-        """Test successful serve command."""
-        args = Mock()
-        args.host = "localhost"
-        args.port = 3000
-        args.reload = False
-
-        result = handle_serve_command(args)
-
-        assert result == 0
-        mock_start_server.assert_called_once_with(
-            host="localhost", port=3000, reload=False
+        binary_path = tmp_path / "sample.exe"
+        binary_path.write_bytes(b"MZ" + b"\0" * 64)
+        analyzer = SimpleNamespace(
+            binary_path=str(binary_path), analysis_folder=tmp_path / "analysis"
         )
 
-    @patch("reveng.cli.start_server")
-    def test_handle_serve_command_import_error(self, mock_start_server):
-        """Test serve command with import error."""
-        mock_start_server.side_effect = ImportError("Web interface not available")
+        with (
+            patch.object(cli, "REVENGAnalyzer", return_value=analyzer),
+            patch.object(cli, "run_end_to_end_analysis", side_effect=RuntimeError("pipeline boom")),
+        ):
+            result = cli.handle_analyze_command(make_analyze_args(str(binary_path)))
 
-        args = Mock()
-        args.host = "localhost"
-        args.port = 3000
-        args.reload = False
-
-        result = handle_serve_command(args)
-
+        captured = capsys.readouterr().out
         assert result == 1
+        assert "REVENG analysis failed" in captured
+        assert "pipeline boom" in captured
 
-    @patch("reveng.cli.start_server")
-    def test_handle_serve_command_exception(self, mock_start_server):
-        """Test serve command with exception."""
-        mock_start_server.side_effect = Exception("Server error")
-
-        args = Mock()
-        args.host = "localhost"
-        args.port = 3000
-        args.reload = False
-
-        result = handle_serve_command(args)
-
-        assert result == 1
-
-
-@pytest.mark.skip(reason="CLI API changed")
-class TestCLIMain:
-    """Test the main CLI function."""
-
-    @patch("reveng.cli.handle_analyze_command")
-    def test_main_analyze_command(self, mock_handle_analyze):
-        """Test main function with analyze command."""
-        mock_handle_analyze.return_value = 0
-
-        result = main()
-
-        assert result == 0
-        mock_handle_analyze.assert_called_once()
-
-    @patch("reveng.cli.handle_serve_command")
-    def test_main_serve_command(self, mock_handle_serve):
-        """Test main function with serve command."""
-        mock_handle_serve.return_value = 0
-
-        result = main()
-
-        assert result == 0
-        mock_handle_serve.assert_called_once()
-
-    def test_main_no_command(self):
-        """Test main function with no command."""
-        with patch("sys.argv", ["reveng"]):
-            result = main()
-
-        assert result == 1
-
-    def test_main_unknown_command(self):
-        """Test main function with unknown command."""
-        with patch("sys.argv", ["reveng", "unknown"]):
-            result = main()
-
-        assert result == 1
-
-
-@pytest.mark.skip(reason="CLI API changed")
-class TestCLIIntegration:
-    """Test CLI integration scenarios."""
-
-    @patch("reveng.cli.REVENGAnalyzer")
-    def test_analyze_with_config_file(
-        self, mock_analyzer_class, mock_binary_file, temp_analysis_dir
-    ):
-        """Test analyze command with configuration file."""
-        # Create config file
-        config_file = temp_analysis_dir / "test_config.json"
-        config_file.write_text(
-            '{"enhanced_analysis": {"enable_corporate_exposure": false}}'
+    def test_create_enhanced_features_applies_cli_flags(self):
+        features = cli.create_enhanced_features(
+            Namespace(
+                no_enhanced=False,
+                no_corporate=True,
+                no_vuln=False,
+                no_threat=True,
+                no_reconstruction=False,
+                no_demo=True,
+                config=None,
+            )
         )
-
-        mock_analyzer = Mock()
-        mock_analyzer.analyze_binary.return_value = True
-        mock_analyzer._count_enabled_modules.return_value = 2
-        mock_analyzer_class.return_value = mock_analyzer
-
-        args = Mock()
-        args.binary_path = str(mock_binary_file)
-        args.no_ollama_check = False
-        args.config = str(config_file)
-        args.no_enhanced = False
-        args.no_corporate = False
-        args.no_vuln = False
-        args.no_threat = False
-        args.no_reconstruction = False
-        args.no_demo = False
-
-        result = handle_analyze_command(args)
-
-        assert result == 0
-        mock_analyzer_class.assert_called_once()
-
-    @patch("reveng.cli.REVENGAnalyzer")
-    def test_analyze_with_invalid_config(
-        self, mock_analyzer_class, mock_binary_file, temp_analysis_dir
-    ):
-        """Test analyze command with invalid configuration file."""
-        # Create invalid config file
-        config_file = temp_analysis_dir / "invalid_config.json"
-        config_file.write_text("invalid json")
-
-        mock_analyzer = Mock()
-        mock_analyzer.analyze_binary.return_value = True
-        mock_analyzer._count_enabled_modules.return_value = 5
-        mock_analyzer_class.return_value = mock_analyzer
-
-        args = Mock()
-        args.binary_path = str(mock_binary_file)
-        args.no_ollama_check = False
-        args.config = str(config_file)
-        args.no_enhanced = False
-        args.no_corporate = False
-        args.no_vuln = False
-        args.no_threat = False
-        args.no_reconstruction = False
-        args.no_demo = False
-
-        result = handle_analyze_command(args)
-
-        assert result == 0  # Should continue despite config error
-        mock_analyzer_class.assert_called_once()
-
-    def test_enhanced_features_creation(self):
-        """Test enhanced features creation from CLI args."""
-        from src.reveng.cli import create_enhanced_features
-
-        args = Mock()
-        args.no_enhanced = False
-        args.no_corporate = True
-        args.no_vuln = False
-        args.no_threat = True
-        args.no_reconstruction = False
-        args.no_demo = False
-        args.config = None
-
-        features = create_enhanced_features(args)
 
         assert features.enable_enhanced_analysis is True
         assert features.enable_corporate_exposure is False
         assert features.enable_vulnerability_discovery is True
         assert features.enable_threat_intelligence is False
         assert features.enable_enhanced_reconstruction is True
-        assert features.enable_demonstration_generation is True
+        assert features.enable_demonstration_generation is False
 
-    def test_enhanced_features_all_disabled(self):
-        """Test enhanced features when all are disabled."""
-        from src.reveng.cli import create_enhanced_features
+    def test_handle_serve_command_import_error(self, capsys: pytest.CaptureFixture[str]):
+        result = cli.handle_serve_command(Namespace(host="localhost", port=13370, reload=False))
 
-        args = Mock()
-        args.no_enhanced = True
-        args.no_corporate = False
-        args.no_vuln = False
-        args.no_threat = False
-        args.no_reconstruction = False
-        args.no_demo = False
-        args.config = None
+        captured = capsys.readouterr().out
+        assert result == 1
+        assert "Web interface not available" in captured
 
-        features = create_enhanced_features(args)
+    def test_handle_reverse_engineer_app_command_success(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ):
+        input_path = tmp_path / "HelloWorld.java"
+        input_path.write_text("public class HelloWorld {}", encoding="utf-8")
+        output_dir = tmp_path / "analysis_out"
+        result_obj = AppReverseEngineeringResult(
+            language="jvm",
+            adapter_name="jvm",
+            input_path=input_path,
+            input_root=input_path.parent,
+            output_dir=output_dir,
+            specs_dir=output_dir / "SPECS",
+            domains_dir=output_dir / "SPECS" / "domains",
+            artifacts_dir=output_dir / "artifacts",
+            analysis_file=output_dir / "analysis.json",
+            topic_files={},
+            domain_files={},
+            primary_artifacts={"sources": output_dir / "artifacts" / "normalized_sources"},
+            source_count=1,
+            warnings=[],
+            validation_grade="evidence_backed",
+            validation_summary="Recovered source and topic evidence were generated.",
+            evidence=[{"kind": "analysis_summary", "path": str(output_dir / "analysis.json")}],
+            provenance={
+                "inputs": [{"kind": "app_input", "path": str(input_path)}],
+                "artifacts": [{"kind": "analysis_summary", "path": str(output_dir / "analysis.json")}],
+                "stages": ["reverse_engineer_app"],
+                "references": [],
+                "tools": ["jvm"],
+            },
+        )
+        framework = SimpleNamespace(reverse_engineer=SimpleNamespace())
 
-        assert features.enable_enhanced_analysis is False
-        assert features.is_any_enhanced_enabled() is False
+        async def _fake_reverse_engineer(*args, **kwargs):
+            return result_obj
+
+        framework.reverse_engineer = _fake_reverse_engineer
+
+        with patch("reveng.app_reverse_engineering.create_default_framework", return_value=framework):
+            result = cli.handle_reverse_engineer_app_command(
+                Namespace(
+                    input_path=str(input_path),
+                    language="jvm",
+                    input_root=None,
+                    skip_pattern=["sentry"],
+                    max_snippets=12,
+                    snippet_context=2,
+                    run_deobfuscator=False,
+                    output_dir=str(output_dir),
+                )
+            )
+
+        captured = capsys.readouterr().out
+        assert result == 0
+        assert "App reverse engineering completed successfully" in captured
+        assert "Language: jvm" in captured
+        assert "Validation: evidence_backed" in captured
+        assert "Evidence items: 1" in captured
+        assert str(output_dir / "analysis.json") in captured
+
+    def test_create_enhanced_features_loads_json_config(self, tmp_path: Path):
+        config_path = tmp_path / "config.json"
+        config_path.write_text(
+            '{"enhanced_analysis": {"enable_vulnerability_discovery": false}}',
+            encoding="utf-8",
+        )
+
+        features = cli.create_enhanced_features(
+            Namespace(
+                no_enhanced=False,
+                no_corporate=False,
+                no_vuln=False,
+                no_threat=False,
+                no_reconstruction=False,
+                no_demo=False,
+                config=str(config_path),
+            )
+        )
+
+        assert features.enable_vulnerability_discovery is False
+
+
+class TestCLIMain:
+    """Test main() routing against the current parser/handlers."""
+
+    def test_main_routes_analyze_command(self):
+        with (
+            patch.object(cli, "handle_analyze_command", return_value=0) as mock_handler,
+            patch.object(sys, "argv", ["reveng", "--no-ollama-check", "analyze", "sample.exe"]),
+        ):
+            result = cli.main()
+
+        assert result == 0
+        mock_handler.assert_called_once()
+        args = mock_handler.call_args.args[0]
+        assert args.command == "analyze"
+        assert args.binary_path == "sample.exe"
+        assert args.no_ollama_check is True
+
+    def test_main_routes_serve_command(self):
+        with (
+            patch.object(cli, "handle_serve_command", return_value=0) as mock_handler,
+            patch.object(
+                sys, "argv", ["reveng", "serve", "--host", "127.0.0.1", "--port", "13370"]
+            ),
+        ):
+            result = cli.main()
+
+        assert result == 0
+        mock_handler.assert_called_once()
+        args = mock_handler.call_args.args[0]
+        assert args.command == "serve"
+        assert args.host == "127.0.0.1"
+        assert args.port == 13370
+
+    def test_main_routes_reverse_engineer_app_command(self):
+        with (
+            patch.object(cli, "handle_reverse_engineer_app_command", return_value=0) as mock_handler,
+            patch.object(
+                sys,
+                "argv",
+                [
+                    "reveng",
+                    "--output-dir",
+                    "analysis_out",
+                    "reverse-engineer-app",
+                    "test_samples/HelloWorld.java",
+                    "--language",
+                    "jvm",
+                ],
+            ),
+        ):
+            result = cli.main()
+
+        assert result == 0
+        mock_handler.assert_called_once()
+        args = mock_handler.call_args.args[0]
+        assert args.command == "reverse-engineer-app"
+        assert args.input_path == "test_samples/HelloWorld.java"
+        assert args.language == "jvm"
+
+    def test_main_no_command(self, capsys: pytest.CaptureFixture[str]):
+        with patch.object(sys, "argv", ["reveng"]):
+            result = cli.main()
+
+        captured = capsys.readouterr().out
+        assert result == 1
+        assert "usage:" in captured.lower()
+
+    def test_main_unknown_command(self, capsys: pytest.CaptureFixture[str]):
+        with patch.object(sys, "argv", ["reveng", "unknown"]):
+            with pytest.raises(SystemExit) as exc_info:
+                cli.main()
+
+        captured = capsys.readouterr().err
+        assert exc_info.value.code == 2
+        assert "invalid choice" in captured
+
+
+class TestCLIIntegration:
+    """Exercise the real CLI wrapper through subprocesses."""
+
+    def test_help_command(self):
+        result = run_cli("--help")
+
+        assert result.returncode == 0, result.stderr
+        assert "REVENG - Universal Reverse Engineering Platform" in result.stdout
+        assert "analyze" in result.stdout
+        assert "generate-exploit" in result.stdout
+
+    def test_version_command(self):
+        result = run_cli("--version")
+
+        assert result.returncode == 0, result.stderr
+        assert get_version_string() in result.stdout
+
+    def test_analyze_command_missing_binary(self, tmp_path: Path):
+        missing_binary = tmp_path / "missing.exe"
+        result = run_cli("--no-ollama-check", "analyze", str(missing_binary))
+
+        assert result.returncode == 1
+        assert "Binary not found" in result.stdout
+        assert str(missing_binary) in result.stdout
+
+    def test_analyze_help_command(self):
+        result = run_cli("analyze", "--help")
+
+        assert result.returncode == 0, result.stderr
+        assert "Run comprehensive binary analysis on the specified file" in result.stdout
+        assert "binary_path" in result.stdout

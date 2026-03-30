@@ -10,9 +10,9 @@ Leverage CPU debug registers for precise breakpoints:
 
 import logging
 import subprocess
-from typing import List, Dict, Optional, Set
 from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -84,9 +84,7 @@ class HardwareBreakpointEngine:
             Breakpoint object or None if limit reached
         """
         if len(self.breakpoints) >= self.max_breakpoints:
-            logger.error(
-                f"Cannot add breakpoint: limit of {self.max_breakpoints} reached"
-            )
+            logger.error(f"Cannot add breakpoint: limit of {self.max_breakpoints} reached")
             return None
 
         if size not in [1, 2, 4, 8]:
@@ -98,8 +96,7 @@ class HardwareBreakpointEngine:
         self.breakpoints.append(bp)
 
         logger.info(
-            f"Added hardware breakpoint: 0x{address:x} "
-            f"({watch_type.value}, {size} bytes)"
+            f"Added hardware breakpoint: 0x{address:x} " f"({watch_type.value}, {size} bytes)"
         )
 
         return bp
@@ -181,7 +178,7 @@ class HardwareBreakpointEngine:
 
                     match = re.search(r"(\d+)\s+hit", line)
                     if match:
-                        count = int(match.group(1))
+                        int(match.group(1))
                         # Would need to map back to address
                         # Simplified for now
 
@@ -198,7 +195,7 @@ class HardwareBreakpointEngine:
 
             try:
                 os.unlink(script_path)
-            except:
+            except OSError:
                 pass
 
     def optimize_breakpoint_placement(self, candidates: List[int]) -> List[int]:

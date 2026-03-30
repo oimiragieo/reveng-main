@@ -88,9 +88,7 @@ class GhidraScriptingEngine:
         self.temp_dir = Path(tempfile.gettempdir()) / "reveng_ghidra"
         self.temp_dir.mkdir(exist_ok=True)
 
-    def execute_python_script(
-        self, script_path: str, binary_path: str
-    ) -> ScriptExecutionResult:
+    def execute_python_script(self, script_path: str, binary_path: str) -> ScriptExecutionResult:
         """Execute Python script in Ghidra headless mode"""
         try:
             self.logger.info(f"Executing Python script {script_path} on {binary_path}")
@@ -157,13 +155,9 @@ class GhidraScriptingEngine:
                 binary_path=binary_path,
                 tool_name="ghidra",
             )
-            raise ScriptExecutionError(
-                script_path, "ghidra", context=context, original_exception=e
-            )
+            raise ScriptExecutionError(script_path, "ghidra", context=context, original_exception=e)
 
-    def execute_java_script(
-        self, script_path: str, binary_path: str
-    ) -> ScriptExecutionResult:
+    def execute_java_script(self, script_path: str, binary_path: str) -> ScriptExecutionResult:
         """Execute Java script in Ghidra"""
         try:
             self.logger.info(f"Executing Java script {script_path} on {binary_path}")
@@ -230,13 +224,9 @@ class GhidraScriptingEngine:
                 binary_path=binary_path,
                 tool_name="ghidra",
             )
-            raise ScriptExecutionError(
-                script_path, "ghidra", context=context, original_exception=e
-            )
+            raise ScriptExecutionError(script_path, "ghidra", context=context, original_exception=e)
 
-    def batch_analyze(
-        self, binaries: List[str], script: str
-    ) -> List[ScriptExecutionResult]:
+    def batch_analyze(self, binaries: List[str], script: str) -> List[ScriptExecutionResult]:
         """Batch process multiple binaries with same script"""
         try:
             self.logger.info(
@@ -290,9 +280,7 @@ class GhidraScriptingEngine:
             self.logger.error(f"Failed to create Ghidra project: {e}")
             raise
 
-    def export_analysis_results(
-        self, project: GhidraProject, format: str
-    ) -> Dict[str, Any]:
+    def export_analysis_results(self, project: GhidraProject, format: str) -> Dict[str, Any]:
         """Export Ghidra analysis results (XML, JSON, etc.)"""
         try:
             export_results = {}
@@ -320,9 +308,7 @@ class GhidraScriptingEngine:
             self.logger.error(f"Failed to export analysis results: {e}")
             return {}
 
-    def analyze_binary(
-        self, binary_path: str, auto_analyze: bool = True
-    ) -> GhidraAnalysis:
+    def analyze_binary(self, binary_path: str, auto_analyze: bool = True) -> GhidraAnalysis:
         """Analyze binary with Ghidra"""
         try:
             self.logger.info(f"Starting Ghidra analysis of {binary_path}")
@@ -359,9 +345,7 @@ class GhidraScriptingEngine:
                 confidence=0.8,  # Placeholder confidence
             )
 
-            self.logger.info(
-                f"Completed Ghidra analysis in {analysis_time:.2f} seconds"
-            )
+            self.logger.info(f"Completed Ghidra analysis in {analysis_time:.2f} seconds")
             return result
 
         except Exception as e:

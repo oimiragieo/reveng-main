@@ -52,6 +52,62 @@ def create_parser() -> argparse.ArgumentParser:
         nargs="?",
         help="Path to binary file (auto-detected if not provided)",
     )
+    analyze_parser.add_argument(
+        "--ghidra-timeout",
+        type=int,
+        default=900,
+        help="Ghidra analysis stage timeout in seconds (default: 900)",
+    )
+    analyze_parser.add_argument(
+        "--ghidra-retries",
+        type=int,
+        default=0,
+        help="Number of retries for the Ghidra analysis stage (default: 0)",
+    )
+
+    # App reverse-engineering command
+    reverse_app_parser = subparsers.add_parser(
+        "reverse-engineer-app",
+        help="Reverse engineer an application bundle or source package",
+        description="Generate a SPECS library and recovered artifacts for supported app inputs",
+    )
+    reverse_app_parser.add_argument(
+        "input_path",
+        help="Input application entrypoint, bundle, source file, or archive",
+    )
+    reverse_app_parser.add_argument(
+        "--language",
+        default="auto",
+        choices=["auto", "javascript", "jvm", "python", "dotnet"],
+        help="Language adapter to use; defaults to auto inference",
+    )
+    reverse_app_parser.add_argument(
+        "--input-root",
+        help="Root directory to inventory before analysis",
+    )
+    reverse_app_parser.add_argument(
+        "--skip-pattern",
+        action="append",
+        default=[],
+        help="Case-insensitive pattern to exclude from generated excerpts; repeat as needed",
+    )
+    reverse_app_parser.add_argument(
+        "--max-snippets",
+        type=int,
+        default=12,
+        help="Maximum excerpts to keep per topic",
+    )
+    reverse_app_parser.add_argument(
+        "--snippet-context",
+        type=int,
+        default=2,
+        help="Neighboring pseudo-lines to keep around a match",
+    )
+    reverse_app_parser.add_argument(
+        "--run-deobfuscator",
+        action="store_true",
+        help="Attempt deeper deobfuscation when the selected adapter supports it",
+    )
 
     # Serve command (web interface)
     serve_parser = subparsers.add_parser(
@@ -266,10 +322,10 @@ def create_parser() -> argparse.ArgumentParser:
         "--output", help="Path to save enhanced code (default: <file>_enhanced.c)"
     )
 
-    # Recompile command (Binary → Source → Binary pipeline)
+    # Recompile command (Binary -> Source -> Binary pipeline)
     recompile_parser = subparsers.add_parser(
         "recompile",
-        help="Binary → Source → Binary reconstruction pipeline",
+        help="Binary -> Source -> Binary reconstruction pipeline",
         description="Prove vulnerabilities through complete binary reconstruction",
     )
     recompile_parser.add_argument("binary_path", help="Path to binary file")
@@ -283,6 +339,12 @@ def create_parser() -> argparse.ArgumentParser:
         help="Ghidra server URL (default: http://127.0.0.1:13370)",
     )
     recompile_parser.add_argument(
+        "--ghidra-timeout",
+        type=int,
+        default=900,
+        help="Ghidra request timeout in seconds for recompilation (default: 900)",
+    )
+    recompile_parser.add_argument(
         "--no-gemini",
         action="store_true",
         help="Disable Gemini AI enhancement",
@@ -291,6 +353,26 @@ def create_parser() -> argparse.ArgumentParser:
         "--no-exploits",
         action="store_true",
         help="Skip exploit generation",
+    )
+
+    build_bun_sea_parser = subparsers.add_parser(
+        "build-bun-sea",
+        help="Build a Bun executable via Node SEA",
+        description="Recover, normalize, and package a Bun executable into a Windows executable using Node SEA",
+    )
+    build_bun_sea_parser.add_argument("binary_path", help="Path to Bun executable")
+    build_bun_sea_parser.add_argument(
+        "--output-dir",
+        help="Output directory for recovered and normalized Bun artifacts (default: analysis_<binary_name>)",
+    )
+    build_bun_sea_parser.add_argument(
+        "--output",
+        help="Output path for the generated SEA executable (default: <output-dir>\\normalized_project\\bun-sea.exe)",
+    )
+    build_bun_sea_parser.add_argument(
+        "--skip-install",
+        action="store_true",
+        help="Skip npm dependency installation before building the SEA executable",
     )
 
     # Decompile command
@@ -314,6 +396,12 @@ def create_parser() -> argparse.ArgumentParser:
         "--enhance",
         action="store_true",
         help="Apply AI enhancement to improve code quality",
+    )
+    decompile_parser.add_argument(
+        "--timeout",
+        type=int,
+        default=120,
+        help="Ghidra request timeout in seconds (default: 120)",
     )
 
     # Generate exploit command
@@ -430,12 +518,414 @@ def create_enhanced_features(args) -> EnhancedAnalysisFeatures:
     return features
 
 
+def _detect_bun_executable(binary_path: str):
+    """Return a Bun extractor and detection info for the given binary."""
+    from .tools.anti_analysis.bun_extractor import BunExecutableExtractor
+
+    extractor = BunExecutableExtractor()
+    return extractor, extractor.detect(binary_path)
+
+
+def _maybe_handle_bun_analysis(binary_path: str, output_dir: str) -> int | None:
+    """Route Bun executables to bundle extraction instead of native analysis."""
+    from .tools.anti_analysis.bun_extractor import (
+        build_bun_report_severity_summary,
+        build_bun_runtime_escalation_summary,
+    )
+
+    extractor, info = _detect_bun_executable(binary_path)
+    if not info.is_bun_executable:
+        return None
+
+    output_root = Path(output_dir)
+    output_root.mkdir(parents=True, exist_ok=True)
+    binary_name = Path(binary_path).stem
+    bundle_output = output_root / f"{binary_name}_bundle.js"
+    bunfs_dir = output_root / f"{binary_name}_bunfs"
+    report_path = output_root / "bun_analysis.json"
+
+    extraction = extractor.extract_javascript(binary_path, str(bundle_output))
+    if not extraction.success:
+        print("Error: Bun executable detected, but JavaScript extraction failed")
+        if extraction.error_message:
+            print(f"Reason: {extraction.error_message}")
+        return 1
+
+    recovery = extractor.recover_virtual_files(binary_path, str(bunfs_dir))
+    canonical_input, canonical_reason = _select_bun_recompilation_input(
+        extraction.output_path, recovery
+    )
+    normalization = _normalize_bun_workspace(extractor, canonical_input, output_root)
+    native_stub = extractor.analyze_pe_stub(binary_path)
+    report_severity = build_bun_report_severity_summary(
+        native_stub=native_stub,
+        normalization=normalization,
+    )
+    runtime_escalation = build_bun_runtime_escalation_summary(
+        native_stub=native_stub,
+        report_severity=report_severity,
+    )
+    summary = {
+        "route": "bun",
+        "binary_path": binary_path,
+        "bundle_output": extraction.output_path,
+        "bundle_hash": extraction.extracted_hash,
+        "javascript_size": extraction.javascript_size,
+        "canonical_recompilation_input": canonical_input,
+        "canonical_recompilation_reason": canonical_reason,
+        "report_severity": report_severity,
+        "runtime_escalation": runtime_escalation,
+        "bundle_info": {
+            "section_name": info.section_name,
+            "bundle_size": info.bundle_size,
+            "javascript_start_offset": info.javascript_start_offset,
+            "indicators": info.indicators,
+        },
+        "bunfs_recovery": {
+            "success": recovery.success,
+            "mode": recovery.recovery_mode,
+            "module_layout": recovery.graph.module_layout if recovery.graph else None,
+            "output_dir": recovery.output_dir,
+            "manifest_path": recovery.manifest_path,
+            "recovered_files": recovery.recovered_files,
+            "error_message": recovery.error_message,
+        },
+        "normalized_project": (
+            {
+                "success": normalization.success,
+                "output_dir": normalization.output_dir,
+                "entrypoint_path": normalization.entrypoint_path,
+                "sea_entrypoint_path": normalization.sea_entrypoint_path,
+                "sea_config_path": normalization.sea_config_path,
+                "package_json_path": normalization.package_json_path,
+                "manifest_path": normalization.manifest_path,
+                "inferred_dependencies": normalization.inferred_dependencies,
+                "runtime_features": normalization.runtime_features,
+                "shims_applied": normalization.shims_applied,
+                "semantic_checks": normalization.semantic_checks,
+                "postprocessing_hooks": normalization.postprocessing_hooks,
+                "warnings": normalization.warnings,
+                "error_message": normalization.error_message,
+            }
+            if normalization
+            else None
+        ),
+        "native_stub": (
+            {
+                "container": native_stub.container,
+                "machine": native_stub.machine,
+                "entry_point_rva": native_stub.entry_point_rva,
+                "image_base": native_stub.image_base,
+                "entry_point_section": native_stub.entry_point_section,
+                "entry_point_preview": [
+                    {
+                        "address": instruction.address,
+                        "mnemonic": instruction.mnemonic,
+                        "op_str": instruction.op_str,
+                        "target_address": instruction.target_address,
+                        "target_rva": instruction.target_rva,
+                        "target_section": instruction.target_section,
+                        "import_target": instruction.import_target,
+                        "rip_relative_address": instruction.rip_relative_address,
+                        "rip_relative_section": instruction.rip_relative_section,
+                    }
+                    for instruction in native_stub.entry_point_preview
+                ],
+                "section_names": native_stub.section_names,
+                "tls_directory_rva": native_stub.tls_directory_rva,
+                "tls_callback_vas": native_stub.tls_callback_vas,
+                "tls_callbacks": [
+                    {
+                        "virtual_address": callback.virtual_address,
+                        "rva": callback.rva,
+                        "section_name": callback.section_name,
+                        "file_offset": callback.file_offset,
+                        "instruction_preview": [
+                            {
+                                "address": instruction.address,
+                                "mnemonic": instruction.mnemonic,
+                                "op_str": instruction.op_str,
+                                "target_address": instruction.target_address,
+                                "target_rva": instruction.target_rva,
+                                "target_section": instruction.target_section,
+                                "import_target": instruction.import_target,
+                                "rip_relative_address": instruction.rip_relative_address,
+                                "rip_relative_section": instruction.rip_relative_section,
+                            }
+                            for instruction in callback.instruction_preview
+                        ],
+                    }
+                    for callback in native_stub.tls_callbacks
+                ],
+                "import_dlls": native_stub.import_dlls,
+                "imported_functions": native_stub.imported_functions,
+                "suspicious_imports": native_stub.suspicious_imports,
+                "startup_classification": native_stub.startup_classification,
+                "startup_reasons": native_stub.startup_reasons,
+                "runtime_readiness": {
+                    "breakpoints": [
+                        {
+                            "label": point.label,
+                            "kind": point.kind,
+                            "address": point.address,
+                            "section": point.section,
+                            "reason": point.reason,
+                        }
+                        for point in native_stub.runtime_readiness.breakpoints
+                    ],
+                    "dump_points": [
+                        {
+                            "label": point.label,
+                            "kind": point.kind,
+                            "address": point.address,
+                            "section": point.section,
+                            "reason": point.reason,
+                        }
+                        for point in native_stub.runtime_readiness.dump_points
+                    ],
+                    "notes": native_stub.runtime_readiness.notes,
+                },
+                "dump_guidance": {
+                    "recommended": native_stub.dump_guidance.recommended,
+                    "actions": [
+                        {
+                            "kind": action.kind,
+                            "summary": action.summary,
+                            "trigger": action.trigger,
+                        }
+                        for action in native_stub.dump_guidance.actions
+                    ],
+                },
+                "cross_references": [
+                    {
+                        "kind": reference.kind,
+                        "value": reference.value,
+                        "section": reference.section,
+                        "file_offset": reference.file_offset,
+                        "source": reference.source,
+                    }
+                    for reference in native_stub.cross_references
+                ],
+                "handoff_signals": [
+                    {
+                        "kind": signal.kind,
+                        "source": signal.source,
+                        "message": signal.message,
+                        "confidence": signal.confidence,
+                    }
+                    for signal in native_stub.handoff_signals
+                ],
+                "startup_targets": [
+                    {
+                        "source": target.source,
+                        "instruction_address": target.instruction_address,
+                        "instruction_mnemonic": target.instruction_mnemonic,
+                        "target_address": target.target_address,
+                        "target_rva": target.target_rva,
+                        "target_section": target.target_section,
+                        "symbolic_label": target.symbolic_label,
+                        "target_resolution": target.target_resolution,
+                        "import_target": target.import_target,
+                        "target_preview": [
+                            {
+                                "address": instruction.address,
+                                "mnemonic": instruction.mnemonic,
+                                "op_str": instruction.op_str,
+                                "target_address": instruction.target_address,
+                                "target_rva": instruction.target_rva,
+                                "target_section": instruction.target_section,
+                                "import_target": instruction.import_target,
+                                "rip_relative_address": instruction.rip_relative_address,
+                                "rip_relative_section": instruction.rip_relative_section,
+                            }
+                            for instruction in target.target_preview
+                        ],
+                    }
+                    for target in native_stub.startup_targets
+                ],
+                "startup_graph": {
+                    "roots": native_stub.startup_graph.roots,
+                    "nodes": [
+                        {
+                            "label": node.label,
+                            "node_type": node.node_type,
+                            "address": node.address,
+                            "rva": node.rva,
+                            "section": node.section,
+                            "source": node.source,
+                            "target_resolution": node.target_resolution,
+                            "import_target": node.import_target,
+                        }
+                        for node in native_stub.startup_graph.nodes
+                    ],
+                    "edges": [
+                        {
+                            "source_label": edge.source_label,
+                            "target_label": edge.target_label,
+                            "instruction_mnemonic": edge.instruction_mnemonic,
+                            "instruction_address": edge.instruction_address,
+                            "depth": edge.depth,
+                            "target_resolution": edge.target_resolution,
+                            "import_target": edge.import_target,
+                        }
+                        for edge in native_stub.startup_graph.edges
+                    ],
+                    "truncated": native_stub.startup_graph.truncated,
+                },
+                "indicators": native_stub.indicators,
+            }
+            if native_stub
+            else None
+        ),
+    }
+    report_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+    print("Detected Bun executable; routing analyze to Bun bundle extraction.")
+    print(f"Bundled JavaScript: {extraction.output_path}")
+    if recovery.success:
+        print(f"Bun virtual filesystem: {recovery.output_dir}")
+        print(f"Bun recovery mode: {recovery.recovery_mode}")
+    elif recovery.error_message:
+        print(f"Warning: Bun recovery incomplete: {recovery.error_message}")
+    if canonical_input:
+        print(f"Preferred recompilation input: {canonical_input}")
+        print(f"Reason: {canonical_reason}")
+    if normalization and normalization.success:
+        print(f"Normalized project workspace: {normalization.output_dir}")
+        print(f"Normalized entrypoint: {normalization.entrypoint_path}")
+        print(f"Normalized SEA entrypoint: {normalization.sea_entrypoint_path}")
+    print(f"Bun analysis report: {report_path}")
+    return 0
+
+
+def _default_bun_decompile_output(binary_path: str) -> str:
+    return f"{Path(binary_path).stem}_bundle.js"
+
+
+def _select_bun_recompilation_input(bundle_output: str | None, recovery) -> tuple[str | None, str]:
+    """Choose the cleanest recovered Bun artifact for downstream recompilation."""
+    from .tools.anti_analysis.bun_extractor import select_bun_recompilation_input
+
+    return select_bun_recompilation_input(bundle_output, recovery)
+
+
+def _normalize_bun_workspace(extractor, canonical_input: str | None, output_root: Path):
+    """Create a normalized Node-compatible workspace from the preferred Bun source artifact."""
+    if not canonical_input:
+        return None
+
+    normalized_dir = output_root / "normalized_project"
+    return extractor.normalize_project(canonical_input, str(normalized_dir))
+
+
+def _run_bun_sea_build(binary_path: str, output_dir: str | None, output_path: str | None, skip_install: bool):
+    """Shared Bun SEA build workflow used by dedicated and delegated CLI paths."""
+    from .tools.anti_analysis.bun_extractor import run_bun_sea_workflow
+
+    workflow = run_bun_sea_workflow(
+        binary_path=binary_path,
+        output_dir=output_dir,
+        output_path=output_path,
+        skip_install=skip_install,
+    )
+    return {
+        "status": workflow.status,
+        "message": workflow.message,
+        "reason": workflow.reason,
+        "canonical_input": workflow.canonical_input,
+        "canonical_reason": workflow.canonical_reason,
+        "normalization": workflow.normalization,
+        "build_result": workflow.build_result,
+        "differential_validation": workflow.differential_validation,
+        "report_path": workflow.report_path,
+    }
+
+
+def _maybe_handle_bun_decompile(args) -> int | None:
+    """Route Bun executables to JS extraction instead of native decompilation."""
+    extractor, info = _detect_bun_executable(args.binary_path)
+    if not info.is_bun_executable:
+        return None
+
+    output_path = args.output or _default_bun_decompile_output(args.binary_path)
+    print("Detected Bun executable; routing decompile to Bun bundle extraction.")
+    extraction = extractor.extract_javascript(args.binary_path, output_path)
+    if not extraction.success or not extraction.output_path:
+        print("Error: Bun executable detected, but JavaScript extraction failed")
+        if extraction.error_message:
+            print(f"Reason: {extraction.error_message}")
+        return 1
+
+    decompiled_code = Path(extraction.output_path).read_text(encoding="utf-8", errors="replace")
+    if args.enhance and decompiled_code:
+        print("Applying AI enhancement...")
+        try:
+            from .agents.ai.ai_enhanced import AICodeQualityEnhancer
+
+            enhancer = AICodeQualityEnhancer()
+            enhanced = enhancer.enhance_function(
+                function_code=decompiled_code, function_name=Path(args.binary_path).stem
+            )
+            decompiled_code = enhanced.enhanced_code
+            Path(extraction.output_path).write_text(decompiled_code, encoding="utf-8")
+            print("✓ AI enhancement applied")
+        except Exception as e:
+            print(f"Warning: AI enhancement failed: {e}")
+
+    bunfs_dir = Path(extraction.output_path).parent / f"{Path(extraction.output_path).stem}_bunfs"
+    recovery = extractor.recover_virtual_files(args.binary_path, str(bunfs_dir))
+    canonical_input, canonical_reason = _select_bun_recompilation_input(
+        extraction.output_path, recovery
+    )
+    normalization = _normalize_bun_workspace(
+        extractor, canonical_input, Path(extraction.output_path).parent
+    )
+
+    print(f"\n✓ Decompiled code saved to: {extraction.output_path}")
+    print("  Route: bun")
+    print("  Language: javascript")
+    if recovery.success:
+        print(f"  Bun virtual filesystem: {recovery.output_dir}")
+        print(f"  Bun recovery mode: {recovery.recovery_mode}")
+    if canonical_input:
+        print(f"  Preferred recompilation input: {canonical_input}")
+        print(f"  Reason: {canonical_reason}")
+    if normalization and normalization.success:
+        print(f"  Normalized project workspace: {normalization.output_dir}")
+        print(f"  Normalized entrypoint: {normalization.entrypoint_path}")
+        print(f"  Normalized SEA entrypoint: {normalization.sea_entrypoint_path}")
+
+    return 0
+
+
+def run_end_to_end_analysis(
+    *,
+    binary_path: str,
+    output_dir: str,
+    enhanced_features: EnhancedAnalysisFeatures,
+    ghidra_timeout_seconds: int,
+    ghidra_retry_count: int,
+) -> dict:
+    """Run the integrated async CLI analysis lifecycle."""
+    from .pipeline.e2e_integration import EndToEndPipelineRunner
+
+    runner = EndToEndPipelineRunner(
+        output_dir=output_dir,
+        use_gemini=enhanced_features.enable_enhanced_analysis,
+        enable_recompilation=enhanced_features.enable_enhanced_reconstruction,
+        enable_forensics=enhanced_features.enable_threat_intelligence,
+        ghidra_timeout_seconds=ghidra_timeout_seconds,
+        ghidra_retry_count=ghidra_retry_count,
+    )
+    return runner.run(binary_path)
+
+
 def handle_analyze_command(args):
     """Handle the analyze command."""
     # Create enhanced analysis features
     enhanced_features = create_enhanced_features(args)
 
-    # Create and run REVENG analyzer
+    # Create analyzer for path resolution, validation, and consistent output-folder handling.
     analyzer = REVENGAnalyzer(
         binary_path=args.binary_path,
         check_ollama=not args.no_ollama_check,
@@ -458,33 +948,118 @@ def handle_analyze_command(args):
         print("  --config FILE       Load configuration from JSON file")
         return 1
 
-    # Run analysis
-    analysis = analyzer.analyze_binary()
+    bun_result = _maybe_handle_bun_analysis(
+        binary_path=analyzer.binary_path,
+        output_dir=str(analyzer.analysis_folder),
+    )
+    if bun_result is not None:
+        return bun_result
 
-    if isinstance(analysis, dict) and analysis.get("status") == "success":
+    try:
+        print("Running end-to-end pipeline...")
+        print(
+            f"Ghidra stage timeout: {args.ghidra_timeout}s (retries: {args.ghidra_retries})"
+        )
+        analysis = run_end_to_end_analysis(
+            binary_path=analyzer.binary_path,
+            output_dir=str(analyzer.analysis_folder),
+            enhanced_features=enhanced_features,
+            ghidra_timeout_seconds=max(60, int(args.ghidra_timeout)),
+            ghidra_retry_count=max(0, int(args.ghidra_retries)),
+        )
+    except Exception as exc:
+        print("\n[ERROR] REVENG analysis failed!")
+        print(f"Reason: {exc}")
+        return 1
+
+    status = analysis.get("status", "failed")
+    report_path = analysis.get("report_path")
+    summary = analysis.get("summary", {})
+
+    if status in {"success", "partial_success"}:
         print("\n[SUCCESS] REVENG analysis completed successfully!")
-        analysis_folder = analysis.get("analysis_folder")
-        if analysis_folder:
-            print(f"Results stored in: {analysis_folder}")
-        if enhanced_features.is_any_enhanced_enabled():
-            print(f"Enhanced modules executed: {analyzer._count_enabled_modules()}")
+        print(f"Pipeline status: {status}")
+        print(f"Results stored in: {analysis.get('output_dir', analyzer.analysis_folder)}")
+        if report_path:
+            print(f"Unified report: {report_path}")
+
+        behavioral_score = summary.get("behavioral_anomaly_score")
+        memory_score = summary.get("memory_anomaly_score")
+        if behavioral_score is not None:
+            print(f"Behavioral anomaly score: {behavioral_score}")
+        if memory_score is not None:
+            print(f"Memory anomaly score: {memory_score}")
+
         return 0
 
-    error_message = None
-    if isinstance(analysis, dict):
-        error_message = analysis.get("error") or analysis.get("message")
-
     print("\n[ERROR] REVENG analysis failed!")
-    if error_message:
-        print(f"Reason: {error_message}")
+    if report_path:
+        print(f"Partial report: {report_path}")
+    print(f"Pipeline status: {status}")
     return 1
+
+
+def handle_reverse_engineer_app_command(args):
+    """Handle the language-agnostic app reverse-engineering command."""
+    import asyncio
+
+    from .app_reverse_engineering import create_default_framework
+
+    input_path = Path(args.input_path).expanduser().resolve()
+    if not input_path.exists():
+        print(f"Error: Input not found: {input_path}")
+        print("\nUsage: reveng reverse-engineer-app [input_path] [options]")
+        return 1
+
+    output_dir = args.output_dir
+    if not output_dir:
+        output_dir = f"analysis_{input_path.stem}"
+
+    framework = create_default_framework()
+    try:
+        result = asyncio.run(
+            framework.reverse_engineer(
+                str(input_path),
+                output_dir,
+                language=args.language,
+                input_root=args.input_root,
+                skip_patterns=args.skip_pattern,
+                max_snippets=args.max_snippets,
+                snippet_context=args.snippet_context,
+                run_deobfuscator=args.run_deobfuscator,
+            )
+        )
+    except Exception as exc:
+        print("\n[ERROR] App reverse engineering failed!")
+        print(f"Reason: {exc}")
+        return 1
+
+    print("\n[SUCCESS] App reverse engineering completed successfully!")
+    print(f"Language: {result.language}")
+    print(f"Adapter: {result.adapter_name}")
+    print(f"Specs root: {result.specs_dir}")
+    print(f"Analysis summary: {result.analysis_file}")
+    print(f"Recovered source files: {result.source_count}")
+    print(f"Validation: {result.validation_grade}")
+    if result.validation_summary:
+        print(f"Validation summary: {result.validation_summary}")
+    print(f"Evidence items: {len(result.evidence)}")
+    if result.primary_artifacts:
+        print("Primary artifacts:")
+        for name, artifact in result.primary_artifacts.items():
+            print(f"  - {name}: {artifact}")
+    if result.warnings:
+        print("Warnings:")
+        for warning in result.warnings:
+            print(f"  - {warning}")
+    return 0
 
 
 def handle_serve_command(args):
     """Handle the serve command (web interface)."""
     try:
         # Import web interface components
-        from ..web_interface.server import start_server
+        from .web_interface.server import start_server
 
         print("Starting REVENG Web Interface...")
         print(f"Server will be available at: http://{args.host}:{args.port}")
@@ -508,8 +1083,9 @@ def handle_serve_command(args):
 def handle_ask_command(args):
     """Handle the ask command (Natural Language Interface)."""
     try:
-        from ..ai.ai_assistant import ask_about_binary
         import asyncio
+
+        from .ai.ai_assistant import ask_about_binary
 
         # Run async function
         answer = asyncio.run(ask_about_binary(args.question, args.binary_path))
@@ -549,14 +1125,15 @@ def handle_ask_command(args):
 def handle_ai_command(args):
     """Handle the ai command (AI Assistant)."""
     try:
-        from ..ai.ai_assistant import REVENGAIAssistant, AIAnalysisRequest
         import asyncio
+
+        from .ai.ai_assistant import AIAnalysisRequest, REVENGAIAssistant
 
         # Create AI assistant
         assistant = REVENGAIAssistant()
 
         # Create analysis request
-        from ..ai.analysis_models import AnalysisType
+        from .ai.analysis_models import AnalysisType
 
         analysis_type = (
             AnalysisType(args.analysis_type)
@@ -641,7 +1218,7 @@ def handle_ai_command(args):
 def handle_triage_command(args):
     """Handle the triage command (Instant Triage)."""
     try:
-        from ..tools.ai.ai_enhanced import InstantTriageEngine
+        from .agents.ai.ai_enhanced import InstantTriageEngine
 
         engine = InstantTriageEngine()
 
@@ -678,7 +1255,7 @@ def handle_vt_lookup_command(args):
     try:
         import os
 
-        from ..tools.threat_intel import VirusTotalConnector
+        from .tools.threat_intel import VirusTotalConnector
 
         api_key = args.api_key or os.getenv("VT_API_KEY")
         if not api_key:
@@ -724,7 +1301,7 @@ def handle_vt_submit_command(args):
     try:
         import os
 
-        from ..tools.threat_intel import VirusTotalConnector
+        from .tools.threat_intel import VirusTotalConnector
 
         api_key = args.api_key or os.getenv("VT_API_KEY")
         if not api_key:
@@ -758,7 +1335,7 @@ def handle_vt_submit_command(args):
 def handle_generate_yara_command(args):
     """Handle the generate-yara command."""
     try:
-        from ..tools.threat_intel import YARAGenerator
+        from .tools.threat_intel import YARAGenerator
 
         # Load analysis results if provided
         analysis_results = None
@@ -795,7 +1372,7 @@ def handle_generate_yara_command(args):
 def handle_scan_yara_command(args):
     """Handle the scan-yara command."""
     try:
-        from ..tools.threat_intel import YARAScanner
+        from .tools.threat_intel import YARAScanner
 
         scanner = YARAScanner(rules_dir=args.rules_dir, rule_file=args.rule_file)
 
@@ -827,7 +1404,7 @@ def handle_scan_yara_command(args):
 def handle_diff_command(args):
     """Handle the diff command."""
     try:
-        from ..tools.diffing import BinaryDiffer
+        from .tools.diffing import BinaryDiffer
 
         differ = BinaryDiffer()
         result = differ.diff(
@@ -869,7 +1446,7 @@ def handle_diff_command(args):
 def handle_patch_analysis_command(args):
     """Handle the patch-analysis command."""
     try:
-        from ..tools.diffing import PatchAnalyzer
+        from .tools.diffing import PatchAnalyzer
 
         analyzer = PatchAnalyzer()
         vulnerabilities = analyzer.analyze_patch(
@@ -895,7 +1472,7 @@ def handle_patch_analysis_command(args):
 def handle_detect_packer_command(args):
     """Handle the detect-packer command."""
     try:
-        from ..tools.anti_analysis import PackerDetector
+        from .tools.anti_analysis import PackerDetector
 
         detector = PackerDetector()
         info = detector.detect(args.binary_path)
@@ -934,7 +1511,7 @@ def handle_detect_packer_command(args):
 def handle_unpack_command(args):
     """Handle the unpack command."""
     try:
-        from ..tools.anti_analysis import UniversalUnpacker
+        from .tools.anti_analysis import UniversalUnpacker
 
         unpacker = UniversalUnpacker()
         result = unpacker.unpack(
@@ -958,7 +1535,7 @@ def handle_unpack_command(args):
 def handle_enhance_code_command(args):
     """Handle the enhance-code command."""
     try:
-        from ..tools.ai.ai_enhanced import AICodeQualityEnhancer
+        from .agents.ai.ai_enhanced import AICodeQualityEnhancer
 
         # Read code file
         with open(args.code_file, "r") as f:
@@ -999,12 +1576,38 @@ def handle_enhance_code_command(args):
 def handle_recompile_command(args):
     """Handle the recompile command."""
     try:
+        extractor, info = _detect_bun_executable(args.binary_path)
+        if info.is_bun_executable:
+            print("Detected Bun executable; routing recompile to Node SEA build.")
+            result = _run_bun_sea_build(
+                binary_path=args.binary_path,
+                output_dir=args.output_dir,
+                output_path=None,
+                skip_install=False,
+            )
+            if result["status"] != "success":
+                print(f"Error: {result.get('message', 'Bun SEA build failed')}")
+                if result.get("reason"):
+                    print(f"Reason: {result['reason']}")
+                if result.get("report_path"):
+                    print(f"Build report: {result['report_path']}")
+                return 1
+
+            normalization = result["normalization"]
+            build_result = result["build_result"]
+            print(f"Preferred recompilation input: {result['canonical_input']}")
+            print(f"Normalized project workspace: {normalization.output_dir}")
+            print(f"SEA executable: {build_result.output_path}")
+            print(f"Build report: {result['report_path']}")
+            return 0
+
         from .recompile_command import run_recompile_command
 
         return run_recompile_command(
             binary_path=args.binary_path,
             output_dir=args.output_dir,
             ghidra_url=args.ghidra_url,
+            ghidra_timeout=max(60, int(args.ghidra_timeout)),
             use_gemini=not args.no_gemini,
         )
     except ImportError as e:
@@ -1016,10 +1619,73 @@ def handle_recompile_command(args):
         return 1
 
 
+def handle_build_bun_sea_command(args):
+    """Handle packaging a recovered Bun executable with Node SEA."""
+    try:
+        if not Path(args.binary_path).exists():
+            print(f"Error: Binary not found: {args.binary_path}")
+            return 1
+
+        result = _run_bun_sea_build(
+            binary_path=args.binary_path,
+            output_dir=args.output_dir,
+            output_path=args.output,
+            skip_install=args.skip_install,
+        )
+
+        if result["status"] == "not_bun":
+            print(f"Error: {result['message']}")
+            return 1
+
+        if result["status"] != "success":
+            print(f"Error: {result.get('message', 'Node SEA build failed')}")
+            if result.get("reason"):
+                print(f"Reason: {result['reason']}")
+            if result.get("report_path"):
+                print(f"Build report: {result['report_path']}")
+            return 1
+
+        normalization = result["normalization"]
+        build_result = result["build_result"]
+
+        print("Built Bun executable with Node SEA.")
+        print(f"Preferred recompilation input: {result['canonical_input']}")
+        print(f"Normalized project workspace: {normalization.output_dir}")
+        print(f"SEA executable: {build_result.output_path}")
+        print(f"Build report: {result['report_path']}")
+        return 0
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return 1
+
+
+def _flatten_decompiled_output(result: dict) -> str:
+    """Convert structured decompiler output into a text blob for file export."""
+    decompiled_code = result.get("decompiled_code", "")
+    if isinstance(decompiled_code, dict):
+        ordered_chunks = [
+            str(chunk).strip() for chunk in decompiled_code.values() if str(chunk).strip()
+        ]
+        if ordered_chunks:
+            return "\n\n".join(ordered_chunks)
+    if isinstance(decompiled_code, str) and decompiled_code.strip():
+        return decompiled_code
+
+    function_chunks = []
+    for function in result.get("functions", []):
+        if not isinstance(function, dict):
+            continue
+        source = str(function.get("source") or function.get("decompiled") or "").strip()
+        if source:
+            function_chunks.append(source)
+    return "\n\n".join(function_chunks)
+
+
 def handle_decompile_command(args):
     """Handle the decompile command."""
     try:
-        from ..integrations.ghidra.ghidra_engine import GhidraEngine
+        from .integrations.ghidra.ghidra_engine import GhidraConnectionError, GhidraEngine
 
         print("=" * 70)
         print("  REVENG Binary Decompilation")
@@ -1031,13 +1697,17 @@ def handle_decompile_command(args):
             print(f"Error: Binary not found: {args.binary_path}")
             return 1
 
+        bun_result = _maybe_handle_bun_decompile(args)
+        if bun_result is not None:
+            return bun_result
+
         # Initialize Ghidra
         print("Initializing Ghidra engine...")
-        ghidra = GhidraEngine()
+        ghidra = GhidraEngine(timeout=max(30, int(args.timeout)))
 
         # Perform decompilation
         print(f"Decompiling: {args.binary_path}")
-        result = ghidra.decompile_binary(args.binary_path)
+        result = ghidra.decompile(args.binary_path)
 
         # Determine output path
         output_path = args.output
@@ -1047,13 +1717,16 @@ def handle_decompile_command(args):
             output_path = f"{binary_name}_decompiled{ext}"
 
         # Save decompiled code
-        decompiled_code = result.get("decompiled_code", "")
+        decompiled_code = _flatten_decompiled_output(result)
+        if not decompiled_code.strip():
+            print("Error: Ghidra did not return any decompiled code")
+            return 1
 
         # Apply AI enhancement if requested
         if args.enhance and decompiled_code:
             print("Applying AI enhancement...")
             try:
-                from ..tools.ai.ai_enhanced import AICodeQualityEnhancer
+                from .agents.ai.ai_enhanced import AICodeQualityEnhancer
 
                 enhancer = AICodeQualityEnhancer()
                 enhanced = enhancer.enhance_function(
@@ -1064,8 +1737,7 @@ def handle_decompile_command(args):
             except Exception as e:
                 print(f"Warning: AI enhancement failed: {e}")
 
-        with open(output_path, "w") as f:
-            f.write(decompiled_code)
+        Path(output_path).write_text(decompiled_code, encoding="utf-8")
 
         print(f"\n✓ Decompiled code saved to: {output_path}")
         print(f"  Functions: {len(result.get('functions', []))}")
@@ -1076,6 +1748,9 @@ def handle_decompile_command(args):
     except ImportError:
         print("Error: Ghidra integration not available")
         print("Please install Ghidra and start the server")
+        return 1
+    except GhidraConnectionError as e:
+        print(f"Error: {e}")
         return 1
     except Exception as e:
         print(f"Error: {e}")
@@ -1146,7 +1821,7 @@ def handle_generate_exploit_command(args):
 
         # Generate exploit
         print("\nGenerating exploit...")
-        from ..exploits.exploit_chain_generator import ExploitChainGenerator
+        from .exploits.exploit_chain_generator import ExploitChainGenerator
 
         generator = ExploitChainGenerator()
         exploit = generator.generate_exploit(
@@ -1207,6 +1882,7 @@ def main():
     # Route to appropriate handler
     handlers = {
         "analyze": handle_analyze_command,
+        "reverse-engineer-app": handle_reverse_engineer_app_command,
         "serve": handle_serve_command,
         "ask": handle_ask_command,
         "ai": handle_ai_command,
@@ -1221,6 +1897,7 @@ def main():
         "unpack": handle_unpack_command,
         "enhance-code": handle_enhance_code_command,
         "recompile": handle_recompile_command,
+        "build-bun-sea": handle_build_bun_sea_command,
         "decompile": handle_decompile_command,
         "generate-exploit": handle_generate_exploit_command,
     }

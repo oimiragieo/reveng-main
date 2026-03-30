@@ -11,7 +11,7 @@ import os
 import sqlite3
 from typing import Any, Dict, List
 
-from ..server import MCPResource, MCPServer, MCPTool
+from ..server import MCPServer, MCPTool
 
 
 class DatabaseMCPServer(MCPServer):
@@ -233,8 +233,6 @@ class DatabaseMCPServer(MCPServer):
 
 # Main entry point for running as MCP server
 if __name__ == "__main__":
-    import sys
-
     from ..transports import StdioTransport
 
     async def main():

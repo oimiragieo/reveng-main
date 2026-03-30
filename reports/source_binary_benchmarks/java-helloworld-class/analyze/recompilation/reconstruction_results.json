@@ -1,0 +1,127 @@
+{
+  "binary_path": "C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.class",
+  "status": "failed",
+  "cfg_artifacts": {},
+  "cfg_summary": {},
+  "source_files": {
+    "c": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c"
+  },
+  "compiled_binaries": {},
+  "compilation_reports": {
+    "c_gcc": {
+      "compiler": "gcc",
+      "status": "failed",
+      "binary_path": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "command": [
+            "ccache",
+            "gcc",
+            "-o",
+            ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed_gcc.exe",
+            ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+            "-w",
+            "-O0",
+            "-g",
+            "-fno-builtin",
+            "-Wl,--allow-multiple-definition"
+          ],
+          "returncode": 1,
+          "stdout": "",
+          "stderr": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:169:6: error: expected identifier or '(' before 'default'\n  169 | void default main_java_lang_String_void(String * * param1);\n      |      ^~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:171:20: error: unknown type name 'HelloWorld'\n  171 | void sayHello_void(HelloWorld this);\n      |                    ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:172:6: error: expected identifier or '(' before 'default'\n  172 | void default _init_java_lang_String_void(HelloWorld this, String * param1);\n      |      ^~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:174:17: error: unknown type name 'HelloWorld'\n  174 | void _init_void(HelloWorld this);\n      |                 ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:39: error: unknown type name 'HelloWorld'\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\n      |                                       ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:55: error: unknown type name 'String'\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\n      |                                                       ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:1: error: unknown type name 'String'\n  178 | String * getMessage_java_lang_String(HelloWorld this);\n      | ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:38: error: unknown type name 'HelloWorld'\n  178 | String * getMessage_java_lang_String(HelloWorld this);\n      |                                      ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:180:18: error: unknown type name 'HelloWorld'\n  180 | int getCount_int(HelloWorld this);\n      |                  ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:189:35: error: unknown type name 'String'\n  189 | void main_java_lang_String___void(String **param1)\n      |                                   ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:216:20: error: unknown type name 'HelloWorld'\n  216 | void sayHello_void(HelloWorld this)\n      |                    ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:233:6: error: expected identifier or '(' before '<' token\n  233 | void <init_java_lang_String_void(HelloWorld this,String *param1)\n      |      ^\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:248:17: error: unknown type name 'HelloWorld'\n  248 | void _init_void(HelloWorld this)\n      |                 ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:263:39: error: unknown type name 'HelloWorld'\n  263 | void setMessage_java_lang_String_void(HelloWorld this,String *param1)\n      |                                       ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:263:55: error: unknown type name 'String'\n  263 | void setMessage_java_lang_String_void(HelloWorld this,String *param1)\n      |                                                       ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:276:1: error: unknown type name 'String'\n  276 | String * getMessage_java_lang_String(HelloWorld this)\n      | ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:276:38: error: unknown type name 'HelloWorld'\n  276 | String * getMessage_java_lang_String(HelloWorld this)\n      |                                      ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:288:18: error: unknown type name 'HelloWorld'\n  288 | int getCount_int(HelloWorld this)\n      |                  ^~~~~~~~~~\n",
+          "source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+          "feedback_applied": false,
+          "feedback_prompt_excerpt": "You are repairing reconstructed C source code so it compiles successfully.\n\nCompiler: gcc\nRetry attempt: 1 of 2\n\nCurrent source:\n```c\n/* Reconstructed by REVENG AI-Powered Analysis */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <stddef.h>\n#include <stdbool.h>\n\n#ifdef _WIN32\n#include <windows.h>\n#else\ntypedef size_t SIZE_T;\ntypedef void * LPVOID;\ntypedef struct {\n    long long QuadPart;\n} LARGE_INTEGER;\ntypedef void * PEXCEPTION_POINTERS;\ntypedef void *"
+        }
+      ],
+      "total_attempts": 1,
+      "max_retries": 2,
+      "max_retries_exceeded": false,
+      "failure_reason": "llm_feedback_unavailable",
+      "final_source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+      "cache_backend": "ccache"
+    },
+    "c_clang": {
+      "compiler": "clang",
+      "status": "failed",
+      "binary_path": null,
+      "attempts": [
+        {
+          "attempt": 1,
+          "command": [
+            "ccache",
+            "clang",
+            "-o",
+            ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed_clang.exe",
+            ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+            "-w",
+            "-O0",
+            "-g",
+            "-fno-builtin",
+            "-Wl,--allow-multiple-definition"
+          ],
+          "returncode": 1,
+          "stdout": "",
+          "stderr": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:169:6: error: expected identifier or '('\r\n  169 | void default main_java_lang_String_void(String * * param1);\r\n      |      ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:171:20: error: unknown type name 'HelloWorld'\r\n  171 | void sayHello_void(HelloWorld this);\r\n      |                    ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:172:6: error: expected identifier or '('\r\n  172 | void default _init_java_lang_String_void(HelloWorld this, String * param1);\r\n      |      ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:174:17: error: unknown type name 'HelloWorld'\r\n  174 | void _init_void(HelloWorld this);\r\n      |                 ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:39: error: unknown type name 'HelloWorld'\r\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\r\n      |                                       ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:55: error: unknown type name 'String'\r\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\r\n      |                                                       ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:1: error: unknown type name 'String'\r\n  178 | String * getMessage_java_lang_String(HelloWorld this);\r\n      | ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:38: error: unknown type name 'HelloWorld'\r\n  178 | String * getMessage_java_lang_String(HelloWorld this);\r\n      |                                      ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:180:18: error: unknown type name 'HelloWorld'\r\n  180 | int getCount_int(HelloWorld this);\r\n      |                  ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:189:35: error: unknown type name 'String'\r\n  189 | void main_java_lang_String___void(String **param1)\r\n      |                                   ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:192:3: error: use of undeclared identifier 'PrintStream'\r\n  192 |   PrintStream *objectRef;\r\n      |   ^~~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:192:16: error: use of undeclared identifier 'objectRef'\r\n  192 |   PrintStream *objectRef;\r\n      |                ^~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:194:3: error: use of undeclared identifier 'String'\r\n  194 |   String *pSVar2;\r\n      |   ^~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:194:11: error: use of undeclared identifier 'pSVar2'\r\n  194 |   String *pSVar2;\r\n      |           ^~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:195:3: error: use of undeclared identifier 'HelloWorld'\r\n  195 |   HelloWorld *objectRef_00;\r\n      |   ^~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:195:15: error: use of undeclared identifier 'objectRef_00'\r\n  195 |   HelloWorld *objectRef_00;\r\n      |               ^~~~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:197:3: error: use of undeclared identifier 'objectRef_00'\r\n  197 |   objectRef_00 = new HelloWorld();\r\n      |   ^~~~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:197:18: error: use of undeclared identifier 'new'\r\n  197 |   objectRef_00 = new HelloWorld();\r\n      |                  ^~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:198:24: error: use of undeclared identifier 'objectRef_00_sayHello'\r\n  198 |   ((ghidra_indirect_fn)objectRef_00_sayHello)(GHIDRA_U64(objectRef_00));\r\n      |                        ^~~~~~~~~~~~~~~~~~~~~\r\nfatal error: too many errors emitted, stopping now [-ferror-limit=]\r\n20 errors generated.\r\n",
+          "source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+          "feedback_applied": false,
+          "feedback_prompt_excerpt": "You are repairing reconstructed C source code so it compiles successfully.\n\nCompiler: clang\nRetry attempt: 1 of 2\n\nCurrent source:\n```c\n/* Reconstructed by REVENG AI-Powered Analysis */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <stddef.h>\n#include <stdbool.h>\n\n#ifdef _WIN32\n#include <windows.h>\n#else\ntypedef size_t SIZE_T;\ntypedef void * LPVOID;\ntypedef struct {\n    long long QuadPart;\n} LARGE_INTEGER;\ntypedef void * PEXCEPTION_POINTERS;\ntypedef void"
+        }
+      ],
+      "total_attempts": 1,
+      "max_retries": 2,
+      "max_retries_exceeded": false,
+      "failure_reason": "llm_feedback_unavailable",
+      "final_source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+      "cache_backend": "ccache"
+    }
+  },
+  "differential_validation": {},
+  "equivalence_validation": {
+    "dimension": "equivalence_validation",
+    "status": "blocked",
+    "equivalence_level": "not_recompiled",
+    "confidence": "high",
+    "summary": "Equivalence is blocked because recompilation did not produce a candidate binary.",
+    "reasons": [
+      "No compiler produced a candidate binary, so behavioral equivalence remains blocked at the compiler frontier.",
+      "Observed compiler blockers: llm_feedback_unavailable"
+    ],
+    "recommended_validations": [
+      {
+        "priority": 1,
+        "kind": "resolve_compiler_frontier",
+        "title": "Resolve the current compiler frontier",
+        "summary": "Fix the earliest compile blockers on the generated source before making any equivalence claim.",
+        "evidence": [
+          "successful_compiler_count:0",
+          "failed_compiler_count:2"
+        ]
+      },
+      {
+        "priority": 2,
+        "kind": "preserve_failure_corpus",
+        "title": "Preserve failing artifacts for regression tests",
+        "summary": "Keep the current source, stderr, and benchmark snippets as regression evidence while moving the frontier forward.",
+        "evidence": [
+          "failure_reason_count:1"
+        ]
+      }
+    ],
+    "evidence": {
+      "successful_compiler_count": 0,
+      "failed_compiler_count": 2,
+      "validation_target_count": 0,
+      "validation_failure_count": 0,
+      "similarity_score": 0.0,
+      "failure_reasons": [
+        "llm_feedback_unavailable"
+      ],
+      "differential_status": null
+    }
+  },
+  "validation_results": {},
+  "vulnerabilities": [],
+  "exploits": []
+}

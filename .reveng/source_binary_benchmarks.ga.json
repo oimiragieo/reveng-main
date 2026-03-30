@@ -1,0 +1,64 @@
+{
+  "version": "1.0",
+  "benchmarks": [
+    {
+      "id": "java-helloworld-class",
+      "source_repo": "..\\test_samples",
+      "binary_path": "..\\test_samples\\HelloWorld.class",
+      "output_dir": "..\\reports\\source_binary_benchmarks\\java-helloworld-class",
+      "analyze_timeout": 300,
+      "recompile_timeout": 300,
+      "analyze_ghidra_timeout": 120,
+      "recompile_ghidra_timeout": 120,
+      "rebuilt_binary_glob": "**/*.class",
+      "commands": []
+    },
+    {
+      "id": "java-helloworld-jar",
+      "source_repo": "..\\test_samples",
+      "binary_path": "..\\test_samples\\HelloWorld.jar",
+      "output_dir": "..\\reports\\source_binary_benchmarks\\java-helloworld-jar",
+      "analyze_timeout": 300,
+      "recompile_timeout": 300,
+      "analyze_ghidra_timeout": 120,
+      "recompile_ghidra_timeout": 120,
+      "rebuilt_binary_glob": "**/*.jar",
+      "commands": []
+    },
+    {
+      "id": "python-sample-bytecode",
+      "source_repo": "..\\test_samples",
+      "binary_path": "..\\test_samples\\sample_app.pyc",
+      "output_dir": "..\\reports\\source_binary_benchmarks\\python-sample-bytecode",
+      "analyze_timeout": 300,
+      "recompile_timeout": 300,
+      "analyze_ghidra_timeout": 120,
+      "recompile_ghidra_timeout": 120,
+      "rebuilt_binary_glob": "**/*.pyc",
+      "commands": []
+    },
+    {
+      "id": "python-sample-zipapp",
+      "source_repo": "..\\test_samples",
+      "binary_path": "..\\test_samples\\sample_app.pyz",
+      "output_dir": "..\\reports\\source_binary_benchmarks\\python-sample-zipapp",
+      "analyze_timeout": 300,
+      "recompile_timeout": 300,
+      "analyze_ghidra_timeout": 120,
+      "recompile_ghidra_timeout": 120,
+      "rebuilt_binary_glob": "**/*.pyz",
+      "commands": []
+    },
+    {
+      "id": "opencode",
+      "source_repo": "..\\external\\ga_sources\\opencode",
+      "binary_path": "..\\external\\ga_binaries\\opencode\\opencode.exe",
+      "output_dir": "..\\reports\\source_binary_benchmarks\\opencode",
+      "analyze_timeout": 900,
+      "recompile_timeout": 900,
+      "analyze_ghidra_timeout": 600,
+      "recompile_ghidra_timeout": 600,
+      "commands": []
+    }
+  ]
+}

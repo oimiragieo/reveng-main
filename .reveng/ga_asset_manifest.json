@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "notes": [
+    "These assets back the stricter GA audit path with real public release binaries and source mirrors.",
+    "They are provisioned on demand rather than checked into the repository."
+  ],
+  "git_repos": [
+    {
+      "id": "hexyl-source",
+      "repo_url": "https://github.com/sharkdp/hexyl.git",
+      "ref": "v0.17.0",
+      "dest": "..\\external\\ga_sources\\hexyl"
+    },
+    {
+      "id": "fd-source",
+      "repo_url": "https://github.com/sharkdp/fd.git",
+      "ref": "v10.4.2",
+      "dest": "..\\external\\ga_sources\\fd"
+    },
+    {
+      "id": "bat-source",
+      "repo_url": "https://github.com/sharkdp/bat.git",
+      "ref": "v0.26.1",
+      "dest": "..\\external\\ga_sources\\bat"
+    },
+    {
+      "id": "hyperfine-source",
+      "repo_url": "https://github.com/sharkdp/hyperfine.git",
+      "ref": "v1.20.0",
+      "dest": "..\\external\\ga_sources\\hyperfine"
+    },
+    {
+      "id": "ripgrep-source",
+      "repo_url": "https://github.com/BurntSushi/ripgrep.git",
+      "ref": "15.1.0",
+      "dest": "..\\external\\ga_sources\\ripgrep"
+    },
+    {
+      "id": "opencode-source",
+      "repo_url": "https://github.com/anomalyco/opencode.git",
+      "ref": "v1.3.6",
+      "dest": "..\\external\\ga_sources\\opencode"
+    },
+    {
+      "id": "winsw-source",
+      "repo_url": "https://github.com/winsw/winsw.git",
+      "ref": "v2.12.0",
+      "dest": "..\\external\\ga_sources\\winsw"
+    }
+  ],
+  "release_assets": [
+    {
+      "id": "hexyl-binary",
+      "asset_type": "zip_extract",
+      "url": "https://github.com/sharkdp/hexyl/releases/download/v0.17.0/hexyl-v0.17.0-x86_64-pc-windows-msvc.zip",
+      "dest": "..\\external\\ga_binaries\\hexyl",
+      "members": ["hexyl-v0.17.0-x86_64-pc-windows-msvc/hexyl.exe"]
+    },
+    {
+      "id": "fd-binary",
+      "asset_type": "zip_extract",
+      "url": "https://github.com/sharkdp/fd/releases/download/v10.4.2/fd-v10.4.2-x86_64-pc-windows-msvc.zip",
+      "dest": "..\\external\\ga_binaries\\fd",
+      "members": ["fd-v10.4.2-x86_64-pc-windows-msvc/fd.exe"]
+    },
+    {
+      "id": "bat-binary",
+      "asset_type": "zip_extract",
+      "url": "https://github.com/sharkdp/bat/releases/download/v0.26.1/bat-v0.26.1-x86_64-pc-windows-msvc.zip",
+      "dest": "..\\external\\ga_binaries\\bat",
+      "members": ["bat-v0.26.1-x86_64-pc-windows-msvc/bat.exe"]
+    },
+    {
+      "id": "hyperfine-binary",
+      "asset_type": "zip_extract",
+      "url": "https://github.com/sharkdp/hyperfine/releases/download/v1.20.0/hyperfine-v1.20.0-x86_64-pc-windows-msvc.zip",
+      "dest": "..\\external\\ga_binaries\\hyperfine",
+      "members": ["hyperfine-v1.20.0-x86_64-pc-windows-msvc/hyperfine.exe"]
+    },
+    {
+      "id": "ripgrep-binary",
+      "asset_type": "zip_extract",
+      "url": "https://github.com/BurntSushi/ripgrep/releases/download/15.1.0/ripgrep-15.1.0-x86_64-pc-windows-msvc.zip",
+      "dest": "..\\external\\ga_binaries\\ripgrep",
+      "members": ["ripgrep-15.1.0-x86_64-pc-windows-msvc/rg.exe"]
+    },
+    {
+      "id": "opencode-binary",
+      "asset_type": "zip_extract",
+      "url": "https://github.com/anomalyco/opencode/releases/download/v1.3.6/opencode-windows-x64.zip",
+      "dest": "..\\external\\ga_binaries\\opencode",
+      "members": ["opencode.exe"]
+    },
+    {
+      "id": "winsw-binary",
+      "asset_type": "file",
+      "url": "https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe",
+      "dest": "..\\external\\ga_binaries\\winsw\\WinSW-x64.exe"
+    }
+  ]
+}

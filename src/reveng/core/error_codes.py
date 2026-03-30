@@ -14,7 +14,7 @@ Categories:
 """
 
 from enum import Enum
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 class ErrorCode(Enum):
@@ -196,9 +196,7 @@ class REVENGError(Exception):
         metadata = ERROR_METADATA.get(error_code, {})
         self.severity = metadata.get("severity", "error")
         self.message = message or metadata.get("message", str(error_code.value))
-        self.recovery = recovery_hint or metadata.get(
-            "recovery", "Check logs for details"
-        )
+        self.recovery = recovery_hint or metadata.get("recovery", "Check logs for details")
 
         super().__init__(self.message)
 

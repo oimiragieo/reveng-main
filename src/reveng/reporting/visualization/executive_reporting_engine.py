@@ -140,10 +140,7 @@ class ExecutiveReportingEngine:
         Returns:
             Composite risk score (0.0 to 1.0)
         """
-        return (
-            likelihood * self.risk_weights["likelihood"]
-            + impact * self.risk_weights["impact"]
-        )
+        return likelihood * self.risk_weights["likelihood"] + impact * self.risk_weights["impact"]
 
     def categorize_risk_level(self, risk_score: float) -> RiskLevel:
         """
@@ -166,9 +163,7 @@ class ExecutiveReportingEngine:
         else:
             return RiskLevel.INFO
 
-    def create_risk_matrix(
-        self, risks: List[RiskMetric], save_path: Optional[str] = None
-    ) -> str:
+    def create_risk_matrix(self, risks: List[RiskMetric], save_path: Optional[str] = None) -> str:
         """
         Create risk matrix visualization
 
@@ -276,8 +271,7 @@ class ExecutiveReportingEngine:
         # Save the plot
         if not save_path:
             save_path = str(
-                self.output_dir
-                / f"risk_matrix_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+                self.output_dir / f"risk_matrix_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
             )
 
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
@@ -369,18 +363,10 @@ class ExecutiveReportingEngine:
             "generation_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "total_risks": len(risks),
             "critical_risks": len(
-                [
-                    r
-                    for r in risks
-                    if self.categorize_risk_level(r.risk_score) == RiskLevel.CRITICAL
-                ]
+                [r for r in risks if self.categorize_risk_level(r.risk_score) == RiskLevel.CRITICAL]
             ),
             "high_risks": len(
-                [
-                    r
-                    for r in risks
-                    if self.categorize_risk_level(r.risk_score) == RiskLevel.HIGH
-                ]
+                [r for r in risks if self.categorize_risk_level(r.risk_score) == RiskLevel.HIGH]
             ),
         }
 
@@ -390,8 +376,7 @@ class ExecutiveReportingEngine:
 
         # Save dashboard
         dashboard_path = (
-            self.output_dir
-            / f"executive_dashboard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            self.output_dir / f"executive_dashboard_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         )
         with open(dashboard_path, "w", encoding="utf-8") as f:
             f.write(dashboard_html)
@@ -417,8 +402,7 @@ class ExecutiveReportingEngine:
 
         # Create PDF document
         pdf_path = (
-            self.output_dir
-            / f"executive_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            self.output_dir / f"executive_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
         )
         doc = SimpleDocTemplate(str(pdf_path), pagesize=A4)
 
@@ -439,9 +423,7 @@ class ExecutiveReportingEngine:
         story.append(Paragraph("Executive Security Assessment Report", title_style))
         story.append(Spacer(1, 20))
         story.append(
-            Paragraph(
-                f"Organization: {executive_summary.organization}", styles["Heading2"]
-            )
+            Paragraph(f"Organization: {executive_summary.organization}", styles["Heading2"])
         )
         story.append(
             Paragraph(
@@ -449,9 +431,7 @@ class ExecutiveReportingEngine:
                 styles["Normal"],
             )
         )
-        story.append(
-            Paragraph(f"Analyst: {executive_summary.analyst}", styles["Normal"])
-        )
+        story.append(Paragraph(f"Analyst: {executive_summary.analyst}", styles["Normal"]))
         story.append(Spacer(1, 30))
 
         # Executive Summary
@@ -496,9 +476,7 @@ class ExecutiveReportingEngine:
         total_risks = len(risks)
 
         for level in RiskLevel:
-            count = len(
-                [r for r in risks if self.categorize_risk_level(r.risk_score) == level]
-            )
+            count = len([r for r in risks if self.categorize_risk_level(r.risk_score) == level])
             percentage = (count / total_risks * 100) if total_risks > 0 else 0
             risk_summary_data.append([level.value, str(count), f"{percentage:.1f}%"])
 
@@ -532,9 +510,7 @@ class ExecutiveReportingEngine:
         logger.info(f"PDF executive report generated: {pdf_path}")
         return str(pdf_path)
 
-    def _extract_risk_metrics(
-        self, analysis_results: Dict[str, Any]
-    ) -> List[RiskMetric]:
+    def _extract_risk_metrics(self, analysis_results: Dict[str, Any]) -> List[RiskMetric]:
         """
         Extract risk metrics from analysis results
 
@@ -615,11 +591,7 @@ class ExecutiveReportingEngine:
                     risk_score=self.calculate_risk_score(likelihood, impact_score),
                     evidence=[vuln.get("location", "Unknown location")],
                     remediation_effort="High",
-                    timeline=(
-                        "Immediate"
-                        if severity in ["Critical", "High"]
-                        else "Short-term"
-                    ),
+                    timeline=("Immediate" if severity in ["Critical", "High"] else "Short-term"),
                 )
                 risks.append(risk)
 
@@ -646,9 +618,7 @@ class ExecutiveReportingEngine:
 
         return risks
 
-    def _generate_remediation_roadmap(
-        self, risks: List[RiskMetric]
-    ) -> List[RemediationRoadmap]:
+    def _generate_remediation_roadmap(self, risks: List[RiskMetric]) -> List[RemediationRoadmap]:
         """
         Generate remediation roadmap from risks
 
@@ -842,9 +812,7 @@ if __name__ == "__main__":
                 },
             ]
         },
-        "threat_intelligence": {
-            "apt_attribution": {"group": "APT29", "confidence": 0.85}
-        },
+        "threat_intelligence": {"apt_attribution": {"group": "APT29", "confidence": 0.85}},
     }
 
     # Generate reports
@@ -852,9 +820,7 @@ if __name__ == "__main__":
         dashboard_path = engine.generate_executive_dashboard(
             sample_analysis_results, sample_executive_summary
         )
-        pdf_path = engine.generate_pdf_report(
-            sample_analysis_results, sample_executive_summary
-        )
+        pdf_path = engine.generate_pdf_report(sample_analysis_results, sample_executive_summary)
 
         print(f"Executive dashboard generated: {dashboard_path}")
         print(f"PDF report generated: {pdf_path}")

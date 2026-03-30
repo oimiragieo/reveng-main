@@ -1,0 +1,49 @@
+{
+  "milestone": "misc-quality",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc",
+      "exitCode": 1,
+      "note": "58 failed, 235 passed, 114 skipped, 1 error — all 58 failures are pre-existing (documented baseline: 179 pass, 58 fail). Pass count improved from 179 to 235. No new failures from misc-quality milestone."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "note": "15 errors — all pre-existing (14 import-untyped for requests, 1 angr syntax). No new typecheck errors from misc-quality milestone."
+    },
+    "lint": {
+      "passed": true,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203",
+      "exitCode": 1,
+      "note": "~470 issues — all pre-existing (F401, E722, F403/F405, E128, etc.). No new lint issues from misc-quality milestone."
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Added note to .factory/library/pipeline-upgrade.md documenting that StageType enum must be serialized as .value for yaml.safe_dump compatibility. This helps future workers modifying save_pipeline/load_pipeline.",
+      "sourceFeature": "fix-pipeline-yaml-serialization"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Add note to python-developer skill: manual verification with test_samples/sample.exe may be skipped for persistence-only or serialization-only fixes that do not affect binary analysis code paths. Workers should document the deviation reason.",
+      "evidence": "fix-pipeline-yaml-serialization worker correctly skipped sample-binary verification since the feature only changes YAML serialization, not analysis logic. The deviation was justified and documented in the handoff.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": null
+}

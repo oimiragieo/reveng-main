@@ -12,6 +12,8 @@ __all__ = [
     "NLPCodeAnalyzer",
     "ThreatIntelligenceCorrelator",
     "VulnerabilityDiscoveryEngine",
+    "YARAMatch",
+    "YARAScanner",
 ]
 
 _LOGGER = logging.getLogger(__name__)
@@ -66,6 +68,12 @@ def __getattr__(name):
             "reveng.security.vulnerability_discovery_engine",
             fromlist=["VulnerabilityDiscoveryEngine"],
         ).VulnerabilityDiscoveryEngine,
+        "YARAMatch": lambda: __import__(
+            "reveng.security.yara_scanner", fromlist=["YARAMatch"]
+        ).YARAMatch,
+        "YARAScanner": lambda: __import__(
+            "reveng.security.yara_scanner", fromlist=["YARAScanner"]
+        ).YARAScanner,
     }
 
     if name in loaders:

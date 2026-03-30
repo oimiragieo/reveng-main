@@ -1,438 +1,190 @@
-"""
-Unit tests for ML Code Reconstruction
-"""
+"""Unit tests for the current ML code reconstruction and recompilation APIs."""
 
-import tempfile
+import json
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 
+from reveng.ai.recompilation_engine import BinaryRecompilationEngine
 from reveng.ml.code_reconstruction import (
     CodeFragment,
     MLCodeReconstruction,
     ModelType,
-    ReconstructionResult,
     ReconstructionTask,
-    ThreatIntelligence,
 )
 
 
-@pytest.mark.skip(reason="ML private methods changed - tests trying to patch non-existent methods")
-class TestMLCodeReconstruction:
-    """Test cases for MLCodeReconstruction"""
+@pytest.fixture
+def reconstructor(monkeypatch: pytest.MonkeyPatch) -> MLCodeReconstruction:
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    return MLCodeReconstruction()
 
-    def setup_method(self):
-        """Setup test environment"""
-        self.temp_dir = Path(tempfile.mkdtemp())
-        self.ml_reconstruction = MLCodeReconstruction()
 
-    def teardown_method(self):
-        """Cleanup test environment"""
-        import shutil
+def test_ml_code_reconstruction_loads_current_local_models(
+    reconstructor: MLCodeReconstruction,
+):
+    assert set(reconstructor.models) == {
+        ModelType.CODEBERT,
+        ModelType.CODET5,
+        ModelType.CODEGEN,
+        ModelType.LOCAL_LLM,
+    }
+    assert reconstructor.model_configs[ModelType.CODEBERT]["model_name"] == (
+        "microsoft/codebert-base"
+    )
+    assert ReconstructionTask.FUNCTION_RECONSTRUCTION.value == "function_reconstruction"
 
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def test_init(self):
-        """Test MLCodeReconstruction initialization"""
-        assert self.ml_reconstruction is not None
-        assert hasattr(self.ml_reconstruction, "logger")
-        assert hasattr(self.ml_reconstruction, "models")
-        assert hasattr(self.ml_reconstruction, "providers")
-        assert hasattr(self.ml_reconstruction, "tasks")
+def test_reconstruct_code_returns_structured_result_for_function_task(
+    reconstructor: MLCodeReconstruction,
+):
+    fragment = CodeFragment(
+        address=0x401000,
+        size=4,
+        assembly_code="mov eax, 1\nret",
+        hex_data=b"\xb8\x01\x00\x00",
+    )
 
-    def test_analyze_binary_success(self):
-        """Test analyzing binary successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
+    result = reconstructor.reconstruct_code(
+        fragment,
+        ReconstructionTask.FUNCTION_RECONSTRUCTION,
+        ModelType.CODEBERT,
+    )
 
-        # Mock model analysis
-        with patch.object(
-            self.ml_reconstruction, "_analyze_with_model"
-        ) as mock_analyze:
-            mock_analyze.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="test code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
-            )
+    assert result.task == ReconstructionTask.FUNCTION_RECONSTRUCTION
+    assert result.input_fragment is fragment
+    assert result.model_used == ModelType.CODEBERT
+    assert result.processing_time >= 0.0
+    assert "reconstructed_function" in result.reconstructed_code
+    assert result.metadata["model_config"]["model_name"] == "microsoft/codebert-base"
+    assert 0.0 < result.confidence <= 1.0
 
-            # Analyze binary
-            result = self.ml_reconstruction.analyze_binary(str(test_binary))
 
-            assert result is not None
-            assert hasattr(result, "framework")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "reconstructed_code")
-            assert hasattr(result, "vulnerabilities")
-            assert hasattr(result, "threat_level")
+def test_select_best_model_prefers_current_available_fallbacks(
+    reconstructor: MLCodeReconstruction,
+):
+    assert (
+        reconstructor._select_best_model(ReconstructionTask.THREAT_INTELLIGENCE)
+        == ModelType.CODEBERT
+    )
+    assert reconstructor._select_best_model(ReconstructionTask.DECOMPILATION) == ModelType.CODEBERT
 
-    def test_analyze_binary_failure(self):
-        """Test analyzing binary with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
 
-        # Mock model analysis to fail
-        with patch.object(
-            self.ml_reconstruction, "_analyze_with_model"
-        ) as mock_analyze:
-            mock_analyze.side_effect = Exception("Analysis failed")
+def test_generate_threat_intelligence_uses_current_analysis_inputs(
+    reconstructor: MLCodeReconstruction,
+):
+    threats = reconstructor.generate_threat_intelligence(
+        {
+            "api_analysis": {
+                "suspicious_apis": [
+                    {
+                        "api": "CreateRemoteThread",
+                        "category": "process_injection",
+                    }
+                ]
+            },
+            "network_connections": [
+                {"foreign_address": "198.51.100.9:443"},
+            ],
+            "file_operations": [
+                {"operation": "WriteFile"},
+            ],
+        }
+    )
 
-            # Analyze binary
-            with pytest.raises(Exception):
-                self.ml_reconstruction.analyze_binary(str(test_binary))
+    threat_types = {threat.threat_type for threat in threats}
 
-    def test_reconstruct_code_success(self):
-        """Test code reconstruction successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
+    assert threat_types == {
+        "Process Injection",
+        "Network Communication",
+        "File System Manipulation",
+    }
+    process_injection = next(
+        threat for threat in threats if threat.threat_type == "Process Injection"
+    )
+    assert process_injection.severity == "HIGH"
+    assert process_injection.indicators == ["CreateRemoteThread"]
+    assert "T1055" in process_injection.references[0]
 
-        # Mock code reconstruction
-        with patch.object(
-            self.ml_reconstruction, "_reconstruct_with_model"
-        ) as mock_reconstruct:
-            mock_reconstruct.return_value = Mock(
-                reconstructed_code="test code",
-                confidence=0.9,
-                framework=".NET",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
-            )
 
-            # Reconstruct code
-            result = self.ml_reconstruction.reconstruct_code(str(test_binary))
-
-            assert result is not None
-            assert hasattr(result, "reconstructed_code")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "framework")
-            assert hasattr(result, "vulnerabilities")
-            assert hasattr(result, "threat_level")
-
-    def test_reconstruct_code_failure(self):
-        """Test code reconstruction with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock code reconstruction to fail
-        with patch.object(
-            self.ml_reconstruction, "_reconstruct_with_model"
-        ) as mock_reconstruct:
-            mock_reconstruct.side_effect = Exception("Reconstruction failed")
-
-            # Reconstruct code
-            with pytest.raises(Exception):
-                self.ml_reconstruction.reconstruct_code(str(test_binary))
-
-    def test_detect_vulnerabilities_success(self):
-        """Test vulnerability detection successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock vulnerability detection
-        with patch.object(
-            self.ml_reconstruction, "_detect_vulnerabilities_with_model"
-        ) as mock_detect:
-            mock_detect.return_value = ["vuln1", "vuln2", "vuln3"]
-
-            # Detect vulnerabilities
-            vulnerabilities = self.ml_reconstruction.detect_vulnerabilities(
-                str(test_binary)
-            )
-
-            assert isinstance(vulnerabilities, list)
-            assert len(vulnerabilities) == 3
-            assert "vuln1" in vulnerabilities
-            assert "vuln2" in vulnerabilities
-            assert "vuln3" in vulnerabilities
-
-    def test_detect_vulnerabilities_failure(self):
-        """Test vulnerability detection with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock vulnerability detection to fail
-        with patch.object(
-            self.ml_reconstruction, "_detect_vulnerabilities_with_model"
-        ) as mock_detect:
-            mock_detect.side_effect = Exception("Vulnerability detection failed")
-
-            # Detect vulnerabilities
-            with pytest.raises(Exception):
-                self.ml_reconstruction.detect_vulnerabilities(str(test_binary))
-
-    def test_analyze_threats_success(self):
-        """Test threat analysis successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock threat analysis
-        with patch.object(
-            self.ml_reconstruction, "_analyze_threats_with_model"
-        ) as mock_analyze:
-            mock_analyze.return_value = Mock(
-                threats=["threat1", "threat2"], confidence=0.85, risk_level="High"
-            )
-
-            # Analyze threats
-            result = self.ml_reconstruction.analyze_threats(str(test_binary))
-
-            assert result is not None
-            assert hasattr(result, "threats")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "risk_level")
-
-    def test_analyze_threats_failure(self):
-        """Test threat analysis with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock threat analysis to fail
-        with patch.object(
-            self.ml_reconstruction, "_analyze_threats_with_model"
-        ) as mock_analyze:
-            mock_analyze.side_effect = Exception("Threat analysis failed")
-
-            # Analyze threats
-            with pytest.raises(Exception):
-                self.ml_reconstruction.analyze_threats(str(test_binary))
-
-    def test_get_model_status_success(self):
-        """Test getting model status successfully"""
-        # Mock model status
-        with patch.object(self.ml_reconstruction, "_get_model_status") as mock_status:
-            mock_status.return_value = {
-                "codebert": {"status": "ready", "accuracy": 0.9},
-                "codet5": {"status": "ready", "accuracy": 0.85},
-                "gpt": {"status": "ready", "accuracy": 0.95},
-                "claude": {"status": "ready", "accuracy": 0.9},
+def test_save_reconstruction_and_threat_results_write_current_json_shapes(
+    reconstructor: MLCodeReconstruction,
+    tmp_path: Path,
+):
+    fragment = CodeFragment(
+        address=0x401000,
+        size=4,
+        assembly_code="call eax",
+        hex_data=b"\xff\xd0",
+        context={"function_name": "entry"},
+    )
+    reconstruction = reconstructor.reconstruct_code(
+        fragment,
+        ReconstructionTask.DECOMPILATION,
+        ModelType.CODEBERT,
+    )
+    threats = reconstructor.generate_threat_intelligence(
+        {
+            "api_analysis": {
+                "suspicious_apis": [{"api": "CreateRemoteThread", "category": "process_injection"}]
             }
+        }
+    )
 
-            # Get model status
-            status = self.ml_reconstruction.get_model_status()
+    reconstruction_path = tmp_path / "reconstruction.json"
+    threats_path = tmp_path / "threats.json"
 
-            assert isinstance(status, dict)
-            assert "codebert" in status
-            assert "codet5" in status
-            assert "gpt" in status
-            assert "claude" in status
-            assert status["codebert"]["status"] == "ready"
-            assert status["codet5"]["status"] == "ready"
-            assert status["gpt"]["status"] == "ready"
-            assert status["claude"]["status"] == "ready"
+    assert reconstructor.save_reconstruction_results([reconstruction], str(reconstruction_path))
+    assert reconstructor.save_threat_intelligence(threats, str(threats_path))
 
-    def test_get_model_status_failure(self):
-        """Test getting model status with failure"""
-        # Mock model status to fail
-        with patch.object(self.ml_reconstruction, "_get_model_status") as mock_status:
-            mock_status.side_effect = Exception("Status check failed")
+    reconstruction_payload = json.loads(reconstruction_path.read_text(encoding="utf-8"))
+    threats_payload = json.loads(threats_path.read_text(encoding="utf-8"))
 
-            # Get model status
-            with pytest.raises(Exception):
-                self.ml_reconstruction.get_model_status()
+    assert reconstruction_payload["summary"]["total_results"] == 1
+    assert reconstruction_payload["reconstruction_results"][0]["task"] == "decompilation"
+    assert reconstruction_payload["reconstruction_results"][0]["address"] == hex(fragment.address)
+    assert threats_payload["summary"]["total_threats"] == 1
+    assert threats_payload["threat_intelligence"][0]["threat_type"] == "Process Injection"
 
-    def test_code_fragment_properties(self):
-        """Test CodeFragment properties"""
-        fragment = CodeFragment(
-            code="test code",
-            language="python",
-            confidence=0.9,
-            source="binary",
-            metadata={"key": "value"},
-        )
 
-        assert fragment.code == "test code"
-        assert fragment.language == "python"
-        assert fragment.confidence == 0.9
-        assert fragment.source == "binary"
-        assert fragment.metadata == {"key": "value"}
+def test_binary_recompilation_engine_feedback_prompt_includes_cfg_context_and_history(
+    tmp_path: Path,
+):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+        max_compilation_retries=3,
+    )
 
-    def test_reconstruction_result_properties(self):
-        """Test ReconstructionResult properties"""
-        result = ReconstructionResult(
-            reconstructed_code="test code",
-            confidence=0.9,
-            framework=".NET",
-            vulnerabilities=["vuln1", "vuln2"],
-            threat_level="Medium",
-        )
+    prompt = engine._create_compilation_feedback_prompt(
+        "int main(void) { return 0 }",
+        "gcc",
+        "error: expected ';' before '}' token",
+        2,
+        [
+            {
+                "attempt": 1,
+                "stderr": "error: missing semicolon before closing brace",
+            },
+            {
+                "attempt": 2,
+                "stderr": "error: expected ';' before '}' token",
+            },
+        ],
+        {
+            "imports": ["printf"],
+            "strings": ["hello world"],
+            "cfg_context_text": "Function main has one basic block and no outgoing calls.",
+        },
+    )
 
-        assert result.reconstructed_code == "test code"
-        assert result.confidence == 0.9
-        assert result.framework == ".NET"
-        assert result.vulnerabilities == ["vuln1", "vuln2"]
-        assert result.threat_level == "Medium"
-
-    def test_reconstruction_task_enum(self):
-        """Test ReconstructionTask enum values"""
-        assert ReconstructionTask.DECOMPILATION == "decompilation"
-        assert ReconstructionTask.FUNCTION == "function"
-        assert ReconstructionTask.VARIABLE == "variable"
-        assert ReconstructionTask.CONTROL_FLOW == "control_flow"
-        assert ReconstructionTask.DATA_FLOW == "data_flow"
-        assert ReconstructionTask.VULNERABILITY_DETECTION == "vulnerability_detection"
-        assert ReconstructionTask.THREAT_INTELLIGENCE == "threat_intelligence"
-
-    def test_model_type_enum(self):
-        """Test ModelType enum values"""
-        assert ModelType.CODEBERT.value == "codebert"
-        assert ModelType.CODET5.value == "codet5"
-        assert ModelType.CODEGEN.value == "codegen"
-        assert ModelType.GPT.value == "gpt"
-        assert ModelType.CLAUDE.value == "claude"
-        assert ModelType.LOCAL_LLM.value == "local_llm"
-
-    def test_threat_intelligence_properties(self):
-        """Test ThreatIntelligence properties"""
-        threat = ThreatIntelligence(
-            threat_type="malware",
-            severity="High",
-            confidence=0.85,
-            indicators=["indicator1", "indicator2"],
-            description="Test threat",
-            mitigation=["mit1", "mit2"],
-        )
-
-        assert threat.threat_type == "malware"
-        assert threat.severity == "High"
-        assert threat.confidence == 0.85
-        assert threat.indicators == ["indicator1", "indicator2"]
-        assert threat.description == "Test threat"
-        assert threat.mitigation == ["mit1", "mit2"]
-
-    def test_ml_reconstruction_with_custom_model(self):
-        """Test ML reconstruction with custom model"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock custom model
-        with patch.object(
-            self.ml_reconstruction, "_analyze_with_model"
-        ) as mock_analyze:
-            mock_analyze.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="custom model code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
-            )
-
-            # Analyze binary with custom model
-            result = self.ml_reconstruction.analyze_binary(
-                str(test_binary), model="custom"
-            )
-
-            assert result is not None
-            assert hasattr(result, "framework")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "reconstructed_code")
-            assert hasattr(result, "vulnerabilities")
-            assert hasattr(result, "threat_level")
-
-    def test_ml_reconstruction_with_large_binary(self):
-        """Test ML reconstruction with large binary"""
-        # Create large test binary
-        test_binary = self.temp_dir / "large.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000000)  # 1MB file
-
-        # Mock model analysis
-        with patch.object(
-            self.ml_reconstruction, "_analyze_with_model"
-        ) as mock_analyze:
-            mock_analyze.return_value = Mock(
-                framework=".NET",
-                confidence=0.9,
-                reconstructed_code="large binary code",
-                vulnerabilities=["vuln1", "vuln2"],
-                threat_level="Medium",
-            )
-
-            # Analyze binary
-            result = self.ml_reconstruction.analyze_binary(str(test_binary))
-
-            assert result is not None
-            assert hasattr(result, "framework")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "reconstructed_code")
-            assert hasattr(result, "vulnerabilities")
-            assert hasattr(result, "threat_level")
-
-    def test_ml_reconstruction_with_multiple_tasks(self):
-        """Test ML reconstruction with multiple tasks"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        tasks = [
-            ReconstructionTask.DECOMPILATION,
-            ReconstructionTask.FUNCTION,
-            ReconstructionTask.VARIABLE,
-            ReconstructionTask.CONTROL_FLOW,
-            ReconstructionTask.DATA_FLOW,
-            ReconstructionTask.VULNERABILITY_DETECTION,
-            ReconstructionTask.THREAT_INTELLIGENCE,
-        ]
-
-        for task in tasks:
-            # Mock task execution
-            with patch.object(self.ml_reconstruction, "_execute_task") as mock_execute:
-                mock_execute.return_value = Mock(
-                    result=f"Result for {task}", confidence=0.9
-                )
-
-                # Execute task
-                result = self.ml_reconstruction.execute_task(str(test_binary), task)
-
-                assert result is not None
-                assert hasattr(result, "result")
-                assert hasattr(result, "confidence")
-
-    def test_ml_reconstruction_with_different_models(self):
-        """Test ML reconstruction with different models"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        models = [
-            ModelType.CODEBERT,
-            ModelType.CODET5,
-            ModelType.CODEGEN,
-            ModelType.GPT,
-            ModelType.CLAUDE,
-            ModelType.LOCAL_LLM,
-        ]
-
-        for model in models:
-            # Mock model analysis
-            with patch.object(
-                self.ml_reconstruction, "_analyze_with_model"
-            ) as mock_analyze:
-                mock_analyze.return_value = Mock(
-                    framework=".NET",
-                    confidence=0.9,
-                    reconstructed_code=f"Code from {model}",
-                    vulnerabilities=["vuln1", "vuln2"],
-                    threat_level="Medium",
-                )
-
-                # Analyze binary with model
-                result = self.ml_reconstruction.analyze_binary(
-                    str(test_binary), model=model
-                )
-
-                assert result is not None
-                assert hasattr(result, "framework")
-                assert hasattr(result, "confidence")
-                assert hasattr(result, "reconstructed_code")
-                assert hasattr(result, "vulnerabilities")
-                assert hasattr(result, "threat_level")
+    assert "Compiler: gcc" in prompt
+    assert "Retry attempt: 2 of 3" in prompt
+    assert "error: expected ';' before '}' token" in prompt
+    assert "Previous failed attempts" in prompt
+    assert "error: missing semicolon before closing brace" in prompt
+    assert "Imported functions: printf" in prompt
+    assert "Observed strings: hello world" in prompt
+    assert "Function main has one basic block and no outgoing calls." in prompt

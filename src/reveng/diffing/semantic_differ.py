@@ -9,11 +9,11 @@ Superior to syntactic diffing through:
 """
 
 import logging
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+
 import networkx as nx
 import numpy as np
-from typing import List, Dict, Optional, Set, Tuple
-from dataclasses import dataclass, field
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ class SemanticBinaryDiffer:
                 from reveng.integrations.ghidra.ghidra_engine import GhidraEngine
 
                 self.ghidra = GhidraEngine()
-            except:
+            except Exception:
                 logger.warning("Ghidra not available")
         return self.ghidra
 
@@ -98,7 +98,7 @@ class SemanticBinaryDiffer:
                 from reveng.ai.gemini_engine import GeminiEngine
 
                 self.gemini = GeminiEngine()
-            except:
+            except Exception:
                 logger.warning("Gemini not available")
         return self.gemini
 
@@ -262,9 +262,7 @@ class SemanticBinaryDiffer:
                 neighbors2 = set(cfg2.neighbors(func2))
 
                 if neighbors1 or neighbors2:
-                    struct_sim = len(neighbors1 & neighbors2) / len(
-                        neighbors1 | neighbors2
-                    )
+                    struct_sim = len(neighbors1 & neighbors2) / len(neighbors1 | neighbors2)
                 else:
                     struct_sim = 1.0 if not (neighbors1 or neighbors2) else 0.0
 
@@ -331,9 +329,7 @@ class SemanticBinaryDiffer:
         if not alignment.matched and not alignment.added and not alignment.removed:
             return 1.0  # Both empty
 
-        total_funcs = (
-            len(alignment.matched) + len(alignment.added) + len(alignment.removed)
-        )
+        total_funcs = len(alignment.matched) + len(alignment.added) + len(alignment.removed)
 
         if total_funcs == 0:
             return 1.0

@@ -122,9 +122,7 @@ class JavaProjectReconstructor:
             },
         }
 
-    def reconstruct_from_jar(
-        self, jar_path: str, analysis_output: str
-    ) -> ProjectStructure:
+    def reconstruct_from_jar(self, jar_path: str, analysis_output: str) -> ProjectStructure:
         """
         Reconstruct project from JAR file and decompilation output
 
@@ -342,9 +340,7 @@ class JavaProjectReconstructor:
         """Find main class by looking for public static void main"""
         for java_class in self.classes:
             try:
-                content = java_class.source_file.read_text(
-                    encoding="utf-8", errors="ignore"
-                )
+                content = java_class.source_file.read_text(encoding="utf-8", errors="ignore")
                 if (
                     "public static void main(String[]" in content
                     or "public static void main(String ..." in content
@@ -378,9 +374,7 @@ class JavaProjectReconstructor:
 
         return resources
 
-    def _generate_project_structure(
-        self, project: ProjectStructure, analysis_output: str
-    ):
+    def _generate_project_structure(self, project: ProjectStructure, analysis_output: str):
         """Generate Maven/Gradle project structure on disk"""
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -531,7 +525,9 @@ dependencies {{
 
         # Add dependencies
         for dep in project.dependencies:
-            gradle_content += f"    implementation '{dep['groupId']}:{dep['artifactId']}:{dep['version']}'\n"
+            gradle_content += (
+                f"    implementation '{dep['groupId']}:{dep['artifactId']}:{dep['version']}'\n"
+            )
 
         gradle_content += """}
 
@@ -651,18 +647,14 @@ def main():
         description="Reconstruct Maven/Gradle project from decompiled Java code"
     )
     parser.add_argument("jar_file", help="Path to JAR file")
-    parser.add_argument(
-        "analysis_output", help="Path to java_bytecode_analyzer output directory"
-    )
+    parser.add_argument("analysis_output", help="Path to java_bytecode_analyzer output directory")
     parser.add_argument(
         "-o",
         "--output",
         default="reconstructed_project",
         help="Output directory for reconstructed project",
     )
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose logging"
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose logging")
 
     args = parser.parse_args()
 

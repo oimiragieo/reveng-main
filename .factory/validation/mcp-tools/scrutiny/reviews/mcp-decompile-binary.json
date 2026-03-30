@@ -1,0 +1,44 @@
+{
+  "featureId": "mcp-decompile-binary",
+  "reviewedAt": "2026-03-14T04:15:00.000Z",
+  "commitId": "aa1f50a3",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The decompile_binary MCP tool was properly fixed. The commit replaces the broken `ghidra.decompile()` call with `self.ghidra_engine.decompile(path)` using a shared GhidraEngine instance initialized in __init__. The tool's inputSchema was updated to require `binary_path` (with legacy `path` fallback via `_resolve_binary_argument`). A new `_build_decompile_response` helper normalizes Ghidra's raw dict into structured JSON with `decompiled_functions`, `decompiled_source`, `strings`, `imports`, `function_count`, and `status_code`. Error handling returns `status_code: 500` with a descriptive message instead of crashing. Three well-targeted tests cover schema correctness, structured response content, and error handling. The worker also fixed several pre-existing type/API issues in the same file to pass scoped mypy, which is justified scope creep. All 15 tools remain registered with correct schemas (VAL-MCP-006 satisfied).",
+    "issues": [
+      {
+        "file": "tests/integration/test_mcp_integration.py",
+        "line": 310,
+        "severity": "non_blocking",
+        "description": "Test `test_decompile_binary_tool_returns_descriptive_error` names its temp file 'missing.exe' but the file actually exists (it's written with `write_bytes`); the error comes from the mocked RuntimeError, not a missing file. The name is slightly misleading but the test logic is correct."
+      },
+      {
+        "file": "src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py",
+        "line": 1720,
+        "severity": "non_blocking",
+        "description": "The `_build_decompile_response` returns both `decompiled_functions` and `functions` keys containing the identical list. This is intentional backward compatibility but adds minor payload redundancy. Consider documenting which key is canonical."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "The `re-platform.md` library file was already updated by someone to document `decompile_binary` as working and GhidraEngine.decompile() as available. This is good — the knowledge stayed in sync with the implementation.",
+      "evidence": "re-platform.md MCP Server section: '`decompile_binary`: Now working — calls `GhidraEngine.decompile()` which hits the HTTP server `/decompile` endpoint'"
+    },
+    {
+      "area": "conventions",
+      "observation": "The worker replaced `asyncio.get_event_loop()` with `asyncio.get_running_loop()` across multiple tool handlers. This is correct for Python 3.10+ (get_event_loop is deprecated in non-async contexts). This convention should be documented in AGENTS.md to prevent future workers from using the deprecated API.",
+      "evidence": "Diff shows 3 replacements: analyze_binary, decompile_binary, and find_vulnerabilities all changed from get_event_loop() to get_running_loop()"
+    },
+    {
+      "area": "conventions",
+      "observation": "The worker introduced a `_resolve_binary_argument` pattern that accepts both the new field name and the legacy `path` argument as a fallback. This backward-compatibility pattern is now used by decompile_binary, recompile_binary, ask_ai_about_binary, and ai_code_reconstruction. This dual-argument convention should be noted so future MCP tool implementers follow the same pattern.",
+      "evidence": "reveng_enterprise_server.py lines 1684-1691: _resolve_binary_argument method; used at lines 799, 834, 1285, 1377"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The decompile_binary MCP tool implementation fully satisfies all requirements: (1) uses the shared GhidraEngine.decompile() method, (2) returns structured JSON with decompiled_functions/strings/imports/decompiled_source, (3) returns status_code 500 with descriptive error on failure, (4) tools/list advertises correct binary_path schema. VAL-MCP-006 confirmed: 15 tools registered with correct schemas. Tests are well-targeted with mock-based verification of success path, error path, and schema completeness. Two non-blocking issues noted: misleading test name and redundant response keys."
+}

@@ -13,10 +13,9 @@ Uses Python's ast module for transformations (similar to Babel but pure Python)
 For production, would integrate with Node.js Babel via subprocess.
 """
 
-import ast
 import logging
-from typing import Any, Dict, List, Optional, Set
 from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

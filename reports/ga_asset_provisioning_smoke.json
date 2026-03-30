@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "result_type": "ga_asset_provisioning_report",
+  "manifest_path": "C:\\dev\\projects\\reveng-main\\.reveng\\ga_asset_manifest.json",
+  "selected_id_count": 3,
+  "summary": {
+    "asset_count": 3,
+    "completed_count": 3,
+    "skipped_count": 0,
+    "failed_count": 0,
+    "overall_status": "pass"
+  },
+  "results": [
+    {
+      "id": "hexyl-binary",
+      "kind": "release_asset",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\hexyl",
+      "asset_type": "zip_extract",
+      "extracted_files": [
+        "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\hexyl\\hexyl.exe"
+      ]
+    },
+    {
+      "id": "opencode-binary",
+      "kind": "release_asset",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\opencode",
+      "asset_type": "zip_extract",
+      "extracted_files": [
+        "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\opencode\\opencode.exe"
+      ]
+    },
+    {
+      "id": "winsw-binary",
+      "kind": "release_asset",
+      "status": "completed",
+      "dest": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\winsw\\WinSW-x64.exe",
+      "asset_type": "file"
+    }
+  ],
+  "notes": [
+    "These assets back the stricter GA audit path with real public release binaries and source mirrors.",
+    "They are provisioned on demand rather than checked into the repository."
+  ]
+}

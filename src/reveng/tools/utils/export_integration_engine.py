@@ -422,9 +422,7 @@ rule {rule_name} {{
         logger.info(f"IOC CSV exported: {export_path}")
         return str(export_path)
 
-    def export_siem_format(
-        self, threat_intel: ThreatIntelligence, siem_type: SIEMType
-    ) -> str:
+    def export_siem_format(self, threat_intel: ThreatIntelligence, siem_type: SIEMType) -> str:
         """
         Export threat intelligence in SIEM-specific format
 
@@ -563,9 +561,7 @@ rule {rule_name} {{
                 )
                 return True
             else:
-                logger.error(
-                    f"Failed to push STIX data: {response.status_code} - {response.text}"
-                )
+                logger.error(f"Failed to push STIX data: {response.status_code} - {response.text}")
                 return False
 
         except Exception as e:
@@ -680,8 +676,7 @@ rule {rule_name} {{
     def _export_stix_json(self, bundle: Bundle, threat_id: str) -> str:
         """Export STIX bundle as JSON"""
         export_path = (
-            self.output_dir
-            / f"stix2_{threat_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            self.output_dir / f"stix2_{threat_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         )
 
         with open(export_path, "w", encoding="utf-8") as f:
@@ -712,8 +707,7 @@ rule {rule_name} {{
         xml_str = minidom.parseString(ET.tostring(root)).toprettyxml(indent="  ")
 
         export_path = (
-            self.output_dir
-            / f"stix2_{threat_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
+            self.output_dir / f"stix2_{threat_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xml"
         )
         with open(export_path, "w", encoding="utf-8") as f:
             f.write(xml_str)
@@ -902,9 +896,7 @@ rule {rule_name} {{
         return str(export_path)
 
     # Helper methods for API integration
-    def _format_for_splunk_api(
-        self, threat_intel: ThreatIntelligence
-    ) -> Dict[str, Any]:
+    def _format_for_splunk_api(self, threat_intel: ThreatIntelligence) -> Dict[str, Any]:
         """Format data for Splunk API"""
         events = []
         for ioc in threat_intel.iocs:
@@ -923,9 +915,7 @@ rule {rule_name} {{
             events.append(event)
         return {"events": events}
 
-    def _format_for_elastic_api(
-        self, threat_intel: ThreatIntelligence
-    ) -> Dict[str, Any]:
+    def _format_for_elastic_api(self, threat_intel: ThreatIntelligence) -> Dict[str, Any]:
         """Format data for Elasticsearch API"""
         docs = []
         for ioc in threat_intel.iocs:
@@ -941,9 +931,7 @@ rule {rule_name} {{
             docs.append(doc)
         return {"docs": docs}
 
-    def _format_for_sentinel_api(
-        self, threat_intel: ThreatIntelligence
-    ) -> Dict[str, Any]:
+    def _format_for_sentinel_api(self, threat_intel: ThreatIntelligence) -> Dict[str, Any]:
         """Format data for Microsoft Sentinel API"""
         indicators = []
         for ioc in threat_intel.iocs:
@@ -956,9 +944,7 @@ rule {rule_name} {{
                     "patternType": "stix",
                     "source": ioc.source,
                     "confidence": int(ioc.confidence * 100),
-                    "threatTypes": [
-                        threat_intel.malware_family or "malicious-activity"
-                    ],
+                    "threatTypes": [threat_intel.malware_family or "malicious-activity"],
                 },
             }
             indicators.append(indicator)
@@ -978,9 +964,7 @@ rule {rule_name} {{
             branded_content = branded_content + "\n" + branding.footer_template
 
         if branding.css_overrides:
-            branded_content = branded_content.replace(
-                "{{CUSTOM_CSS}}", branding.css_overrides
-            )
+            branded_content = branded_content.replace("{{CUSTOM_CSS}}", branding.css_overrides)
 
         return branded_content
 
@@ -1139,9 +1123,7 @@ if __name__ == "__main__":
         print(f"Elasticsearch export: {elastic_path}")
 
         # Custom format export
-        custom_path = engine.export_custom_format(
-            sample_threat_intel, "custom_json", "json"
-        )
+        custom_path = engine.export_custom_format(sample_threat_intel, "custom_json", "json")
         print(f"Custom JSON export: {custom_path}")
 
     except Exception as e:

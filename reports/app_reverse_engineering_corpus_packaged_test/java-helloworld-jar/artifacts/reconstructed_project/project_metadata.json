@@ -1,0 +1,11 @@
+{
+  "project_name": "HelloWorld",
+  "group_id": "com.example",
+  "artifact_id": "helloworld",
+  "version": "1.0.0",
+  "packages": [],
+  "dependencies": [],
+  "main_class": "HelloWorld",
+  "resources": [],
+  "build_system": "maven"
+}

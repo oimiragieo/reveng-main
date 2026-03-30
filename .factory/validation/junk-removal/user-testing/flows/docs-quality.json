@@ -1,0 +1,76 @@
+{
+  "groupId": "docs-quality",
+  "testedAt": "2026-03-14T19:31:00Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "type": "git-repository",
+    "platform": "Windows PowerShell",
+    "readOnly": true
+  },
+  "toolsUsed": ["git", "rg (via Grep tool)"],
+  "assertions": [
+    {
+      "id": "VAL-DOCS-001",
+      "title": "docs/ consolidated to ≤20 markdown files",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run git ls-files docs/ | Select-String '\\.md$'",
+          "expected": "List of tracked markdown files in docs/",
+          "observed": "12 markdown files listed"
+        },
+        {
+          "action": "Count results with Measure-Object -Line",
+          "expected": "Count ≤ 20",
+          "observed": "Lines: 12"
+        },
+        {
+          "action": "Review file list for AI-padding or redundant guides",
+          "expected": "Only essential engineering references remain",
+          "observed": "All 12 files are essential: API reference, architecture overview, changelogs (v4-v6), deployment guide, developer guide, installation, privacy/legal, MCP docs, CLI usage"
+        }
+      ],
+      "evidence": {
+        "fileList": "junk-removal/docs-quality/VAL-DOCS-001-file-list.txt",
+        "count": 12,
+        "threshold": 20,
+        "consoleErrors": "none"
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-DOCS-002",
+      "title": "Runtime analysis output dirs gitignored",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Search .gitignore for 'analysis_' pattern",
+          "expected": "Matching lines found including analysis_*/",
+          "observed": "Found 7 matching lines including 'analysis_*/' at lines 35 and 244"
+        },
+        {
+          "action": "Search .gitignore for 'ml_analysis' pattern",
+          "expected": "Matching line found for ml_analysis/",
+          "observed": "Found 'ml_analysis/' at line 36"
+        }
+      ],
+      "evidence": {
+        "gitignoreMatches": "junk-removal/docs-quality/VAL-DOCS-002-gitignore-entries.txt",
+        "analysisPattern": "analysis_*/ found at .gitignore lines 35, 244",
+        "mlAnalysisPattern": "ml_analysis/ found at .gitignore line 36",
+        "consoleErrors": "none"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "ripgrep (rg) binary not on system PATH in PowerShell — used built-in Grep tool and PowerShell Select-String as alternatives",
+      "resolved": true,
+      "resolution": "Used Grep tool for .gitignore searches and PowerShell Select-String for git ls-files filtering",
+      "affectedAssertions": ["VAL-DOCS-001", "VAL-DOCS-002"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assertions: 2 passed. docs/ contains 12 markdown files (≤20 threshold). .gitignore contains both analysis_*/ and ml_analysis/ entries."
+}

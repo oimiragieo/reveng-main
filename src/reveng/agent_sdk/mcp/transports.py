@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 # Optional HTTP transport support
 try:
     from aiohttp import web
+
     _HAS_AIOHTTP = True
 except ImportError:
     _HAS_AIOHTTP = False

@@ -15,16 +15,14 @@ Intel PT provides:
 - Minimal performance impact (<5%)
 """
 
-import os
-import sys
-import subprocess
+import asyncio
+import json
 import logging
-import struct
-from typing import List, Dict, Optional, Set, Tuple
+import subprocess
+import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
-import tempfile
-import json
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -141,9 +139,7 @@ class IntelPTAnalyzer:
     def _check_perf(self) -> bool:
         """Check if perf tool is available"""
         try:
-            result = subprocess.run(
-                ["perf", "--version"], capture_output=True, timeout=5
-            )
+            result = subprocess.run(["perf", "--version"], capture_output=True, timeout=5)
 
             if result.returncode == 0:
                 logger.info("perf tool available")
@@ -172,9 +168,7 @@ class IntelPTAnalyzer:
             TraceResult with complete execution trace
         """
         if not self.pt_available:
-            return TraceResult(
-                success=False, error="Intel PT not available on this system"
-            )
+            return TraceResult(success=False, error="Intel PT not available on this system")
 
         if not self.perf_available:
             return TraceResult(success=False, error="perf tool not available")
@@ -287,14 +281,8 @@ class IntelPTAnalyzer:
                 try:
                     # Extract address
                     addr_str = parts[3].rstrip(":")
-                    if addr_str.startswith("0x") or all(
-                        c in "0123456789abcdef" for c in addr_str
-                    ):
-                        addr = (
-                            int(addr_str, 16)
-                            if addr_str.startswith("0x")
-                            else int(addr_str, 16)
-                        )
+                    if addr_str.startswith("0x") or all(c in "0123456789abcdef" for c in addr_str):
+                        addr = int(addr_str, 16) if addr_str.startswith("0x") else int(addr_str, 16)
 
                         block_addrs.add(addr)
                         total_instructions += 1
@@ -370,9 +358,7 @@ class IntelPTAnalyzer:
         covered_blocks = trace.unique_blocks
         estimated_total = int(covered_blocks / 0.7)  # Estimate total blocks
 
-        coverage_pct = (
-            (covered_blocks / estimated_total) * 100 if estimated_total > 0 else 0
-        )
+        coverage_pct = (covered_blocks / estimated_total) * 100 if estimated_total > 0 else 0
 
         # Find hot blocks (most executed)
         block_counts = {}
@@ -394,9 +380,7 @@ class IntelPTAnalyzer:
             hot_blocks=hot_blocks,
         )
 
-        logger.info(
-            f"Coverage: {coverage_pct:.1f}% ({covered_blocks}/{estimated_total} blocks)"
-        )
+        logger.info(f"Coverage: {coverage_pct:.1f}% ({covered_blocks}/{estimated_total} blocks)")
 
         return coverage
 
@@ -410,14 +394,10 @@ class IntelPTAnalyzer:
         # Estimate branch mispredictions (branches with low count = likely mispredicted)
         total_branches = len(trace.branches)
         branch_counts = [b.count for b in trace.branches]
-        avg_branch_count = (
-            sum(branch_counts) / len(branch_counts) if branch_counts else 0
-        )
+        avg_branch_count = sum(branch_counts) / len(branch_counts) if branch_counts else 0
 
         # Branches executed less than average might be mispredicted
-        mispredictions = sum(
-            1 for count in branch_counts if count < avg_branch_count * 0.5
-        )
+        mispredictions = sum(1 for count in branch_counts if count < avg_branch_count * 0.5)
 
         profile = PerformanceProfile(
             total_instructions=trace.total_instructions,
@@ -490,9 +470,7 @@ class IntelPTAnalyzer:
 
             logger.info(f"  Speedup: {speedup:.2f}x")
 
-    def export_trace(
-        self, result: TraceResult, output_path: str, format: str = "json"
-    ) -> None:
+    def export_trace(self, result: TraceResult, output_path: str, format: str = "json") -> None:
         """Export trace to file"""
         if not result.success or not result.trace:
             logger.error("No trace to export")
@@ -595,7 +573,3 @@ class IntelPTAnalyzer:
         )
 
         return interesting_inputs
-
-
-# Import asyncio at module level
-import asyncio

@@ -1,0 +1,112 @@
+{
+  "milestone": "advanced-analysis",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc --tb=short -q",
+      "exitCode": 1,
+      "note": "58 failed, 211 passed, 132 skipped, 1 error — all 58 failures are pre-existing (documented baseline: 179 pass, 58 fail). Pass count improved from 179 to 211. No new failures from advanced-analysis milestone."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "note": "15 errors — all pre-existing (14 import-untyped for requests, 1 angr syntax). No new typecheck errors from advanced-analysis milestone."
+    },
+    "lint": {
+      "passed": true,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203 --count --statistics",
+      "exitCode": 1,
+      "note": "468 issues — all pre-existing (F401, E722, F403/F405, etc.). No new lint issues from advanced-analysis milestone files."
+    }
+  },
+  "reviewsSummary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "nonBlockingIssues": [
+    {
+      "featureId": "docker-sandbox",
+      "severity": "non_blocking",
+      "description": "~300 lines of dead legacy _monitor_* methods with powershell/wmic subprocess calls remain in behavioral_monitor.py (lines 468-773). These are unreachable from the new Docker-based code path but add unnecessary dead code."
+    },
+    {
+      "featureId": "docker-sandbox",
+      "severity": "non_blocking",
+      "description": "Docker sandbox timeout is silently capped at 30 seconds without logging when caller passes a larger value."
+    },
+    {
+      "featureId": "generate-exploit-tool",
+      "severity": "non_blocking",
+      "description": "analysis_depth parameter is read from args but not declared in MCP tool input_schema, so callers cannot discover or set it."
+    },
+    {
+      "featureId": "generate-exploit-tool",
+      "severity": "non_blocking",
+      "description": "Catches bare TimeoutError instead of explicit asyncio.TimeoutError — functionally correct in Python 3.14 but slightly less clear."
+    },
+    {
+      "featureId": "volatility3-memory",
+      "severity": "non_blocking",
+      "description": "Uses deprecated datetime.utcnow() (deprecated since Python 3.12) while the same commit's memory_forensics.py uses the preferred datetime.now(timezone.utc)."
+    },
+    {
+      "featureId": "volatility3-memory",
+      "severity": "non_blocking",
+      "description": "Uses str | None union syntax requiring Python 3.10+ runtime (mitigated by __future__ annotations import)."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add convention: when replacing an implementation (e.g., Docker sandbox replacing powershell host monitoring), workers should remove the dead legacy code rather than leaving ~300 lines of unreachable methods. This prevents accumulation of security-sensitive dead code (subprocess calls to powershell, wmic).",
+      "evidence": "docker-sandbox worker left 8 dead _monitor_* methods (lines 468-773) with subprocess.run(['powershell'...]) calls in behavioral_monitor.py. Confirmed zero callers via codebase grep.",
+      "isSystemic": false
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add convention: prefer datetime.now(timezone.utc) over deprecated datetime.utcnow() (deprecated since Python 3.12, PEP 670). This prevents inconsistencies within the same module.",
+      "evidence": "volatility3-memory worker used utcnow() in volatility_analyzer.py while the same commit's memory_forensics.py uses the correct datetime.now(timezone.utc).",
+      "isSystemic": false
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Update the MCP stub count reference (currently '5 stubs') — after the mcp-tools and advanced-analysis milestones, most stubs are now fully implemented.",
+      "evidence": "generate-exploit-tool reviewer noted AGENTS.md states '5 stubs' but generate_exploit is now fully implemented, along with decompile_binary, recompile_binary, ask_ai_about_binary, ai_code_reconstruction, and classify_malware from the mcp-tools milestone.",
+      "isSystemic": false
+    },
+    {
+      "target": "skills",
+      "suggestion": "Add note to python-developer skill: TDD (write tests first) exception applies when replacing trivial 'coming soon' stubs with entirely new return contracts — in these cases, implementing first then testing is more practical.",
+      "evidence": "generate-exploit-tool worker deviated from TDD because the feature was replacing a pure stub, making meaningful assertions impossible before the implementation existed.",
+      "isSystemic": true
+    },
+    {
+      "target": "skills",
+      "suggestion": "Add to python-developer skill's mypy step: mention --disable-error-code import-untyped for environments where installed third-party packages (e.g., requests) lack type stubs.",
+      "evidence": "generate-exploit-tool worker needed to add this flag because requests lacks type stubs in the environment. Same pattern seen across all milestones.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Skill file missing for python-developer at .factory/skills/python-developer/SKILL.md",
+      "reason": "The python-developer skill is a project droid defined at .factory/droids/, not in .factory/skills/. This is expected architecture."
+    },
+    {
+      "observation": "Worker documented Docker sandbox architecture in .factory/library/re-platform.md",
+      "reason": "This is positive practice, not an action item. Already correctly documented."
+    },
+    {
+      "observation": "Worker documented Volatility3 integration in .factory/library/ai-forensics.md",
+      "reason": "This is positive practice, not an action item. Already correctly documented."
+    }
+  ],
+  "previousRound": null
+}

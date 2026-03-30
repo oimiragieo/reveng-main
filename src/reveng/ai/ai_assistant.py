@@ -17,35 +17,36 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ..agents.ai.ai_enhanced_analyzer import AIEnhancedAnalyzer
+from ..agents.ai.ollama_analyzer import OllamaAnalyzer
+
 # Import REVENG components
 from ..analyzer import REVENGAnalyzer
 from ..ghidra.scripting_engine import GhidraScriptingEngine
-from ..tools.ai.ollama_analyzer import OllamaAnalyzer
-from ..tools.ai.ai_enhanced_analyzer import AIEnhancedAnalyzer
-from ..tools.security.vulnerability_discovery_engine import VulnerabilityDiscoveryEngine
-from ..tools.security.threat_intelligence_correlator import ThreatIntelligenceCorrelator
-from ..tools.config.ghidra_mcp_connector import GhidraMCPConnector
-from ..tools.languages.language_detector import LanguageDetector
+from ..integrations.ghidra.ghidra_mcp_connector import GhidraMCPConnector
+from ..security.threat_intelligence_correlator import ThreatIntelligenceCorrelator
+from ..security.vulnerability_discovery_engine import VulnerabilityDiscoveryEngine
 from ..tools.core.optimal_binary_analysis import OptimalBinaryAnalyzer
+from ..tools.languages.language_detector import LanguageDetector
 
 # Import structured models
 from .analysis_models import (
-    AIAnalysisResult,
     AIAnalysisRequest,
-    BinaryInfo,
-    FunctionAnalysis,
-    Vulnerability,
-    ThreatIndicator,
-    Recommendation,
+    AIAnalysisResult,
     AnalysisMetadata,
     AnalysisType,
+    BinaryInfo,
+    FunctionAnalysis,
+    Recommendation,
+    ThreatIndicator,
     ThreatLevel,
+    Vulnerability,
+    create_analysis_metadata,
     create_binary_info,
     create_function_analysis,
-    create_vulnerability,
-    create_threat_indicator,
     create_recommendation,
-    create_analysis_metadata,
+    create_threat_indicator,
+    create_vulnerability,
 )
 
 logger = logging.getLogger(__name__)
@@ -109,22 +110,16 @@ class REVENGAIAssistant:
         try:
             # Step 1: Detect binary type and select optimal analysis strategy
             binary_type = await self._detect_binary_type(request.binary_path)
-            analysis_strategy = await self._select_analysis_strategy(
-                request, binary_type
-            )
+            analysis_strategy = await self._select_analysis_strategy(request, binary_type)
 
             # Step 2: Run comprehensive analysis pipeline
-            analysis_results = await self._run_analysis_pipeline(
-                request, analysis_strategy
-            )
+            analysis_results = await self._run_analysis_pipeline(request, analysis_strategy)
 
             # Step 3: Generate AI-powered insights and recommendations
             insights = await self._generate_ai_insights(analysis_results, request)
 
             # Step 4: Create structured data models
-            binary_info = self._create_binary_info(
-                request.binary_path, analysis_results
-            )
+            binary_info = self._create_binary_info(request.binary_path, analysis_results)
             functions = self._create_function_analyses(analysis_results)
             vulnerabilities = self._create_vulnerabilities(analysis_results)
             threat_indicators = self._create_threat_indicators(analysis_results)
@@ -134,14 +129,10 @@ class REVENGAIAssistant:
             )
 
             # Step 5: Create natural language summary
-            summary = await self._create_natural_language_summary(
-                analysis_results, insights
-            )
+            summary = await self._create_natural_language_summary(analysis_results, insights)
 
             # Step 6: Format for AI model consumption
-            structured_prompt = await self._create_structured_prompt(
-                analysis_results, insights
-            )
+            structured_prompt = await self._create_structured_prompt(analysis_results, insights)
 
             # Create comprehensive result
             result = AIAnalysisResult(
@@ -163,9 +154,7 @@ class REVENGAIAssistant:
                 {"request": request, "result": result, "timestamp": time.time()}
             )
 
-            self.logger.info(
-                f"AI analysis completed in {time.time() - start_time:.2f} seconds"
-            )
+            self.logger.info(f"AI analysis completed in {time.time() - start_time:.2f} seconds")
             return result
 
         except Exception as e:
@@ -195,15 +184,11 @@ class REVENGAIAssistant:
                 context = analysis_result.to_dict()
             elif binary_path:
                 # Perform quick analysis for context
-                request = AIAnalysisRequest(
-                    binary_path=binary_path, analysis_type="triage"
-                )
+                request = AIAnalysisRequest(binary_path=binary_path, analysis_type="triage")
                 analysis_result = await self.analyze_binary_ai(request)
                 context = analysis_result.to_dict()
             else:
-                raise ValueError(
-                    "Either binary_path or analysis_result must be provided"
-                )
+                raise ValueError("Either binary_path or analysis_result must be provided")
 
             # Use Ollama for natural language processing
             answer = await self.ollama_analyzer.ask_question(question, context)
@@ -214,9 +199,7 @@ class REVENGAIAssistant:
             self.logger.error(f"Question answering failed: {e}")
             return f"I'm sorry, I couldn't answer that question: {e}"
 
-    async def suggest_workflow(
-        self, binary_path: str, goals: List[str]
-    ) -> Dict[str, Any]:
+    async def suggest_workflow(self, binary_path: str, goals: List[str]) -> Dict[str, Any]:
         """
         Suggest optimal analysis workflow based on binary characteristics and goals
 
@@ -290,9 +273,7 @@ class REVENGAIAssistant:
             self.logger.warning(f"Binary type detection failed: {e}")
             return "unknown"
 
-    async def _select_analysis_strategy(
-        self, request: AIAnalysisRequest, binary_type: str
-    ) -> str:
+    async def _select_analysis_strategy(self, request: AIAnalysisRequest, binary_type: str) -> str:
         """Select optimal analysis strategy based on binary type and goals"""
         if request.analysis_type == "triage":
             return "rapid_triage"
@@ -338,21 +319,15 @@ class REVENGAIAssistant:
 
         # Quick security scan
         if self.vuln_engine:
-            results["vulnerabilities"] = await self._quick_vulnerability_scan(
-                request.binary_path
-            )
+            results["vulnerabilities"] = await self._quick_vulnerability_scan(request.binary_path)
 
         # Threat intelligence lookup
         if self.threat_correlator:
-            results["threat_indicators"] = await self._quick_threat_lookup(
-                request.binary_path
-            )
+            results["threat_indicators"] = await self._quick_threat_lookup(request.binary_path)
 
         return results
 
-    async def _run_security_analysis(
-        self, request: AIAnalysisRequest
-    ) -> Dict[str, Any]:
+    async def _run_security_analysis(self, request: AIAnalysisRequest) -> Dict[str, Any]:
         """Run security-focused analysis"""
         results = {}
 
@@ -369,23 +344,17 @@ class REVENGAIAssistant:
             )
 
         # Security recommendations
-        results["security_recommendations"] = (
-            await self._generate_security_recommendations(results)
-        )
+        results["security_recommendations"] = await self._generate_security_recommendations(results)
 
         return results
 
-    async def _run_comprehensive_analysis(
-        self, request: AIAnalysisRequest
-    ) -> Dict[str, Any]:
+    async def _run_comprehensive_analysis(self, request: AIAnalysisRequest) -> Dict[str, Any]:
         """Run comprehensive analysis using all available tools"""
         results = {}
 
         # Use enhanced analyzer for comprehensive analysis
         if self.enhanced_analyzer:
-            enhanced_result = await self.enhanced_analyzer.analyze_universal(
-                request.binary_path
-            )
+            enhanced_result = await self.enhanced_analyzer.analyze_universal(request.binary_path)
             results.update(enhanced_result)
 
         # Add Ghidra analysis if available
@@ -402,17 +371,13 @@ class REVENGAIAssistant:
         # Analyze based on goals
         for goal in request.goals:
             if goal == "understand_functionality":
-                results["functionality"] = await self._analyze_functionality(
-                    request.binary_path
-                )
+                results["functionality"] = await self._analyze_functionality(request.binary_path)
             elif goal == "find_vulnerabilities":
-                results["vulnerabilities"] = (
-                    await self._comprehensive_vulnerability_scan(request.binary_path)
+                results["vulnerabilities"] = await self._comprehensive_vulnerability_scan(
+                    request.binary_path
                 )
             elif goal == "assess_threats":
-                results["threat_assessment"] = await self._assess_threats(
-                    request.binary_path
-                )
+                results["threat_assessment"] = await self._assess_threats(request.binary_path)
 
         return results
 
@@ -430,9 +395,7 @@ class REVENGAIAssistant:
         try:
             # Use Ollama for insight generation
             if self.ollama_analyzer:
-                ai_insights = await self.ollama_analyzer.generate_insights(
-                    analysis_results
-                )
+                ai_insights = await self.ollama_analyzer.generate_insights(analysis_results)
                 insights.update(ai_insights)
 
             return insights
@@ -448,9 +411,7 @@ class REVENGAIAssistant:
         try:
             # Use Ollama to generate natural language summary
             if self.ollama_analyzer:
-                summary = await self.ollama_analyzer.generate_summary(
-                    analysis_results, insights
-                )
+                summary = await self.ollama_analyzer.generate_summary(analysis_results, insights)
                 return summary
             else:
                 return "Analysis completed. Please check the detailed results."
@@ -520,9 +481,7 @@ class REVENGAIAssistant:
         except Exception as e:
             return [{"error": str(e)}]
 
-    async def _comprehensive_vulnerability_scan(
-        self, binary_path: str
-    ) -> List[Dict[str, Any]]:
+    async def _comprehensive_vulnerability_scan(self, binary_path: str) -> List[Dict[str, Any]]:
         """Comprehensive vulnerability scan"""
         try:
             if self.vuln_engine:
@@ -532,9 +491,7 @@ class REVENGAIAssistant:
         except Exception as e:
             return [{"error": str(e)}]
 
-    async def _comprehensive_threat_analysis(
-        self, binary_path: str
-    ) -> List[Dict[str, Any]]:
+    async def _comprehensive_threat_analysis(self, binary_path: str) -> List[Dict[str, Any]]:
         """Comprehensive threat intelligence analysis"""
         try:
             if self.threat_correlator:
@@ -544,9 +501,7 @@ class REVENGAIAssistant:
         except Exception as e:
             return [{"error": str(e)}]
 
-    async def _generate_security_recommendations(
-        self, results: Dict[str, Any]
-    ) -> List[str]:
+    async def _generate_security_recommendations(self, results: Dict[str, Any]) -> List[str]:
         """Generate security recommendations"""
         recommendations = []
 
@@ -628,9 +583,7 @@ class REVENGAIAssistant:
             return "unknown"
 
     # Helper methods for creating structured data models
-    def _create_binary_info(
-        self, binary_path: str, analysis_results: Dict[str, Any]
-    ) -> BinaryInfo:
+    def _create_binary_info(self, binary_path: str, analysis_results: Dict[str, Any]) -> BinaryInfo:
         """Create BinaryInfo from analysis results"""
         path = Path(binary_path)
         return create_binary_info(
@@ -648,9 +601,7 @@ class REVENGAIAssistant:
             metadata=analysis_results.get("binary_metadata", {}),
         )
 
-    def _create_function_analyses(
-        self, analysis_results: Dict[str, Any]
-    ) -> List[FunctionAnalysis]:
+    def _create_function_analyses(self, analysis_results: Dict[str, Any]) -> List[FunctionAnalysis]:
         """Create FunctionAnalysis objects from analysis results"""
         functions = []
         for func_data in analysis_results.get("functions", []):
@@ -672,9 +623,7 @@ class REVENGAIAssistant:
             functions.append(func)
         return functions
 
-    def _create_vulnerabilities(
-        self, analysis_results: Dict[str, Any]
-    ) -> List[Vulnerability]:
+    def _create_vulnerabilities(self, analysis_results: Dict[str, Any]) -> List[Vulnerability]:
         """Create Vulnerability objects from analysis results"""
         vulnerabilities = []
         for vuln_data in analysis_results.get("vulnerabilities", []):
@@ -694,9 +643,7 @@ class REVENGAIAssistant:
             vulnerabilities.append(vuln)
         return vulnerabilities
 
-    def _create_threat_indicators(
-        self, analysis_results: Dict[str, Any]
-    ) -> List[ThreatIndicator]:
+    def _create_threat_indicators(self, analysis_results: Dict[str, Any]) -> List[ThreatIndicator]:
         """Create ThreatIndicator objects from analysis results"""
         indicators = []
         for indicator_data in analysis_results.get("threat_indicators", []):
@@ -705,9 +652,7 @@ class REVENGAIAssistant:
                 type=indicator_data.get("type", "unknown"),
                 value=indicator_data.get("value", ""),
                 threat_level=threat_level,
-                description=indicator_data.get(
-                    "description", "Unknown threat indicator"
-                ),
+                description=indicator_data.get("description", "Unknown threat indicator"),
                 source=indicator_data.get("source", "unknown"),
                 first_seen=indicator_data.get("first_seen"),
                 last_seen=indicator_data.get("last_seen"),
@@ -808,8 +753,7 @@ async def analyze_binary(
     request = AIAnalysisRequest(
         binary_path=binary_path,
         analysis_type=analysis_type,
-        goals=goals
-        or ["understand_functionality", "find_vulnerabilities", "assess_threats"],
+        goals=goals or ["understand_functionality", "find_vulnerabilities", "assess_threats"],
     )
     return await assistant.analyze_binary_ai(request)
 
@@ -829,9 +773,7 @@ async def ask_about_binary(question: str, binary_path: str) -> str:
     return await assistant.ask_question(question, binary_path)
 
 
-async def suggest_analysis_workflow(
-    binary_path: str, goals: List[str]
-) -> Dict[str, Any]:
+async def suggest_analysis_workflow(binary_path: str, goals: List[str]) -> Dict[str, Any]:
     """
     Convenience function for workflow suggestions
 

@@ -18,7 +18,7 @@ def test_confidence_level_enum_contains_expected_members():
 def test_evidence_tracker_records_items():
     tracker = EvidenceTracker()
     # add_evidence takes individual parameters, not Evidence object
-    evidence = tracker.add_evidence(
+    tracker.add_evidence(
         evidence_type="test_evidence",
         description="Test",
         source="unit-test",

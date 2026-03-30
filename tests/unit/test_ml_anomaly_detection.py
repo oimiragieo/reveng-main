@@ -1,488 +1,216 @@
-"""
-Unit tests for ML Anomaly Detection
-"""
+"""Unit tests for the current malware-forensics anomaly APIs."""
 
-import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from types import SimpleNamespace
 
 import pytest
 
-from reveng.ml.anomaly_detection import (
-    AnomalyFeature,
-    AnomalyModel,
-    AnomalyResult,
-    AnomalySeverity,
-    AnomalyType,
-    MLAnomalyDetection,
+from reveng.malware.behavioral_monitor import (
+    BehavioralMonitor,
+    BehaviorEvent,
+    BehaviorType,
+    ThreatLevel,
+)
+from reveng.ml.forensics_anomaly_models import (
+    BehavioralAnomalyModel,
+    ForensicsAnomalyModel,
 )
 
 
-@pytest.mark.skip(reason="ML anomaly detection API changed - tests need rewrite")
-class TestMLAnomalyDetection:
-    """Test cases for MLAnomalyDetection"""
-
-    def setup_method(self):
-        """Setup test environment"""
-        self.temp_dir = Path(tempfile.mkdtemp())
-        self.ml_anomaly_detection = MLAnomalyDetection()
-
-    def teardown_method(self):
-        """Cleanup test environment"""
-        import shutil
-
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    def test_init(self):
-        """Test MLAnomalyDetection initialization"""
-        assert self.ml_anomaly_detection is not None
-        assert hasattr(self.ml_anomaly_detection, "logger")
-        assert hasattr(self.ml_anomaly_detection, "models")
-        assert hasattr(self.ml_anomaly_detection, "feature_extractors")
-        assert hasattr(self.ml_anomaly_detection, "anomaly_types")
-
-    def test_detect_anomalies_success(self):
-        """Test detecting anomalies successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock anomaly detection
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_with_model"
-        ) as mock_detect:
-            mock_detect.return_value = Mock(
-                anomalies=["anomaly1", "anomaly2"], confidence=0.8, risk_score=0.7
-            )
-
-            # Detect anomalies
-            result = self.ml_anomaly_detection.detect_anomalies(str(test_binary))
-
-            assert result is not None
-            assert hasattr(result, "anomalies")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "risk_score")
-
-    def test_detect_anomalies_failure(self):
-        """Test detecting anomalies with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock anomaly detection to fail
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_with_model"
-        ) as mock_detect:
-            mock_detect.side_effect = Exception("Anomaly detection failed")
-
-            # Detect anomalies
-            with pytest.raises(Exception):
-                self.ml_anomaly_detection.detect_anomalies(str(test_binary))
-
-    def test_detect_behavioral_anomalies_success(self):
-        """Test detecting behavioral anomalies successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock behavioral anomaly detection
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_behavioral_anomalies"
-        ) as mock_detect:
-            mock_detect.return_value = ["anomaly1", "anomaly2"]
-
-            # Detect behavioral anomalies
-            anomalies = self.ml_anomaly_detection.detect_behavioral_anomalies(
-                str(test_binary)
-            )
-
-            assert isinstance(anomalies, list)
-            assert len(anomalies) == 2
-            assert "anomaly1" in anomalies
-            assert "anomaly2" in anomalies
-
-    def test_detect_behavioral_anomalies_failure(self):
-        """Test detecting behavioral anomalies with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock behavioral anomaly detection to fail
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_behavioral_anomalies"
-        ) as mock_detect:
-            mock_detect.side_effect = Exception("Behavioral anomaly detection failed")
-
-            # Detect behavioral anomalies
-            with pytest.raises(Exception):
-                self.ml_anomaly_detection.detect_behavioral_anomalies(str(test_binary))
-
-    def test_detect_structural_anomalies_success(self):
-        """Test detecting structural anomalies successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock structural anomaly detection
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_structural_anomalies"
-        ) as mock_detect:
-            mock_detect.return_value = ["anomaly1", "anomaly2"]
-
-            # Detect structural anomalies
-            anomalies = self.ml_anomaly_detection.detect_structural_anomalies(
-                str(test_binary)
-            )
-
-            assert isinstance(anomalies, list)
-            assert len(anomalies) == 2
-            assert "anomaly1" in anomalies
-            assert "anomaly2" in anomalies
-
-    def test_detect_structural_anomalies_failure(self):
-        """Test detecting structural anomalies with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock structural anomaly detection to fail
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_structural_anomalies"
-        ) as mock_detect:
-            mock_detect.side_effect = Exception("Structural anomaly detection failed")
-
-            # Detect structural anomalies
-            with pytest.raises(Exception):
-                self.ml_anomaly_detection.detect_structural_anomalies(str(test_binary))
-
-    def test_detect_statistical_anomalies_success(self):
-        """Test detecting statistical anomalies successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock statistical anomaly detection
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_statistical_anomalies"
-        ) as mock_detect:
-            mock_detect.return_value = ["anomaly1", "anomaly2"]
-
-            # Detect statistical anomalies
-            anomalies = self.ml_anomaly_detection.detect_statistical_anomalies(
-                str(test_binary)
-            )
-
-            assert isinstance(anomalies, list)
-            assert len(anomalies) == 2
-            assert "anomaly1" in anomalies
-            assert "anomaly2" in anomalies
-
-    def test_detect_statistical_anomalies_failure(self):
-        """Test detecting statistical anomalies with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock statistical anomaly detection to fail
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_statistical_anomalies"
-        ) as mock_detect:
-            mock_detect.side_effect = Exception("Statistical anomaly detection failed")
-
-            # Detect statistical anomalies
-            with pytest.raises(Exception):
-                self.ml_anomaly_detection.detect_statistical_anomalies(str(test_binary))
-
-    def test_detect_pattern_anomalies_success(self):
-        """Test detecting pattern anomalies successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock pattern anomaly detection
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_pattern_anomalies"
-        ) as mock_detect:
-            mock_detect.return_value = ["anomaly1", "anomaly2"]
-
-            # Detect pattern anomalies
-            anomalies = self.ml_anomaly_detection.detect_pattern_anomalies(
-                str(test_binary)
-            )
-
-            assert isinstance(anomalies, list)
-            assert len(anomalies) == 2
-            assert "anomaly1" in anomalies
-            assert "anomaly2" in anomalies
-
-    def test_detect_pattern_anomalies_failure(self):
-        """Test detecting pattern anomalies with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock pattern anomaly detection to fail
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_pattern_anomalies"
-        ) as mock_detect:
-            mock_detect.side_effect = Exception("Pattern anomaly detection failed")
-
-            # Detect pattern anomalies
-            with pytest.raises(Exception):
-                self.ml_anomaly_detection.detect_pattern_anomalies(str(test_binary))
-
-    def test_detect_temporal_anomalies_success(self):
-        """Test detecting temporal anomalies successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock temporal anomaly detection
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_temporal_anomalies"
-        ) as mock_detect:
-            mock_detect.return_value = ["anomaly1", "anomaly2"]
-
-            # Detect temporal anomalies
-            anomalies = self.ml_anomaly_detection.detect_temporal_anomalies(
-                str(test_binary)
-            )
-
-            assert isinstance(anomalies, list)
-            assert len(anomalies) == 2
-            assert "anomaly1" in anomalies
-            assert "anomaly2" in anomalies
-
-    def test_detect_temporal_anomalies_failure(self):
-        """Test detecting temporal anomalies with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock temporal anomaly detection to fail
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_temporal_anomalies"
-        ) as mock_detect:
-            mock_detect.side_effect = Exception("Temporal anomaly detection failed")
-
-            # Detect temporal anomalies
-            with pytest.raises(Exception):
-                self.ml_anomaly_detection.detect_temporal_anomalies(str(test_binary))
-
-    def test_extract_features_success(self):
-        """Test extracting features successfully"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock feature extraction
-        with patch.object(
-            self.ml_anomaly_detection, "_extract_features_with_model"
-        ) as mock_extract:
-            mock_extract.return_value = [
-                AnomalyFeature("feature1", 0.9, "type1"),
-                AnomalyFeature("feature2", 0.8, "type2"),
-            ]
-
-            # Extract features
-            features = self.ml_anomaly_detection.extract_features(str(test_binary))
-
-            assert isinstance(features, list)
-            assert len(features) == 2
-            assert all(isinstance(feature, AnomalyFeature) for feature in features)
-            assert features[0].name == "feature1"
-            assert features[0].confidence == 0.9
-            assert features[0].feature_type == "type1"
-            assert features[1].name == "feature2"
-            assert features[1].confidence == 0.8
-            assert features[1].feature_type == "type2"
-
-    def test_extract_features_failure(self):
-        """Test extracting features with failure"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock feature extraction to fail
-        with patch.object(
-            self.ml_anomaly_detection, "_extract_features_with_model"
-        ) as mock_extract:
-            mock_extract.side_effect = Exception("Feature extraction failed")
-
-            # Extract features
-            with pytest.raises(Exception):
-                self.ml_anomaly_detection.extract_features(str(test_binary))
-
-    def test_get_model_status_success(self):
-        """Test getting model status successfully"""
-        # Mock model status
-        with patch.object(
-            self.ml_anomaly_detection, "_get_model_status"
-        ) as mock_status:
-            mock_status.return_value = {
-                "behavioral": {"status": "ready", "accuracy": 0.9},
-                "structural": {"status": "ready", "accuracy": 0.85},
-                "statistical": {"status": "ready", "accuracy": 0.8},
-                "pattern": {"status": "ready", "accuracy": 0.88},
-                "temporal": {"status": "ready", "accuracy": 0.82},
-            }
-
-            # Get model status
-            status = self.ml_anomaly_detection.get_model_status()
-
-            assert isinstance(status, dict)
-            assert "behavioral" in status
-            assert "structural" in status
-            assert "statistical" in status
-            assert "pattern" in status
-            assert "temporal" in status
-            assert status["behavioral"]["status"] == "ready"
-            assert status["structural"]["status"] == "ready"
-            assert status["statistical"]["status"] == "ready"
-            assert status["pattern"]["status"] == "ready"
-            assert status["temporal"]["status"] == "ready"
-
-    def test_get_model_status_failure(self):
-        """Test getting model status with failure"""
-        # Mock model status to fail
-        with patch.object(
-            self.ml_anomaly_detection, "_get_model_status"
-        ) as mock_status:
-            mock_status.side_effect = Exception("Status check failed")
-
-            # Get model status
-            with pytest.raises(Exception):
-                self.ml_anomaly_detection.get_model_status()
-
-    def test_anomaly_result_properties(self):
-        """Test AnomalyResult properties"""
-        result = AnomalyResult(
-            anomalies=["anomaly1", "anomaly2"], confidence=0.8, risk_score=0.7
-        )
-
-        assert result.anomalies == ["anomaly1", "anomaly2"]
-        assert result.confidence == 0.8
-        assert result.risk_score == 0.7
-
-    def test_anomaly_feature_properties(self):
-        """Test AnomalyFeature properties"""
-        feature = AnomalyFeature(
-            name="test_feature", confidence=0.9, feature_type="behavioral"
-        )
-
-        assert feature.name == "test_feature"
-        assert feature.confidence == 0.9
-        assert feature.feature_type == "behavioral"
-
-    def test_anomaly_type_enum(self):
-        """Test AnomalyType enum values"""
-        assert AnomalyType.BEHAVIORAL == "behavioral"
-        assert AnomalyType.STRUCTURAL == "structural"
-        assert AnomalyType.STATISTICAL == "statistical"
-        assert AnomalyType.PATTERN == "pattern"
-        assert AnomalyType.TEMPORAL == "temporal"
-
-    def test_anomaly_severity_enum(self):
-        """Test AnomalySeverity enum values"""
-        assert AnomalySeverity.LOW == "low"
-        assert AnomalySeverity.MEDIUM == "medium"
-        assert AnomalySeverity.HIGH == "high"
-        assert AnomalySeverity.CRITICAL == "critical"
-
-    def test_anomaly_model_properties(self):
-        """Test AnomalyModel properties"""
-        model = AnomalyModel(
-            name="test_model",
-            model_type=AnomalyType.BEHAVIORAL,
-            accuracy=0.9,
-            status="ready",
-        )
-
-        assert model.name == "test_model"
-        assert model.model_type == AnomalyType.BEHAVIORAL
-        assert model.accuracy == 0.9
-        assert model.status == "ready"
-
-    def test_ml_anomaly_detection_with_custom_model(self):
-        """Test ML anomaly detection with custom model"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        # Mock custom model
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_with_model"
-        ) as mock_detect:
-            mock_detect.return_value = Mock(
-                anomalies=["custom_anomaly1", "custom_anomaly2"],
-                confidence=0.8,
-                risk_score=0.7,
-            )
-
-            # Detect anomalies with custom model
-            result = self.ml_anomaly_detection.detect_anomalies(
-                str(test_binary), model="custom"
-            )
-
-            assert result is not None
-            assert hasattr(result, "anomalies")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "risk_score")
-
-    def test_ml_anomaly_detection_with_large_binary(self):
-        """Test ML anomaly detection with large binary"""
-        # Create large test binary
-        test_binary = self.temp_dir / "large.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000000)  # 1MB file
-
-        # Mock anomaly detection
-        with patch.object(
-            self.ml_anomaly_detection, "_detect_with_model"
-        ) as mock_detect:
-            mock_detect.return_value = Mock(
-                anomalies=["large_anomaly1", "large_anomaly2"],
-                confidence=0.8,
-                risk_score=0.7,
-            )
-
-            # Detect anomalies
-            result = self.ml_anomaly_detection.detect_anomalies(str(test_binary))
-
-            assert result is not None
-            assert hasattr(result, "anomalies")
-            assert hasattr(result, "confidence")
-            assert hasattr(result, "risk_score")
-
-    def test_ml_anomaly_detection_with_multiple_types(self):
-        """Test ML anomaly detection with multiple types"""
-        # Create test binary
-        test_binary = self.temp_dir / "test.exe"
-        test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
-
-        anomaly_types = [
-            AnomalyType.BEHAVIORAL,
-            AnomalyType.STRUCTURAL,
-            AnomalyType.STATISTICAL,
-            AnomalyType.PATTERN,
-            AnomalyType.TEMPORAL,
-        ]
-
-        for anomaly_type in anomaly_types:
-            # Mock anomaly detection for each type
-            with patch.object(
-                self.ml_anomaly_detection, f"_detect_{anomaly_type.value}_anomalies"
-            ) as mock_detect:
-                mock_detect.return_value = [
-                    f"{anomaly_type.value}_anomaly1",
-                    f"{anomaly_type.value}_anomaly2",
-                ]
-
-                # Detect anomalies for this type
-                anomalies = getattr(
-                    self.ml_anomaly_detection, f"detect_{anomaly_type.value}_anomalies"
-                )(str(test_binary))
-
-                assert isinstance(anomalies, list)
-                assert len(anomalies) == 2
-                assert f"{anomaly_type.value}_anomaly1" in anomalies
-                assert f"{anomaly_type.value}_anomaly2" in anomalies
+def _event(
+    behavior_type: BehaviorType,
+    operation: str,
+    target: str,
+    *,
+    threat_level: ThreatLevel,
+) -> BehaviorEvent:
+    return BehaviorEvent(
+        timestamp=1.0,
+        behavior_type=behavior_type,
+        operation=operation,
+        target=target,
+        threat_level=threat_level,
+    )
+
+
+def test_behavioral_anomaly_model_flags_high_risk_event_stream():
+    assessment = BehavioralAnomalyModel().assess_events(
+        [
+            _event(
+                BehaviorType.NETWORK_OPERATION,
+                "HttpSendRequest",
+                "198.51.100.5:443",
+                threat_level=ThreatLevel.HIGH,
+            ),
+            _event(
+                BehaviorType.ANTI_ANALYSIS,
+                "IsDebuggerPresent",
+                "kernel32.dll",
+                threat_level=ThreatLevel.HIGH,
+            ),
+            _event(
+                BehaviorType.PROCESS_OPERATION,
+                "CreateRemoteThread",
+                "winlogon.exe",
+                threat_level=ThreatLevel.CRITICAL,
+            ),
+            _event(
+                BehaviorType.MEMORY_OPERATION,
+                "WriteProcessMemory",
+                "lsass.exe",
+                threat_level=ThreatLevel.CRITICAL,
+            ),
+        ],
+        [
+            "HttpSendRequest",
+            "IsDebuggerPresent",
+            "CreateRemoteThread",
+            "WriteProcessMemory",
+        ],
+    )
+
+    assert assessment.exceeded is True
+    assert assessment.score > assessment.threshold
+    assert assessment.reasons[0].startswith("ML anomaly score")
+    assert assessment.features["indicator_ratio"] == pytest.approx(1.0)
+    assert assessment.features["network_ratio"] == pytest.approx(0.25)
+
+
+def test_behavioral_anomaly_model_leaves_benign_event_stream_below_threshold():
+    assessment = BehavioralAnomalyModel().assess_events(
+        [
+            _event(
+                BehaviorType.FILE_OPERATION,
+                "FileAccess",
+                "readme.txt",
+                threat_level=ThreatLevel.LOW,
+            ),
+            _event(
+                BehaviorType.FILE_OPERATION,
+                "FileAccess",
+                "notes.txt",
+                threat_level=ThreatLevel.LOW,
+            ),
+        ],
+        [],
+    )
+
+    assert assessment.exceeded is False
+    assert assessment.score < assessment.threshold
+    assert assessment.reasons == []
+    assert assessment.features["network_ratio"] == 0.0
+
+
+def test_behavioral_monitor_parses_trace_output_and_adds_timeout_event():
+    monitor = BehavioralMonitor()
+    monitor.binary_path = "sample.exe"
+    monitor._sandbox = SimpleNamespace(timeout_seconds=7)
+    monitor._sandbox_result = SimpleNamespace(
+        sandbox_available=True,
+        trace_output=(
+            '123 openat(AT_FDCWD, "/tmp/test.txt", O_RDONLY) = 3\n'
+            "123 connect(4, {sa_family=AF_INET, sin_port=htons(443)}, 16) = 0\n"
+            "123 ptrace(PTRACE_TRACEME, 0, NULL, NULL) = 0"
+        ),
+        timed_out=True,
+        container_name="sandbox-1",
+        image="python:3.11-slim",
+        exit_code=124,
+        stdout="",
+        stderr="",
+        error="",
+    )
+
+    events = monitor._events_from_sandbox_result()
+
+    assert [event.operation for event in events[:3]] == ["openat", "connect", "ptrace"]
+    assert events[0].behavior_type == BehaviorType.FILE_OPERATION
+    assert events[0].target == "/tmp/test.txt"
+    assert events[1].behavior_type == BehaviorType.NETWORK_OPERATION
+    assert events[1].target == "port:443"
+    assert events[2].behavior_type == BehaviorType.ANTI_ANALYSIS
+    assert events[-1].operation == "SandboxTimeout"
+    assert events[-1].threat_level == ThreatLevel.MEDIUM
+
+
+def test_behavioral_monitor_creates_static_only_profile_when_sandbox_unavailable(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    binary_path = tmp_path / "sample.exe"
+    binary_path.write_bytes(b"MZ" + bytes(range(64)) * 4)
+
+    monitor = BehavioralMonitor()
+    monitor.binary_path = str(binary_path)
+    monitor.start_time = 10.0
+    monitor._sandbox_result = SimpleNamespace(
+        sandbox_available=False,
+        image="python:3.11-slim",
+        container_name=None,
+        exit_code=None,
+        stdout="",
+        stderr="",
+        timed_out=False,
+        error="",
+    )
+
+    monkeypatch.setattr("reveng.malware.behavioral_monitor.time.time", lambda: 25.0)
+
+    monitor.events = monitor._events_from_sandbox_result()
+    profile = monitor._create_behavioral_profile()
+
+    assert profile is not None
+    assert profile.total_events == 1
+    assert profile.sandbox_available is False
+    assert profile.analysis_mode == "static_only"
+    assert profile.file_operations[0]["operation"] == "StaticMetadata"
+    assert profile.file_operations[0]["target"] == str(binary_path)
+    assert profile.analysis_duration == pytest.approx(15.0)
+
+
+def test_forensics_anomaly_model_distinguishes_suspicious_and_benign_profiles():
+    model = ForensicsAnomalyModel()
+
+    suspicious = model.assess_binary_features(
+        {
+            "file_size_kb": 380.38,
+            "entropy": 0.06,
+            "is_pe": 0.0,
+            "import_count": 191.55,
+            "suspicious_import_ratio": 0.96,
+            "section_count": 1.1,
+            "executable_section_count": 0.14,
+            "writable_executable_section_count": 4.85,
+            "average_section_entropy": 0.90,
+            "max_section_entropy": 0.90,
+            "string_indicator_density": 0.89,
+        }
+    )
+    benign = model.assess_binary_features(
+        {
+            "file_size_kb": 56.0,
+            "entropy": 5.60,
+            "is_pe": 1.0,
+            "import_count": 62.0,
+            "suspicious_import_ratio": 0.06,
+            "section_count": 6.0,
+            "executable_section_count": 2.0,
+            "writable_executable_section_count": 0.0,
+            "average_section_entropy": 5.10,
+            "max_section_entropy": 5.80,
+            "string_indicator_density": 0.03,
+        }
+    )
+
+    assert suspicious.exceeded is True
+    assert suspicious.score > suspicious.threshold
+    assert suspicious.features["suspicious_import_ratio"] == pytest.approx(0.96)
+    assert any(
+        "suspicious APIs" in reason
+        or "writable and executable sections" in reason
+        or "embedded strings" in reason
+        for reason in suspicious.reasons[1:]
+    )
+    assert benign.exceeded is False
+    assert benign.score < benign.threshold
+    assert benign.reasons == []

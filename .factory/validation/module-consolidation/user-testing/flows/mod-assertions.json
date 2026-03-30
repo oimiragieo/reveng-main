@@ -1,0 +1,43 @@
+{
+  "flowId": "mod-assertions",
+  "milestone": "module-consolidation",
+  "testedAt": "2026-03-14T23:45:00Z",
+  "isolation": {
+    "repoRoot": "C:\\dev\\projects\\reveng-main",
+    "surface": "Python Direct Invocation",
+    "services": "none"
+  },
+  "assertions": {
+    "VAL-MOD-001": {
+      "status": "pass",
+      "evidence": "module-consolidation/mod-assertions/VAL-MOD-001-git-ls-files.txt",
+      "notes": "git ls-files | findstr gpu_accelerator.py returned exactly 1 line: src/reveng/ml/gpu_accelerator.py. Duplicates in performance/ and tools/enterprise/ are removed."
+    },
+    "VAL-MOD-002": {
+      "status": "pass",
+      "evidence": "module-consolidation/mod-assertions/VAL-MOD-002-git-ls-files.txt",
+      "notes": "git ls-files | findstr symbolic_execution_engine.py returned exactly 1 line: src/reveng/security/symbolic_execution_engine.py. Duplicate in symbolic/ is removed."
+    },
+    "VAL-MOD-003": {
+      "status": "pass",
+      "evidence": "module-consolidation/mod-assertions/VAL-MOD-003-shim-dirs.txt",
+      "notes": "git ls-files for src/reveng/tools/ai/, src/reveng/tools/security/, src/reveng/tools/visualization/ returned empty. git ls-files for the 3 ghidra shim files in src/reveng/tools/config/ also returned empty. All shim directories and files are removed."
+    },
+    "VAL-MOD-004": {
+      "status": "pass",
+      "evidence": "module-consolidation/mod-assertions/VAL-MOD-004-import-and-tests.txt",
+      "notes": "python import of reveng succeeded (exit code 0). pytest ran 323 passed, 2 failed (pre-existing: KeyError in docker_sandbox, AssertionError in volatility_integration), 20 skipped. Zero ImportError or ModuleNotFoundError found in test output."
+    }
+  },
+  "frictions": [
+    {
+      "description": "ripgrep (rg) is not available in PowerShell PATH despite being installed system-wide; had to use findstr as alternative",
+      "resolved": true,
+      "resolution": "Used findstr instead of rg for pattern matching in git ls-files output",
+      "affectedAssertions": ["VAL-MOD-001", "VAL-MOD-002"]
+    }
+  ],
+  "blockers": [],
+  "toolsUsed": ["git", "python", "pytest", "findstr"],
+  "summary": "Tested 4 assertions: all 4 passed. Module consolidation is complete — gpu_accelerator.py and symbolic_execution_engine.py each exist at exactly 1 canonical location, all shim directories/files are removed, and the test suite has zero import errors."
+}

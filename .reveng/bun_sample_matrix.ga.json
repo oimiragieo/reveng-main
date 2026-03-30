@@ -1,0 +1,58 @@
+{
+  "version": "1.0",
+  "min_live_bun_samples_for_pass": 2,
+  "notes": [
+    "This GA matrix uses provisioned public Bun release binaries instead of ad hoc local samples.",
+    "Negative controls remain required so non-Bun binaries do not accidentally route through the Bun workflow."
+  ],
+  "samples": [
+    {
+      "id": "droid",
+      "path": "C:\\dev\\droid.exe",
+      "kind": "bun_live_sample",
+      "required": false,
+      "smoke_validation": {
+        "enabled": true,
+        "policy_binary_name": "droid.exe"
+      },
+      "expectations": {
+        "detection": {
+          "is_bun_executable": true
+        },
+        "analyze": {
+          "route": "bun",
+          "recovery_mode": "module_graph",
+          "module_layout": "full"
+        },
+        "rebuild": {
+          "route": "bun_node_sea",
+          "verification_status": "pass_with_warnings",
+          "differential_status": "pass",
+          "equivalence_level": "structural_candidate"
+        }
+      }
+    },
+    {
+      "id": "opencode",
+      "path": "..\\external\\ga_binaries\\opencode\\opencode.exe",
+      "kind": "bun_live_sample",
+      "required": true,
+      "expectations": {
+        "detection": {
+          "is_bun_executable": true
+        }
+      }
+    },
+    {
+      "id": "sample-control",
+      "path": "..\\test_samples\\sample.exe",
+      "kind": "negative_control",
+      "required": true,
+      "expectations": {
+        "detection": {
+          "is_bun_executable": false
+        }
+      }
+    }
+  ]
+}

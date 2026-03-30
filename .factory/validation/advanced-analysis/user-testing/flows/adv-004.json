@@ -1,0 +1,84 @@
+{
+  "groupId": "adv-004",
+  "testedAt": "2026-03-14T00:00:00Z",
+  "isolation": {
+    "repoRoot": "C:\\dev\\projects\\reveng-main",
+    "testingTool": "Python direct invocation",
+    "sysPathInsert": "C:\\dev\\projects\\reveng-main\\src",
+    "envVars": {
+      "PYTHONIOENCODING": "utf8",
+      "SKIP_VOLATILITY": "NOT SET (intentionally)"
+    }
+  },
+  "toolsUsed": ["python -c", "unittest.mock"],
+  "assertions": [
+    {
+      "id": "VAL-ADV-004",
+      "title": "analyze_memory_dump Uses Volatility3 (Not WMIC) for Analysis",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run python -c \"import volatility3; print('OK')\"",
+          "expected": "Exit code 0, prints OK",
+          "observed": "Exit code 0, printed 'volatility3 OK'"
+        },
+        {
+          "action": "Run python -c \"import volatility3.framework; print('OK')\"",
+          "expected": "Exit code 0, prints OK",
+          "observed": "Exit code 0, printed 'volatility3.framework OK'"
+        },
+        {
+          "action": "Import MemoryForensics from reveng.malware.memory_forensics",
+          "expected": "Import succeeds",
+          "observed": "Import succeeded, class available"
+        },
+        {
+          "action": "Create temp .mem file (1024 zero bytes), mock VolatilityAnalyzer.analyze_dump to return 3 processes, patch subprocess.run to track calls",
+          "expected": "Mocks configured successfully",
+          "observed": "Mocks configured successfully"
+        },
+        {
+          "action": "Call MemoryForensics().analyze_memory(dump_path, output_dir) with .mem file",
+          "expected": "Returns MemoryAnalysis with processes populated via Volatility3",
+          "observed": "MemoryAnalysis returned with 3 ProcessInfo entries"
+        },
+        {
+          "action": "Assert subprocess.run NOT called with 'wmic' args",
+          "expected": "No wmic calls found",
+          "observed": "subprocess.run call count = 0, no wmic calls detected"
+        },
+        {
+          "action": "Assert VolatilityAnalyzer.analyze_dump was called",
+          "expected": "analyze_dump called once",
+          "observed": "analyze_dump called 1 time"
+        },
+        {
+          "action": "Assert result has 'processes' attribute with >= 1 ProcessInfo entry",
+          "expected": "processes count >= 1, all ProcessInfo instances",
+          "observed": "processes count = 3, all are ProcessInfo instances"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "testScript": "advanced-analysis/adv-004/test_val_adv_004.py",
+        "testResultsJson": "advanced-analysis/adv-004/test_results.json",
+        "volatility3ImportLog": "advanced-analysis/adv-004/volatility3_import.txt",
+        "subprocessRunNotCalledWithWmic": true,
+        "subprocessRunCallCount": 0,
+        "volatilityAnalyzeDumpCalled": true,
+        "processesCount": 3,
+        "processesAreProcessInfo": true,
+        "first3Processes": [
+          {"process_id": 4, "process_name": "System", "parent_id": 0, "command_line": ""},
+          {"process_id": 456, "process_name": "svchost.exe", "parent_id": 4, "command_line": "svchost.exe -k netsvcs"},
+          {"process_id": 789, "process_name": "explorer.exe", "parent_id": 456, "command_line": "explorer.exe"}
+        ]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 1 assertion: 1 passed. VAL-ADV-004 confirms that MemoryForensics.analyze_memory() routes .mem/.dmp files through VolatilityAnalyzer (Volatility3) and does NOT call subprocess.run with 'wmic'. volatility3 and volatility3.framework are both importable. The returned MemoryAnalysis object contains 3 ProcessInfo entries as expected."
+}

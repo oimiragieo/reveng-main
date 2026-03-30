@@ -46,8 +46,8 @@ __build_time__ = "00:00:00"
 __build_timestamp__ = "2025-11-16T00:00:00Z"
 
 # Development status
-__status__ = "Production/Stable"
-__release_type__ = "stable"
+__status__ = "Development/Beta"
+__release_type__ = "beta"
 
 # Supported Python versions
 __python_versions__ = ["3.9", "3.10", "3.11", "3.12"]

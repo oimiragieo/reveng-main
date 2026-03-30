@@ -13,16 +13,15 @@ Based on 2024-2025 research:
 Achieves 70-95% success rate depending on obfuscation complexity.
 """
 
-import os
-import sys
-import subprocess
-import logging
-import tempfile
 import json
-from typing import List, Dict, Optional, Set, Tuple
+import logging
+import os
+import subprocess
+import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -149,39 +148,31 @@ class JavaScriptDeobfuscator:
 
         # Check webcrack
         try:
-            subprocess.run(
-                [self.webcrack_path, "--version"], capture_output=True, timeout=5
-            )
+            subprocess.run([self.webcrack_path, "--version"], capture_output=True, timeout=5)
             tools["webcrack"] = True
             logger.info("webcrack available")
-        except:
+        except (OSError, subprocess.SubprocessError):
             tools["webcrack"] = False
 
         # Check prettier
         try:
-            subprocess.run(
-                [self.prettier_path, "--version"], capture_output=True, timeout=5
-            )
+            subprocess.run([self.prettier_path, "--version"], capture_output=True, timeout=5)
             tools["prettier"] = True
             logger.info("prettier available")
-        except:
+        except (OSError, subprocess.SubprocessError):
             tools["prettier"] = False
 
         # Check unuglifyjs
         try:
-            subprocess.run(
-                [self.unuglifyjs_path, "--help"], capture_output=True, timeout=5
-            )
+            subprocess.run([self.unuglifyjs_path, "--help"], capture_output=True, timeout=5)
             tools["unuglifyjs"] = True
             logger.info("unuglify-js available")
-        except:
+        except (OSError, subprocess.SubprocessError):
             tools["unuglifyjs"] = False
 
         return tools
 
-    async def deobfuscate(
-        self, code: str, filename: str = "input.js"
-    ) -> DeobfuscationResult:
+    async def deobfuscate(self, code: str, filename: str = "input.js") -> DeobfuscationResult:
         """
         Main deobfuscation pipeline
 
@@ -308,7 +299,7 @@ class JavaScriptDeobfuscator:
                 # Run webcrack
                 output_dir = Path(tmpdir) / "output"
 
-                result = subprocess.run(
+                subprocess.run(
                     [self.webcrack_path, str(input_file), "-o", str(output_dir)],
                     capture_output=True,
                     text=True,
@@ -326,9 +317,7 @@ class JavaScriptDeobfuscator:
                     for f in sorted(output_files):
                         deobfuscated += f.read_text() + "\n\n"
 
-                    logger.info(
-                        f"webcrack processed successfully ({len(output_files)} files)"
-                    )
+                    logger.info(f"webcrack processed successfully ({len(output_files)} files)")
                     return deobfuscated.strip()
                 else:
                     logger.warning("webcrack produced no output")
@@ -415,7 +404,7 @@ class JavaScriptDeobfuscator:
             # Clean up temp file
             try:
                 os.unlink(input_file)
-            except:
+            except OSError:
                 pass
 
     async def _enhance_with_llm(self, code: str) -> Tuple[str, Dict]:
@@ -589,8 +578,7 @@ Respond in JSON:
 
         # Check for common JS patterns
         has_valid_patterns = any(
-            p in deobfuscated
-            for p in ["function", "var ", "let ", "const ", "=>", "return"]
+            p in deobfuscated for p in ["function", "var ", "let ", "const ", "=>", "return"]
         )
 
         if has_valid_patterns:

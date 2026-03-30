@@ -9,13 +9,12 @@ Achieves 90%+ first-attempt success rate through:
 - Learning from compilation failures
 """
 
+import logging
 import os
 import re
 import subprocess
-import logging
-from pathlib import Path
-from typing import List, Dict, Optional, Set
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -172,9 +171,7 @@ class SmartCompiler:
                 with open(current_source, "r", encoding="utf-8", errors="ignore") as f:
                     source_code = f.read()
 
-                fixed_source = await self._fix_compilation_errors(
-                    source_code, errors, attempts
-                )
+                fixed_source = await self._fix_compilation_errors(source_code, errors, attempts)
 
                 # Save fixed source to temp file
                 temp_path = f"{source_path}.fix{attempt}.c"
@@ -188,9 +185,7 @@ class SmartCompiler:
                     {
                         "attempt": attempt + 1,
                         "errors": [e.__dict__ for e in errors],
-                        "fixes_applied": (
-                            "AI fixes" if self._get_gemini() else "heuristic fixes"
-                        ),
+                        "fixes_applied": ("AI fixes" if self._get_gemini() else "heuristic fixes"),
                     }
                 )
 
@@ -205,7 +200,7 @@ class SmartCompiler:
         for temp_file in temp_files:
             try:
                 os.remove(temp_file)
-            except:
+            except OSError:
                 pass
 
         return CompileResult(
@@ -215,9 +210,7 @@ class SmartCompiler:
             final_errors=final_errors,
         )
 
-    def _try_compile(
-        self, source: str, output: str, compiler: str, flags: List[str]
-    ) -> Dict:
+    def _try_compile(self, source: str, output: str, compiler: str, flags: List[str]) -> Dict:
         """Try to compile, return result dict"""
         cmd = [compiler, source, "-o", output] + flags
 
@@ -296,9 +289,7 @@ class SmartCompiler:
 
         # Fix missing headers (heuristic)
         if missing_headers or undefined_symbols:
-            source = self._add_missing_headers(
-                source, missing_headers + undefined_symbols
-            )
+            source = self._add_missing_headers(source, missing_headers + undefined_symbols)
 
         # Fix syntax errors (heuristic)
         if syntax_errors:
@@ -433,9 +424,7 @@ Keep all functionality the same, only fix type issues."""
             logger.error(f"AI type error fixing failed: {e}")
             return source
 
-    async def _comprehensive_ai_fix(
-        self, source: str, errors: List[CompileError]
-    ) -> str:
+    async def _comprehensive_ai_fix(self, source: str, errors: List[CompileError]) -> str:
         """
         Use AI for comprehensive error fixing when many errors exist
         """
@@ -561,8 +550,7 @@ Output ONLY the fixed code, no explanations."""
             return source
 
         declarations = "\n".join(
-            f"/* Forward declaration */ void {sym}();"
-            for sym in sorted(need_declarations)
+            f"/* Forward declaration */ void {sym}();" for sym in sorted(need_declarations)
         )
 
         # Insert after includes

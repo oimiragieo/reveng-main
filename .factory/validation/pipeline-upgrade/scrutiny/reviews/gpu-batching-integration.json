@@ -1,0 +1,50 @@
+{
+  "featureId": "gpu-batching-integration",
+  "reviewedAt": "2026-03-13T16:50:00.000Z",
+  "commitId": "eb2762584d916f1f525ff5c218d74068a4a60c80",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The implementation correctly integrates memory forensics batching into GPUAccelerator with queue-based aggregation, configurable batch-size limits and time-window triggers, ordered result reconstruction, telemetry tracking, and a sequential fallback in MemoryForensics. The refactoring of _extract_memory_artifacts into composable helpers (_extract_artifact_from_region, _extract_memory_artifact_batch, _extract_memory_artifacts_sequential) is clean and preserves the original behavior. Thread safety is handled properly via threading.Lock. Tests cover the three key scenarios (batch-size grouping, time-window flush, and MemoryForensics integration path) and all 3 pass. The commit touches 4 files with +506/-47 lines.",
+    "issues": [
+      {
+        "file": "src/reveng/ml/gpu_accelerator.py",
+        "line": null,
+        "severity": "non_blocking",
+        "description": "memory_forensics_dispatch_history grows unboundedly across the lifetime of a GPUAccelerator instance. For long-running sessions with many scans this could accumulate significant memory. Consider adding a cap or a clear method in a follow-up."
+      },
+      {
+        "file": "src/reveng/malware/memory_forensics.py",
+        "line": null,
+        "severity": "non_blocking",
+        "description": "hashlib.sha512(region_data).hexdigest() on line in _extract_artifact_from_region computes a SHA-512 hash but never stores it. This is a pre-existing issue (present before this PR), not introduced by this change, but it wastes CPU cycles."
+      },
+      {
+        "file": "src/reveng/malware/memory_forensics.py",
+        "line": null,
+        "severity": "non_blocking",
+        "description": "_get_accelerator() will silently create a new GPUAccelerator() with default params when no accelerator is injected. This means PyTorch import errors are swallowed at debug level. Acceptable for graceful degradation, but worth noting for debugging scenarios where a user expects GPU batching to be active but the accelerator silently falls back to sequential."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The worker correctly updated .factory/library/pipeline-upgrade.md with the new batching API surface. No conventions were violated.",
+      "evidence": "Diff shows 2 lines added to .factory/library/pipeline-upgrade.md documenting the new queue/dispatch/flush/process methods."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker deviated from step 1.3 (Baseline Validation) by continuing after a red baseline. The deviation was justified: AGENTS.md explicitly documents that the baseline failures are pre-existing and out of scope. The skill procedure could acknowledge this pattern to avoid future deviation reports.",
+      "evidence": "Handoff skillFeedback.followedProcedure=false with deviation at step 1.3. Worker documented 58 pre-existing failures and proceeded with targeted feature-specific TDD validation."
+    },
+    {
+      "area": "skills",
+      "observation": "The python-developer skill file was not found at .factory/skills/python-developer/SKILL.md in the project. It appears to be defined at the user/global level. This meant we could not verify whether the worker followed the skill procedure precisely, though the TDD approach (red test first, then implement) is evident from the transcript showing the initial test failure followed by passing tests.",
+      "evidence": "Glob for .factory/skills/**/SKILL.md returned no matches. Transcript shows red-phase pytest failure (missing GPUAccelerator methods) followed by green-phase passing tests."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The gpu-batching-integration feature passes review. The implementation correctly fulfills VAL-PIPE-002 by aggregating memory forensics region scans into configurable batches (batch-size and time-window triggers) before dispatching them through GPUAccelerator, with telemetry tracking and ordered result reconstruction. The code is well-structured with proper error handling, thread safety, and a sequential fallback path. Three focused unit tests cover batch-size grouping, time-window dispatch, and the MemoryForensics integration path — all passing. Three non-blocking observations were noted: unbounded dispatch history growth, a pre-existing unused SHA-512 computation, and silent accelerator fallback. No blocking issues found."
+}

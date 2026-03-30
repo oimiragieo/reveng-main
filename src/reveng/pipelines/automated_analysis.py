@@ -129,6 +129,8 @@ class AutomatedAnalysisPipeline:
         """Run analysis pipeline with specified template"""
 
         context = create_error_context(
+            component="automated_analysis_pipeline",
+            operation="run_pipeline",
             tool_name="automated_analysis_pipeline",
             binary_path=binary_path,
             analysis_stage="pipeline_execution",
@@ -136,24 +138,22 @@ class AutomatedAnalysisPipeline:
 
         try:
             if template_name not in self.templates:
+                self.logger.error(f"Unknown template requested: {template_name}")
                 raise AnalysisFailureError(
                     "pipeline_execution",
                     binary_path,
                     context=context,
-                    details=f"Unknown template: {template_name}",
                 )
 
             if not Path(binary_path).exists():
+                self.logger.error(f"Binary file not found: {binary_path}")
                 raise AnalysisFailureError(
                     "pipeline_execution",
                     binary_path,
                     context=context,
-                    details="Binary file not found",
                 )
 
-            self.logger.info(
-                f"Running analysis pipeline: {template_name} on {binary_path}"
-            )
+            self.logger.info(f"Running analysis pipeline: {template_name} on {binary_path}")
 
             # Get template
             template = self.templates[template_name]
@@ -177,9 +177,7 @@ class AutomatedAnalysisPipeline:
 
             # Execute pipeline stages
             for stage in template.stages:
-                stage_results = self._execute_stage(
-                    stage, steps, binary_path, output_path
-                )
+                stage_results = self._execute_stage(stage, steps, binary_path, output_path)
                 result.stage_results[stage] = stage_results
 
                 # Check for critical errors
@@ -209,9 +207,9 @@ class AutomatedAnalysisPipeline:
 
         except Exception as e:
             self.logger.error(f"Failed to run analysis pipeline: {e}")
-            raise AnalysisFailureError(
-                "pipeline_execution", binary_path, context=context, original_error=e
-            )
+            if isinstance(e, AnalysisFailureError):
+                raise
+            raise AnalysisFailureError("pipeline_execution", binary_path, context=context) from e
 
     def _execute_stage(
         self,
@@ -255,9 +253,7 @@ class AutomatedAnalysisPipeline:
                                 f"Required step failed: {step.name}"
                             )
                         else:
-                            stage_results["warnings"].append(
-                                f"Optional step failed: {step.name}"
-                            )
+                            stage_results["warnings"].append(f"Optional step failed: {step.name}")
 
                 except Exception as e:
                     self.logger.error(f"Step execution failed: {step.name} - {e}")
@@ -267,14 +263,10 @@ class AutomatedAnalysisPipeline:
                             f"Required step failed: {step.name} - {e}"
                         )
                     else:
-                        stage_results["warnings"].append(
-                            f"Optional step failed: {step.name} - {e}"
-                        )
+                        stage_results["warnings"].append(f"Optional step failed: {step.name} - {e}")
 
             stage_results["end_time"] = time.time()
-            stage_results["duration"] = (
-                stage_results["end_time"] - stage_results["start_time"]
-            )
+            stage_results["duration"] = stage_results["end_time"] - stage_results["start_time"]
 
             self.logger.info(
                 f"Stage {stage.value} completed: {stage_results['steps_executed']} successful, {stage_results['steps_failed']} failed"
@@ -332,9 +324,7 @@ class AutomatedAnalysisPipeline:
             return step_result
 
         except subprocess.TimeoutExpired:
-            self.logger.error(
-                f"Step {step.name} timed out after {step.timeout} seconds"
-            )
+            self.logger.error(f"Step {step.name} timed out after {step.timeout} seconds")
             return {
                 "step_name": step.name,
                 "success": False,
@@ -348,6 +338,11 @@ class AutomatedAnalysisPipeline:
         """Generate final analysis report"""
 
         try:
+            serialized_stage_results = {
+                stage.value if isinstance(stage, PipelineStage) else str(stage): data
+                for stage, data in result.stage_results.items()
+            }
+
             # Create comprehensive report
             report = {
                 "pipeline_name": result.pipeline_name,
@@ -356,7 +351,7 @@ class AutomatedAnalysisPipeline:
                 "success": result.success,
                 "errors": result.errors,
                 "warnings": result.warnings,
-                "stage_results": result.stage_results,
+                "stage_results": serialized_stage_results,
                 "summary": self._generate_summary(result),
             }
 
@@ -391,8 +386,7 @@ class AutomatedAnalysisPipeline:
                     if stage_result.get("critical_errors")
                 ),
                 "total_steps": sum(
-                    stage_result.get("steps_executed", 0)
-                    + stage_result.get("steps_failed", 0)
+                    stage_result.get("steps_executed", 0) + stage_result.get("steps_failed", 0)
                     for stage_result in result.stage_results.values()
                 ),
                 "successful_steps": sum(
@@ -408,9 +402,7 @@ class AutomatedAnalysisPipeline:
             }
 
             if summary["total_steps"] > 0:
-                summary["success_rate"] = (
-                    summary["successful_steps"] / summary["total_steps"]
-                )
+                summary["success_rate"] = summary["successful_steps"] / summary["total_steps"]
 
             return summary
 
@@ -484,16 +476,15 @@ class AutomatedAnalysisPipeline:
         except Exception as e:
             self.logger.error(f"Failed to generate HTML report: {e}")
 
-    def _generate_stage_html(
-        self, stage_results: Dict[PipelineStage, Dict[str, Any]]
-    ) -> str:
+    def _generate_stage_html(self, stage_results: Dict[PipelineStage, Dict[str, Any]]) -> str:
         """Generate HTML for stage results"""
 
         html = ""
         for stage, results in stage_results.items():
+            stage_name = stage.value if isinstance(stage, PipelineStage) else str(stage)
             html += f"""
             <div class="section">
-                <h3>{stage.value}</h3>
+                <h3>{stage_name}</h3>
                 <p><strong>Steps Executed:</strong> {results.get("steps_executed", 0)}</p>
                 <p><strong>Steps Failed:</strong> {results.get("steps_failed", 0)}</p>
                 <p><strong>Duration:</strong> {results.get("duration", 0):.2f} seconds</p>

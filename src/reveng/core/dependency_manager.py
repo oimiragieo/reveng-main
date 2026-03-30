@@ -31,6 +31,13 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+GHIDRA_VERSION = "12.0.4"
+GHIDRA_DIST_NAME = f"ghidra_{GHIDRA_VERSION}_PUBLIC"
+GHIDRA_DOWNLOAD_URL = (
+    "https://github.com/NationalSecurityAgency/ghidra/releases/download/"
+    "Ghidra_12.0.4_build/ghidra_12.0.4_PUBLIC_20260303.zip"
+)
+
 
 # Platform Detection Utilities
 class Platform(Enum):
@@ -306,14 +313,10 @@ class BaseInstaller(ABC):
             env_path = os.getenv(env_var)
             if env_path:
                 self.install_dir = Path(env_path)
-                logger.info(
-                    f"Using custom install path from {env_var}: {self.install_dir}"
-                )
+                logger.info(f"Using custom install path from {env_var}: {self.install_dir}")
             else:
                 # Default: ~/.reveng/tools/{tool_name}
-                base_dir = os.getenv(
-                    "REVENG_TOOLS_DIR", str(Path.home() / ".reveng" / "tools")
-                )
+                base_dir = os.getenv("REVENG_TOOLS_DIR", str(Path.home() / ".reveng" / "tools"))
                 self.install_dir = Path(base_dir) / tool_name
 
         self.logger = logging.getLogger(f"installer.{tool_name}")
@@ -356,15 +359,50 @@ class GhidraInstaller(BaseInstaller):
     """Installer for Ghidra reverse engineering tool (cross-platform)"""
 
     def __init__(self, custom_install_dir: Path = None):
-        super().__init__("ghidra", "11.0", custom_install_dir=custom_install_dir)
+        super().__init__("ghidra", GHIDRA_VERSION, custom_install_dir=custom_install_dir)
         self.platform = get_platform()
-        self.ghidra_url = "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_11.0_build/ghidra_11.0_PUBLIC_20241210.zip"
+        self.ghidra_url = GHIDRA_DOWNLOAD_URL
+
+    def _get_bundled_dist_root(self) -> Path:
+        """Return the repository-local Ghidra dist root if available."""
+        return Path(__file__).resolve().parents[3] / "external" / "ghidra-dist"
+
+    def _iter_dist_roots(self):
+        """Yield install roots to search, preferring user-configured locations."""
+        yield self.install_dir
+        bundled_root = self._get_bundled_dist_root()
+        if bundled_root != self.install_dir:
+            yield bundled_root
+
+    def _resolve_distribution_path(self) -> Optional[Path]:
+        """Find a usable Ghidra distribution under known install roots."""
+        executable = get_script_name("ghidraRun", self.platform)
+
+        for dist_root in self._iter_dist_roots():
+            preferred = dist_root / GHIDRA_DIST_NAME
+            candidates = [preferred]
+            if dist_root.exists():
+                candidates.extend(sorted(dist_root.glob("ghidra_*_PUBLIC")))
+
+            seen = set()
+            for candidate in candidates:
+                if candidate in seen:
+                    continue
+                seen.add(candidate)
+                if candidate.exists() and (candidate / executable).exists():
+                    return candidate
+        return None
 
     def check_installed(self) -> bool:
         """Check if Ghidra is installed"""
-        ghidra_path = self.install_dir / "ghidra_11.0_PUBLIC"
-        executable = get_script_name("ghidraRun", self.platform)
-        return ghidra_path.exists() and (ghidra_path / executable).exists()
+        return self._resolve_distribution_path() is not None
+
+    def get_executable_path(self) -> str:
+        """Get the resolved Ghidra launcher path."""
+        ghidra_path = self._resolve_distribution_path()
+        if ghidra_path is None:
+            return str(self.install_dir / self.get_executable_name())
+        return str(ghidra_path / self.get_executable_name())
 
     def install(self) -> InstallationResult:
         """Install Ghidra"""
@@ -373,15 +411,11 @@ class GhidraInstaller(BaseInstaller):
                 return InstallationResult(True, "ghidra", str(self.install_dir))
 
             if not self.create_install_dir():
-                return InstallationResult(
-                    False, "ghidra", "", "Failed to create install directory"
-                )
+                return InstallationResult(False, "ghidra", "", "Failed to create install directory")
 
             # Check Java requirement
             if not self._check_java():
-                return InstallationResult(
-                    False, "ghidra", "", "Java 21+ required for Ghidra"
-                )
+                return InstallationResult(False, "ghidra", "", "Java 21+ required for Ghidra")
 
             # Download Ghidra with retry logic
             # Use mkstemp for secure temp file creation (avoids race condition)
@@ -408,9 +442,7 @@ class GhidraInstaller(BaseInstaller):
                     self.logger.info("Validating download integrity...")
                     validate_checksum(temp_file_path, expected_sha256)
                 else:
-                    self.logger.warning(
-                        "No checksum available for Ghidra - skipping validation"
-                    )
+                    self.logger.warning("No checksum available for Ghidra - skipping validation")
                     self.logger.warning("Download integrity cannot be guaranteed")
             except ValueError as e:
                 # Checksum mismatch - delete file and fail
@@ -428,9 +460,7 @@ class GhidraInstaller(BaseInstaller):
             if self.verify_installation():
                 return InstallationResult(True, "ghidra", str(self.install_dir))
             else:
-                return InstallationResult(
-                    False, "ghidra", "", "Installation verification failed"
-                )
+                return InstallationResult(False, "ghidra", "", "Installation verification failed")
 
         except Exception as e:
             self.logger.error(f"Ghidra installation failed: {e}")
@@ -439,8 +469,8 @@ class GhidraInstaller(BaseInstaller):
     def verify_installation(self) -> bool:
         """Verify Ghidra installation"""
         try:
-            ghidra_path = self.install_dir / "ghidra_11.0_PUBLIC"
-            if not ghidra_path.exists():
+            ghidra_path = self._resolve_distribution_path()
+            if ghidra_path is None or not ghidra_path.exists():
                 return False
 
             # Test Ghidra headless mode - platform-aware
@@ -448,18 +478,17 @@ class GhidraInstaller(BaseInstaller):
             headless_path = ghidra_path / "support" / headless
 
             if not headless_path.exists():
-                self.logger.warning(
-                    f"Ghidra headless script not found: {headless_path}"
-                )
+                self.logger.warning(f"Ghidra headless script not found: {headless_path}")
                 return False
 
             # Make executable on Unix systems
             if self.platform in (Platform.LINUX, Platform.MACOS):
                 os.chmod(headless_path, 0o755)
-
-            result = subprocess.run(
-                [str(headless_path), "-help"], capture_output=True, timeout=30
-            )
+                result = subprocess.run([str(headless_path), "-help"], capture_output=True, timeout=30)
+            else:
+                result = subprocess.run(
+                    ["cmd", "/c", str(headless_path), "-help"], capture_output=True, timeout=30
+                )
 
             return result.returncode == 0
         except Exception as e:
@@ -472,9 +501,7 @@ class GhidraInstaller(BaseInstaller):
     def _check_java(self) -> bool:
         """Check if Java 21+ is available"""
         try:
-            result = subprocess.run(
-                ["java", "-version"], capture_output=True, text=True
-            )
+            result = subprocess.run(["java", "-version"], capture_output=True, text=True)
             if result.returncode == 0:
                 version_output = result.stderr
                 # Extract version number
@@ -520,9 +547,7 @@ class ILSpyInstaller(BaseInstaller):
                 return InstallationResult(True, "ilspy", str(self.install_dir))
 
             if not self.create_install_dir():
-                return InstallationResult(
-                    False, "ilspy", "", "Failed to create install directory"
-                )
+                return InstallationResult(False, "ilspy", "", "Failed to create install directory")
 
             # Download ILSpy
             import requests
@@ -551,9 +576,7 @@ class ILSpyInstaller(BaseInstaller):
             if self.verify_installation():
                 return InstallationResult(True, "ilspy", str(self.install_dir))
             else:
-                return InstallationResult(
-                    False, "ilspy", "", "Installation verification failed"
-                )
+                return InstallationResult(False, "ilspy", "", "Installation verification failed")
 
         except Exception as e:
             self.logger.error(f"ILSpy installation failed: {e}")
@@ -593,9 +616,7 @@ class CFRInstaller(BaseInstaller):
 
     def __init__(self, custom_install_dir: Path = None):
         super().__init__("cfr", "0.152", custom_install_dir=custom_install_dir)
-        self.cfr_url = (
-            "https://github.com/leibnitz27/cfr/releases/download/0.152/cfr-0.152.jar"
-        )
+        self.cfr_url = "https://github.com/leibnitz27/cfr/releases/download/0.152/cfr-0.152.jar"
 
     def check_installed(self) -> bool:
         """Check if CFR is installed"""
@@ -609,9 +630,7 @@ class CFRInstaller(BaseInstaller):
                 return InstallationResult(True, "cfr", str(self.install_dir))
 
             if not self.create_install_dir():
-                return InstallationResult(
-                    False, "cfr", "", "Failed to create install directory"
-                )
+                return InstallationResult(False, "cfr", "", "Failed to create install directory")
 
             # Download CFR JAR
             import requests
@@ -628,9 +647,7 @@ class CFRInstaller(BaseInstaller):
             if self.verify_installation():
                 return InstallationResult(True, "cfr", str(self.install_dir))
             else:
-                return InstallationResult(
-                    False, "cfr", "", "Installation verification failed"
-                )
+                return InstallationResult(False, "cfr", "", "Installation verification failed")
 
         except Exception as e:
             self.logger.error(f"CFR installation failed: {e}")
@@ -662,9 +679,7 @@ class DIEInstaller(BaseInstaller):
     """Installer for Detect It Easy (Windows/Linux/macOS)"""
 
     def __init__(self, custom_install_dir: Path = None):
-        super().__init__(
-            "detect_it_easy", "3.08", custom_install_dir=custom_install_dir
-        )
+        super().__init__("detect_it_easy", "3.08", custom_install_dir=custom_install_dir)
         self.platform = get_platform()
         self.arch = get_architecture()
 
@@ -741,9 +756,7 @@ class DIEInstaller(BaseInstaller):
                         tar_ref.extractall(self.install_dir)
                 elif suffix == ".dmg":
                     # macOS DMG requires special handling
-                    self.logger.warning(
-                        "macOS DMG installation requires manual mounting"
-                    )
+                    self.logger.warning("macOS DMG installation requires manual mounting")
                     return InstallationResult(
                         False,
                         "detect_it_easy",
@@ -788,9 +801,7 @@ class DIEInstaller(BaseInstaller):
 
             # Test DIE CLI (skip GUI versions)
             if str(die_path).endswith(("diec", "die.exe")):
-                result = subprocess.run(
-                    [str(die_path), "--help"], capture_output=True, timeout=30
-                )
+                result = subprocess.run([str(die_path), "--help"], capture_output=True, timeout=30)
                 return result.returncode == 0
 
             return True  # GUI version exists
@@ -840,9 +851,7 @@ class ScyllaInstaller(BaseInstaller):
                 return InstallationResult(True, "scylla", str(self.install_dir))
 
             if not self.create_install_dir():
-                return InstallationResult(
-                    False, "scylla", "", "Failed to create install directory"
-                )
+                return InstallationResult(False, "scylla", "", "Failed to create install directory")
 
             # Download Scylla
             import requests
@@ -865,9 +874,7 @@ class ScyllaInstaller(BaseInstaller):
             if self.verify_installation():
                 return InstallationResult(True, "scylla", str(self.install_dir))
             else:
-                return InstallationResult(
-                    False, "scylla", "", "Installation verification failed"
-                )
+                return InstallationResult(False, "scylla", "", "Installation verification failed")
 
         except Exception as e:
             self.logger.error(f"Scylla installation failed: {e}")
@@ -881,9 +888,7 @@ class ScyllaInstaller(BaseInstaller):
                 return False
 
             # Test Scylla
-            result = subprocess.run(
-                [str(scylla_path), "--help"], capture_output=True, timeout=30
-            )
+            result = subprocess.run([str(scylla_path), "--help"], capture_output=True, timeout=30)
 
             return result.returncode == 0
         except Exception:
@@ -900,9 +905,7 @@ class HxDInstaller(BaseInstaller):
         super().__init__("hxd", "2.5.0.0", custom_install_dir=custom_install_dir)
         self.platform = get_platform()
         self.hxd_url = (
-            "https://mh-nexus.de/downloads/HxD25.zip"
-            if self.platform == Platform.WINDOWS
-            else None
+            "https://mh-nexus.de/downloads/HxD25.zip" if self.platform == Platform.WINDOWS else None
         )
 
     def check_installed(self) -> bool:
@@ -927,9 +930,7 @@ class HxDInstaller(BaseInstaller):
                 return InstallationResult(True, "hxd", str(self.install_dir))
 
             if not self.create_install_dir():
-                return InstallationResult(
-                    False, "hxd", "", "Failed to create install directory"
-                )
+                return InstallationResult(False, "hxd", "", "Failed to create install directory")
 
             # Download HxD
             import requests
@@ -952,9 +953,7 @@ class HxDInstaller(BaseInstaller):
             if self.verify_installation():
                 return InstallationResult(True, "hxd", str(self.install_dir))
             else:
-                return InstallationResult(
-                    False, "hxd", "", "Installation verification failed"
-                )
+                return InstallationResult(False, "hxd", "", "Installation verification failed")
 
         except Exception as e:
             self.logger.error(f"HxD installation failed: {e}")
@@ -976,9 +975,7 @@ class ResourceHackerInstaller(BaseInstaller):
     """Installer for Resource Hacker (Windows-only PE resource editor)"""
 
     def __init__(self, custom_install_dir: Path = None):
-        super().__init__(
-            "resource_hacker", "5.1.7", custom_install_dir=custom_install_dir
-        )
+        super().__init__("resource_hacker", "5.1.7", custom_install_dir=custom_install_dir)
         self.platform = get_platform()
         self.rh_url = (
             "https://www.angusj.com/resourcehacker/resource_hacker.zip"
@@ -1005,9 +1002,7 @@ class ResourceHackerInstaller(BaseInstaller):
                 )
 
             if self.check_installed():
-                return InstallationResult(
-                    True, "resource_hacker", str(self.install_dir)
-                )
+                return InstallationResult(True, "resource_hacker", str(self.install_dir))
 
             if not self.create_install_dir():
                 return InstallationResult(
@@ -1033,9 +1028,7 @@ class ResourceHackerInstaller(BaseInstaller):
             os.unlink(temp_file.name)
 
             if self.verify_installation():
-                return InstallationResult(
-                    True, "resource_hacker", str(self.install_dir)
-                )
+                return InstallationResult(True, "resource_hacker", str(self.install_dir))
             else:
                 return InstallationResult(
                     False, "resource_hacker", "", "Installation verification failed"
@@ -1084,15 +1077,11 @@ class DependencyManager:
         if is_windows:
             self.tools.update(
                 {
-                    "ilspy": ILSpyInstaller(
-                        custom_install_dir=get_install_dir("ilspy")
-                    ),
+                    "ilspy": ILSpyInstaller(custom_install_dir=get_install_dir("ilspy")),
                     "detect_it_easy": DIEInstaller(
                         custom_install_dir=get_install_dir("detect_it_easy")
                     ),
-                    "scylla": ScyllaInstaller(
-                        custom_install_dir=get_install_dir("scylla")
-                    ),
+                    "scylla": ScyllaInstaller(custom_install_dir=get_install_dir("scylla")),
                     "hxd": HxDInstaller(custom_install_dir=get_install_dir("hxd")),
                     "resource_hacker": ResourceHackerInstaller(
                         custom_install_dir=get_install_dir("resource_hacker")

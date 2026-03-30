@@ -1,0 +1,86 @@
+{
+  "milestone": "module-consolidation",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "python -m pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc",
+      "exitCode": 0,
+      "notes": "325 passed, 20 skipped, 0 failures. Baseline improved from 306 (junk-removal) to 325 after test-quality milestone restored skipped tests."
+    },
+    "typecheck": {
+      "passed": false,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "notes": "17 pre-existing errors: 15 from missing types-requests stubs, 1 from angr library using Python 3.10+ match syntax, 1 duplicate. None related to module-consolidation changes."
+    },
+    "lint": {
+      "passed": false,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203",
+      "exitCode": 1,
+      "notes": "Hundreds of pre-existing lint warnings (F401 unused imports, F403 star imports, E722 bare excepts) across the entire codebase. None introduced by module-consolidation work."
+    }
+  },
+  "reviewsSummary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "nonBlockingIssues": [
+    {
+      "featureId": "consolidate-gpu-accelerator",
+      "severity": "non_blocking",
+      "description": "Stale import in examples/advanced/v4_0_features_demo.py:164 still references `from reveng.performance.gpu_accelerator import BatchProcessor`. The examples/ directory was out of the feature's scoped search (src/ and tests/ only)."
+    },
+    {
+      "featureId": "consolidate-symbolic-engine",
+      "severity": "non_blocking",
+      "description": "docs/changelogs/v4.0.md still references the removed `reveng.symbolic` package at lines 204, 402, 424. These are documentation references, not code imports."
+    },
+    {
+      "featureId": "consolidate-symbolic-engine",
+      "severity": "non_blocking",
+      "description": "Worker edited tests/poc/test_incremental_compilation_poc.py despite AGENTS.md listing tests/poc/ as off-limits. The edit was necessary to satisfy the feature contract (update all stale importers in tests/)."
+    },
+    {
+      "featureId": "remove-shim-directories",
+      "severity": "non_blocking",
+      "description": "tools/config/__init__.py changed from star re-export to module import, subtly changing the public API. No current code relies on the old star-import behavior."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Update test baseline expectation. AGENTS.md currently says '≥ 325 passed, 0 failures' but during module-consolidation features the actual count was 306 passed (before test-quality milestone). Now after test-quality it is 325. The number should be kept current. Also, the 'off-limits: tests/poc/' rule should be clarified: import consolidation features that scan tests/ will inevitably find stale imports in tests/poc/, and workers need clear guidance on whether to fix those or skip them.",
+      "evidence": "All 3 reviewers flagged the baseline discrepancy. consolidate-symbolic-engine worker had to edit tests/poc/ despite the off-limits rule to satisfy the feature verification contract.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add guidance that consolidation features must search examples/ in addition to src/ and tests/ for stale imports. Currently the feature descriptions scope searches to src/ and tests/ only, leaving stale imports in examples/.",
+      "evidence": "consolidate-gpu-accelerator left a stale import in examples/advanced/v4_0_features_demo.py:164 because the search was scoped to src/ and tests/ only.",
+      "isSystemic": true
+    },
+    {
+      "target": "skills",
+      "suggestion": "The codebase-cleaner skill's lint/typecheck scoping guidance (scoped to touched files rather than repo-wide) was correctly updated during the junk-removal milestone. The remove-shim-directories worker initially ran repo-wide lint before discovering the scoped approach, suggesting the updated guidance needs to be more prominent or encountered earlier in the skill procedure.",
+      "evidence": "remove-shim-directories worker's skillFeedback.followedProcedure=false — stopped short of committing due to repo-wide validator failures before discovering the scoped approach.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Worker for consolidate-gpu-accelerator deviated from skill by running scoped lint/mypy instead of repo-wide",
+      "reason": "Already addressed — the skill was updated during junk-removal to document that scoped lint/mypy is the correct approach for cleanup features. No further action needed."
+    },
+    {
+      "observation": "Inconsistency in enhanced_health_monitor.py line 186 using fully-qualified path 'reveng.agents.ai.ai_enhanced_analyzer' while other entries use short paths",
+      "reason": "Pre-existing inconsistency, not introduced by module-consolidation. The diff made it more visible but it's not a regression."
+    }
+  ],
+  "previousRound": null
+}

@@ -1,0 +1,87 @@
+{
+  "groupId": "group-decompile-schema",
+  "testedAt": "2026-03-14T00:10:14Z",
+  "isolation": {
+    "surface": "Python Direct Invocation (MCP server instantiation)",
+    "ghidra_server": "localhost:13370",
+    "working_directory": "C:\\dev\\projects\\reveng-main",
+    "python_path_setup": "sys.path.insert(0, 'C:/dev/projects/reveng-main/src')",
+    "test_binary": "test_samples/sample.exe"
+  },
+  "toolsUsed": ["python subprocess execution"],
+  "assertions": [
+    {
+      "id": "VAL-MCP-001",
+      "title": "decompile_binary Returns Real Decompiled C Functions",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Instantiate REVENGEnterpriseServer with rate limiting and audit disabled",
+          "expected": "Server instance created with Ghidra engine",
+          "observed": "Server initialized successfully, Ghidra engine on http://127.0.0.1:13370"
+        },
+        {
+          "action": "Call server.decompile_binary({'binary_path': 'test_samples/sample.exe', '_ghidra_timeout': 180})",
+          "expected": "Response text >= 200 chars with >= 1 function body, no stub phrases",
+          "observed": "Response text = 4225 chars, 99 decompiled functions, decompiled_source = 47505 chars, no stub phrases found"
+        },
+        {
+          "action": "Verify response text does not contain 'coming soon', 'not implemented', or 'stub'",
+          "expected": "No stub phrases found",
+          "observed": "No stub phrases found"
+        },
+        {
+          "action": "Verify function list is non-empty and contains real C pseudocode",
+          "expected": ">= 1 function body",
+          "observed": "99 functions decompiled, first function: do_pseudo_reloc with C-like pseudocode"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "POST http://127.0.0.1:13370/decompile -> 200 (via GhidraEngine, ~36 seconds)",
+        "files": ["mcp-tools/group-mcp-tools-api/VAL-MCP-001-decompile-response.json"]
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-MCP-006",
+      "title": "MCP tools/list Exposes All Expected Tools with Correct Schemas",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Instantiate REVENGEnterpriseServer and inspect server.tools dictionary",
+          "expected": ">= 15 tools registered",
+          "observed": "15 tools registered"
+        },
+        {
+          "action": "Verify all 5 required tools are present: decompile_binary, recompile_binary, ask_ai_about_binary, ai_code_reconstruction, classify_malware",
+          "expected": "All 5 present",
+          "observed": "All 5 present, 0 missing"
+        },
+        {
+          "action": "Verify each tool has non-empty name, description, and inputSchema with >= 1 property",
+          "expected": "All tools pass schema validation",
+          "observed": "All 15 tools have valid name, description, and inputSchema with >= 1 property"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "N/A (direct Python object inspection)",
+        "files": ["mcp-tools/group-mcp-tools-api/VAL-MCP-006-tools-list.json"]
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Default Ghidra timeout of 30s is too short for decompilation; first attempt timed out. Had to use _ghidra_timeout=180 parameter.",
+      "resolved": true,
+      "resolution": "Passed _ghidra_timeout=180 to decompile_binary call, which creates a GhidraEngine with extended timeout",
+      "affectedAssertions": ["VAL-MCP-001"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assertions: 2 passed, 0 failed. VAL-MCP-006 confirms 15 tools with correct schemas including all 5 required tools. VAL-MCP-001 confirms decompile_binary returns real Ghidra-decompiled C pseudocode (99 functions, 47505 chars of source) with no stub phrases."
+}

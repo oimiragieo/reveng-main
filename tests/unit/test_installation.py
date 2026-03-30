@@ -6,6 +6,7 @@ Test REVENG Installation
 This module tests that REVENG is properly installed and all dependencies are available.
 """
 
+import importlib
 import subprocess
 import sys
 from pathlib import Path
@@ -18,37 +19,45 @@ class TestInstallation:
 
     def test_python_version(self):
         """Test that Python version meets minimum requirement"""
-        assert sys.version_info >= (3, 9), (
-            f"Python 3.9+ required, got {sys.version_info}"
-        )
+        assert sys.version_info >= (3, 9), f"Python 3.9+ required, got {sys.version_info}"
 
     def test_core_imports(self):
         """Test that core modules can be imported"""
         try:
-            import capstone
-            import keystone
-            import lief
-            import networkx
-            import requests
-            import yaml
+            for module_name in (
+                "capstone",
+                "keystone",
+                "lief",
+                "networkx",
+                "requests",
+                "yaml",
+            ):
+                assert importlib.import_module(module_name) is not None
         except ImportError as e:
             pytest.fail(f"Core dependency import failed: {e}")
 
     def test_reveng_analyzer_import(self):
         """Test that main analyzer can be imported"""
         try:
-            from reveng.analyzer import REVENGAnalyzer
+            assert importlib.import_module("reveng.analyzer").REVENGAnalyzer is not None
         except ImportError as e:
             pytest.fail(f"REVENGAnalyzer import failed: {e}")
 
     def test_tools_import(self):
         """Test that key tools can be imported"""
         try:
-            from reveng.tools.core.ai_recompiler_converter import AIRecompilerConverter
-            from reveng.tools.core.optimal_binary_analysis import (
-                UniversalOptimalBinaryAnalysis,
-            )
-            from reveng.tools.languages.language_detector import LanguageDetector
+            for module_name, attribute in (
+                (
+                    "reveng.tools.core.ai_recompiler_converter",
+                    "AIRecompilerConverter",
+                ),
+                (
+                    "reveng.tools.core.optimal_binary_analysis",
+                    "UniversalOptimalBinaryAnalysis",
+                ),
+                ("reveng.tools.languages.language_detector", "LanguageDetector"),
+            ):
+                assert getattr(importlib.import_module(module_name), attribute) is not None
         except ImportError as e:
             pytest.fail(f"Tools import failed: {e}")
 
@@ -89,9 +98,7 @@ class TestInstallation:
         if platform.system() == "Windows" and len(available_compilers) == 0:
             pytest.skip("No Unix compilers on Windows (optional)")
 
-        assert len(available_compilers) > 0, (
-            f"No compilers available. Tried: {compilers}"
-        )
+        assert len(available_compilers) > 0, f"No compilers available. Tried: {compilers}"
 
     def test_analysis_pipeline(self):
         """Test that analysis pipeline can be initialized"""
@@ -103,7 +110,7 @@ class TestInstallation:
 
         # Test with binary path
         analyzer = REVENGAnalyzer("test_samples/HelloWorld.java")
-        assert analyzer.binary_path == "test_samples/HelloWorld.java"
+        assert Path(analyzer.binary_path) == Path("test_samples/HelloWorld.java").resolve()
 
     def test_tool_chain_check(self):
         """Test that toolchain check script works"""
@@ -121,9 +128,7 @@ class TestInstallation:
             )
 
             # Toolchain check should not fail completely
-            assert result.returncode in [0, 1], (
-                f"Toolchain check failed: {result.stderr}"
-            )
+            assert result.returncode in [0, 1], f"Toolchain check failed: {result.stderr}"
         except subprocess.TimeoutExpired:
             pytest.skip("Toolchain check timed out")
         except FileNotFoundError:

@@ -24,7 +24,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -119,9 +118,7 @@ class AIRecompilerConverter:
     def __init__(self, binary_path: str = None):
         """Initialize the AI recompiler converter"""
         self.binary_path = binary_path or self._find_binary()
-        self.binary_name = (
-            Path(self.binary_path).stem if self.binary_path else "unknown"
-        )
+        self.binary_name = Path(self.binary_path).stem if self.binary_path else "unknown"
         self.analysis_folder = Path(f"ai_recompiler_analysis_{self.binary_name}")
         self.mcp_server_url = "http://localhost:13337/mcp"
         self.ghidra_connected = False
@@ -223,29 +220,19 @@ class AIRecompilerConverter:
         if "imports" in func_data:
             for import_name in func_data["imports"]:
                 if "CreateFile" in import_name:
-                    patterns.append(
-                        {"type": "file_operation", "offset": 0, "confidence": 0.9}
-                    )
+                    patterns.append({"type": "file_operation", "offset": 0, "confidence": 0.9})
                 elif "socket" in import_name.lower():
-                    patterns.append(
-                        {"type": "network_operation", "offset": 0, "confidence": 0.9}
-                    )
+                    patterns.append({"type": "network_operation", "offset": 0, "confidence": 0.9})
                 elif "malloc" in import_name or "alloc" in import_name:
-                    patterns.append(
-                        {"type": "memory_operation", "offset": 0, "confidence": 0.8}
-                    )
+                    patterns.append({"type": "memory_operation", "offset": 0, "confidence": 0.8})
 
         # String patterns
         if "strings" in func_data:
             for string_val in func_data["strings"]:
                 if "http" in string_val.lower():
-                    patterns.append(
-                        {"type": "network_protocol", "offset": 0, "confidence": 0.8}
-                    )
+                    patterns.append({"type": "network_protocol", "offset": 0, "confidence": 0.8})
                 elif "error" in string_val.lower():
-                    patterns.append(
-                        {"type": "error_handling", "offset": 0, "confidence": 0.7}
-                    )
+                    patterns.append({"type": "error_handling", "offset": 0, "confidence": 0.7})
 
         return patterns
 
@@ -449,9 +436,7 @@ class AIRecompilerConverter:
         # For now, we'll simulate verification
         return evidence.confidence > 0.5
 
-    def generate_rename_suggestions(
-        self, func_data: Dict[str, Any]
-    ) -> List[RenameSuggestion]:
+    def generate_rename_suggestions(self, func_data: Dict[str, Any]) -> List[RenameSuggestion]:
         """Generate smart rename suggestions with confidence scoring"""
         suggestions = []
 
@@ -612,9 +597,7 @@ class AIRecompilerConverter:
 
         return clusters
 
-    def extract_ioc_hints(
-        self, functions: List[FunctionSummary]
-    ) -> List[Dict[str, Any]]:
+    def extract_ioc_hints(self, functions: List[FunctionSummary]) -> List[Dict[str, Any]]:
         """Extract IOC and protocol hints (defanged)"""
         iocs = []
 
@@ -680,8 +663,7 @@ class AIRecompilerConverter:
                 self._serialize_rename_suggestion(rs) for rs in self.rename_suggestions
             ],
             "prototype_suggestions": [
-                self._serialize_prototype_suggestion(ps)
-                for ps in self.prototype_suggestions
+                self._serialize_prototype_suggestion(ps) for ps in self.prototype_suggestions
             ],
             "clusters": {
                 k: [self._serialize_function_summary(fs) for fs in v]
@@ -742,9 +724,7 @@ class AIRecompilerConverter:
             "evidence_count": len(rs.evidence),
         }
 
-    def _serialize_prototype_suggestion(
-        self, ps: PrototypeSuggestion
-    ) -> Dict[str, Any]:
+    def _serialize_prototype_suggestion(self, ps: PrototypeSuggestion) -> Dict[str, Any]:
         """Serialize prototype suggestion for JSON"""
         return {
             "function_name": ps.function_name,
@@ -799,13 +779,9 @@ class AIRecompilerConverter:
 
         for cluster_name, functions in report["clusters"].items():
             if functions:
-                md_content += (
-                    f"### {cluster_name.title()} ({len(functions)} functions)\n"
-                )
+                md_content += f"### {cluster_name.title()} ({len(functions)} functions)\n"
                 for func in functions:
-                    md_content += (
-                        f"- {func['name']} (confidence: {func['confidence']:.2f})\n"
-                    )
+                    md_content += f"- {func['name']} (confidence: {func['confidence']:.2f})\n"
                 md_content += "\n"
 
         md_content += """
@@ -814,11 +790,11 @@ class AIRecompilerConverter:
 """
 
         for ioc in report["ioc_hints"]:
-            md_content += f"- **{ioc['type']}**: {ioc['value']} (confidence: {ioc['confidence']:.2f})\n"
+            md_content += (
+                f"- **{ioc['type']}**: {ioc['value']} (confidence: {ioc['confidence']:.2f})\n"
+            )
 
-        with open(
-            self.analysis_folder / "analysis_report.md", "w", encoding="utf-8"
-        ) as f:
+        with open(self.analysis_folder / "analysis_report.md", "w", encoding="utf-8") as f:
             f.write(md_content)
 
     def run_ai_analysis(self):
@@ -899,9 +875,7 @@ def main():
 
     print("[AI] AI RECOMPILER CONVERTER")
     print("=" * 60)
-    print(
-        "This provides AI-powered binary analysis with verification and confidence scoring!"
-    )
+    print("This provides AI-powered binary analysis with verification and confidence scoring!")
     print("=" * 60)
 
     # Get binary path from command line or auto-detect
@@ -921,9 +895,7 @@ def main():
         print("Or place a binary file in the current directory")
         return
 
-    print(
-        f"Target: {converter.binary_path} ({Path(converter.binary_path).stat().st_size:,} bytes)"
-    )
+    print(f"Target: {converter.binary_path} ({Path(converter.binary_path).stat().st_size:,} bytes)")
     print()
 
     results = converter.run_ai_analysis()
@@ -957,9 +929,7 @@ def main():
     print("  - evidence/ (verification evidence)")
     print()
     print("[POWER] The AI recompiler converter analysis is complete!")
-    print(
-        "This provides AI-powered binary analysis with verification and confidence scoring!"
-    )
+    print("This provides AI-powered binary analysis with verification and confidence scoring!")
     print("=" * 60)
 
 

@@ -1,0 +1,1033 @@
+{
+  "generated_at": "2026-03-29 19:10:05",
+  "binary_path": "C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.class",
+  "analysis_folder": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze",
+  "summary": {
+    "overall_status": "partial_success",
+    "stage_statuses": {
+      "ghidra_analysis": "success",
+      "recompilation": "failed",
+      "behavioral_forensics": "success",
+      "memory_forensics": "success"
+    },
+    "ghidra_backend": "ghidra_server",
+    "functions_detected": 7,
+    "compiled_binaries": [],
+    "behavioral_anomaly_score": 0.5739076106271356,
+    "behavioral_threat_level": "medium",
+    "memory_anomaly_score": 0.35,
+    "memory_threat_level": "CRITICAL",
+    "yara_match_count": 0,
+    "malware_family": "Suspicious Binary",
+    "malware_confidence": 0.427
+  },
+  "decompiled_functions": [
+    {
+      "address": "ram:00010054",
+      "body": [
+        {
+          "address": "ram:00010054",
+          "mnemonic": "new",
+          "operands": "0xa"
+        },
+        {
+          "address": "ram:00010057",
+          "mnemonic": "dup",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010058",
+          "mnemonic": "invokespecial",
+          "operands": "0x1f"
+        },
+        {
+          "address": "ram:0001005b",
+          "mnemonic": "astore_1",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001005c",
+          "mnemonic": "aload_1",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001005d",
+          "mnemonic": "invokevirtual",
+          "operands": "0x20"
+        },
+        {
+          "address": "ram:00010060",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010061",
+          "mnemonic": "arraylength",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010062",
+          "mnemonic": "ifle",
+          "operands": "0x00010070"
+        },
+        {
+          "address": "ram:00010065",
+          "mnemonic": "aload_1",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010066",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010067",
+          "mnemonic": "iconst_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010068",
+          "mnemonic": "aaload",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010069",
+          "mnemonic": "invokevirtual",
+          "operands": "0x23"
+        },
+        {
+          "address": "ram:0001006c",
+          "mnemonic": "aload_1",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001006d",
+          "mnemonic": "invokevirtual",
+          "operands": "0x20"
+        },
+        {
+          "address": "ram:00010070",
+          "mnemonic": "getstatic",
+          "operands": "0x13"
+        },
+        {
+          "address": "ram:00010073",
+          "mnemonic": "aload_1",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010074",
+          "mnemonic": "invokevirtual",
+          "operands": "0x26"
+        },
+        {
+          "address": "ram:00010077",
+          "mnemonic": "invokedynamic",
+          "operands": "0x2a"
+        },
+        {
+          "address": "ram:0001007c",
+          "mnemonic": "invokevirtual",
+          "operands": "0x19"
+        },
+        {
+          "address": "ram:0001007f",
+          "mnemonic": "return",
+          "operands": ""
+        }
+      ],
+      "calling_convention": "default",
+      "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n     ACC_STATIC\r\n   \r\n   public static void main(java.lang.String[])  */\r\n\r\nvoid main_java_lang_String___void(String **param1)\r\n\r\n{\r\n  PrintStream *objectRef;\r\n  int iVar1;\r\n  String *pSVar2;\r\n  HelloWorld *objectRef_00;\r\n  \r\n  objectRef_00 = new HelloWorld();\r\n  (*objectRef_00->sayHello)(objectRef_00);\r\n  if (0 < param1->length) {\r\n    (*objectRef_00->setMessage)(objectRef_00,*param1);\r\n    (*objectRef_00->sayHello)(objectRef_00);\r\n  }\r\n  objectRef = *System_out;\r\n  iVar1 = (*objectRef_00->getCount)(objectRef_00);\r\n  pSVar2 = (*makeConcatWithConstants)(iVar1);\r\n  (*objectRef->println)(objectRef,pSVar2);\r\n  return;\r\n}\r\n\r\n",
+      "entry_point": "ram:00010054",
+      "name": "main_java.lang.String[]_void",
+      "signature": "void default main_java.lang.String[]_void(String * * param1)",
+      "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n     ACC_STATIC\r\n   \r\n   public static void main(java.lang.String[])  */\r\n\r\nvoid main_java_lang_String___void(String **param1)\r\n\r\n{\r\n  PrintStream *objectRef;\r\n  int iVar1;\r\n  String *pSVar2;\r\n  HelloWorld *objectRef_00;\r\n  \r\n  objectRef_00 = new HelloWorld();\r\n  (*objectRef_00->sayHello)(objectRef_00);\r\n  if (0 < param1->length) {\r\n    (*objectRef_00->setMessage)(objectRef_00,*param1);\r\n    (*objectRef_00->sayHello)(objectRef_00);\r\n  }\r\n  objectRef = *System_out;\r\n  iVar1 = (*objectRef_00->getCount)(objectRef_00);\r\n  pSVar2 = (*makeConcatWithConstants)(iVar1);\r\n  (*objectRef->println)(objectRef,pSVar2);\r\n  return;\r\n}\r\n\r\n"
+    },
+    {
+      "address": "ram:00010024",
+      "body": [
+        {
+          "address": "ram:00010024",
+          "mnemonic": "getstatic",
+          "operands": "0x13"
+        },
+        {
+          "address": "ram:00010027",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010028",
+          "mnemonic": "getfield",
+          "operands": "0x9"
+        },
+        {
+          "address": "ram:0001002b",
+          "mnemonic": "invokevirtual",
+          "operands": "0x19"
+        },
+        {
+          "address": "ram:0001002e",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001002f",
+          "mnemonic": "dup",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010030",
+          "mnemonic": "getfield",
+          "operands": "0xf"
+        },
+        {
+          "address": "ram:00010033",
+          "mnemonic": "iconst_1",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010034",
+          "mnemonic": "iadd",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010035",
+          "mnemonic": "putfield",
+          "operands": "0xf"
+        },
+        {
+          "address": "ram:00010038",
+          "mnemonic": "return",
+          "operands": ""
+        }
+      ],
+      "calling_convention": "default",
+      "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public void sayHello()  */\r\n\r\nvoid sayHello_void(HelloWorld this)\r\n\r\n{\r\n  PrintStream *objectRef;\r\n  \r\n  objectRef = *System_out;\r\n  (*objectRef->println)(objectRef,*this->message);\r\n  *this->count = *this->count + 1;\r\n  return;\r\n}\r\n\r\n",
+      "entry_point": "ram:00010024",
+      "name": "sayHello_void",
+      "signature": "void default sayHello_void(HelloWorld this)",
+      "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public void sayHello()  */\r\n\r\nvoid sayHello_void(HelloWorld this)\r\n\r\n{\r\n  PrintStream *objectRef;\r\n  \r\n  objectRef = *System_out;\r\n  (*objectRef->println)(objectRef,*this->message);\r\n  *this->count = *this->count + 1;\r\n  return;\r\n}\r\n\r\n"
+    },
+    {
+      "address": "ram:00010014",
+      "body": [
+        {
+          "address": "ram:00010014",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010015",
+          "mnemonic": "invokespecial",
+          "operands": "0x1"
+        },
+        {
+          "address": "ram:00010018",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010019",
+          "mnemonic": "aload_1",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001001a",
+          "mnemonic": "putfield",
+          "operands": "0x9"
+        },
+        {
+          "address": "ram:0001001d",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001001e",
+          "mnemonic": "iconst_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001001f",
+          "mnemonic": "putfield",
+          "operands": "0xf"
+        },
+        {
+          "address": "ram:00010022",
+          "mnemonic": "return",
+          "operands": ""
+        }
+      ],
+      "calling_convention": "default",
+      "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public HelloWorld(java.lang.String)  */\r\n\r\nvoid <init>_java_lang_String_void(HelloWorld this,String *param1)\r\n\r\n{\r\n  (*this-><init>)((void *)this);\r\n  *this->message = param1;\r\n  *this->count = 0;\r\n  return;\r\n}\r\n\r\n",
+      "entry_point": "ram:00010014",
+      "name": "<init>_java.lang.String_void",
+      "signature": "void default <init>_java.lang.String_void(HelloWorld this, String * param1)",
+      "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public HelloWorld(java.lang.String)  */\r\n\r\nvoid <init>_java_lang_String_void(HelloWorld this,String *param1)\r\n\r\n{\r\n  (*this-><init>)((void *)this);\r\n  *this->message = param1;\r\n  *this->count = 0;\r\n  return;\r\n}\r\n\r\n"
+    },
+    {
+      "address": "ram:00010000",
+      "body": [
+        {
+          "address": "ram:00010000",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010001",
+          "mnemonic": "invokespecial",
+          "operands": "0x1"
+        },
+        {
+          "address": "ram:00010004",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010005",
+          "mnemonic": "ldc",
+          "operands": "0x7"
+        },
+        {
+          "address": "ram:00010007",
+          "mnemonic": "putfield",
+          "operands": "0x9"
+        },
+        {
+          "address": "ram:0001000a",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001000b",
+          "mnemonic": "iconst_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001000c",
+          "mnemonic": "putfield",
+          "operands": "0xf"
+        },
+        {
+          "address": "ram:0001000f",
+          "mnemonic": "return",
+          "operands": ""
+        }
+      ],
+      "calling_convention": "default",
+      "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public HelloWorld()  */\r\n\r\nvoid <init>_void(HelloWorld this)\r\n\r\n{\r\n  (*this-><init>)((void *)this);\r\n  *this->message = \"Hello, World!\";\r\n  *this->count = 0;\r\n  return;\r\n}\r\n\r\n",
+      "entry_point": "ram:00010000",
+      "name": "<init>_void",
+      "signature": "void default <init>_void(HelloWorld this)",
+      "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public HelloWorld()  */\r\n\r\nvoid <init>_void(HelloWorld this)\r\n\r\n{\r\n  (*this-><init>)((void *)this);\r\n  *this->message = \"Hello, World!\";\r\n  *this->count = 0;\r\n  return;\r\n}\r\n\r\n"
+    },
+    {
+      "address": "ram:00010044",
+      "body": [
+        {
+          "address": "ram:00010044",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010045",
+          "mnemonic": "aload_1",
+          "operands": ""
+        },
+        {
+          "address": "ram:00010046",
+          "mnemonic": "putfield",
+          "operands": "0x9"
+        },
+        {
+          "address": "ram:00010049",
+          "mnemonic": "return",
+          "operands": ""
+        }
+      ],
+      "calling_convention": "default",
+      "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public void setMessage(java.lang.String)  */\r\n\r\nvoid setMessage_java_lang_String_void(HelloWorld this,String *param1)\r\n\r\n{\r\n  *this->message = param1;\r\n  return;\r\n}\r\n\r\n",
+      "entry_point": "ram:00010044",
+      "name": "setMessage_java.lang.String_void",
+      "signature": "void default setMessage_java.lang.String_void(HelloWorld this, String * param1)",
+      "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public void setMessage(java.lang.String)  */\r\n\r\nvoid setMessage_java_lang_String_void(HelloWorld this,String *param1)\r\n\r\n{\r\n  *this->message = param1;\r\n  return;\r\n}\r\n\r\n"
+    },
+    {
+      "address": "ram:0001003c",
+      "body": [
+        {
+          "address": "ram:0001003c",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001003d",
+          "mnemonic": "getfield",
+          "operands": "0x9"
+        },
+        {
+          "address": "ram:00010040",
+          "mnemonic": "areturn",
+          "operands": ""
+        }
+      ],
+      "calling_convention": "default",
+      "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public String getMessage()  */\r\n\r\nString * getMessage_java_lang_String(HelloWorld this)\r\n\r\n{\r\n  return *this->message;\r\n}\r\n\r\n",
+      "entry_point": "ram:0001003c",
+      "name": "getMessage_java.lang.String",
+      "signature": "String * default getMessage_java.lang.String(HelloWorld this)",
+      "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public String getMessage()  */\r\n\r\nString * getMessage_java_lang_String(HelloWorld this)\r\n\r\n{\r\n  return *this->message;\r\n}\r\n\r\n"
+    },
+    {
+      "address": "ram:0001004c",
+      "body": [
+        {
+          "address": "ram:0001004c",
+          "mnemonic": "aload_0",
+          "operands": ""
+        },
+        {
+          "address": "ram:0001004d",
+          "mnemonic": "getfield",
+          "operands": "0xf"
+        },
+        {
+          "address": "ram:00010050",
+          "mnemonic": "ireturn",
+          "operands": ""
+        }
+      ],
+      "calling_convention": "default",
+      "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public int getCount()  */\r\n\r\nint getCount_int(HelloWorld this)\r\n\r\n{\r\n  return *this->count;\r\n}\r\n\r\n",
+      "entry_point": "ram:0001004c",
+      "name": "getCount_int",
+      "signature": "int default getCount_int(HelloWorld this)",
+      "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public int getCount()  */\r\n\r\nint getCount_int(HelloWorld this)\r\n\r\n{\r\n  return *this->count;\r\n}\r\n\r\n"
+    }
+  ],
+  "recompilation_result": {
+    "status": "failed",
+    "output_dir": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation",
+    "source_files": {
+      "c": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\source\\reconstructed.c"
+    },
+    "compiled_binaries": {},
+    "compilation_reports": {
+      "c_gcc": {
+        "compiler": "gcc",
+        "status": "failed",
+        "binary_path": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "command": [
+              "ccache",
+              "gcc",
+              "-o",
+              ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed_gcc.exe",
+              ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+              "-w",
+              "-O0",
+              "-g",
+              "-fno-builtin",
+              "-Wl,--allow-multiple-definition"
+            ],
+            "returncode": 1,
+            "stdout": "",
+            "stderr": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:169:6: error: expected identifier or '(' before 'default'\n  169 | void default main_java_lang_String_void(String * * param1);\n      |      ^~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:171:20: error: unknown type name 'HelloWorld'\n  171 | void sayHello_void(HelloWorld this);\n      |                    ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:172:6: error: expected identifier or '(' before 'default'\n  172 | void default _init_java_lang_String_void(HelloWorld this, String * param1);\n      |      ^~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:174:17: error: unknown type name 'HelloWorld'\n  174 | void _init_void(HelloWorld this);\n      |                 ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:39: error: unknown type name 'HelloWorld'\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\n      |                                       ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:55: error: unknown type name 'String'\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\n      |                                                       ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:1: error: unknown type name 'String'\n  178 | String * getMessage_java_lang_String(HelloWorld this);\n      | ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:38: error: unknown type name 'HelloWorld'\n  178 | String * getMessage_java_lang_String(HelloWorld this);\n      |                                      ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:180:18: error: unknown type name 'HelloWorld'\n  180 | int getCount_int(HelloWorld this);\n      |                  ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:189:35: error: unknown type name 'String'\n  189 | void main_java_lang_String___void(String **param1)\n      |                                   ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:216:20: error: unknown type name 'HelloWorld'\n  216 | void sayHello_void(HelloWorld this)\n      |                    ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:233:6: error: expected identifier or '(' before '<' token\n  233 | void <init_java_lang_String_void(HelloWorld this,String *param1)\n      |      ^\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:248:17: error: unknown type name 'HelloWorld'\n  248 | void _init_void(HelloWorld this)\n      |                 ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:263:39: error: unknown type name 'HelloWorld'\n  263 | void setMessage_java_lang_String_void(HelloWorld this,String *param1)\n      |                                       ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:263:55: error: unknown type name 'String'\n  263 | void setMessage_java_lang_String_void(HelloWorld this,String *param1)\n      |                                                       ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:276:1: error: unknown type name 'String'\n  276 | String * getMessage_java_lang_String(HelloWorld this)\n      | ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:276:38: error: unknown type name 'HelloWorld'\n  276 | String * getMessage_java_lang_String(HelloWorld this)\n      |                                      ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:288:18: error: unknown type name 'HelloWorld'\n  288 | int getCount_int(HelloWorld this)\n      |                  ^~~~~~~~~~\n",
+            "source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+            "feedback_applied": false,
+            "feedback_prompt_excerpt": "You are repairing reconstructed C source code so it compiles successfully.\n\nCompiler: gcc\nRetry attempt: 1 of 2\n\nCurrent source:\n```c\n/* Reconstructed by REVENG AI-Powered Analysis */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <stddef.h>\n#include <stdbool.h>\n\n#ifdef _WIN32\n#include <windows.h>\n#else\ntypedef size_t SIZE_T;\ntypedef void * LPVOID;\ntypedef struct {\n    long long QuadPart;\n} LARGE_INTEGER;\ntypedef void * PEXCEPTION_POINTERS;\ntypedef void *"
+          }
+        ],
+        "total_attempts": 1,
+        "max_retries": 2,
+        "max_retries_exceeded": false,
+        "failure_reason": "llm_feedback_unavailable",
+        "final_source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+        "cache_backend": "ccache"
+      },
+      "c_clang": {
+        "compiler": "clang",
+        "status": "failed",
+        "binary_path": null,
+        "attempts": [
+          {
+            "attempt": 1,
+            "command": [
+              "ccache",
+              "clang",
+              "-o",
+              ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed_clang.exe",
+              ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+              "-w",
+              "-O0",
+              "-g",
+              "-fno-builtin",
+              "-Wl,--allow-multiple-definition"
+            ],
+            "returncode": 1,
+            "stdout": "",
+            "stderr": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:169:6: error: expected identifier or '('\r\n  169 | void default main_java_lang_String_void(String * * param1);\r\n      |      ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:171:20: error: unknown type name 'HelloWorld'\r\n  171 | void sayHello_void(HelloWorld this);\r\n      |                    ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:172:6: error: expected identifier or '('\r\n  172 | void default _init_java_lang_String_void(HelloWorld this, String * param1);\r\n      |      ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:174:17: error: unknown type name 'HelloWorld'\r\n  174 | void _init_void(HelloWorld this);\r\n      |                 ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:39: error: unknown type name 'HelloWorld'\r\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\r\n      |                                       ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:55: error: unknown type name 'String'\r\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\r\n      |                                                       ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:1: error: unknown type name 'String'\r\n  178 | String * getMessage_java_lang_String(HelloWorld this);\r\n      | ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:38: error: unknown type name 'HelloWorld'\r\n  178 | String * getMessage_java_lang_String(HelloWorld this);\r\n      |                                      ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:180:18: error: unknown type name 'HelloWorld'\r\n  180 | int getCount_int(HelloWorld this);\r\n      |                  ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:189:35: error: unknown type name 'String'\r\n  189 | void main_java_lang_String___void(String **param1)\r\n      |                                   ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:192:3: error: use of undeclared identifier 'PrintStream'\r\n  192 |   PrintStream *objectRef;\r\n      |   ^~~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:192:16: error: use of undeclared identifier 'objectRef'\r\n  192 |   PrintStream *objectRef;\r\n      |                ^~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:194:3: error: use of undeclared identifier 'String'\r\n  194 |   String *pSVar2;\r\n      |   ^~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:194:11: error: use of undeclared identifier 'pSVar2'\r\n  194 |   String *pSVar2;\r\n      |           ^~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:195:3: error: use of undeclared identifier 'HelloWorld'\r\n  195 |   HelloWorld *objectRef_00;\r\n      |   ^~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:195:15: error: use of undeclared identifier 'objectRef_00'\r\n  195 |   HelloWorld *objectRef_00;\r\n      |               ^~~~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:197:3: error: use of undeclared identifier 'objectRef_00'\r\n  197 |   objectRef_00 = new HelloWorld();\r\n      |   ^~~~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:197:18: error: use of undeclared identifier 'new'\r\n  197 |   objectRef_00 = new HelloWorld();\r\n      |                  ^~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:198:24: error: use of undeclared identifier 'objectRef_00_sayHello'\r\n  198 |   ((ghidra_indirect_fn)objectRef_00_sayHello)(GHIDRA_U64(objectRef_00));\r\n      |                        ^~~~~~~~~~~~~~~~~~~~~\r\nfatal error: too many errors emitted, stopping now [-ferror-limit=]\r\n20 errors generated.\r\n",
+            "source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+            "feedback_applied": false,
+            "feedback_prompt_excerpt": "You are repairing reconstructed C source code so it compiles successfully.\n\nCompiler: clang\nRetry attempt: 1 of 2\n\nCurrent source:\n```c\n/* Reconstructed by REVENG AI-Powered Analysis */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <stddef.h>\n#include <stdbool.h>\n\n#ifdef _WIN32\n#include <windows.h>\n#else\ntypedef size_t SIZE_T;\ntypedef void * LPVOID;\ntypedef struct {\n    long long QuadPart;\n} LARGE_INTEGER;\ntypedef void * PEXCEPTION_POINTERS;\ntypedef void"
+          }
+        ],
+        "total_attempts": 1,
+        "max_retries": 2,
+        "max_retries_exceeded": false,
+        "failure_reason": "llm_feedback_unavailable",
+        "final_source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+        "cache_backend": "ccache"
+      }
+    },
+    "validation_results": {},
+    "cfg_summary": {},
+    "error": "Compilation failed for all configured compilers"
+  },
+  "yara_matches": [],
+  "vulnerabilities": [],
+  "malware_classification": {
+    "family": "Suspicious Binary",
+    "confidence": 0.427,
+    "matched_rules": [],
+    "indicators": [
+      "ML anomaly score 0.76 exceeded threshold 0.64",
+      "feature distribution diverged from benign baseline"
+    ]
+  },
+  "stages": {
+    "ghidra_analysis": {
+      "status": "success",
+      "backend": "ghidra_server",
+      "ghidra_url": "http://127.0.0.1:13370",
+      "analysis_data": {
+        "compiler": "default",
+        "exports": [],
+        "functions": [
+          {
+            "address": "ram:00010054",
+            "body": [
+              {
+                "address": "ram:00010054",
+                "mnemonic": "new",
+                "operands": "0xa"
+              },
+              {
+                "address": "ram:00010057",
+                "mnemonic": "dup",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010058",
+                "mnemonic": "invokespecial",
+                "operands": "0x1f"
+              },
+              {
+                "address": "ram:0001005b",
+                "mnemonic": "astore_1",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001005c",
+                "mnemonic": "aload_1",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001005d",
+                "mnemonic": "invokevirtual",
+                "operands": "0x20"
+              },
+              {
+                "address": "ram:00010060",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010061",
+                "mnemonic": "arraylength",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010062",
+                "mnemonic": "ifle",
+                "operands": "0x00010070"
+              },
+              {
+                "address": "ram:00010065",
+                "mnemonic": "aload_1",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010066",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010067",
+                "mnemonic": "iconst_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010068",
+                "mnemonic": "aaload",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010069",
+                "mnemonic": "invokevirtual",
+                "operands": "0x23"
+              },
+              {
+                "address": "ram:0001006c",
+                "mnemonic": "aload_1",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001006d",
+                "mnemonic": "invokevirtual",
+                "operands": "0x20"
+              },
+              {
+                "address": "ram:00010070",
+                "mnemonic": "getstatic",
+                "operands": "0x13"
+              },
+              {
+                "address": "ram:00010073",
+                "mnemonic": "aload_1",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010074",
+                "mnemonic": "invokevirtual",
+                "operands": "0x26"
+              },
+              {
+                "address": "ram:00010077",
+                "mnemonic": "invokedynamic",
+                "operands": "0x2a"
+              },
+              {
+                "address": "ram:0001007c",
+                "mnemonic": "invokevirtual",
+                "operands": "0x19"
+              },
+              {
+                "address": "ram:0001007f",
+                "mnemonic": "return",
+                "operands": ""
+              }
+            ],
+            "calling_convention": "default",
+            "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n     ACC_STATIC\r\n   \r\n   public static void main(java.lang.String[])  */\r\n\r\nvoid main_java_lang_String___void(String **param1)\r\n\r\n{\r\n  PrintStream *objectRef;\r\n  int iVar1;\r\n  String *pSVar2;\r\n  HelloWorld *objectRef_00;\r\n  \r\n  objectRef_00 = new HelloWorld();\r\n  (*objectRef_00->sayHello)(objectRef_00);\r\n  if (0 < param1->length) {\r\n    (*objectRef_00->setMessage)(objectRef_00,*param1);\r\n    (*objectRef_00->sayHello)(objectRef_00);\r\n  }\r\n  objectRef = *System_out;\r\n  iVar1 = (*objectRef_00->getCount)(objectRef_00);\r\n  pSVar2 = (*makeConcatWithConstants)(iVar1);\r\n  (*objectRef->println)(objectRef,pSVar2);\r\n  return;\r\n}\r\n\r\n",
+            "entry_point": "ram:00010054",
+            "name": "main_java.lang.String[]_void",
+            "signature": "void default main_java.lang.String[]_void(String * * param1)",
+            "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n     ACC_STATIC\r\n   \r\n   public static void main(java.lang.String[])  */\r\n\r\nvoid main_java_lang_String___void(String **param1)\r\n\r\n{\r\n  PrintStream *objectRef;\r\n  int iVar1;\r\n  String *pSVar2;\r\n  HelloWorld *objectRef_00;\r\n  \r\n  objectRef_00 = new HelloWorld();\r\n  (*objectRef_00->sayHello)(objectRef_00);\r\n  if (0 < param1->length) {\r\n    (*objectRef_00->setMessage)(objectRef_00,*param1);\r\n    (*objectRef_00->sayHello)(objectRef_00);\r\n  }\r\n  objectRef = *System_out;\r\n  iVar1 = (*objectRef_00->getCount)(objectRef_00);\r\n  pSVar2 = (*makeConcatWithConstants)(iVar1);\r\n  (*objectRef->println)(objectRef,pSVar2);\r\n  return;\r\n}\r\n\r\n"
+          },
+          {
+            "address": "ram:00010024",
+            "body": [
+              {
+                "address": "ram:00010024",
+                "mnemonic": "getstatic",
+                "operands": "0x13"
+              },
+              {
+                "address": "ram:00010027",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010028",
+                "mnemonic": "getfield",
+                "operands": "0x9"
+              },
+              {
+                "address": "ram:0001002b",
+                "mnemonic": "invokevirtual",
+                "operands": "0x19"
+              },
+              {
+                "address": "ram:0001002e",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001002f",
+                "mnemonic": "dup",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010030",
+                "mnemonic": "getfield",
+                "operands": "0xf"
+              },
+              {
+                "address": "ram:00010033",
+                "mnemonic": "iconst_1",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010034",
+                "mnemonic": "iadd",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010035",
+                "mnemonic": "putfield",
+                "operands": "0xf"
+              },
+              {
+                "address": "ram:00010038",
+                "mnemonic": "return",
+                "operands": ""
+              }
+            ],
+            "calling_convention": "default",
+            "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public void sayHello()  */\r\n\r\nvoid sayHello_void(HelloWorld this)\r\n\r\n{\r\n  PrintStream *objectRef;\r\n  \r\n  objectRef = *System_out;\r\n  (*objectRef->println)(objectRef,*this->message);\r\n  *this->count = *this->count + 1;\r\n  return;\r\n}\r\n\r\n",
+            "entry_point": "ram:00010024",
+            "name": "sayHello_void",
+            "signature": "void default sayHello_void(HelloWorld this)",
+            "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public void sayHello()  */\r\n\r\nvoid sayHello_void(HelloWorld this)\r\n\r\n{\r\n  PrintStream *objectRef;\r\n  \r\n  objectRef = *System_out;\r\n  (*objectRef->println)(objectRef,*this->message);\r\n  *this->count = *this->count + 1;\r\n  return;\r\n}\r\n\r\n"
+          },
+          {
+            "address": "ram:00010014",
+            "body": [
+              {
+                "address": "ram:00010014",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010015",
+                "mnemonic": "invokespecial",
+                "operands": "0x1"
+              },
+              {
+                "address": "ram:00010018",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010019",
+                "mnemonic": "aload_1",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001001a",
+                "mnemonic": "putfield",
+                "operands": "0x9"
+              },
+              {
+                "address": "ram:0001001d",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001001e",
+                "mnemonic": "iconst_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001001f",
+                "mnemonic": "putfield",
+                "operands": "0xf"
+              },
+              {
+                "address": "ram:00010022",
+                "mnemonic": "return",
+                "operands": ""
+              }
+            ],
+            "calling_convention": "default",
+            "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public HelloWorld(java.lang.String)  */\r\n\r\nvoid <init>_java_lang_String_void(HelloWorld this,String *param1)\r\n\r\n{\r\n  (*this-><init>)((void *)this);\r\n  *this->message = param1;\r\n  *this->count = 0;\r\n  return;\r\n}\r\n\r\n",
+            "entry_point": "ram:00010014",
+            "name": "<init>_java.lang.String_void",
+            "signature": "void default <init>_java.lang.String_void(HelloWorld this, String * param1)",
+            "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public HelloWorld(java.lang.String)  */\r\n\r\nvoid <init>_java_lang_String_void(HelloWorld this,String *param1)\r\n\r\n{\r\n  (*this-><init>)((void *)this);\r\n  *this->message = param1;\r\n  *this->count = 0;\r\n  return;\r\n}\r\n\r\n"
+          },
+          {
+            "address": "ram:00010000",
+            "body": [
+              {
+                "address": "ram:00010000",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010001",
+                "mnemonic": "invokespecial",
+                "operands": "0x1"
+              },
+              {
+                "address": "ram:00010004",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010005",
+                "mnemonic": "ldc",
+                "operands": "0x7"
+              },
+              {
+                "address": "ram:00010007",
+                "mnemonic": "putfield",
+                "operands": "0x9"
+              },
+              {
+                "address": "ram:0001000a",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001000b",
+                "mnemonic": "iconst_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001000c",
+                "mnemonic": "putfield",
+                "operands": "0xf"
+              },
+              {
+                "address": "ram:0001000f",
+                "mnemonic": "return",
+                "operands": ""
+              }
+            ],
+            "calling_convention": "default",
+            "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public HelloWorld()  */\r\n\r\nvoid <init>_void(HelloWorld this)\r\n\r\n{\r\n  (*this-><init>)((void *)this);\r\n  *this->message = \"Hello, World!\";\r\n  *this->count = 0;\r\n  return;\r\n}\r\n\r\n",
+            "entry_point": "ram:00010000",
+            "name": "<init>_void",
+            "signature": "void default <init>_void(HelloWorld this)",
+            "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public HelloWorld()  */\r\n\r\nvoid <init>_void(HelloWorld this)\r\n\r\n{\r\n  (*this-><init>)((void *)this);\r\n  *this->message = \"Hello, World!\";\r\n  *this->count = 0;\r\n  return;\r\n}\r\n\r\n"
+          },
+          {
+            "address": "ram:00010044",
+            "body": [
+              {
+                "address": "ram:00010044",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010045",
+                "mnemonic": "aload_1",
+                "operands": ""
+              },
+              {
+                "address": "ram:00010046",
+                "mnemonic": "putfield",
+                "operands": "0x9"
+              },
+              {
+                "address": "ram:00010049",
+                "mnemonic": "return",
+                "operands": ""
+              }
+            ],
+            "calling_convention": "default",
+            "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public void setMessage(java.lang.String)  */\r\n\r\nvoid setMessage_java_lang_String_void(HelloWorld this,String *param1)\r\n\r\n{\r\n  *this->message = param1;\r\n  return;\r\n}\r\n\r\n",
+            "entry_point": "ram:00010044",
+            "name": "setMessage_java.lang.String_void",
+            "signature": "void default setMessage_java.lang.String_void(HelloWorld this, String * param1)",
+            "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public void setMessage(java.lang.String)  */\r\n\r\nvoid setMessage_java_lang_String_void(HelloWorld this,String *param1)\r\n\r\n{\r\n  *this->message = param1;\r\n  return;\r\n}\r\n\r\n"
+          },
+          {
+            "address": "ram:0001003c",
+            "body": [
+              {
+                "address": "ram:0001003c",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001003d",
+                "mnemonic": "getfield",
+                "operands": "0x9"
+              },
+              {
+                "address": "ram:00010040",
+                "mnemonic": "areturn",
+                "operands": ""
+              }
+            ],
+            "calling_convention": "default",
+            "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public String getMessage()  */\r\n\r\nString * getMessage_java_lang_String(HelloWorld this)\r\n\r\n{\r\n  return *this->message;\r\n}\r\n\r\n",
+            "entry_point": "ram:0001003c",
+            "name": "getMessage_java.lang.String",
+            "signature": "String * default getMessage_java.lang.String(HelloWorld this)",
+            "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public String getMessage()  */\r\n\r\nString * getMessage_java_lang_String(HelloWorld this)\r\n\r\n{\r\n  return *this->message;\r\n}\r\n\r\n"
+          },
+          {
+            "address": "ram:0001004c",
+            "body": [
+              {
+                "address": "ram:0001004c",
+                "mnemonic": "aload_0",
+                "operands": ""
+              },
+              {
+                "address": "ram:0001004d",
+                "mnemonic": "getfield",
+                "operands": "0xf"
+              },
+              {
+                "address": "ram:00010050",
+                "mnemonic": "ireturn",
+                "operands": ""
+              }
+            ],
+            "calling_convention": "default",
+            "decompiled": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public int getCount()  */\r\n\r\nint getCount_int(HelloWorld this)\r\n\r\n{\r\n  return *this->count;\r\n}\r\n\r\n",
+            "entry_point": "ram:0001004c",
+            "name": "getCount_int",
+            "signature": "int default getCount_int(HelloWorld this)",
+            "source": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public int getCount()  */\r\n\r\nint getCount_int(HelloWorld this)\r\n\r\n{\r\n  return *this->count;\r\n}\r\n\r\n"
+          }
+        ],
+        "imports": [],
+        "language": "JVM:BE:32:default",
+        "program_name": "HelloWorld.class",
+        "status": "success",
+        "strings": [],
+        "xrefs": [],
+        "decompiled_code": {
+          "ram:00010054": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n     ACC_STATIC\r\n   \r\n   public static void main(java.lang.String[])  */\r\n\r\nvoid main_java_lang_String___void(String **param1)\r\n\r\n{\r\n  PrintStream *objectRef;\r\n  int iVar1;\r\n  String *pSVar2;\r\n  HelloWorld *objectRef_00;\r\n  \r\n  objectRef_00 = new HelloWorld();\r\n  (*objectRef_00->sayHello)(objectRef_00);\r\n  if (0 < param1->length) {\r\n    (*objectRef_00->setMessage)(objectRef_00,*param1);\r\n    (*objectRef_00->sayHello)(objectRef_00);\r\n  }\r\n  objectRef = *System_out;\r\n  iVar1 = (*objectRef_00->getCount)(objectRef_00);\r\n  pSVar2 = (*makeConcatWithConstants)(iVar1);\r\n  (*objectRef->println)(objectRef,pSVar2);\r\n  return;\r\n}\r\n\r\n",
+          "ram:00010024": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public void sayHello()  */\r\n\r\nvoid sayHello_void(HelloWorld this)\r\n\r\n{\r\n  PrintStream *objectRef;\r\n  \r\n  objectRef = *System_out;\r\n  (*objectRef->println)(objectRef,*this->message);\r\n  *this->count = *this->count + 1;\r\n  return;\r\n}\r\n\r\n",
+          "ram:00010014": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public HelloWorld(java.lang.String)  */\r\n\r\nvoid <init>_java_lang_String_void(HelloWorld this,String *param1)\r\n\r\n{\r\n  (*this-><init>)((void *)this);\r\n  *this->message = param1;\r\n  *this->count = 0;\r\n  return;\r\n}\r\n\r\n",
+          "ram:00010000": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public HelloWorld()  */\r\n\r\nvoid <init>_void(HelloWorld this)\r\n\r\n{\r\n  (*this-><init>)((void *)this);\r\n  *this->message = \"Hello, World!\";\r\n  *this->count = 0;\r\n  return;\r\n}\r\n\r\n",
+          "ram:00010044": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public void setMessage(java.lang.String)  */\r\n\r\nvoid setMessage_java_lang_String_void(HelloWorld this,String *param1)\r\n\r\n{\r\n  *this->message = param1;\r\n  return;\r\n}\r\n\r\n",
+          "ram:0001003c": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public String getMessage()  */\r\n\r\nString * getMessage_java_lang_String(HelloWorld this)\r\n\r\n{\r\n  return *this->message;\r\n}\r\n\r\n",
+          "ram:0001004c": "\r\n/* Flags:\r\n     ACC_PUBLIC\r\n   \r\n   public int getCount()  */\r\n\r\nint getCount_int(HelloWorld this)\r\n\r\n{\r\n  return *this->count;\r\n}\r\n\r\n"
+        },
+        "cfg_payload": {
+          "status": "failed",
+          "source": "angr",
+          "binary_name": "HelloWorld.class",
+          "error": "angr CFG extraction failed for C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.class: Unable to find a loader backend for C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.class.  Perhaps try the 'blob' loader?"
+        },
+        "cfg_context_text": "",
+        "cfg_artifacts": {},
+        "cfg_summary": {}
+      },
+      "summary": {
+        "functions": 7,
+        "imports": 0,
+        "strings": 0
+      },
+      "report_path": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\ghidra_analysis\\ghidra_analysis.json"
+    },
+    "recompilation": {
+      "status": "failed",
+      "output_dir": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation",
+      "source_files": {
+        "c": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c"
+      },
+      "compiled_binaries": {},
+      "compilation_reports": {
+        "c_gcc": {
+          "compiler": "gcc",
+          "status": "failed",
+          "binary_path": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "command": [
+                "ccache",
+                "gcc",
+                "-o",
+                ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed_gcc.exe",
+                ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+                "-w",
+                "-O0",
+                "-g",
+                "-fno-builtin",
+                "-Wl,--allow-multiple-definition"
+              ],
+              "returncode": 1,
+              "stdout": "",
+              "stderr": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:169:6: error: expected identifier or '(' before 'default'\n  169 | void default main_java_lang_String_void(String * * param1);\n      |      ^~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:171:20: error: unknown type name 'HelloWorld'\n  171 | void sayHello_void(HelloWorld this);\n      |                    ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:172:6: error: expected identifier or '(' before 'default'\n  172 | void default _init_java_lang_String_void(HelloWorld this, String * param1);\n      |      ^~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:174:17: error: unknown type name 'HelloWorld'\n  174 | void _init_void(HelloWorld this);\n      |                 ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:39: error: unknown type name 'HelloWorld'\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\n      |                                       ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:55: error: unknown type name 'String'\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\n      |                                                       ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:1: error: unknown type name 'String'\n  178 | String * getMessage_java_lang_String(HelloWorld this);\n      | ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:38: error: unknown type name 'HelloWorld'\n  178 | String * getMessage_java_lang_String(HelloWorld this);\n      |                                      ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:180:18: error: unknown type name 'HelloWorld'\n  180 | int getCount_int(HelloWorld this);\n      |                  ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:189:35: error: unknown type name 'String'\n  189 | void main_java_lang_String___void(String **param1)\n      |                                   ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:216:20: error: unknown type name 'HelloWorld'\n  216 | void sayHello_void(HelloWorld this)\n      |                    ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:233:6: error: expected identifier or '(' before '<' token\n  233 | void <init_java_lang_String_void(HelloWorld this,String *param1)\n      |      ^\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:248:17: error: unknown type name 'HelloWorld'\n  248 | void _init_void(HelloWorld this)\n      |                 ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:263:39: error: unknown type name 'HelloWorld'\n  263 | void setMessage_java_lang_String_void(HelloWorld this,String *param1)\n      |                                       ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:263:55: error: unknown type name 'String'\n  263 | void setMessage_java_lang_String_void(HelloWorld this,String *param1)\n      |                                                       ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:276:1: error: unknown type name 'String'\n  276 | String * getMessage_java_lang_String(HelloWorld this)\n      | ^~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:276:38: error: unknown type name 'HelloWorld'\n  276 | String * getMessage_java_lang_String(HelloWorld this)\n      |                                      ^~~~~~~~~~\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:288:18: error: unknown type name 'HelloWorld'\n  288 | int getCount_int(HelloWorld this)\n      |                  ^~~~~~~~~~\n",
+              "source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+              "feedback_applied": false,
+              "feedback_prompt_excerpt": "You are repairing reconstructed C source code so it compiles successfully.\n\nCompiler: gcc\nRetry attempt: 1 of 2\n\nCurrent source:\n```c\n/* Reconstructed by REVENG AI-Powered Analysis */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <stddef.h>\n#include <stdbool.h>\n\n#ifdef _WIN32\n#include <windows.h>\n#else\ntypedef size_t SIZE_T;\ntypedef void * LPVOID;\ntypedef struct {\n    long long QuadPart;\n} LARGE_INTEGER;\ntypedef void * PEXCEPTION_POINTERS;\ntypedef void *"
+            }
+          ],
+          "total_attempts": 1,
+          "max_retries": 2,
+          "max_retries_exceeded": false,
+          "failure_reason": "llm_feedback_unavailable",
+          "final_source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+          "cache_backend": "ccache"
+        },
+        "c_clang": {
+          "compiler": "clang",
+          "status": "failed",
+          "binary_path": null,
+          "attempts": [
+            {
+              "attempt": 1,
+              "command": [
+                "ccache",
+                "clang",
+                "-o",
+                ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed_clang.exe",
+                ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+                "-w",
+                "-O0",
+                "-g",
+                "-fno-builtin",
+                "-Wl,--allow-multiple-definition"
+              ],
+              "returncode": 1,
+              "stdout": "",
+              "stderr": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:169:6: error: expected identifier or '('\r\n  169 | void default main_java_lang_String_void(String * * param1);\r\n      |      ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:171:20: error: unknown type name 'HelloWorld'\r\n  171 | void sayHello_void(HelloWorld this);\r\n      |                    ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:172:6: error: expected identifier or '('\r\n  172 | void default _init_java_lang_String_void(HelloWorld this, String * param1);\r\n      |      ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:174:17: error: unknown type name 'HelloWorld'\r\n  174 | void _init_void(HelloWorld this);\r\n      |                 ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:39: error: unknown type name 'HelloWorld'\r\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\r\n      |                                       ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:176:55: error: unknown type name 'String'\r\n  176 | void setMessage_java_lang_String_void(HelloWorld this,String *param1);\r\n      |                                                       ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:1: error: unknown type name 'String'\r\n  178 | String * getMessage_java_lang_String(HelloWorld this);\r\n      | ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:178:38: error: unknown type name 'HelloWorld'\r\n  178 | String * getMessage_java_lang_String(HelloWorld this);\r\n      |                                      ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:180:18: error: unknown type name 'HelloWorld'\r\n  180 | int getCount_int(HelloWorld this);\r\n      |                  ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:189:35: error: unknown type name 'String'\r\n  189 | void main_java_lang_String___void(String **param1)\r\n      |                                   ^\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:192:3: error: use of undeclared identifier 'PrintStream'\r\n  192 |   PrintStream *objectRef;\r\n      |   ^~~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:192:16: error: use of undeclared identifier 'objectRef'\r\n  192 |   PrintStream *objectRef;\r\n      |                ^~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:194:3: error: use of undeclared identifier 'String'\r\n  194 |   String *pSVar2;\r\n      |   ^~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:194:11: error: use of undeclared identifier 'pSVar2'\r\n  194 |   String *pSVar2;\r\n      |           ^~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:195:3: error: use of undeclared identifier 'HelloWorld'\r\n  195 |   HelloWorld *objectRef_00;\r\n      |   ^~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:195:15: error: use of undeclared identifier 'objectRef_00'\r\n  195 |   HelloWorld *objectRef_00;\r\n      |               ^~~~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:197:3: error: use of undeclared identifier 'objectRef_00'\r\n  197 |   objectRef_00 = new HelloWorld();\r\n      |   ^~~~~~~~~~~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:197:18: error: use of undeclared identifier 'new'\r\n  197 |   objectRef_00 = new HelloWorld();\r\n      |                  ^~~\r\n.reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c:198:24: error: use of undeclared identifier 'objectRef_00_sayHello'\r\n  198 |   ((ghidra_indirect_fn)objectRef_00_sayHello)(GHIDRA_U64(objectRef_00));\r\n      |                        ^~~~~~~~~~~~~~~~~~~~~\r\nfatal error: too many errors emitted, stopping now [-ferror-limit=]\r\n20 errors generated.\r\n",
+              "source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+              "feedback_applied": false,
+              "feedback_prompt_excerpt": "You are repairing reconstructed C source code so it compiles successfully.\n\nCompiler: clang\nRetry attempt: 1 of 2\n\nCurrent source:\n```c\n/* Reconstructed by REVENG AI-Powered Analysis */\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdint.h>\n#include <stddef.h>\n#include <stdbool.h>\n\n#ifdef _WIN32\n#include <windows.h>\n#else\ntypedef size_t SIZE_T;\ntypedef void * LPVOID;\ntypedef struct {\n    long long QuadPart;\n} LARGE_INTEGER;\ntypedef void * PEXCEPTION_POINTERS;\ntypedef void"
+            }
+          ],
+          "total_attempts": 1,
+          "max_retries": 2,
+          "max_retries_exceeded": false,
+          "failure_reason": "llm_feedback_unavailable",
+          "final_source_file": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\recompilation\\reconstructed.c",
+          "cache_backend": "ccache"
+        }
+      },
+      "cfg_summary": {},
+      "validation_results": {},
+      "vulnerabilities": [],
+      "exploits": [],
+      "error": "Compilation failed for all configured compilers"
+    },
+    "behavioral_forensics": {
+      "status": "success",
+      "analyzed_binary": "C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.class",
+      "risk_score": 57.39076106271356,
+      "threat_level": "medium",
+      "anomaly_score": 0.5739076106271356,
+      "anomaly_threshold": 0.6,
+      "anomaly_flags": [],
+      "sandbox_available": true,
+      "analysis_mode": "sandbox",
+      "report_path": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\behavioral_forensics\\behavioral_profile.json"
+    },
+    "memory_forensics": {
+      "status": "success",
+      "analyzed_binary": "C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.class",
+      "total_processes": 0,
+      "total_memory_regions": 0,
+      "total_artifacts": 0,
+      "risk_score": 100.0,
+      "threat_level": "CRITICAL",
+      "anomaly_score": 0.35,
+      "anomaly_threshold": 0.68,
+      "anomaly_flags": [],
+      "report_path": ".reveng\\..\\reports\\source_binary_benchmarks\\java-helloworld-class\\analyze\\memory_forensics\\memory_analysis.json"
+    }
+  }
+}

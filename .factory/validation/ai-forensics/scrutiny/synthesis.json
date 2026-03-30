@@ -1,0 +1,124 @@
+{
+  "milestone": "ai-forensics",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc",
+      "exitCode": 1,
+      "note": "58 failures + 1 error are ALL pre-existing (documented in AGENTS.md and confirmed identical to pipeline-upgrade and recompilation-engine scrutiny rounds). All 24 mission-specific tests pass: 4 ml-anomaly-detection, 18 mcp-integration, 2 e2e-pipeline-integration. Pre-existing failures: test_automated_pipeline (19), test_cli integration (8), test_documentation (12), test_examples (3), test_ml_workflow (10), test_analyzer (1), test_installation (1), test_pipeline import error (1). 162 passed, 132 skipped."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "note": "16 errors in 14 files are ALL pre-existing: 15 'Library stubs not installed for requests' errors across pre-existing modules (agents/ai, core, evasion, integrations/ghidra, etc.), and 1 angr library syntax error. No mypy errors in any mission-modified files. Confirmed by running mypy on just the 6 modified files: 0 new errors."
+    },
+    "lint": {
+      "passed": true,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203",
+      "exitCode": 1,
+      "note": "All lint issues are pre-existing (unused imports, bare excepts, star imports across legacy modules). Confirmed by running flake8 on just the mission-modified files (behavioral_monitor.py, memory_forensics.py, forensics_anomaly_models.py, reveng_enterprise_server.py, e2e_integration.py, cli.py, cli/reveng.py): 0 new lint issues."
+    }
+  },
+  "reviewsSummary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "nonBlockingIssues": [
+    {
+      "featureId": "ml-anomaly-detection",
+      "severity": "non_blocking",
+      "description": "Models are trained eagerly in __init__ with only 6 hardcoded benign samples each. Each instantiation triggers IsolationForest.fit(). Consider lazy initialization or a module-level singleton for production workloads."
+    },
+    {
+      "featureId": "ml-anomaly-detection",
+      "severity": "non_blocking",
+      "description": "stop_monitoring() return type changed from BehavioralProfile to Optional[BehavioralProfile]. Callers outside this file should be checked for None-handling."
+    },
+    {
+      "featureId": "ml-anomaly-detection",
+      "severity": "non_blocking",
+      "description": "_identify_suspicious_processes() now relies solely on the ML process anomaly model, removing the old name-matching heuristic. No static fallback if the model drifts."
+    },
+    {
+      "featureId": "ml-anomaly-detection",
+      "severity": "non_blocking",
+      "description": "_build_reasons uses a hardcoded z_score > 1.5 threshold for significant features. Consider exposing this as a configurable parameter."
+    },
+    {
+      "featureId": "mcp-server-tools",
+      "severity": "non_blocking",
+      "description": "Path validation helpers only check existence, not directory confinement. A client could reference any file on the system. Pre-existing architectural pattern, not a regression."
+    },
+    {
+      "featureId": "mcp-server-tools",
+      "severity": "non_blocking",
+      "description": "analyze_memory_dump passes memory_scan_batch_size and memory_scan_max_wait_seconds from args.get() which may return None. Low risk since MCP clients typically validate against the schema."
+    },
+    {
+      "featureId": "e2e-pipeline-integration",
+      "severity": "non_blocking",
+      "description": "asyncio.run() is called inside a function dispatched via asyncio.to_thread(), creating a nested event loop pattern. This works correctly but is non-obvious and could break if someone later calls _dispatch_stage_execution from an async context directly. An inline comment would help."
+    },
+    {
+      "featureId": "e2e-pipeline-integration",
+      "severity": "non_blocking",
+      "description": "Only 2 test cases for a 925-line change. Missing edge-case coverage: all stages failing, forensics disabled, recompilation disabled, invalid binary path."
+    },
+    {
+      "featureId": "e2e-pipeline-integration",
+      "severity": "non_blocking",
+      "description": "Behavioral forensics mode has a minimum 1.1-second wall-clock wait per pipeline execution via time.sleep(). Will slow down future integration tests exercising the real path."
+    },
+    {
+      "featureId": "e2e-pipeline-integration",
+      "severity": "non_blocking",
+      "description": "_candidate_ghidra_urls hardcodes fallback port 13370 which is not documented in services.yaml or AGENTS.md."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add coding convention: 'When using asyncio in the pipeline engine, note that stage handlers run inside asyncio.to_thread() (a threadpool thread with no running event loop). It is safe to call asyncio.run() within these handlers. Do NOT call stage handlers directly from an async context.'",
+      "evidence": "e2e-pipeline-integration introduced asyncio.run() inside asyncio.to_thread()-dispatched handlers in pipeline_engine.py:680. This pattern is non-obvious and was flagged by the reviewer as easy to break if someone changes the dispatch model.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Worker discovered and fixed pre-existing bugs (entropy calculation, error kwargs, enum mismatch) during ml-anomaly-detection implementation.",
+      "reason": "Already documented in .factory/library/ai-forensics.md. No additional documentation needed."
+    },
+    {
+      "observation": "sklearn IsolationForest/StandardScaler/Pipeline are newly used in forensics_anomaly_models.py.",
+      "reason": "Already documented in .factory/library/ai-forensics.md by the worker. scikit-learn is in requirements.txt."
+    },
+    {
+      "observation": "Lazy-importing backend modules inside MCP tool handlers is an undocumented convention.",
+      "reason": "Already the established pattern in the file (pre-existing handlers use the same approach). Documenting this specific micro-pattern adds noise without value."
+    },
+    {
+      "observation": "asyncio.get_running_loop() vs get_event_loop() inconsistency in reveng_enterprise_server.py.",
+      "reason": "Cosmetic inconsistency in a single file. get_running_loop() is the modern/correct approach used by the new code. Not worth a convention rule."
+    },
+    {
+      "observation": "Worker followed skill procedure correctly for ml-anomaly-detection.",
+      "reason": "Acknowledgment, not actionable."
+    },
+    {
+      "observation": "Worker documented e2e integration notes well in library.",
+      "reason": "Acknowledgment, not actionable."
+    },
+    {
+      "observation": "Port 13370 fallback in pipeline_engine.py not documented in services.yaml.",
+      "reason": "This is a hardcoded fallback URL probe, not a managed service. It does not need a services.yaml entry (which is for services workers start/stop). A code comment would suffice."
+    }
+  ],
+  "previousRound": null
+}

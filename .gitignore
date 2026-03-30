@@ -22,6 +22,7 @@ build/
 
 # Logs
 *.log
+test_results.log
 logs/
 *.log.*
 reveng_analyzer.log
@@ -32,6 +33,7 @@ semgrep-final-results.json
 
 # Analysis outputs (runtime generated)
 analysis_*/
+ml_analysis/
 ai_recompiler_analysis_*/
 ai_enhanced_analysis_*/
 src_optimal_analysis_*/
@@ -230,6 +232,7 @@ secrets.json
 
 # External dependencies (download separately - see docs/getting-started/installation.md)
 external/ghidra/
+external/ghidra-dist/
 
 # Windows reserved filename artifact
 nul

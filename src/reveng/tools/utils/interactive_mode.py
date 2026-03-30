@@ -154,9 +154,7 @@ class REVENGShell(cmd.Cmd):
 
         # Apply filter
         if arg:
-            functions = [
-                f for f in functions if arg.lower() in f.get("name", "").lower()
-            ]
+            functions = [f for f in functions if arg.lower() in f.get("name", "").lower()]
 
         print(f"Functions ({len(functions)}):")
         print("-" * 70)

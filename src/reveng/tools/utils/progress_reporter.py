@@ -169,9 +169,7 @@ class PipelineProgress:
         self.current_step = step_num
 
         # Update main progress bar
-        self.main_bar.set_description(
-            f"Step {step_num}/{self.total_steps}: {step_name}"
-        )
+        self.main_bar.set_description(f"Step {step_num}/{self.total_steps}: {step_name}")
 
         # Create substep bar if needed
         if substeps:

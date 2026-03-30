@@ -1,0 +1,56 @@
+{
+  "featureId": "async-pipeline-executor",
+  "reviewedAt": "2026-03-13T16:45:00.000Z",
+  "commitId": "cab7cdcf247fd762f7028a664812749c9530ce98",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The async DAG executor is well-implemented. `execute_pipeline_async()` uses a wave-based scheduler that discovers ready stages (all dependencies resolved), executes them concurrently via `asyncio.gather(..., return_exceptions=True)`, and correctly isolates failures so downstream dependents are skipped while independent branches continue. The synchronous `execute_pipeline()` wrapper is preserved for backward compatibility. Helper methods for dependency checking, blocked-dependency detection, circular/stalled-DAG handling, and duplicate-name validation are clean and well-separated. Tests cover the two primary validation assertions (VAL-PIPE-001 concurrency timing and VAL-PIPE-003 failure isolation). Both commits (a6c67402 for the implementation, cab7cdcf for flake8 cleanup) are correct.",
+    "issues": [
+      {
+        "file": "src/reveng/pipeline/pipeline_engine.py",
+        "line": 321,
+        "severity": "non_blocking",
+        "description": "_run_coroutine_sync has return type Callable[[], Awaitable[PipelineResult]] -> PipelineResult, but it is also called from _execute_stage (line 479) which needs Awaitable[StageResult]. The function works correctly at runtime because Python does not enforce type hints, but static type checkers (mypy) would flag this. Should use a TypeVar or Generic to be type-safe."
+      },
+      {
+        "file": "src/reveng/pipeline/pipeline_engine.py",
+        "line": 560,
+        "severity": "non_blocking",
+        "description": "StageType.DYNAMIC_ANALYSIS exists in the enum (line 48) but is not handled in _dispatch_stage_execution. A stage configured with DYNAMIC_ANALYSIS would raise ValueError('Unknown stage type'). This is pre-existing behavior (the original if-elif chain also omitted it), not a regression introduced by this feature."
+      },
+      {
+        "file": "src/reveng/pipeline/pipeline_engine.py",
+        "line": 335,
+        "severity": "non_blocking",
+        "description": "In the threading fallback path of _run_coroutine_sync, thread.join() is called without a timeout. If the spawned coroutine hangs indefinitely, the calling thread blocks forever. Each individual stage has its own asyncio.wait_for timeout, so this is unlikely in practice, but a defensive join timeout would be safer."
+      },
+      {
+        "file": "tests/unit/test_pipeline_engine_async.py",
+        "line": 116,
+        "severity": "non_blocking",
+        "description": "The concurrency timing assertion (elapsed < expected_sequential_duration - 0.1) depends on wall-clock timing. On heavily loaded CI machines the 0.1s margin could be tight, though the 0.75s sleep durations provide a generous buffer. Consider using a wider tolerance or a non-timing-based concurrency proof (e.g., checking that branch_a and branch_b overlapped rather than asserting total elapsed time)."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Worker ee651ee4 deviated from the skill's TDD procedure (step 2: 'Write tests first, red') because the feature code was already landed by a prior worker session (653d9a8a). The skill does not account for 'validation/cleanup-only' re-runs where the implementation already exists and the worker's role is to finalize or fix lint issues. skillFeedback.followedProcedure is false with justified deviations.",
+      "evidence": "Handoff from ee651ee4 states: 'The core async pipeline implementation and regression tests were already on main in commit a6c67402, so there was no unimplemented red state to create before the final cleanup and verification work.' Skill step 2 says 'Write tests first (red)' which doesn't apply when code is already green."
+    },
+    {
+      "area": "conventions",
+      "observation": "The first worker (653d9a8a) committed code that didn't pass flake8 line-length checks, requiring a second worker session (ee651ee4) just for formatting cleanup. AGENTS.md mentions 'Follow PEP 8. Use black and isort for formatting if available' but does not explicitly mandate running flake8 before committing.",
+      "evidence": "Commit cab7cdcf is entirely flake8 line-wrapping fixes (123 insertions, 35 deletions). The prior commit a6c67402 had lines exceeding 79 characters in pipeline_engine.py."
+    },
+    {
+      "area": "skills",
+      "observation": "Both workers noted that .factory/init.sh does not work on Windows. The skill references a generic startup step (1.2 Initialize Environment) that implicitly expects bash. AGENTS.md has a Windows-specific note, but the skill itself doesn't reference it.",
+      "evidence": "Both handoffs (653d9a8a and ee651ee4) document deviating from step 1.2, noting '.factory/init.sh' fails on Windows. AGENTS.md says 'Do NOT run .factory/init.sh directly on Windows' but the skill doesn't mention checking AGENTS.md for OS-specific overrides."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The async DAG executor correctly fulfills VAL-PIPE-001 (concurrent execution) and VAL-PIPE-003 (failure isolation). The implementation uses asyncio.gather with return_exceptions=True for concurrent stage execution, properly skips downstream stages when dependencies fail, and preserves backward compatibility via a synchronous wrapper. Two focused tests verify timing overlap and graceful degradation. Four non-blocking issues were identified: a type annotation imprecision in _run_coroutine_sync, a pre-existing missing handler for DYNAMIC_ANALYSIS stage type, a missing timeout on the threading fallback's thread.join(), and timing-sensitive test assertions. None of these are blocking for production use."
+}
