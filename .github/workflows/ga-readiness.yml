@@ -40,7 +40,7 @@ jobs:
         run: python scripts/verify_ga_readiness.py --profile baseline --output reports/ga_readiness_baseline.json
 
       - name: Upload readiness artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ga-readiness-baseline
           path: |
@@ -86,7 +86,7 @@ jobs:
         run: python scripts/verify_ga_readiness.py --profile ga --output reports/ga_readiness_target.json
 
       - name: Upload GA audit artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ga-readiness-target
           path: |

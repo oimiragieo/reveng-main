@@ -96,7 +96,7 @@ jobs:
         prerelease: false
 
     - name: Upload readiness artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: release-readiness
         path: |
