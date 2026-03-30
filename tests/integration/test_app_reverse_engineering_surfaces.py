@@ -3,10 +3,9 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from reveng.api import REVENGAPI
 from reveng.agent_sdk.mcp.servers.reveng_enterprise_server import REVENGEnterpriseServer
 from reveng.agent_sdk.mcp.servers.reveng_server import REVENGMCPServer
-
+from reveng.api import REVENGAPI
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CORPUS_CONFIG = REPO_ROOT / ".reveng" / "app_reverse_engineering_corpus.json"

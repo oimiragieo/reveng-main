@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-
 RUNNER_PATH = (
     Path(__file__).resolve().parents[2] / "scripts" / "run_app_reverse_engineering_corpus.py"
 )
@@ -23,7 +22,7 @@ def test_load_app_corpus_config_resolves_relative_paths(tmp_path: Path):
     sample = tmp_path / "sample.py"
     sample.write_text("print('hello')\n", encoding="utf-8")
     config_path.write_text(
-        '{\n'
+        "{\n"
         '  "version": "1.0",\n'
         '  "entries": [\n'
         '    {"name": "sample", "input_path": "sample.py", "language": "python"}\n'
@@ -48,7 +47,7 @@ def test_build_report_runs_selected_entries_only(tmp_path: Path):
     sample_a.write_text("print('a')\n", encoding="utf-8")
     sample_b.write_text("print('b')\n", encoding="utf-8")
     config_path.write_text(
-        '{\n'
+        "{\n"
         '  "version": "1.0",\n'
         '  "entries": [\n'
         '    {"name": "sample-a", "input_path": "sample_a.py", "language": "python"},\n'
@@ -71,12 +70,16 @@ def test_build_report_runs_selected_entries_only(tmp_path: Path):
 
 def test_checked_in_corpus_config_can_run_dotnet_entry():
     runner = _load_module("test_app_corpus_checked_in", RUNNER_PATH)
-    config_path = Path(__file__).resolve().parents[2] / ".reveng" / "app_reverse_engineering_corpus.json"
+    config_path = (
+        Path(__file__).resolve().parents[2] / ".reveng" / "app_reverse_engineering_corpus.json"
+    )
 
     report = runner.build_report(
         config_path,
         selected_names=["dotnet-sample-app"],
-        output_dir=Path(__file__).resolve().parents[2] / "reports" / "app_reverse_engineering_corpus_test",
+        output_dir=Path(__file__).resolve().parents[2]
+        / "reports"
+        / "app_reverse_engineering_corpus_test",
     )
 
     assert report["selected_entry_count"] == 1
@@ -87,12 +90,16 @@ def test_checked_in_corpus_config_can_run_dotnet_entry():
 
 def test_checked_in_corpus_config_can_run_packaged_entries():
     runner = _load_module("test_app_corpus_packaged", RUNNER_PATH)
-    config_path = Path(__file__).resolve().parents[2] / ".reveng" / "app_reverse_engineering_corpus.json"
+    config_path = (
+        Path(__file__).resolve().parents[2] / ".reveng" / "app_reverse_engineering_corpus.json"
+    )
 
     report = runner.build_report(
         config_path,
         selected_names=["java-helloworld-jar", "python-sample-zipapp", "python-sample-bytecode"],
-        output_dir=Path(__file__).resolve().parents[2] / "reports" / "app_reverse_engineering_corpus_packaged_test",
+        output_dir=Path(__file__).resolve().parents[2]
+        / "reports"
+        / "app_reverse_engineering_corpus_packaged_test",
     )
 
     assert report["selected_entry_count"] == 3

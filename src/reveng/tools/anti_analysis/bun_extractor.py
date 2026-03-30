@@ -7,8 +7,8 @@ Focused on Bun single-file Windows executables that embed a `.bun` PE section.
 from __future__ import annotations
 
 import base64
-import json
 import hashlib
+import json
 import logging
 import re
 import shutil
@@ -412,14 +412,21 @@ def select_bun_recompilation_input(
                 continue
             if recovered_path.suffix == ".bunmap":
                 continue
-            if recovered_path.name in {"bundle_tail.bin", "module_records.bin", "discovered_paths.txt"}:
+            if recovered_path.name in {
+                "bundle_tail.bin",
+                "module_records.bin",
+                "discovered_paths.txt",
+            }:
                 continue
             try:
                 prefix = recovered_path.read_text(encoding="utf-8", errors="replace")[:32]
             except Exception:
                 prefix = ""
             if prefix.startswith("// @bun"):
-                return str(recovered_path), "Recovered Bun virtual file excludes appended bundle metadata"
+                return (
+                    str(recovered_path),
+                    "Recovered Bun virtual file excludes appended bundle metadata",
+                )
 
     return bundle_output, "Extracted bundle is the best available Bun source artifact"
 
@@ -526,12 +533,8 @@ def build_bun_runtime_escalation_summary(
         "dump_guidance_recommended": (
             native_stub.dump_guidance.recommended if native_stub else False
         ),
-        "breakpoint_count": (
-            len(native_stub.runtime_readiness.breakpoints) if native_stub else 0
-        ),
-        "dump_point_count": (
-            len(native_stub.runtime_readiness.dump_points) if native_stub else 0
-        ),
+        "breakpoint_count": (len(native_stub.runtime_readiness.breakpoints) if native_stub else 0),
+        "dump_point_count": (len(native_stub.runtime_readiness.dump_points) if native_stub else 0),
         "differential_status": differential_status,
         "verification_status": verification_status,
     }
@@ -539,7 +542,9 @@ def build_bun_runtime_escalation_summary(
     next_steps: List[Dict[str, Any]] = []
     seen_kinds: set[str] = set()
 
-    def add_step(priority: int, kind: str, title: str, summary: str, evidence_items: List[str]) -> None:
+    def add_step(
+        priority: int, kind: str, title: str, summary: str, evidence_items: List[str]
+    ) -> None:
         if kind in seen_kinds:
             return
         seen_kinds.add(kind)
@@ -592,7 +597,9 @@ def build_bun_runtime_escalation_summary(
             [f"breakpoints:{top_labels}"],
         )
 
-    if native_stub and any(action.kind == "memory_dump" for action in native_stub.dump_guidance.actions):
+    if native_stub and any(
+        action.kind == "memory_dump" for action in native_stub.dump_guidance.actions
+    ):
         dump_labels = ", ".join(
             point.label for point in native_stub.runtime_readiness.dump_points[:3]
         )
@@ -655,7 +662,9 @@ def build_bun_runtime_escalation_summary(
     if not recommended:
         status = "static_sufficient"
         confidence = "high"
-        summary = "Static recovery appears sufficient; runtime escalation is not currently recommended."
+        summary = (
+            "Static recovery appears sufficient; runtime escalation is not currently recommended."
+        )
     elif evidence["dump_guidance_recommended"] and evidence["dump_point_count"] > 0:
         status = "runtime_dump_recommended"
         confidence = "high"
@@ -663,7 +672,9 @@ def build_bun_runtime_escalation_summary(
     elif evidence["breakpoint_count"] > 0:
         status = "targeted_runtime_observation"
         confidence = "medium"
-        summary = "Targeted runtime observation is recommended before making stronger fidelity claims."
+        summary = (
+            "Targeted runtime observation is recommended before making stronger fidelity claims."
+        )
     else:
         status = "manual_review_required"
         confidence = "medium"
@@ -707,7 +718,9 @@ def build_bun_equivalence_validation_summary(
                 }
             ],
             "evidence": {
-                "differential_status": differential_validation.get("status") if differential_validation else None,
+                "differential_status": (
+                    differential_validation.get("status") if differential_validation else None
+                ),
                 "verification_status": verification.get("status") if verification else None,
             },
         }
@@ -718,8 +731,12 @@ def build_bun_equivalence_validation_summary(
     verification_checks = verification.get("checks", [])
     diff_failures = [check for check in diff_checks if check.get("status") == "fail"]
     diff_warnings = [check for check in diff_checks if check.get("status") == "warn"]
-    verification_failures = [check for check in verification_checks if check.get("status") == "fail"]
-    verification_warnings = [check for check in verification_checks if check.get("status") == "warn"]
+    verification_failures = [
+        check for check in verification_checks if check.get("status") == "fail"
+    ]
+    verification_warnings = [
+        check for check in verification_checks if check.get("status") == "warn"
+    ]
     content_changed = bool(differential_validation.get("content_changed"))
     expected_rewrites = differential_validation.get("expected_rewrites", [])
     missing_features = differential_validation.get("missing_runtime_features", [])
@@ -758,29 +775,35 @@ def build_bun_equivalence_validation_summary(
         status = "candidate_with_warnings"
         equivalence_level = "structural_candidate"
         confidence = "medium"
-        reasons.append("No hard failures were found, but warnings still limit confidence in behavioral equivalence.")
+        reasons.append(
+            "No hard failures were found, but warnings still limit confidence in behavioral equivalence."
+        )
     elif not content_changed:
         status = "candidate"
         equivalence_level = "artifact_identity_candidate"
         confidence = "high"
-        reasons.append("Normalized source matches the canonical input byte-for-byte while rebuild verification is clean.")
+        reasons.append(
+            "Normalized source matches the canonical input byte-for-byte while rebuild verification is clean."
+        )
     else:
         status = "candidate"
         equivalence_level = "semantic_candidate"
         confidence = "medium"
-        reasons.append("Content changed, but only within a verification-clean normalization path, so semantic equivalence is the strongest current claim.")
+        reasons.append(
+            "Content changed, but only within a verification-clean normalization path, so semantic equivalence is the strongest current claim."
+        )
 
     if expected_rewrites:
-        reasons.append(
-            "Known Bun-to-Node rewrites were applied: " + ", ".join(expected_rewrites)
-        )
+        reasons.append("Known Bun-to-Node rewrites were applied: " + ", ".join(expected_rewrites))
     if missing_features:
         reasons.append(
-            "Preserved runtime features were lost during normalization: " + ", ".join(missing_features)
+            "Preserved runtime features were lost during normalization: "
+            + ", ".join(missing_features)
         )
     if added_features:
         reasons.append(
-            "Normalization introduced additional runtime features that should be reviewed: " + ", ".join(added_features)
+            "Normalization introduced additional runtime features that should be reviewed: "
+            + ", ".join(added_features)
         )
 
     add_validation(
@@ -845,7 +868,9 @@ def build_bun_equivalence_validation_summary(
     }
 
 
-def _serialize_bun_normalization(normalization: Optional[BunNormalizationResult]) -> Optional[Dict[str, Any]]:
+def _serialize_bun_normalization(
+    normalization: Optional[BunNormalizationResult],
+) -> Optional[Dict[str, Any]]:
     if not normalization:
         return None
     return {
@@ -878,7 +903,9 @@ def _serialize_bun_recovery(recovery: Optional[BunRecoveryResult]) -> Optional[D
     }
 
 
-def _serialize_bun_build_result(build_result: Optional[BunSeaBuildResult]) -> Optional[Dict[str, Any]]:
+def _serialize_bun_build_result(
+    build_result: Optional[BunSeaBuildResult],
+) -> Optional[Dict[str, Any]]:
     if not build_result:
         return None
     return {
@@ -944,7 +971,9 @@ def run_bun_sea_workflow(
         )
 
     recovery = extractor.recover_virtual_files(binary_path, str(bunfs_dir))
-    canonical_input, canonical_reason = select_bun_recompilation_input(extraction.output_path, recovery)
+    canonical_input, canonical_reason = select_bun_recompilation_input(
+        extraction.output_path, recovery
+    )
     normalization = (
         extractor.normalize_project(canonical_input, str(output_root / "normalized_project"))
         if canonical_input
@@ -968,7 +997,9 @@ def run_bun_sea_workflow(
             report_data=None,
         )
 
-    differential_validation = extractor._build_differential_validation(canonical_input, normalization)
+    differential_validation = extractor._build_differential_validation(
+        canonical_input, normalization
+    )
 
     build_result = extractor.build_node_sea(
         normalization.output_dir,
@@ -1286,8 +1317,7 @@ class BunExecutableExtractor:
                 indicators.append(f"TLS callbacks present: {len(tls_callback_vas)}")
             if suspicious_imports:
                 indicators.append(
-                    "Stub imports include loader-style APIs: "
-                    + ", ".join(suspicious_imports[:6])
+                    "Stub imports include loader-style APIs: " + ", ".join(suspicious_imports[:6])
                 )
             if startup_graph.nodes:
                 indicators.append(
@@ -1295,9 +1325,7 @@ class BunExecutableExtractor:
                     f"{len(startup_graph.nodes)} nodes / {len(startup_graph.edges)} edges"
                 )
             if cross_references:
-                indicators.append(
-                    f"Cross-linked PE clues: {len(cross_references)}"
-                )
+                indicators.append(f"Cross-linked PE clues: {len(cross_references)}")
             if runtime_readiness.breakpoints or runtime_readiness.dump_points:
                 indicators.append(
                     "Runtime observation guidance available: "
@@ -1372,7 +1400,9 @@ class BunExecutableExtractor:
         if modules_bytes is None:
             return None
 
-        compile_exec_argv_bytes = self._slice_bytes(raw_bytes, compile_argv_offset, compile_argv_length)
+        compile_exec_argv_bytes = self._slice_bytes(
+            raw_bytes, compile_argv_offset, compile_argv_length
+        )
         compile_exec_argv = (
             compile_exec_argv_bytes.decode("utf-8", errors="replace")
             if compile_exec_argv_bytes
@@ -1443,7 +1473,8 @@ class BunExecutableExtractor:
             sourcemap_provenance = None
             if module.sourcemap_size > 0:
                 sourcemap_bytes = (
-                    self._slice_bytes(raw_bytes, module.sourcemap_offset, module.sourcemap_size) or b""
+                    self._slice_bytes(raw_bytes, module.sourcemap_offset, module.sourcemap_size)
+                    or b""
                 )
                 sourcemap_output = module_output.with_name(module_output.name + ".bunmap")
                 sourcemap_output.write_bytes(sourcemap_bytes)
@@ -1456,22 +1487,22 @@ class BunExecutableExtractor:
 
             manifest_modules.append(
                 {
-                        "virtual_path": module.virtual_path,
-                        "recovered_path": module.recovered_path,
-                        "loader_id": module.loader_id,
-                        "content_offset": module.content_offset,
-                        "content_size": module.content_size,
-                        "sourcemap_offset": module.sourcemap_offset,
-                        "sourcemap_size": module.sourcemap_size,
-                        "output_path": str(module_output),
-                        "sourcemap_output_path": str(sourcemap_output) if sourcemap_output else None,
-                        "sourcemap_provenance": (
-                            self._serialize_sourcemap_provenance(sourcemap_provenance)
-                            if sourcemap_provenance
-                            else None
-                        ),
-                    }
-                )
+                    "virtual_path": module.virtual_path,
+                    "recovered_path": module.recovered_path,
+                    "loader_id": module.loader_id,
+                    "content_offset": module.content_offset,
+                    "content_size": module.content_size,
+                    "sourcemap_offset": module.sourcemap_offset,
+                    "sourcemap_size": module.sourcemap_size,
+                    "output_path": str(module_output),
+                    "sourcemap_output_path": str(sourcemap_output) if sourcemap_output else None,
+                    "sourcemap_provenance": (
+                        self._serialize_sourcemap_provenance(sourcemap_provenance)
+                        if sourcemap_provenance
+                        else None
+                    ),
+                }
+            )
 
         manifest_path = target_dir / "module_graph.json"
         manifest_path.write_text(
@@ -1540,9 +1571,7 @@ class BunExecutableExtractor:
             )
 
             warnings = [
-                check["message"]
-                for check in semantic_checks
-                if check["severity"] == "warning"
+                check["message"] for check in semantic_checks if check["severity"] == "warning"
             ]
 
             target_dir = Path(output_dir)
@@ -1563,9 +1592,7 @@ class BunExecutableExtractor:
 
             if "bun:ffi replacement" in shims_applied:
                 bun_ffi_shim_path = target_dir / self.BUN_FFI_SHIM_FILENAME
-                bun_ffi_shim_path.write_text(
-                    self._build_bun_ffi_shim_source(), encoding="utf-8"
-                )
+                bun_ffi_shim_path.write_text(self._build_bun_ffi_shim_source(), encoding="utf-8")
                 companion_files.append(self.BUN_FFI_SHIM_FILENAME)
 
             sea_entrypoint_path = target_dir / "sea-entry.cjs"
@@ -1625,7 +1652,9 @@ class BunExecutableExtractor:
                 },
             }
             if inferred_dependencies:
-                package_json["dependencies"] = {dependency: "*" for dependency in inferred_dependencies}
+                package_json["dependencies"] = {
+                    dependency: "*" for dependency in inferred_dependencies
+                }
             package_json_path.write_text(json.dumps(package_json, indent=2), encoding="utf-8")
 
             manifest_path = target_dir / "normalization_manifest.json"
@@ -1707,8 +1736,10 @@ class BunExecutableExtractor:
             if header_offset + 40 > len(data):
                 break
 
-            name = data[header_offset : header_offset + 8].rstrip(b"\x00").decode(
-                "ascii", errors="ignore"
+            name = (
+                data[header_offset : header_offset + 8]
+                .rstrip(b"\x00")
+                .decode("ascii", errors="ignore")
             )
             raw_size = struct.unpack("<I", data[header_offset + 16 : header_offset + 20])[0]
             raw_offset = struct.unpack("<I", data[header_offset + 20 : header_offset + 24])[0]
@@ -1833,9 +1864,7 @@ class BunExecutableExtractor:
             end = len(data)
         return data[offset:end].decode("ascii", errors="replace")
 
-    def _parse_imports(
-        self, data: bytes, pe_header: Dict[str, Any]
-    ) -> tuple[List[str], List[str]]:
+    def _parse_imports(self, data: bytes, pe_header: Dict[str, Any]) -> tuple[List[str], List[str]]:
         import_table_rva = pe_header.get("import_table_rva")
         if not import_table_rva:
             return [], []
@@ -1858,7 +1887,9 @@ class BunExecutableExtractor:
                 break
 
             dll_name_offset = self._rva_to_file_offset(sections, name_rva)
-            dll_name = self._read_c_string(data, dll_name_offset) if dll_name_offset is not None else ""
+            dll_name = (
+                self._read_c_string(data, dll_name_offset) if dll_name_offset is not None else ""
+            )
             if dll_name and dll_name not in seen_dlls:
                 seen_dlls.add(dll_name)
                 dlls.append(dll_name)
@@ -1977,9 +2008,7 @@ class BunExecutableExtractor:
             ):
                 target_address = int(insn.operands[0].imm)
                 target_rva = target_address - pe_header["image_base"]
-                target_section = self._find_section_name_for_rva(
-                    pe_header["sections"], target_rva
-                )
+                target_section = self._find_section_name_for_rva(pe_header["sections"], target_rva)
             for operand in insn.operands:
                 if operand.type == X86_OP_MEM and operand.mem.base == X86_REG_RIP:
                     rip_relative_address = insn.address + insn.size + operand.mem.disp
@@ -2064,9 +2093,7 @@ class BunExecutableExtractor:
             return "runtime_bootstrap_likely", reasons
         return "mixed_or_unknown", reasons
 
-    def _looks_like_entrypoint_thunk(
-        self, entry_point_preview: List[PEInstructionPreview]
-    ) -> bool:
+    def _looks_like_entrypoint_thunk(self, entry_point_preview: List[PEInstructionPreview]) -> bool:
         if len(entry_point_preview) < 4:
             return False
         return (
@@ -2097,7 +2124,10 @@ class BunExecutableExtractor:
                 target_preview: List[PEInstructionPreview] = []
                 target_resolution = "direct"
                 if target_address is None:
-                    if instruction.import_target is None and instruction.rip_relative_address is None:
+                    if (
+                        instruction.import_target is None
+                        and instruction.rip_relative_address is None
+                    ):
                         continue
                     target_address = instruction.rip_relative_address
                     if target_address is not None:
@@ -2105,7 +2135,9 @@ class BunExecutableExtractor:
                     else:
                         target_rva = None
                     target_section = instruction.rip_relative_section
-                    target_resolution = "import_iat" if instruction.import_target else "rip_relative"
+                    target_resolution = (
+                        "import_iat" if instruction.import_target else "rip_relative"
+                    )
                 else:
                     target_preview = self._disassemble_preview(
                         data, pe_header, instruction.target_rva, import_address_map
@@ -2135,9 +2167,7 @@ class BunExecutableExtractor:
                     target_preview=target_preview,
                 )
                 target.symbolic_label = self._build_startup_symbolic_label(target)
-                targets.append(
-                    target
-                )
+                targets.append(target)
 
         add_targets("entrypoint", entry_point_preview)
         for index, callback in enumerate(tls_callbacks):
@@ -2335,8 +2365,7 @@ class BunExecutableExtractor:
             )
 
         if any(
-            instruction.rip_relative_section == ".bun"
-            for instruction in entry_point_preview
+            instruction.rip_relative_section == ".bun" for instruction in entry_point_preview
         ) or any(
             instruction.rip_relative_section == ".bun"
             for callback in tls_callbacks
@@ -2350,8 +2379,7 @@ class BunExecutableExtractor:
             )
 
         if any(
-            node.section == ".bun" and node.node_type == "target"
-            for node in startup_graph.nodes
+            node.section == ".bun" and node.node_type == "target" for node in startup_graph.nodes
         ):
             add_signal(
                 "startup_graph_bun_node",
@@ -2380,9 +2408,7 @@ class BunExecutableExtractor:
                 PECrossReference(
                     kind=kind,
                     value=value,
-                    section=self._find_section_name_for_file_offset(
-                        pe_header["sections"], offset
-                    ),
+                    section=self._find_section_name_for_file_offset(pe_header["sections"], offset),
                     file_offset=offset,
                     source=source,
                 )
@@ -2490,11 +2516,13 @@ class BunExecutableExtractor:
                     f"callsite_{target.symbolic_label}",
                     "callsite",
                     target.instruction_address,
-                    self._find_section_name_for_rva(
-                        pe_header["sections"], target.instruction_address - image_base
-                    )
-                    if image_base is not None
-                    else None,
+                    (
+                        self._find_section_name_for_rva(
+                            pe_header["sections"], target.instruction_address - image_base
+                        )
+                        if image_base is not None
+                        else None
+                    ),
                     "Trace dynamic import resolution at the callsite before the import target is invoked",
                 )
                 continue
@@ -2521,7 +2549,10 @@ class BunExecutableExtractor:
             notes.append(
                 "TLS callbacks are present; attach before normal process resume if you need the earliest loader-triggered state."
             )
-        if any(signal.kind.startswith("bun_") or signal.kind.endswith("_bun_section") for signal in handoff_signals):
+        if any(
+            signal.kind.startswith("bun_") or signal.kind.endswith("_bun_section")
+            for signal in handoff_signals
+        ):
             notes.append(
                 "Strong Bun handoff evidence is present; prioritize breakpoints that transition into .bun-backed targets."
             )
@@ -2554,7 +2585,13 @@ class BunExecutableExtractor:
                 )
             )
 
-        dynamic_imports = {"GetProcAddress", "LoadLibraryA", "LoadLibraryW", "VirtualProtect", "VirtualAlloc"}
+        dynamic_imports = {
+            "GetProcAddress",
+            "LoadLibraryA",
+            "LoadLibraryW",
+            "VirtualProtect",
+            "VirtualAlloc",
+        }
         if any(name in dynamic_imports for name in suspicious_imports) or any(
             point.kind == "callsite" for point in runtime_readiness.breakpoints
         ):
@@ -2720,9 +2757,7 @@ class BunExecutableExtractor:
         seen_builtin = set()
 
         def record_package(specifier: str) -> None:
-            package_name = self._package_name_from_specifier(
-                specifier, allow_node_builtin=True
-            )
+            package_name = self._package_name_from_specifier(specifier, allow_node_builtin=True)
             if not package_name:
                 return
             if package_name in _NODE_BUILTIN_MODULES:
@@ -2820,9 +2855,7 @@ class BunExecutableExtractor:
             normalized = self._ensure_module_import(
                 normalized, 'import { createRequire } from "module";'
             )
-            normalized = normalized.replace(
-                "import.meta.require", "createRequire(import.meta.url)"
-            )
+            normalized = normalized.replace("import.meta.require", "createRequire(import.meta.url)")
             shims_applied.extend(["createRequire import", "import.meta.require replacement"])
         normalized, bun_ffi_rewritten = self._rewrite_runtime_import_specifier(
             normalized,
@@ -2854,8 +2887,8 @@ class BunExecutableExtractor:
             "This code path requires manual porting or a Bun runtime.`\n"
             "  );\n"
             "};\n"
-            "export const dlopen = unsupported(\"dlopen\");\n"
-            "export const ptr = unsupported(\"ptr\");\n"
+            'export const dlopen = unsupported("dlopen");\n'
+            'export const ptr = unsupported("ptr");\n'
             "export const FFIType = new Proxy(Object.create(null), {\n"
             "  get(_target, prop) {\n"
             "    return String(prop);\n"
@@ -2880,8 +2913,8 @@ class BunExecutableExtractor:
             '  const shellArgs = process.platform === "win32" ? ["/d", "/s", "/c", command] : ["-lc", command];\n'
             "  const result = spawnSync(shell, shellArgs, { encoding: null });\n"
             "  return {\n"
-            '    stdout: Buffer.from(result.stdout ?? []),\n'
-            '    stderr: Buffer.from(result.stderr ?? []),\n'
+            "    stdout: Buffer.from(result.stdout ?? []),\n"
+            "    stderr: Buffer.from(result.stderr ?? []),\n"
             "    exitCode: result.status ?? 1,\n"
             "  };\n"
             "}\n"
@@ -2897,7 +2930,7 @@ class BunExecutableExtractor:
             "\n"
             "function locateCommand(command) {\n"
             '  const locator = process.platform === "win32" ? "where" : "which";\n'
-            "  const result = spawnSync(locator, [command], { encoding: \"utf8\" });\n"
+            '  const result = spawnSync(locator, [command], { encoding: "utf8" });\n'
             "  if (result.status !== 0) {\n"
             "    return null;\n"
             "  }\n"
@@ -3173,9 +3206,17 @@ class BunExecutableExtractor:
 
         canonical_features = set(self._detect_runtime_features(canonical_text))
         normalized_features = set(self._detect_runtime_features(normalized_text))
-        expected_feature_drops = {"bun_import_meta_require"} if "bun_import_meta_require" in canonical_features else set()
-        missing_features = sorted((canonical_features - expected_feature_drops) - normalized_features)
-        preserved_features = sorted((canonical_features - expected_feature_drops) & normalized_features)
+        expected_feature_drops = (
+            {"bun_import_meta_require"}
+            if "bun_import_meta_require" in canonical_features
+            else set()
+        )
+        missing_features = sorted(
+            (canonical_features - expected_feature_drops) - normalized_features
+        )
+        preserved_features = sorted(
+            (canonical_features - expected_feature_drops) & normalized_features
+        )
         added_features = sorted(normalized_features - canonical_features)
         if missing_features:
             checks.append(
@@ -3183,7 +3224,8 @@ class BunExecutableExtractor:
                     "runtime_feature_continuity",
                     "error",
                     "fail",
-                    "Normalization dropped preserved runtime features: " + ", ".join(missing_features),
+                    "Normalization dropped preserved runtime features: "
+                    + ", ".join(missing_features),
                 )
             )
         else:
@@ -3253,13 +3295,11 @@ class BunExecutableExtractor:
                     "info",
                     "pass",
                     "No Bun require rewrite was needed for this canonical input",
-                    )
                 )
+            )
 
         if "bun_global_usage" in canonical_features:
-            expected_rewrites.append(
-                f"Bun global bootstrap -> ./{self.BUN_GLOBAL_SHIM_FILENAME}"
-            )
+            expected_rewrites.append(f"Bun global bootstrap -> ./{self.BUN_GLOBAL_SHIM_FILENAME}")
             bun_global_bootstrap_present = (
                 f'import "./{self.BUN_GLOBAL_SHIM_FILENAME}";' in normalized_text
             )
@@ -3283,9 +3323,7 @@ class BunExecutableExtractor:
                 )
 
         if '"bun:ffi"' in canonical_text or "'bun:ffi'" in canonical_text:
-            expected_rewrites.append(
-                f"bun:ffi -> ./{self.BUN_FFI_SHIM_FILENAME}"
-            )
+            expected_rewrites.append(f"bun:ffi -> ./{self.BUN_FFI_SHIM_FILENAME}")
             ffi_shim_present = f"./{self.BUN_FFI_SHIM_FILENAME}" in normalized_text
             if ffi_shim_present:
                 checks.append(
@@ -3311,10 +3349,13 @@ class BunExecutableExtractor:
         if canonical_path.exists():
             artifacts["canonical_input"] = self._describe_validation_artifact(canonical_path)
         if normalized_entrypoint.exists():
-            artifacts["normalized_entrypoint"] = self._describe_validation_artifact(normalized_entrypoint)
+            artifacts["normalized_entrypoint"] = self._describe_validation_artifact(
+                normalized_entrypoint
+            )
         if "canonical_input" in artifacts and "normalized_entrypoint" in artifacts:
             content_changed = (
-                artifacts["canonical_input"]["sha256"] != artifacts["normalized_entrypoint"]["sha256"]
+                artifacts["canonical_input"]["sha256"]
+                != artifacts["normalized_entrypoint"]["sha256"]
             )
             checks.append(
                 self._build_rebuild_verification_check(
@@ -3439,7 +3480,11 @@ class BunExecutableExtractor:
                     )
                 )
             else:
-                failure_hint = standalone_probe.get("error") or standalone_probe.get("output_tail") or "unknown runtime failure"
+                failure_hint = (
+                    standalone_probe.get("error")
+                    or standalone_probe.get("output_tail")
+                    or "unknown runtime failure"
+                )
                 checks.append(
                     self._build_rebuild_verification_check(
                         "standalone_copy_probe",
@@ -3627,7 +3672,9 @@ class BunExecutableExtractor:
         package_data = json.loads(package_json_path.read_text(encoding="utf-8"))
         reveng_data = package_data.get("reveng", {})
         package_dependencies = package_data.get("dependencies", {})
-        inferred_dependencies = list(package_dependencies.keys()) if isinstance(package_dependencies, dict) else []
+        inferred_dependencies = (
+            list(package_dependencies.keys()) if isinstance(package_dependencies, dict) else []
+        )
         if not inferred_dependencies:
             dependency_analysis = reveng_data.get("dependency_analysis", {})
             inferred_dependencies = list(dependency_analysis.get("required_packages", []))
@@ -3756,7 +3803,9 @@ class BunExecutableExtractor:
             ("short", self.SHORT_MODULE_ENTRY_STRUCT),
             ("short_ext", self.SHORT_EXT_MODULE_ENTRY_STRUCT),
         ):
-            modules = self._parse_module_entries_with_layout(raw_bytes, modules_bytes, layout_name, entry_struct)
+            modules = self._parse_module_entries_with_layout(
+                raw_bytes, modules_bytes, layout_name, entry_struct
+            )
             if modules:
                 return modules, layout_name
         return None
@@ -3841,7 +3890,9 @@ class BunExecutableExtractor:
             bundle_data=bundle_data,
             discovered_paths=discovered_paths,
             output_dir=target_dir,
-            excluded_outputs=[path for path in (primary_source_path, recovered_sourcemap_path) if path],
+            excluded_outputs=[
+                path for path in (primary_source_path, recovered_sourcemap_path) if path
+            ],
         )
         recovered_files.extend(recovered_supporting_artifacts)
 
@@ -3899,9 +3950,9 @@ class BunExecutableExtractor:
                         ),
                         "recovered_supporting_artifacts": recovered_supporting_artifacts,
                         "bundle_tail_path": str(bundle_tail_path),
-                        "module_records_path": str(module_records_path)
-                        if module_records_path
-                        else None,
+                        "module_records_path": (
+                            str(module_records_path) if module_records_path else None
+                        ),
                         "discovered_paths_path": str(discovered_paths_path),
                     },
                 },
@@ -3941,7 +3992,9 @@ class BunExecutableExtractor:
             return None
 
         js_end = self._find_js_end(bundle_data, js_start)
-        next_path_offset = self._find_next_virtual_path_offset(bundle_data, discovered_paths, js_start + 1)
+        next_path_offset = self._find_next_virtual_path_offset(
+            bundle_data, discovered_paths, js_start + 1
+        )
         if next_path_offset is not None and (js_end <= js_start or next_path_offset < js_end):
             js_end = next_path_offset
         if js_end <= js_start:
@@ -4165,9 +4218,13 @@ class BunExecutableExtractor:
             if bundle_data[start_offset] not in _TEXT_BYTES:
                 continue
 
-            next_path_offset = self._find_next_virtual_path_offset(bundle_data, discovered_paths, start_offset)
+            next_path_offset = self._find_next_virtual_path_offset(
+                bundle_data, discovered_paths, start_offset
+            )
             text_end = self._find_fallback_text_end(bundle_data, start_offset)
-            candidate_end = min(text_end, next_path_offset) if next_path_offset is not None else text_end
+            candidate_end = (
+                min(text_end, next_path_offset) if next_path_offset is not None else text_end
+            )
             text_bytes = bundle_data[start_offset:candidate_end].rstrip(b"\x00\r\n\t ")
             if not text_bytes:
                 continue
@@ -4175,7 +4232,9 @@ class BunExecutableExtractor:
                 continue
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(text_bytes.decode("utf-8", errors="replace") + "\n", encoding="utf-8")
+            output_path.write_text(
+                text_bytes.decode("utf-8", errors="replace") + "\n", encoding="utf-8"
+            )
             return str(output_path)
         return None
 
@@ -4210,13 +4269,17 @@ class BunExecutableExtractor:
             start_offset = marker_offset + len(candidate_bytes)
             if start_offset >= len(bundle_data):
                 continue
-            wasm_offset = bundle_data.find(self.WASM_MAGIC, start_offset, min(len(bundle_data), start_offset + 32))
+            wasm_offset = bundle_data.find(
+                self.WASM_MAGIC, start_offset, min(len(bundle_data), start_offset + 32)
+            )
             if wasm_offset < 0 or wasm_offset + 8 > len(bundle_data):
                 continue
             if bundle_data[wasm_offset + 4 : wasm_offset + 8] != self.WASM_VERSION:
                 continue
 
-            next_path_offset = self._find_next_virtual_path_offset(bundle_data, discovered_paths, wasm_offset + 1)
+            next_path_offset = self._find_next_virtual_path_offset(
+                bundle_data, discovered_paths, wasm_offset + 1
+            )
             end_offset = next_path_offset if next_path_offset is not None else len(bundle_data)
             wasm_bytes = bundle_data[wasm_offset:end_offset].rstrip(b"\x00\r\n\t ")
             if len(wasm_bytes) < 8:
@@ -4315,9 +4378,7 @@ class BunExecutableExtractor:
             file_matches_source_name=file_matches_source_name,
         )
 
-    def _serialize_sourcemap_provenance(
-        self, provenance: BunSourcemapProvenance
-    ) -> Dict[str, Any]:
+    def _serialize_sourcemap_provenance(self, provenance: BunSourcemapProvenance) -> Dict[str, Any]:
         return {
             "origin": provenance.origin,
             "byte_size": provenance.byte_size,

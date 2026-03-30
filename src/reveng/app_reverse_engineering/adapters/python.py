@@ -42,7 +42,14 @@ PYTHON_TOPIC_DEFINITIONS = [
         key="cli_and_entrypoints",
         title="CLI And Entrypoints",
         description="Main functions, CLI libraries, argument parsing, and executable entry surfaces.",
-        keywords=("argparse", "click", "typer", "__name__ == '__main__'", "__name__ == \"__main__\"", "def main"),
+        keywords=(
+            "argparse",
+            "click",
+            "typer",
+            "__name__ == '__main__'",
+            '__name__ == "__main__"',
+            "def main",
+        ),
     ),
     TopicDefinition(
         key="dependencies_and_imports",
@@ -566,15 +573,15 @@ class PythonAppAdapter:
                 candidates.append(value)
         return top_values(candidates, 200)
 
-    def _run_pyi_archive_viewer(
-        self, frozen_path: Path, artifacts_dir: Path
-    ) -> Dict[str, object]:
+    def _run_pyi_archive_viewer(self, frozen_path: Path, artifacts_dir: Path) -> Dict[str, object]:
         listing_path = artifacts_dir / "pyi_archive_listing.txt"
         if shutil.which("pyi-archive_viewer") is None:
             return {
                 "available": False,
                 "entries": [],
-                "warnings": ["pyi-archive_viewer not available; skipped PyInstaller archive introspection."],
+                "warnings": [
+                    "pyi-archive_viewer not available; skipped PyInstaller archive introspection."
+                ],
                 "listing_path": None,
             }
 

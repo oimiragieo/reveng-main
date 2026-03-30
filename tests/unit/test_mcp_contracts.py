@@ -1000,7 +1000,9 @@ def test_enterprise_tools_list_exposes_risk_annotations(monkeypatch):
     assert tools["generate_exploit"]["annotations"]["risk_level"] == "high"
     assert tools["generate_exploit"]["annotations"]["requires_policy_acknowledgement"] is True
     assert tools["ai_code_reconstruction"]["annotations"]["risk_level"] == "high"
-    assert tools["ai_code_reconstruction"]["annotations"]["requires_policy_acknowledgement"] is False
+    assert (
+        tools["ai_code_reconstruction"]["annotations"]["requires_policy_acknowledgement"] is False
+    )
     assert tools["analyze_binary"]["annotations"]["risk_level"] == "moderate"
 
 
@@ -1015,7 +1017,9 @@ def test_enterprise_execute_with_audit_denies_unacknowledged_high_risk_tools(mon
         return {"ok": True}
 
     result = asyncio.run(
-        server._execute_with_audit("generate_exploit", {"binary_path": "sample.exe"}, _unused_handler)
+        server._execute_with_audit(
+            "generate_exploit", {"binary_path": "sample.exe"}, _unused_handler
+        )
     )
 
     assert result["status"] == "error"
@@ -1035,7 +1039,9 @@ def test_enterprise_execute_with_audit_logs_policy_denial(monkeypatch):
         return {"ok": True}
 
     result = asyncio.run(
-        server._execute_with_audit("generate_exploit", {"binary_path": "sample.exe"}, _unused_handler)
+        server._execute_with_audit(
+            "generate_exploit", {"binary_path": "sample.exe"}, _unused_handler
+        )
     )
 
     assert result["status"] == "error"
@@ -1213,7 +1219,9 @@ def test_enterprise_recompile_binary_routes_bun_to_node_sea(monkeypatch, tmp_pat
         },
     )
 
-    monkeypatch.setattr(reveng_enterprise_server, "run_bun_sea_workflow", lambda **kwargs: bun_result)
+    monkeypatch.setattr(
+        reveng_enterprise_server, "run_bun_sea_workflow", lambda **kwargs: bun_result
+    )
 
     result = asyncio.run(server.recompile_binary({"binary_path": str(sample)}))
 

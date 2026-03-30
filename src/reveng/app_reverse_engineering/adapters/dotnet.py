@@ -1,4 +1,4 @@
-""" .NET adapter for the shared app reverse-engineering framework."""
+""".NET adapter for the shared app reverse-engineering framework."""
 
 from __future__ import annotations
 
@@ -161,8 +161,8 @@ class DotNetAppAdapter:
         else:
             summary["entrypoints"] = top_values([str(il_result.metadata.get("entry_point", ""))])
 
-        source_files, generated_artifacts, decompiled_project_summary = self._collect_sources_from_analysis(
-            entry_path, artifacts_dir, il_result
+        source_files, generated_artifacts, decompiled_project_summary = (
+            self._collect_sources_from_analysis(entry_path, artifacts_dir, il_result)
         )
         primary_artifacts.update(generated_artifacts)
         summary["decompiled_project"] = decompiled_project_summary
@@ -411,7 +411,9 @@ class DotNetAppAdapter:
             elif tag in {"TargetFramework", "TargetFrameworks"}:
                 value = (element.text or "").strip()
                 if value:
-                    target_frameworks.extend([item.strip() for item in value.split(";") if item.strip()])
+                    target_frameworks.extend(
+                        [item.strip() for item in value.split(";") if item.strip()]
+                    )
 
         return {
             "package_references": package_references,
@@ -439,7 +441,7 @@ class DotNetAppAdapter:
                 "{",
                 "    public static class AssemblySummary",
                 "    {",
-                "        public static string Describe() => \".NET assembly metadata recovered\";",
+                '        public static string Describe() => ".NET assembly metadata recovered";',
                 "    }",
                 "}",
                 "",

@@ -7,7 +7,6 @@ from types import SimpleNamespace
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RUNNER_PATH = REPO_ROOT / "scripts" / "run_source_binary_benchmark.py"
 
@@ -67,7 +66,12 @@ def test_compare_behavior_results_honors_output_and_exit_code_flags():
     comparison = runner._compare_behavior_results(
         {"returncode": 0, "normalized_output": "abc", "timed_out": False},
         {"returncode": 1, "normalized_output": "xyz", "timed_out": False},
-        {"id": "version", "description": "Print version", "compare_output": False, "compare_exit_code": True},
+        {
+            "id": "version",
+            "description": "Print version",
+            "compare_output": False,
+            "compare_exit_code": True,
+        },
     )
 
     assert comparison["matched"] is False

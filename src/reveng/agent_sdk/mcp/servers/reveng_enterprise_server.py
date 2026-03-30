@@ -42,13 +42,13 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, cast
 
 import requests
 
+from ....ai.angr_cfg_preprocessor import AngrCFGPreprocessor, CFGExtractionError
 from ....app_reverse_engineering import (
     AppCorpusEntry,
     create_default_framework,
     run_app_corpus,
     select_app_corpus_entries,
 )
-from ....ai.angr_cfg_preprocessor import AngrCFGPreprocessor, CFGExtractionError
 from ....integrations.ghidra.ghidra_engine import GhidraEngine
 from ....result_contracts import (
     RESULT_SCHEMA_VERSION,
@@ -248,10 +248,16 @@ class REVENGEnterpriseServer(MCPServer):
         "diff_binaries": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
         "scan_yara": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
         "analyze_memory_dump": {"risk_level": "high", "requires_policy_acknowledgement": False},
-        "find_vulnerabilities": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "find_vulnerabilities": {
+            "risk_level": "moderate",
+            "requires_policy_acknowledgement": False,
+        },
         "generate_exploit": {"risk_level": "high", "requires_policy_acknowledgement": True},
         "classify_malware": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
-        "deobfuscate_javascript": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
+        "deobfuscate_javascript": {
+            "risk_level": "moderate",
+            "requires_policy_acknowledgement": False,
+        },
         "detect_js_malware": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
         "ask_ai_about_binary": {"risk_level": "moderate", "requires_policy_acknowledgement": False},
         "ai_code_reconstruction": {"risk_level": "high", "requires_policy_acknowledgement": False},
@@ -379,7 +385,11 @@ class REVENGEnterpriseServer(MCPServer):
             provenance={
                 "inputs": [],
                 "artifacts": [],
-                "stages": ["mcp_tool_execution", "enterprise_policy_gate", "result_contract_serialization"],
+                "stages": [
+                    "mcp_tool_execution",
+                    "enterprise_policy_gate",
+                    "result_contract_serialization",
+                ],
                 "references": [
                     make_trace_reference(
                         "blocked_by_policy",
@@ -392,7 +402,9 @@ class REVENGEnterpriseServer(MCPServer):
             },
         )
 
-    def _validate_tool_policy(self, tool_name: str, args: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _validate_tool_policy(
+        self, tool_name: str, args: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         """Validate policy requirements for a tool invocation."""
         policy = self._TOOL_RISK_POLICIES.get(tool_name)
         if not policy or not policy.get("requires_policy_acknowledgement"):
@@ -886,7 +898,10 @@ class REVENGEnterpriseServer(MCPServer):
                 input_schema={
                     "type": "object",
                     "properties": {
-                        "path": {"type": "string", "description": "Path to app entry file or package"},
+                        "path": {
+                            "type": "string",
+                            "description": "Path to app entry file or package",
+                        },
                         "language": {
                             "type": "string",
                             "description": "Adapter language or auto",
@@ -910,13 +925,19 @@ class REVENGEnterpriseServer(MCPServer):
                 input_schema={
                     "type": "object",
                     "properties": {
-                        "config_path": {"type": "string", "description": "Optional corpus config path"},
+                        "config_path": {
+                            "type": "string",
+                            "description": "Optional corpus config path",
+                        },
                         "entry_names": {
                             "type": "array",
                             "items": {"type": "string"},
                             "description": "Optional list of corpus entry names to run",
                         },
-                        "output_dir": {"type": "string", "description": "Optional corpus output directory"},
+                        "output_dir": {
+                            "type": "string",
+                            "description": "Optional corpus output directory",
+                        },
                     },
                 },
                 handler=self.run_app_corpus,
@@ -1254,7 +1275,9 @@ class REVENGEnterpriseServer(MCPServer):
                                     normalization.output_dir if normalization else None
                                 ),
                                 "sea_blob_path": (
-                                    bun_result.build_result.sea_blob_path if bun_result.build_result else None
+                                    bun_result.build_result.sea_blob_path
+                                    if bun_result.build_result
+                                    else None
                                 ),
                                 "installed_dependencies": (
                                     bun_result.build_result.installed_dependencies
@@ -1321,7 +1344,13 @@ class REVENGEnterpriseServer(MCPServer):
                                         confidence=0.95,
                                     )
                                 ],
-                                "tools": ["recompile_binary", "bun_extractor", "node", "npm", "postject"],
+                                "tools": [
+                                    "recompile_binary",
+                                    "bun_extractor",
+                                    "node",
+                                    "npm",
+                                    "postject",
+                                ],
                             },
                         )
 
@@ -1333,7 +1362,11 @@ class REVENGEnterpriseServer(MCPServer):
                             + "\n\n"
                             + f"Input: {binary_path}\n"
                             + f"Failure reason: {bun_result.reason or 'bun_rebuild_failed'}\n"
-                            + (f"Build report: {bun_result.report_path}\n" if bun_result.report_path else "")
+                            + (
+                                f"Build report: {bun_result.report_path}\n"
+                                if bun_result.report_path
+                                else ""
+                            )
                         ),
                         payload={
                             "status_code": 200,
@@ -1400,7 +1433,13 @@ class REVENGEnterpriseServer(MCPServer):
                                 "result_contract_serialization",
                             ],
                             "references": [],
-                            "tools": ["recompile_binary", "bun_extractor", "node", "npm", "postject"],
+                            "tools": [
+                                "recompile_binary",
+                                "bun_extractor",
+                                "node",
+                                "npm",
+                                "postject",
+                            ],
                         },
                     )
 
@@ -2887,7 +2926,10 @@ class REVENGEnterpriseServer(MCPServer):
             corpus_entries = [AppCorpusEntry(**entry) for entry in config.get("entries", [])]
             corpus_entries = select_app_corpus_entries(corpus_entries, args.get("entry_names"))
             output_dir = str(
-                Path(args.get("output_dir") or (Path.cwd() / "reports" / "app_reverse_engineering_corpus"))
+                Path(
+                    args.get("output_dir")
+                    or (Path.cwd() / "reports" / "app_reverse_engineering_corpus")
+                )
                 .expanduser()
                 .resolve()
             )
@@ -2910,7 +2952,11 @@ class REVENGEnterpriseServer(MCPServer):
                 provenance={
                     "inputs": [],
                     "artifacts": [],
-                    "stages": ["mcp_tool_execution", "app_corpus_execution", "result_contract_serialization"],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "app_corpus_execution",
+                        "result_contract_serialization",
+                    ],
                     "references": [
                         make_trace_reference(
                             "cached_as",

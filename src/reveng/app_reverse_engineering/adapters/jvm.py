@@ -49,13 +49,27 @@ JVM_TOPIC_DEFINITIONS = [
         key="state_and_io",
         title="State And IO",
         description="Fields, stateful objects, console output, file IO, and common persistence patterns.",
-        keywords=("private ", "System.out", "System.err", "File", "Path", "InputStream", "OutputStream"),
+        keywords=(
+            "private ",
+            "System.out",
+            "System.err",
+            "File",
+            "Path",
+            "InputStream",
+            "OutputStream",
+        ),
     ),
     TopicDefinition(
         key="build_and_runtime",
         title="Build And Runtime",
         description="Manifest data, main classes, decompilation routes, and reconstructed project metadata.",
-        keywords=("Main-Class", "Implementation-Version", "public static void main", "maven", "gradle"),
+        keywords=(
+            "Main-Class",
+            "Implementation-Version",
+            "public static void main",
+            "maven",
+            "gradle",
+        ),
     ),
 ]
 
@@ -188,7 +202,9 @@ class JVMAppAdapter:
                     description=topic.description,
                     language="java",
                     matches=matches,
-                    assessment_lines=self._assessment_lines(topic.key, summary, source_origin, len(source_files)),
+                    assessment_lines=self._assessment_lines(
+                        topic.key, summary, source_origin, len(source_files)
+                    ),
                 ),
                 encoding="utf-8",
             )
@@ -278,9 +294,11 @@ class JVMAppAdapter:
                 "archive_type": analysis_result.get("archive_type", entry_path.suffix.lstrip(".")),
                 "total_classes": analysis_result.get("total_classes", 1),
                 "analyzed_classes": analysis_result.get("analyzed_classes", 1),
-                "obfuscation_detected": analysis_result.get("obfuscation_detected")
-                if "obfuscation_detected" in analysis_result
-                else analysis_result.get("obfuscated", False),
+                "obfuscation_detected": (
+                    analysis_result.get("obfuscation_detected")
+                    if "obfuscation_detected" in analysis_result
+                    else analysis_result.get("obfuscated", False)
+                ),
             }
         }
 
@@ -289,7 +307,9 @@ class JVMAppAdapter:
             metadata["manifest"] = manifest
             metadata["archive_entries"] = archive_entries
 
-        source_files = self._recover_java_sources(entry_path, bytecode_dir, analysis_result, artifacts_dir)
+        source_files = self._recover_java_sources(
+            entry_path, bytecode_dir, analysis_result, artifacts_dir
+        )
         if not source_files:
             warnings.append("No Java sources were recovered from the bytecode input.")
 
@@ -501,9 +521,7 @@ class JVMAppAdapter:
                 )
             manifest = summary.get("manifest", {})
             if isinstance(manifest, dict) and manifest:
-                manifest_preview = ", ".join(
-                    f"{key}={manifest[key]}" for key in list(manifest)[:4]
-                )
+                manifest_preview = ", ".join(f"{key}={manifest[key]}" for key in list(manifest)[:4])
                 lines.append(f"Manifest preview: {manifest_preview}.")
 
         return lines

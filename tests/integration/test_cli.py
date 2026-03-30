@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import json
+import os
 import struct
 import subprocess
 import sys
@@ -116,7 +116,9 @@ def _build_dotnet_pe() -> bytes:
     optional_header[68:70] = struct.pack("<H", 3)
     optional_header[92:96] = struct.pack("<I", 16)
     com_descriptor_offset = 96 + (8 * 14)
-    optional_header[com_descriptor_offset : com_descriptor_offset + 8] = struct.pack("<II", 0x1100, 0x48)
+    optional_header[com_descriptor_offset : com_descriptor_offset + 8] = struct.pack(
+        "<II", 0x1100, 0x48
+    )
 
     pe_header = bytearray()
     pe_header.extend(b"PE\x00\x00")
@@ -330,7 +332,9 @@ class TestCLI:
         binary_path = _write_bun_cli_fixture(tmp_path)
         output_dir = tmp_path / "bun_recompile"
 
-        result = run_cli("recompile", str(binary_path), "--output-dir", str(output_dir), timeout=180)
+        result = run_cli(
+            "recompile", str(binary_path), "--output-dir", str(output_dir), timeout=180
+        )
 
         assert result.returncode == 0, result.stderr
         assert "routing recompile to Node SEA build" in result.stdout
@@ -529,7 +533,10 @@ class TestCLI:
         assert report["normalized_project"]["sea_config_path"].endswith("sea-config.json")
         assert report["normalized_project"]["inferred_dependencies"] == ["ws"]
         assert "import.meta.require replacement" in report["normalized_project"]["shims_applied"]
-        assert report["normalized_project"]["semantic_checks"][0]["check"] == "dependency_import_sanity"
+        assert (
+            report["normalized_project"]["semantic_checks"][0]["check"]
+            == "dependency_import_sanity"
+        )
         assert report["normalized_project"]["postprocessing_hooks"][0]["tool"] == "webcrack"
         assert report["native_stub"]["container"] == "pe"
         assert ".bun" in report["native_stub"]["section_names"]

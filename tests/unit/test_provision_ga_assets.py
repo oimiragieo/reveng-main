@@ -6,7 +6,6 @@ import sys
 import zipfile
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = REPO_ROOT / "scripts" / "provision_ga_assets.py"
 
@@ -27,8 +26,20 @@ def test_load_manifest_resolves_relative_destinations(tmp_path: Path):
     manifest_path.write_text(
         json.dumps(
             {
-                "git_repos": [{"id": "repo", "repo_url": "https://example.invalid/repo.git", "dest": "external/repo"}],
-                "release_assets": [{"id": "asset", "url": "https://example.invalid/asset.zip", "dest": "external/bin"}],
+                "git_repos": [
+                    {
+                        "id": "repo",
+                        "repo_url": "https://example.invalid/repo.git",
+                        "dest": "external/repo",
+                    }
+                ],
+                "release_assets": [
+                    {
+                        "id": "asset",
+                        "url": "https://example.invalid/asset.zip",
+                        "dest": "external/bin",
+                    }
+                ],
             }
         ),
         encoding="utf-8",
@@ -51,4 +62,3 @@ def test_extract_members_flattens_requested_files(tmp_path: Path):
 
     assert extracted == [str(output_dir / "demo.exe")]
     assert (output_dir / "demo.exe").read_bytes() == b"binary-data"
-

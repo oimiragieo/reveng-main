@@ -9,9 +9,13 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
-from reveng.app_reverse_engineering import create_default_framework
 from reveng.analyzers.dotnet_analyzer import DotNetAnalysisResult
-from reveng.tools.languages.csharp_il_analyzer import CSharpILAnalyzer, DotNetDetector, ILDisassemblyResult
+from reveng.app_reverse_engineering import create_default_framework
+from reveng.tools.languages.csharp_il_analyzer import (
+    CSharpILAnalyzer,
+    DotNetDetector,
+    ILDisassemblyResult,
+)
 from reveng.tools.languages.java_bytecode_analyzer import JavaBytecodeAnalyzer
 from reveng.tools.languages.python_bytecode_analyzer import PythonBytecodeDetector
 
@@ -297,7 +301,10 @@ def test_framework_uses_pyi_archive_viewer_when_available(tmp_path: Path):
     )
     output_dir = tmp_path / "pyinstaller_viewer_analysis"
     with (
-        patch("reveng.app_reverse_engineering.adapters.python.shutil.which", return_value="pyi-archive_viewer"),
+        patch(
+            "reveng.app_reverse_engineering.adapters.python.shutil.which",
+            return_value="pyi-archive_viewer",
+        ),
         patch(
             "reveng.app_reverse_engineering.adapters.python.subprocess.run",
             return_value=subprocess.CompletedProcess(
@@ -319,7 +326,8 @@ def test_framework_uses_pyi_archive_viewer_when_available(tmp_path: Path):
 
     assert result.metadata["frozen_python"]["archive_viewer_available"] is True
     assert any(
-        "pkg/main.pyc" in entry for entry in result.metadata["frozen_python"]["archive_viewer_entries"]
+        "pkg/main.pyc" in entry
+        for entry in result.metadata["frozen_python"]["archive_viewer_entries"]
     )
     assert result.primary_artifacts["pyi_archive_listing"].exists()
     assert not any("pyi-archive_viewer not available" in warning for warning in result.warnings)
@@ -367,8 +375,13 @@ def test_framework_extracts_python_entries_from_pyi_archive_viewer(tmp_path: Pat
 
     output_dir = tmp_path / "pyinstaller_extract_analysis"
     with (
-        patch("reveng.app_reverse_engineering.adapters.python.shutil.which", return_value="pyi-archive_viewer"),
-        patch("reveng.app_reverse_engineering.adapters.python.subprocess.run", side_effect=_fake_run),
+        patch(
+            "reveng.app_reverse_engineering.adapters.python.shutil.which",
+            return_value="pyi-archive_viewer",
+        ),
+        patch(
+            "reveng.app_reverse_engineering.adapters.python.subprocess.run", side_effect=_fake_run
+        ),
     ):
         result = asyncio.run(
             framework.reverse_engineer(
@@ -422,13 +435,13 @@ def test_framework_reverse_engineers_dotnet_sample_with_mocked_analyzers(tmp_pat
     (decompiled_dir / "sample.csproj").write_text(
         "\n".join(
             [
-                "<Project Sdk=\"Microsoft.NET.Sdk\">",
+                '<Project Sdk="Microsoft.NET.Sdk">',
                 "  <PropertyGroup>",
                 "    <TargetFramework>net8.0</TargetFramework>",
                 "  </PropertyGroup>",
                 "  <ItemGroup>",
-                "    <PackageReference Include=\"Newtonsoft.Json\" Version=\"13.0.3\" />",
-                "    <ProjectReference Include=\"..\\Shared\\Shared.csproj\" />",
+                '    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />',
+                '    <ProjectReference Include="..\\Shared\\Shared.csproj" />',
                 "  </ItemGroup>",
                 "</Project>",
             ]
@@ -439,7 +452,7 @@ def test_framework_reverse_engineers_dotnet_sample_with_mocked_analyzers(tmp_pat
         "namespace Demo.App; public static class Program { public static void Main() {} }",
         encoding="utf-8",
     )
-    (decompiled_dir / "appsettings.json").write_text("{\"mode\": \"demo\"}", encoding="utf-8")
+    (decompiled_dir / "appsettings.json").write_text('{"mode": "demo"}', encoding="utf-8")
 
     il_result = ILDisassemblyResult(
         assembly=str(assembly_path),
@@ -510,7 +523,9 @@ def test_framework_reverse_engineers_dotnet_sample_with_mocked_analyzers(tmp_pat
     assert result.metadata["decompiled_project"]["project_file_count"] == 1
     assert result.metadata["decompiled_project"]["source_file_count"] >= 1
     assert result.metadata["decompiled_project"]["package_references"] == ["Newtonsoft.Json"]
-    assert result.metadata["decompiled_project"]["project_references"] == ["../Shared/Shared.csproj"]
+    assert result.metadata["decompiled_project"]["project_references"] == [
+        "../Shared/Shared.csproj"
+    ]
     spec_text = result.topic_files["assemblies_and_types"].read_text(encoding="utf-8")
     assert "Demo.App.Program" in spec_text or "Program" in spec_text
     runtime_spec = result.topic_files["runtime_and_obfuscation"].read_text(encoding="utf-8")

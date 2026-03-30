@@ -26,8 +26,8 @@ import os
 import struct
 import subprocess
 import sys
-from importlib import util as importlib_util
 from dataclasses import asdict, dataclass
+from importlib import util as importlib_util
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 

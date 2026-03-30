@@ -116,7 +116,9 @@ def collect_keyword_matches(
         segments = list(source["segments"])
         for index, segment in enumerate(segments):
             lowered_segment = segment.lower()
-            matched_keywords = [keyword for keyword in lowered_keywords if keyword in lowered_segment]
+            matched_keywords = [
+                keyword for keyword in lowered_keywords if keyword in lowered_segment
+            ]
             if not matched_keywords:
                 continue
 

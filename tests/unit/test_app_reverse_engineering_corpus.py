@@ -20,7 +20,9 @@ class _FakeCorpusFramework:
         return result
 
 
-def _make_result(tmp_path: Path, stem: str, *, language: str, grade: str) -> AppReverseEngineeringResult:
+def _make_result(
+    tmp_path: Path, stem: str, *, language: str, grade: str
+) -> AppReverseEngineeringResult:
     output_dir = tmp_path / f"{stem}_analysis"
     analysis_file = output_dir / "analysis.json"
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -54,7 +56,11 @@ def test_app_corpus_report_preserves_row_metadata(tmp_path: Path):
     )
 
     report = run_app_corpus_sync(
-        [AppCorpusEntry(name="sample-row", input_path=str(sample), language="python", tags=["smoke"])],
+        [
+            AppCorpusEntry(
+                name="sample-row", input_path=str(sample), language="python", tags=["smoke"]
+            )
+        ],
         str(tmp_path / "corpus_out"),
         framework=framework,
     )
@@ -77,14 +83,26 @@ def test_app_corpus_required_failure_flips_matrix_status(tmp_path: Path):
     framework = _FakeCorpusFramework(
         {
             "required": RuntimeError("required failure"),
-            "optional": _make_result(tmp_path, "optional", language="python", grade="partial_recovery"),
+            "optional": _make_result(
+                tmp_path, "optional", language="python", grade="partial_recovery"
+            ),
         }
     )
 
     report = run_app_corpus_sync(
         [
-            AppCorpusEntry(name="required-row", input_path=str(required_sample), language="python", required=True),
-            AppCorpusEntry(name="optional-row", input_path=str(optional_sample), language="python", required=False),
+            AppCorpusEntry(
+                name="required-row",
+                input_path=str(required_sample),
+                language="python",
+                required=True,
+            ),
+            AppCorpusEntry(
+                name="optional-row",
+                input_path=str(optional_sample),
+                language="python",
+                required=False,
+            ),
         ],
         str(tmp_path / "corpus_out"),
         framework=framework,

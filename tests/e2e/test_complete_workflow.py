@@ -150,7 +150,9 @@ class TestCompleteWorkflow:
         assert report["summary"]["total_entries"] >= 7
 
     def test_complete_bun_sample_matrix_report_contract(self):
-        report = json.loads((REPO_ROOT / "reports" / "bun_sample_matrix.json").read_text(encoding="utf-8"))
+        report = json.loads(
+            (REPO_ROOT / "reports" / "bun_sample_matrix.json").read_text(encoding="utf-8")
+        )
         assert report["matrix_status"] == "pass"
         assert report["live_bun_sample_count"] >= 2
 

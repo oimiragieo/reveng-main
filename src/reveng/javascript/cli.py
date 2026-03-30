@@ -116,7 +116,9 @@ Examples:
         scan_parser = subparsers.add_parser("scan", help="Scan website for source maps")
         scan_parser.add_argument("url", help="Website URL")
         scan_parser.add_argument("--recover", action="store_true", help="Recover sources from maps")
-        scan_parser.add_argument("-o", "--output_dir", help="Output directory for recovered sources")
+        scan_parser.add_argument(
+            "-o", "--output_dir", help="Output directory for recovered sources"
+        )
 
         cache_parser = subparsers.add_parser("cache", help="Manage cache")
         cache_parser.add_argument("--stats", action="store_true", help="Show cache statistics")

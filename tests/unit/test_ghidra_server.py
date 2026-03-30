@@ -93,9 +93,7 @@ def test_build_headless_command_preserves_windows_paths_with_spaces(tmp_path: Pa
     assert command[-1] == "-deleteProject"
 
 
-def test_run_ghidra_analysis_uses_default_timeout_and_returns_source(
-    monkeypatch, tmp_path: Path
-):
+def test_run_ghidra_analysis_uses_default_timeout_and_returns_source(monkeypatch, tmp_path: Path):
     server = _load_module("test_ghidra_server_run")
     ghidra_path = tmp_path / server.DEFAULT_GHIDRA_DIST_NAME
     headless_path = ghidra_path / "support" / server.get_headless_script_name()
@@ -171,7 +169,9 @@ def test_analyze_endpoint_passes_requested_timeout_to_headless_runner(monkeypatc
     binary_path.write_bytes(b"MZ")
     captured: dict[str, object] = {}
 
-    def fake_run_ghidra_analysis(binary_path, ghidra_path=None, timeout=server.GHIDRA_HEADLESS_TIMEOUT):
+    def fake_run_ghidra_analysis(
+        binary_path, ghidra_path=None, timeout=server.GHIDRA_HEADLESS_TIMEOUT
+    ):
         captured["binary_path"] = str(binary_path)
         captured["timeout"] = timeout
         return {"functions": [], "imports": [], "strings": []}
@@ -193,7 +193,9 @@ def test_analyze_endpoint_timeout_response_uses_requested_timeout(monkeypatch, t
     binary_path = tmp_path / "sample.exe"
     binary_path.write_bytes(b"MZ")
 
-    def fake_run_ghidra_analysis(binary_path, ghidra_path=None, timeout=server.GHIDRA_HEADLESS_TIMEOUT):
+    def fake_run_ghidra_analysis(
+        binary_path, ghidra_path=None, timeout=server.GHIDRA_HEADLESS_TIMEOUT
+    ):
         raise server.subprocess.TimeoutExpired(cmd=["ghidra"], timeout=timeout)
 
     monkeypatch.setattr(server, "run_ghidra_analysis", fake_run_ghidra_analysis)

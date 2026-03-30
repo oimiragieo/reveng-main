@@ -8,7 +8,6 @@ import pytest
 from reveng.app_reverse_engineering.adapters.dotnet import DotNetAppAdapter
 from reveng.app_reverse_engineering.adapters.python import PythonAppAdapter
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -22,7 +21,9 @@ def test_python_adapter_archive_viewer_executes_on_checked_in_fixture(tmp_path: 
     adapter = PythonAppAdapter()
     fixture = REPO_ROOT / "test_samples" / "sample_app.pyz"
 
-    result = adapter._run_pyi_archive_viewer(fixture, tmp_path)  # noqa: SLF001 - integration characterization
+    result = adapter._run_pyi_archive_viewer(
+        fixture, tmp_path
+    )  # noqa: SLF001 - integration characterization
 
     assert result["available"] is True
     assert result["listing_path"] is not None

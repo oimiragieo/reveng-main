@@ -10,8 +10,6 @@ Author: REVENG Team
 Version: 3.0.0
 """
 
-from bisect import bisect_right
-
 import asyncio
 import json
 import logging
@@ -20,6 +18,7 @@ import re
 import shutil
 import tempfile
 import time
+from bisect import bisect_right
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -109,7 +108,9 @@ class BinaryRecompilationEngine:
         bounded_pos = min(max(before_pos, 0), len(source))
         return max(0, bisect_right(starts, bounded_pos) - 1)
 
-    def _get_cached_line_declarations(self, source: str, line_index: int, line: str) -> Dict[str, str]:
+    def _get_cached_line_declarations(
+        self, source: str, line_index: int, line: str
+    ) -> Dict[str, str]:
         """Return cached variable declarations for a source line."""
         cache = self._get_source_lookup_cache("_line_declarations_cache", source)
         if line_index not in cache:
@@ -303,7 +304,9 @@ class BinaryRecompilationEngine:
         if boundary_index in boundary_indices:
             boundary_pos = boundary_indices.index(boundary_index)
             next_boundary = (
-                boundary_indices[boundary_pos + 1] if boundary_pos + 1 < len(boundary_indices) else len(lines)
+                boundary_indices[boundary_pos + 1]
+                if boundary_pos + 1 < len(boundary_indices)
+                else len(lines)
             )
         else:
             next_boundary = len(lines)
@@ -386,9 +389,11 @@ class BinaryRecompilationEngine:
             results["source_files"] = compilation_result.get("source_files", reconstructed_code)
             results["compiled_binaries"] = compilation_result["compiled_binaries"]
             results["compilation_reports"] = compilation_result["reports"]
-            results["equivalence_validation"] = self._build_recompilation_equivalence_validation_summary(
-                results["compilation_reports"],
-                results["validation_results"],
+            results["equivalence_validation"] = (
+                self._build_recompilation_equivalence_validation_summary(
+                    results["compilation_reports"],
+                    results["validation_results"],
+                )
             )
 
             if not results["compiled_binaries"]:
@@ -404,12 +409,12 @@ class BinaryRecompilationEngine:
                 binary_path, results["compiled_binaries"], ghidra_data
             )
             results["validation_results"] = validation
-            results["differential_validation"] = validation.get(
-                "differential_validation", {}
-            )
-            results["equivalence_validation"] = self._build_recompilation_equivalence_validation_summary(
-                results["compilation_reports"],
-                results["validation_results"],
+            results["differential_validation"] = validation.get("differential_validation", {})
+            results["equivalence_validation"] = (
+                self._build_recompilation_equivalence_validation_summary(
+                    results["compilation_reports"],
+                    results["validation_results"],
+                )
             )
 
             # Phase 5: Security Analysis
@@ -1074,7 +1079,9 @@ Instructions:
         original_path = Path(original_binary)
         validation_config = load_validation_manifest(original_path.name)
         smoke_tests = (
-            validation_config.smoke_tests if validation_config and validation_config.smoke_tests else None
+            validation_config.smoke_tests
+            if validation_config and validation_config.smoke_tests
+            else None
         )
         validator = BinaryValidator()
         all_checks: List[Dict[str, Any]] = []
@@ -1101,9 +1108,9 @@ Instructions:
                 target=target,
                 kind="artifact_presence",
                 severity="error",
-                status="pass"
-                if original_info.get("exists") and rebuilt_info.get("exists")
-                else "fail",
+                status=(
+                    "pass" if original_info.get("exists") and rebuilt_info.get("exists") else "fail"
+                ),
                 message=(
                     f"Original and rebuilt artifacts are available for target {target}."
                     if original_info.get("exists") and rebuilt_info.get("exists")
@@ -1116,9 +1123,7 @@ Instructions:
                 kind="size_similarity",
                 severity="warning",
                 status="pass" if size_diff_ratio < 0.5 else "warn",
-                message=(
-                    f"Rebuilt artifact size differs by {size_diff_ratio * 100:.1f}%."
-                ),
+                message=(f"Rebuilt artifact size differs by {size_diff_ratio * 100:.1f}%."),
             )
             add_check(
                 target_checks,
@@ -1313,7 +1318,9 @@ Instructions:
             status = "blocked"
             equivalence_level = "not_recompiled"
             confidence = "high"
-            summary = "Equivalence is blocked because recompilation did not produce a candidate binary."
+            summary = (
+                "Equivalence is blocked because recompilation did not produce a candidate binary."
+            )
             reasons.append(
                 "No compiler produced a candidate binary, so behavioral equivalence remains blocked at the compiler frontier."
             )
@@ -1340,9 +1347,7 @@ Instructions:
             status = "candidate"
             equivalence_level = "compile_only_candidate"
             confidence = "low"
-            summary = (
-                "A candidate binary exists, but only compile-side evidence is available, so equivalence remains a low-confidence compile-only candidate."
-            )
+            summary = "A candidate binary exists, but only compile-side evidence is available, so equivalence remains a low-confidence compile-only candidate."
             reasons.append(
                 "At least one compiler produced a candidate binary, but runtime validation evidence is still missing."
             )
@@ -1527,8 +1532,7 @@ Instructions:
             )
         if stage_timings:
             progress["stage_timings"] = {
-                name: round(float(duration), 3)
-                for name, duration in stage_timings.items()
+                name: round(float(duration), 3) for name, duration in stage_timings.items()
             }
         progress_path.write_text(json.dumps(progress, indent=2), encoding="utf-8")
 
@@ -1599,7 +1603,9 @@ Instructions:
             "reason": dump_reason,
             "stages": list(snapshots.keys()),
         }
-        (function_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        (function_dir / "manifest.json").write_text(
+            json.dumps(manifest, indent=2), encoding="utf-8"
+        )
         for stage_name, content in snapshots.items():
             (function_dir / f"{stage_name}.c").write_text(content, encoding="utf-8")
 
@@ -1692,7 +1698,9 @@ Instructions:
                 sig = func.get("signature", f"void {func.get('name')}(void)")
                 original_name = self._get_function_original_name(func, index)
                 if original_name:
-                    sig = self._apply_function_name_map(str(sig), {original_name: function_name_map[original_name]})
+                    sig = self._apply_function_name_map(
+                        str(sig), {original_name: function_name_map[original_name]}
+                    )
                 sig = self._sanitize_generated_c_tokens(str(sig))
                 declaration_name = self._extract_function_name(sig)
                 if not declaration_name:
@@ -1731,7 +1739,9 @@ Instructions:
             if progress_callback:
                 progress_callback(index, total_functions, str(address))
 
-        def apply_stage(stage_name: str, transform: Callable[[str], str], current_source: str) -> str:
+        def apply_stage(
+            stage_name: str, transform: Callable[[str], str], current_source: str
+        ) -> str:
             if stage_callback:
                 stage_callback(stage_name)
             stage_started = time.monotonic()
@@ -1752,170 +1762,221 @@ Instructions:
             ),
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "whole_source_normalization",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "whole_source_normalization",
+            )
         )
         source = apply_stage(
             "prototype_relaxation",
             self._relax_mismatched_pointer_prototypes,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "prototype_relaxation",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "prototype_relaxation",
+            )
         )
         source = apply_stage(
             "integer_pointer_access_normalization",
             self._normalize_integer_pointer_accesses,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "integer_pointer_access_normalization",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "integer_pointer_access_normalization",
+            )
         )
         source = apply_stage(
             "non_code_pointer_retargeting",
             self._retarget_non_code_pointer_cast_assignments,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "non_code_pointer_retargeting",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "non_code_pointer_retargeting",
+            )
         )
         source = apply_stage(
             "uintptr_bridge_normalization",
             self._normalize_uintptr_bridge_accesses,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "uintptr_bridge_normalization",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "uintptr_bridge_normalization",
+            )
         )
         source = apply_stage(
             "void_prototype_relaxation",
             self._relax_mismatched_void_prototypes,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "void_prototype_relaxation",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "void_prototype_relaxation",
+            )
         )
         source = apply_stage(
             "uintptr_param_normalization",
             self._normalize_pointer_arguments_for_uintptr_params,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "uintptr_param_normalization",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "uintptr_param_normalization",
+            )
         )
         source = apply_stage(
             "prototype_alignment",
             self._align_conflicting_function_prototypes,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "prototype_alignment",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "prototype_alignment",
+            )
         )
         source = apply_stage(
             "void_return_relaxation",
             self._relax_void_return_functions_used_as_values,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "void_return_relaxation",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "void_return_relaxation",
+            )
         )
         source = apply_stage(
             "bare_return_normalization",
             self._normalize_bare_returns_for_scalar_functions,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "bare_return_normalization",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "bare_return_normalization",
+            )
         )
         source = apply_stage(
             "helper_alias_qualification",
             self._qualify_unresolved_function_aliases,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "helper_alias_qualification",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "helper_alias_qualification",
+            )
         )
         source = apply_stage(
             "void_pointer_index_normalization",
             self._normalize_void_pointer_parameter_indexing,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "void_pointer_index_normalization",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "void_pointer_index_normalization",
+            )
         )
         source = apply_stage(
             "late_pointer_param_normalization",
             self._normalize_integer_arguments_for_pointer_params,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "late_pointer_param_normalization",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "late_pointer_param_normalization",
+            )
         )
         source = apply_stage(
             "late_uintptr_param_normalization",
             self._normalize_pointer_arguments_for_uintptr_params,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "late_uintptr_param_normalization",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "late_uintptr_param_normalization",
+            )
         )
         source = apply_stage(
             "late_void_pointer_index_normalization",
             self._normalize_void_pointer_parameter_indexing,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "late_void_pointer_index_normalization",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "late_void_pointer_index_normalization",
+            )
         )
         source = apply_stage(
             "late_pointer_integer_assignment_normalization",
             self._normalize_pointer_integer_assignments,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "late_pointer_integer_assignment_normalization",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "late_pointer_integer_assignment_normalization",
+            )
         )
         source = apply_stage(
             "late_non_code_pointer_retargeting",
             self._retarget_non_code_pointer_cast_assignments,
             source,
         )
-        whole_source_dump_written = whole_source_dump_written or self._maybe_dump_whole_source_stage_debug(
-            debug_output_dir,
-            whole_source_snapshots,
-            "late_non_code_pointer_retargeting",
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "late_non_code_pointer_retargeting",
+            )
         )
         if stage_callback:
             stage_callback("generated_prelude_build")
@@ -2172,7 +2233,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         if raw_name:
             return raw_name
 
-        source_name = self._extract_function_name(str(func.get("source") or func.get("decompiled") or ""))
+        source_name = self._extract_function_name(
+            str(func.get("source") or func.get("decompiled") or "")
+        )
         if source_name:
             return source_name
 
@@ -2280,7 +2343,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
     def _sanitize_generated_c_tokens(self, source: str) -> str:
         """Sanitize residual non-C identifiers left in generated source."""
         source = self._join_wrapped_sanitized_call_identifiers(source)
-        token_pattern = re.compile(r"(?<![A-Za-z0-9_])([A-Za-z_.$:][A-Za-z0-9_.$:<>-]*)(?![A-Za-z0-9_])")
+        token_pattern = re.compile(
+            r"(?<![A-Za-z0-9_])([A-Za-z_.$:][A-Za-z0-9_.$:<>-]*)(?![A-Za-z0-9_])"
+        )
 
         def replace_token(match: re.Match[str]) -> str:
             token = match.group(1)
@@ -2444,10 +2509,10 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             if not lhs_type and self._is_integer_fragment_name(lhs):
                 lhs_type = "uint64_t"
             if self._is_integer_declared_type(lhs_type):
-                updated_lines.append(
-                    f"{match.group('indent')}{lhs} = {match.group('rhs')};"
-                )
-            elif self._is_pointer_declared_type(lhs_type) and " ".join(lhs_type.split()) != "code *":
+                updated_lines.append(f"{match.group('indent')}{lhs} = {match.group('rhs')};")
+            elif (
+                self._is_pointer_declared_type(lhs_type) and " ".join(lhs_type.split()) != "code *"
+            ):
                 updated_lines.append(
                     f"{match.group('indent')}{lhs} = ({lhs_type})(uintptr_t){match.group('rhs')};"
                 )
@@ -2461,16 +2526,20 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
     ) -> str:
         """Normalize common Ghidra-emitted constructs into more compilable C."""
         updated = source
-        vector128_names = set(re.findall(r"\bundefined1\s+([A-Za-z_][A-Za-z0-9_]*)\s*\[16\];", source))
+        vector128_names = set(
+            re.findall(r"\bundefined1\s+([A-Za-z_][A-Za-z0-9_]*)\s*\[16\];", source)
+        )
         byte_array_names = set(
-            re.findall(r"\bundefined1\s+([A-Za-z_][A-Za-z0-9_]*)\s*\[(?:9|10|11|12|13|14|15)\];", source)
+            re.findall(
+                r"\bundefined1\s+([A-Za-z_][A-Za-z0-9_]*)\s*\[(?:9|10|11|12|13|14|15)\];", source
+            )
         )
         indexed_vector_names = {
-            name
-            for name in vector128_names
-            if re.search(rf"\b{re.escape(name)}\[[^\]]+\]", source)
+            name for name in vector128_names if re.search(rf"\b{re.escape(name)}\[[^\]]+\]", source)
         }
-        byte_vector64_names = set(re.findall(r"\bundefined1\s+([A-Za-z_][A-Za-z0-9_]*)\s*\[8\];", source))
+        byte_vector64_names = set(
+            re.findall(r"\bundefined1\s+([A-Za-z_][A-Za-z0-9_]*)\s*\[8\];", source)
+        )
 
         def replace_vector_declaration(match: re.Match[str]) -> str:
             name = match.group(1)
@@ -2546,7 +2615,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         def replace_plain_vector_value_load(match: re.Match[str]) -> str:
             lhs, rhs = match.groups()
             lhs_type = vector_value_types.get(lhs, "")
-            rhs_base_match = re.match(r"^\*?(?P<base>[A-Za-z_][A-Za-z0-9_]*)(?:\s*\[[^\]]+\])?$", rhs.strip())
+            rhs_base_match = re.match(
+                r"^\*?(?P<base>[A-Za-z_][A-Za-z0-9_]*)(?:\s*\[[^\]]+\])?$", rhs.strip()
+            )
             rhs_base = rhs_base_match.group("base") if rhs_base_match else ""
             rhs_is_vector_ptr = bool(rhs_base and rhs_base in vector_pointer_names)
             if " ".join(lhs_type.split()) != "ghidra_uint128":
@@ -2577,13 +2648,24 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 rf"{name}.bytes[\1]",
                 updated,
             )
-        updated = self._rewrite_vector_whole_value_uses(updated, indexed_vector_names, "ghidra_vec128")
-        updated = self._rewrite_vector_whole_value_uses(updated, byte_vector64_names, "ghidra_vec64")
-        updated = self._rewrite_split_local_aliases(updated, indexed_vector_names | byte_vector64_names)
+        updated = self._rewrite_vector_whole_value_uses(
+            updated, indexed_vector_names, "ghidra_vec128"
+        )
+        updated = self._rewrite_vector_whole_value_uses(
+            updated, byte_vector64_names, "ghidra_vec64"
+        )
+        updated = self._rewrite_split_local_aliases(
+            updated, indexed_vector_names | byte_vector64_names
+        )
         updated = self._restore_prefixed_local_aliases(updated)
         updated = self._rewrite_illegal_array_cast_assignments(updated)
         updated = self._relax_readonly_local_pointer_declarations(updated)
-        updated = re.sub(r"(^\s*)code\s+([A-Za-z_][A-Za-z0-9_]*)\s*;$", r"\1code *\2;", updated, flags=re.MULTILINE)
+        updated = re.sub(
+            r"(^\s*)code\s+([A-Za-z_][A-Za-z0-9_]*)\s*;$",
+            r"\1code *\2;",
+            updated,
+            flags=re.MULTILINE,
+        )
         updated = re.sub(r"\(code\)\s*", "(code *)", updated)
         updated = re.sub(r"\*\(code \*\)\s*([^=;\n]+?)\s*=", r"*(code **)\1 =", updated)
         updated = re.sub(
@@ -2651,8 +2733,12 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             boundary_index = self._get_enclosing_function_boundary_index(source, position)
             if boundary_index is None:
                 return match.group(0)
-            local_types = dict(self._get_function_parameter_types_at_boundary(source, boundary_index))
-            local_types.update(self._get_function_local_declarations_at_boundary(source, boundary_index))
+            local_types = dict(
+                self._get_function_parameter_types_at_boundary(source, boundary_index)
+            )
+            local_types.update(
+                self._get_function_local_declarations_at_boundary(source, boundary_index)
+            )
             local_types.update(variable_types)
             if base_name not in local_types:
                 return match.group(0)
@@ -2757,7 +2843,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         """Restore sanitized LARGE_INTEGER and split-struct field aliases to compilable access forms."""
         variable_types = self._extract_declared_variable_types(source)
         for boundary_index in self._get_function_boundary_indices(source):
-            variable_types.update(self._get_function_parameter_types_at_boundary(source, boundary_index))
+            variable_types.update(
+                self._get_function_parameter_types_at_boundary(source, boundary_index)
+            )
         large_integer_names = {
             name
             for name, declared_type in variable_types.items()
@@ -2796,7 +2884,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         security_attributes_pointer_names = {
             name
             for name, declared_type in variable_types.items()
-            if " ".join(declared_type.split()) in {"_SECURITY_ATTRIBUTES *", "SECURITY_ATTRIBUTES *", "LPSECURITY_ATTRIBUTES"}
+            if " ".join(declared_type.split())
+            in {"_SECURITY_ATTRIBUTES *", "SECURITY_ATTRIBUTES *", "LPSECURITY_ATTRIBUTES"}
         }
         filetime_names = {
             name
@@ -2811,7 +2900,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         by_handle_file_information_names = {
             name
             for name, declared_type in variable_types.items()
-            if " ".join(declared_type.split()) in {"_BY_HANDLE_FILE_INFORMATION", "BY_HANDLE_FILE_INFORMATION"}
+            if " ".join(declared_type.split())
+            in {"_BY_HANDLE_FILE_INFORMATION", "BY_HANDLE_FILE_INFORMATION"}
         }
         by_handle_file_information_pointer_names = {
             name
@@ -2826,7 +2916,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         console_screen_buffer_info_names = {
             name
             for name, declared_type in variable_types.items()
-            if " ".join(declared_type.split()) in {"_CONSOLE_SCREEN_BUFFER_INFO", "CONSOLE_SCREEN_BUFFER_INFO"}
+            if " ".join(declared_type.split())
+            in {"_CONSOLE_SCREEN_BUFFER_INFO", "CONSOLE_SCREEN_BUFFER_INFO"}
         }
         console_screen_buffer_info_pointer_names = {
             name
@@ -2841,7 +2932,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         console_readconsole_control_names = {
             name
             for name, declared_type in variable_types.items()
-            if " ".join(declared_type.split()) in {"_CONSOLE_READCONSOLE_CONTROL", "CONSOLE_READCONSOLE_CONTROL"}
+            if " ".join(declared_type.split())
+            in {"_CONSOLE_READCONSOLE_CONTROL", "CONSOLE_READCONSOLE_CONTROL"}
         }
 
         def replace_split_alias(match: re.Match[str]) -> str:
@@ -2917,19 +3009,35 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                     return f"({name}).HighPart"
             if name in large_integer_pointer_names and suffix == "QuadPart":
                 return f"((LARGE_INTEGER *){name})->QuadPart"
-            if name in context_names and suffix in {"P1Home", "P2Home", "P3Home", "P4Home", "Rip", "Rsp"}:
+            if name in context_names and suffix in {
+                "P1Home",
+                "P2Home",
+                "P3Home",
+                "P4Home",
+                "Rip",
+                "Rsp",
+            }:
                 return f"({name}).{suffix}"
-            if (
-                name in context_pointer_names
-                and suffix in {"P1Home", "P2Home", "P3Home", "P4Home", "Rip", "Rsp"}
-            ):
+            if name in context_pointer_names and suffix in {
+                "P1Home",
+                "P2Home",
+                "P3Home",
+                "P4Home",
+                "Rip",
+                "Rsp",
+            }:
                 return f"({name})->{suffix}"
-            if name in security_attributes_names and suffix in {"nLength", "lpSecurityDescriptor", "bInheritHandle"}:
+            if name in security_attributes_names and suffix in {
+                "nLength",
+                "lpSecurityDescriptor",
+                "bInheritHandle",
+            }:
                 return f"({name}).{suffix}"
-            if (
-                name in security_attributes_pointer_names
-                and suffix in {"nLength", "lpSecurityDescriptor", "bInheritHandle"}
-            ):
+            if name in security_attributes_pointer_names and suffix in {
+                "nLength",
+                "lpSecurityDescriptor",
+                "bInheritHandle",
+            }:
                 return f"({name})->{suffix}"
             if name in filetime_names and suffix in {"dwLowDateTime", "dwHighDateTime"}:
                 return f"({name}).{suffix}"
@@ -3040,7 +3148,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         for line_index, line in enumerate(source.splitlines()):
             rewritten = line
             stripped = line.strip()
-            current_boundary = line_to_boundary[line_index] if line_index < len(line_to_boundary) else None
+            current_boundary = (
+                line_to_boundary[line_index] if line_index < len(line_to_boundary) else None
+            )
             if current_boundary != active_boundary:
                 active_boundary = current_boundary
                 local_types = (
@@ -3090,7 +3200,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 r"\(\*\(_struct_19 \*\)&(?P<lhs>[A-Za-z_][A-Za-z0-9_]*)\)\s*=\s*\(_struct_19\)(?P<rhs>[A-Za-z_][A-Za-z0-9_]*\([^;\n]*\))",
                 lambda match: (
                     f"((LARGE_INTEGER *)&{match.group('lhs')})->QuadPart = {match.group('rhs')}"
-                    if self._infer_expression_declared_type(match.group("lhs"), variable_types) == "LARGE_INTEGER"
+                    if self._infer_expression_declared_type(match.group("lhs"), variable_types)
+                    == "LARGE_INTEGER"
                     else match.group(0)
                 ),
                 rewritten,
@@ -3099,7 +3210,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 r"\(LARGE_INTEGER\)\s*([A-Za-z_][A-Za-z0-9_]*\([^;\n]*\))",
                 lambda match: (
                     match.group(1)
-                    if self._infer_expression_declared_type(match.group(1), variable_types) == "LARGE_INTEGER"
+                    if self._infer_expression_declared_type(match.group(1), variable_types)
+                    == "LARGE_INTEGER"
                     else f"GHIDRA_U64({match.group(1)})"
                 ),
                 rewritten,
@@ -3108,7 +3220,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 r"\(LARGE_INTEGER\)\s*(0x[0-9A-Fa-f]+|\d+|[A-Za-z_][A-Za-z0-9_]*)",
                 lambda match: (
                     match.group(1)
-                    if self._infer_expression_declared_type(match.group(1), variable_types) == "LARGE_INTEGER"
+                    if self._infer_expression_declared_type(match.group(1), variable_types)
+                    == "LARGE_INTEGER"
                     else f"GHIDRA_U64({match.group(1)})"
                 ),
                 rewritten,
@@ -3117,7 +3230,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 r"\(LARGE_INTEGER\)\s*(\(\([^;\n]+?\)->QuadPart\)|\([^;\n]+?\))",
                 lambda match: (
                     match.group(1)
-                    if self._infer_expression_declared_type(match.group(1), variable_types) == "LARGE_INTEGER"
+                    if self._infer_expression_declared_type(match.group(1), variable_types)
+                    == "LARGE_INTEGER"
                     else f"GHIDRA_U64({match.group(1)})"
                 ),
                 rewritten,
@@ -3169,7 +3283,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 rewritten,
             )
 
-            line_large_integer_names = large_integer_names.intersection(token_pattern.findall(rewritten))
+            line_large_integer_names = large_integer_names.intersection(
+                token_pattern.findall(rewritten)
+            )
             for name in sorted(line_large_integer_names, key=len, reverse=True):
                 rewritten = re.sub(
                     rf"\((?P<cast>[^)]+)\)\s*{re.escape(name)}\b",
@@ -3199,15 +3315,17 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 lhs = bare_assignment_match.group("lhs")
                 lhs_type = variable_types.get(lhs, "")
                 rhs = bare_assignment_match.group("rhs").strip()
-                if " ".join(lhs_type.split()) == "LARGE_INTEGER" and not rhs.startswith("GHIDRA_LARGE_INTEGER("):
+                if " ".join(lhs_type.split()) == "LARGE_INTEGER" and not rhs.startswith(
+                    "GHIDRA_LARGE_INTEGER("
+                ):
                     rhs_type = self._infer_expression_declared_type(rhs, variable_types)
                     if " ".join(rhs_type.split()) != "LARGE_INTEGER":
-                        rewritten = (
-                            f"{bare_assignment_match.group('indent')}{lhs} = GHIDRA_LARGE_INTEGER({rhs});"
-                        )
+                        rewritten = f"{bare_assignment_match.group('indent')}{lhs} = GHIDRA_LARGE_INTEGER({rhs});"
                 elif " ".join(lhs_type.split()) == "code *":
                     rhs_type = self._infer_expression_declared_type(rhs, variable_types)
-                    if not self._is_pointer_declared_type(rhs_type) and not rhs.startswith("(code *)"):
+                    if not self._is_pointer_declared_type(rhs_type) and not rhs.startswith(
+                        "(code *)"
+                    ):
                         rewritten = (
                             f"{bare_assignment_match.group('indent')}{lhs} = "
                             f"(code *)(uintptr_t)GHIDRA_U64({rhs});"
@@ -3220,7 +3338,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             if store_match:
                 rhs = store_match.group("rhs").strip()
                 rhs_type = self._infer_expression_declared_type(rhs, variable_types)
-                if " ".join(rhs_type.split()) != "LARGE_INTEGER" and not rhs.startswith("GHIDRA_LARGE_INTEGER("):
+                if " ".join(rhs_type.split()) != "LARGE_INTEGER" and not rhs.startswith(
+                    "GHIDRA_LARGE_INTEGER("
+                ):
                     rewritten = (
                         f"{store_match.group('indent')}{store_match.group('lhs')} = "
                         f"GHIDRA_LARGE_INTEGER({rhs});"
@@ -3286,7 +3406,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
     def _normalize_void_pointer_parameter_indexing(self, source: str) -> str:
         """Rewrite invalid indexing and dereference operations on `void *param_n` parameters."""
 
-        def find_matching_delimiter(text: str, open_index: int, open_char: str, close_char: str) -> int:
+        def find_matching_delimiter(
+            text: str, open_index: int, open_char: str, close_char: str
+        ) -> int:
             depth = 0
             for index in range(open_index, len(text)):
                 char = text[index]
@@ -3405,7 +3527,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             else:
                 multiline_match = multiline_signature_pattern.match(stripped)
                 if multiline_match:
-                    pending_void_params = extract_void_pointer_params(multiline_match.group("params"))
+                    pending_void_params = extract_void_pointer_params(
+                        multiline_match.group("params")
+                    )
                     is_signature_line = True
                 else:
                     signature_start_match = signature_start_pattern.match(stripped)
@@ -3414,7 +3538,12 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                         is_signature_line = True
 
             rewritten = line
-            if function_brace_depth > 0 and active_void_params and not is_signature_line and stripped != "{":
+            if (
+                function_brace_depth > 0
+                and active_void_params
+                and not is_signature_line
+                and stripped != "{"
+            ):
                 for name in sorted(active_void_params, key=len, reverse=True):
                     rewritten = rewrite_offset_indexing(rewritten, name)
                     rewritten = re.sub(
@@ -3477,7 +3606,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             function_name: {
                 index
                 for index, param_type in enumerate(params)
-                if self._is_integer_declared_type(param_type) or " ".join(param_type.split()) == "uintptr_t"
+                if self._is_integer_declared_type(param_type)
+                or " ".join(param_type.split()) == "uintptr_t"
             }
             for function_name, params in parameter_types.items()
             if function_name in called_function_names
@@ -3541,7 +3671,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         called_function_names = self._collect_called_function_names(source)
         byte_pointer_param_positions = {
             function_name: {
-                index for index, param_type in enumerate(params) if " ".join(param_type.split()) == "byte *"
+                index
+                for index, param_type in enumerate(params)
+                if " ".join(param_type.split()) == "byte *"
             }
             for function_name, params in parameter_types.items()
             if function_name in called_function_names
@@ -3608,7 +3740,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             if function_name in called_function_names
         }
         relevant_function_names = {
-            function_name for function_name, positions in pointer_param_positions.items() if positions
+            function_name
+            for function_name, positions in pointer_param_positions.items()
+            if positions
         }
         data_symbol_pattern = re.compile(r"^(?:_?UNK|_?DAT|DAT)_[A-Za-z0-9_]+$")
         replacements: List[tuple[int, int, str]] = []
@@ -3680,9 +3814,13 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             if function_name in called_function_names
         }
         relevant_function_names = {
-            function_name for function_name, positions in pointer_param_positions.items() if positions
+            function_name
+            for function_name, positions in pointer_param_positions.items()
+            if positions
         }
-        bridge_read_pattern = re.compile(r"^(?:\*?\(\(uintptr_t \*\)\(uintptr_t\).+\)|\(\(uintptr_t \*\)\(uintptr_t\).+\)\[[^\]]+\])$")
+        bridge_read_pattern = re.compile(
+            r"^(?:\*?\(\(uintptr_t \*\)\(uintptr_t\).+\)|\(\(uintptr_t \*\)\(uintptr_t\).+\)\[[^\]]+\])$"
+        )
         replacements: List[tuple[int, int, str]] = []
         calls = self._collect_calls_for_names(source, relevant_function_names)
         for call in reversed(calls):
@@ -3695,7 +3833,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 replacement = arg
                 stripped_arg = arg.strip()
                 is_bridge_read = bridge_read_pattern.match(stripped_arg) is not None
-                if index in pointer_positions and ("(uintptr_t)" not in stripped_arg or is_bridge_read):
+                if index in pointer_positions and (
+                    "(uintptr_t)" not in stripped_arg or is_bridge_read
+                ):
                     arg_type = variable_types.get(stripped_arg, "")
                     should_cast = (
                         self._is_integer_declared_type(arg_type)
@@ -3887,7 +4027,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 break
             wrapper_close = skip_whitespace(wrapper_close)
             if wrapper_close >= len(updated) or updated[wrapper_close] != ")":
-                result.append(updated[start : wrapper_close if wrapper_close is not None else len(updated)])
+                result.append(
+                    updated[start : wrapper_close if wrapper_close is not None else len(updated)]
+                )
                 index = wrapper_close if wrapper_close is not None else len(updated)
                 continue
             open_paren = skip_whitespace(wrapper_close + 1)
@@ -3904,9 +4046,7 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             index = args_close + 1
         updated = "".join(result)
         rewritten_lines: list[str] = []
-        indirect_call_pattern = re.compile(
-            r"\(\*\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\)\s*\("
-        )
+        indirect_call_pattern = re.compile(r"\(\*\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\)\s*\(")
         for line in updated.splitlines():
             stripped = line.lstrip()
             if stripped.startswith("typedef "):
@@ -4054,15 +4194,23 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         for qualifier in ("const", "volatile", "static", "extern", "register", "inline"):
             normalized = normalized.replace(qualifier, "")
         normalized = re.sub(r"\s+", " ", normalized.strip())
-        return "[" not in normalized and "*" not in normalized and normalized in {
-            "float",
-            "double",
-            "long double",
-        }
+        return (
+            "[" not in normalized
+            and "*" not in normalized
+            and normalized
+            in {
+                "float",
+                "double",
+                "long double",
+            }
+        )
 
     def _normalize_code_pointer_byte_uses(self, source: str) -> str:
         """Rewrite direct code-pointer byte stores when code* locals are acting as raw buffers."""
-        def find_matching_delimiter(text: str, open_index: int, open_char: str, close_char: str) -> int:
+
+        def find_matching_delimiter(
+            text: str, open_index: int, open_char: str, close_char: str
+        ) -> int:
             depth = 0
             for index in range(open_index, len(text)):
                 char = text[index]
@@ -4095,8 +4243,7 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                     search_start = open_paren + 1
                     continue
                 contains_code_pointer = any(
-                    re.search(rf"\b{re.escape(name)}\b", expression)
-                    for name in code_pointer_names
+                    re.search(rf"\b{re.escape(name)}\b", expression) for name in code_pointer_names
                 )
                 if not contains_code_pointer:
                     search_start = open_paren + 1
@@ -4143,7 +4290,10 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             if direct_copy_match:
                 lhs_type = variable_types.get(direct_copy_match.group("lhs"), "")
                 rhs_type = variable_types.get(direct_copy_match.group("rhs"), "")
-                if " ".join(lhs_type.split()) == "code *" and " ".join(rhs_type.split()) == "code *":
+                if (
+                    " ".join(lhs_type.split()) == "code *"
+                    and " ".join(rhs_type.split()) == "code *"
+                ):
                     rewritten = (
                         f"{direct_copy_match.group('indent')}*(byte *)(uintptr_t){direct_copy_match.group('lhs')} = "
                         f"*(byte *)(uintptr_t){direct_copy_match.group('rhs')};"
@@ -4155,9 +4305,7 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             if null_store_match:
                 lhs_type = variable_types.get(null_store_match.group("lhs"), "")
                 if " ".join(lhs_type.split()) == "code *":
-                    rewritten = (
-                        f"{null_store_match.group('indent')}*(byte *)(uintptr_t){null_store_match.group('lhs')} = 0;"
-                    )
+                    rewritten = f"{null_store_match.group('indent')}*(byte *)(uintptr_t){null_store_match.group('lhs')} = 0;"
                     updated_lines.append(rewritten)
                     continue
 
@@ -4165,7 +4313,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
 
         updated = "\n".join(updated_lines)
         if code_pointer_names:
-            alternation = "|".join(sorted((re.escape(name) for name in code_pointer_names), key=len, reverse=True))
+            alternation = "|".join(
+                sorted((re.escape(name) for name in code_pointer_names), key=len, reverse=True)
+            )
             updated = re.sub(
                 rf"GHIDRA_U64\(\*(?P<name>{alternation})\)",
                 r"GHIDRA_U64(*(byte *)(uintptr_t)\g<name>)",
@@ -4191,7 +4341,10 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         """Return whether a declared type is a non-vector undefined1 byte array."""
         normalized = " ".join(declared_type.split())
         compact = normalized.replace(" ", "")
-        return compact.startswith("undefined1[") and compact not in {"undefined1[8]", "undefined1[16]"}
+        return compact.startswith("undefined1[") and compact not in {
+            "undefined1[8]",
+            "undefined1[16]",
+        }
 
     def _rewrite_pointer_double_cast(
         self, match: re.Match[str], variable_types: Dict[str, str]
@@ -4255,22 +4408,20 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 rhs_type = resolve_type(rhs, current_line_start)
                 cast_type = cast_match.group("cast").strip()
                 if self._is_integer_declared_type(lhs_type) and (
-                    self._is_pointer_declared_type(rhs_type) or self._is_pointer_declared_type(cast_type)
+                    self._is_pointer_declared_type(rhs_type)
+                    or self._is_pointer_declared_type(cast_type)
                 ):
                     rewritten = (
                         f"{cast_match.group('indent')}{lhs} = GHIDRA_U64(({cast_type}){rhs});"
                     )
                 elif self._is_pointer_declared_type(lhs_type) and (
-                    self._is_integer_declared_type(rhs_type) or self._is_float_declared_type(rhs_type)
+                    self._is_integer_declared_type(rhs_type)
+                    or self._is_float_declared_type(rhs_type)
                 ):
                     if self._is_pointer_declared_type(cast_type):
-                        rewritten = (
-                            f"{cast_match.group('indent')}{lhs} = ({lhs_type})(uintptr_t)GHIDRA_U64({rhs});"
-                        )
+                        rewritten = f"{cast_match.group('indent')}{lhs} = ({lhs_type})(uintptr_t)GHIDRA_U64({rhs});"
                     else:
-                        rewritten = (
-                            f"{cast_match.group('indent')}{lhs} = ({lhs_type})(uintptr_t)(({cast_type}){rhs});"
-                        )
+                        rewritten = f"{cast_match.group('indent')}{lhs} = ({lhs_type})(uintptr_t)(({cast_type}){rhs});"
                 updated_lines.append(rewritten)
                 continue
 
@@ -4282,7 +4433,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                     lhs_type = "uint64_t"
                 cast_type = cast_expression_match.group("cast").strip()
                 rhs_expr = cast_expression_match.group("rhs").strip()
-                if self._is_integer_declared_type(lhs_type) and self._is_pointer_declared_type(cast_type):
+                if self._is_integer_declared_type(lhs_type) and self._is_pointer_declared_type(
+                    cast_type
+                ):
                     rewritten = (
                         f"{cast_expression_match.group('indent')}{lhs} = "
                         f"GHIDRA_U64(({cast_type}){rhs_expr});"
@@ -4295,7 +4448,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                         re.match(r"^\*[A-Za-z_][A-Za-z0-9_]*$", rhs_expr)
                         or re.match(r"^[A-Za-z_][A-Za-z0-9_]*\s*\[[^\]]+\]$", rhs_expr)
                     )
-                    and not self._is_pointer_declared_type(self._infer_expression_declared_type(rhs_expr, variable_types))
+                    and not self._is_pointer_declared_type(
+                        self._infer_expression_declared_type(rhs_expr, variable_types)
+                    )
                 ):
                     rewritten = (
                         f"{cast_expression_match.group('indent')}{lhs} = "
@@ -4374,8 +4529,13 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                     rewritten,
                 )
                 if non_code_pointer_cast_match:
-                    lhs_type = resolve_type(non_code_pointer_cast_match.group("lhs"), current_line_start)
-                    if self._is_pointer_declared_type(lhs_type) and " ".join(lhs_type.split()) != "code *":
+                    lhs_type = resolve_type(
+                        non_code_pointer_cast_match.group("lhs"), current_line_start
+                    )
+                    if (
+                        self._is_pointer_declared_type(lhs_type)
+                        and " ".join(lhs_type.split()) != "code *"
+                    ):
                         rewritten = (
                             f"{non_code_pointer_cast_match.group('indent')}"
                             f"{non_code_pointer_cast_match.group('lhs')} = "
@@ -4390,9 +4550,13 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             if not lhs_type and self._is_integer_fragment_name(lhs):
                 lhs_type = "uint64_t"
             rhs_type = resolve_type(rhs, current_line_start)
-            if self._is_integer_declared_type(lhs_type) and self._is_byte_array_declared_type(rhs_type):
+            if self._is_integer_declared_type(lhs_type) and self._is_byte_array_declared_type(
+                rhs_type
+            ):
                 rewritten = f"{match.group('indent')}{lhs} = GHIDRA_U64({rhs});"
-            elif self._is_integer_declared_type(lhs_type) and self._is_pointer_declared_type(rhs_type):
+            elif self._is_integer_declared_type(lhs_type) and self._is_pointer_declared_type(
+                rhs_type
+            ):
                 rewritten = f"{match.group('indent')}{lhs} = GHIDRA_U64({rhs});"
             elif self._is_integer_declared_type(lhs_type) and re.match(
                 r"^(?:FUN|PTR_FUN)_[A-Za-z0-9_]+$",
@@ -4401,21 +4565,27 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 rewritten = f"{match.group('indent')}{lhs} = GHIDRA_U64({rhs});"
             elif self._is_integer_declared_type(lhs_type) and rhs in declared_function_names:
                 rewritten = f"{match.group('indent')}{lhs} = GHIDRA_U64({rhs});"
-            elif self._is_pointer_declared_type(lhs_type) and re.match(r"^(?:_{2,3})xmm_[0-9A-Fa-f]+$", rhs):
+            elif self._is_pointer_declared_type(lhs_type) and re.match(
+                r"^(?:_{2,3})xmm_[0-9A-Fa-f]+$", rhs
+            ):
                 rewritten = f"{match.group('indent')}{lhs} = ({lhs_type})(uintptr_t)&{rhs};"
             elif (
                 self._is_pointer_declared_type(lhs_type)
                 and " ".join(lhs_type.split()) != "code *"
                 and " ".join(rhs_type.split()) == "code *"
             ):
-                rewritten = f"{match.group('indent')}{lhs} = ({lhs_type})(uintptr_t)GHIDRA_U64({rhs});"
+                rewritten = (
+                    f"{match.group('indent')}{lhs} = ({lhs_type})(uintptr_t)GHIDRA_U64({rhs});"
+                )
             elif (
                 self._is_pointer_declared_type(lhs_type)
                 and self._is_pointer_declared_type(rhs_type)
                 and " ".join(lhs_type.split()) != " ".join(rhs_type.split())
             ):
                 rewritten = f"{match.group('indent')}{lhs} = ({lhs_type}){rhs};"
-            elif self._is_pointer_declared_type(lhs_type) and self._is_integer_declared_type(rhs_type):
+            elif self._is_pointer_declared_type(lhs_type) and self._is_integer_declared_type(
+                rhs_type
+            ):
                 rewritten = f"{match.group('indent')}{lhs} = ({lhs_type})(uintptr_t){rhs};"
             updated_lines.append(rewritten)
 
@@ -4580,7 +4750,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         if self._is_pointer_declared_type(lhs_type):
             if re.match(r"^(?:_{2,3})xmm_[0-9A-Fa-f]+$", rhs):
                 replacement_rhs = f"({lhs_type})(uintptr_t)&{rhs}"
-            elif re.match(r"^\(\(byte \*\)\(uintptr_t\)[A-Za-z_][A-Za-z0-9_]*\)\s*\[[^\]]+\]$", rhs):
+            elif re.match(
+                r"^\(\(byte \*\)\(uintptr_t\)[A-Za-z_][A-Za-z0-9_]*\)\s*\[[^\]]+\]$", rhs
+            ):
                 replacement_rhs = f"({lhs_type})(uintptr_t)GHIDRA_U64({rhs})"
             elif " ".join(lhs_type.split()) == "code *":
                 replacement_rhs = f"(code *)(uintptr_t)GHIDRA_U64({rhs})"
@@ -4601,9 +4773,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
     ) -> str:
         """Rewrite pointer/integer assignments whose RHS is an expression, not just a bare variable."""
         lhs = match.group("lhs")
-        lhs_type = self._find_nearest_declared_variable_type(source, lhs, match.start()) or variable_types.get(
-            lhs, ""
-        )
+        lhs_type = self._find_nearest_declared_variable_type(
+            source, lhs, match.start()
+        ) or variable_types.get(lhs, "")
         if not lhs_type and self._is_integer_fragment_name(lhs):
             lhs_type = "uint64_t"
         rhs_expr = match.group("rhs").strip()
@@ -4658,8 +4830,7 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         ):
             return f"{match.group('indent')}{lhs} = ({lhs_type})(uintptr_t)GHIDRA_U64({rhs_expr});"
         if self._is_pointer_declared_type(lhs_type) and (
-            re.match(r"^(?:SUB\d+|CONCAT\d+)\(", rhs_expr)
-            or rhs_expr.startswith("GHIDRA_U64(")
+            re.match(r"^(?:SUB\d+|CONCAT\d+)\(", rhs_expr) or rhs_expr.startswith("GHIDRA_U64(")
         ):
             return f"{match.group('indent')}{lhs} = ({lhs_type})(uintptr_t){rhs_expr};"
         if self._is_pointer_declared_type(lhs_type) and self._is_integer_declared_type(rhs_type):
@@ -4691,7 +4862,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 lhs_type = re.sub(r"\*\s*$", "", base_type).rstrip()
         rhs_type = self._infer_expression_declared_type(rhs_expr, variable_types)
         if not rhs_type and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", rhs_expr):
-            rhs_type = self._find_nearest_declared_variable_type(source, rhs_expr, match.start()) or ""
+            rhs_type = (
+                self._find_nearest_declared_variable_type(source, rhs_expr, match.start()) or ""
+            )
         if not lhs_type:
             lhs_base_match = re.match(
                 r"^(?:\*\s*(?P<deref>[A-Za-z_][A-Za-z0-9_]*)|(?P<index>[A-Za-z_][A-Za-z0-9_]*)\s*\[[^\]]+\])$",
@@ -4738,7 +4911,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             base_type = variable_types.get(deref_match.group("base"), "")
             if self._is_pointer_declared_type(base_type):
                 return re.sub(r"\*\s*$", "", base_type).rstrip()
-        pointer_cast_match = re.match(r"^\((?P<cast>[A-Za-z_][A-Za-z0-9_\s\*]+?\*)\)\s*(?:\(uintptr_t\))?.+$", stripped)
+        pointer_cast_match = re.match(
+            r"^\((?P<cast>[A-Za-z_][A-Za-z0-9_\s\*]+?\*)\)\s*(?:\(uintptr_t\))?.+$", stripped
+        )
         if pointer_cast_match:
             return pointer_cast_match.group("cast").strip()
         if stripped.startswith("GHIDRA_LARGE_INTEGER("):
@@ -4800,7 +4975,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         """Return whether an arithmetic expression contains pointer-typed terms."""
         if re.match(r'^"(?:[^"\\]|\\.)*"$', expression.strip()):
             return True
-        for symbol in re.findall(r"[A-Za-z_][A-Za-z0-9_]*\s*\[[^\]]+\]|[A-Za-z_][A-Za-z0-9_]*", expression):
+        for symbol in re.findall(
+            r"[A-Za-z_][A-Za-z0-9_]*\s*\[[^\]]+\]|[A-Za-z_][A-Za-z0-9_]*", expression
+        ):
             inferred = self._infer_expression_declared_type(symbol, variable_types)
             if self._is_pointer_declared_type(inferred):
                 return True
@@ -4867,7 +5044,11 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             rewritten = line
             stripped = line.strip()
             declaration = stripped[:-1].rstrip() if stripped.endswith(";") else stripped
-            if declaration and "=" not in declaration and self._match_variable_declaration(declaration):
+            if (
+                declaration
+                and "=" not in declaration
+                and self._match_variable_declaration(declaration)
+            ):
                 updated_lines.append(rewritten)
                 continue
             line_names = pointer_like_integer_names.intersection(token_pattern.findall(rewritten))
@@ -4914,7 +5095,11 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             rewritten = line
             stripped = line.strip()
             declaration = stripped[:-1].rstrip() if stripped.endswith(";") else stripped
-            if declaration and "=" not in declaration and self._match_variable_declaration(declaration):
+            if (
+                declaration
+                and "=" not in declaration
+                and self._match_variable_declaration(declaration)
+            ):
                 updated_lines.append(rewritten)
                 continue
             if "((uintptr_t *)(uintptr_t)" not in rewritten:
@@ -4930,9 +5115,11 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             if store_match:
                 rhs_expr = store_match.group("rhs").strip()
                 rhs_type = self._infer_expression_declared_type(rhs_expr, variable_types)
-                if self._is_pointer_declared_type(rhs_type) or self._expression_contains_pointer_terms(
-                    rhs_expr, variable_types
-                ) or "*" in rhs_expr:
+                if (
+                    self._is_pointer_declared_type(rhs_type)
+                    or self._expression_contains_pointer_terms(rhs_expr, variable_types)
+                    or "*" in rhs_expr
+                ):
                     rewritten = (
                         f"{store_match.group('indent')}{store_match.group('lhs')} = "
                         f"GHIDRA_U64({rhs_expr});"
@@ -4958,9 +5145,7 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         if "=" not in line or "((uintptr_t *)(uintptr_t)" not in line:
             return line
         rewritten = line
-        assignment_pattern = re.compile(
-            r"(?<![A-Za-z0-9_])(?P<lhs>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*"
-        )
+        assignment_pattern = re.compile(r"(?<![A-Za-z0-9_])(?P<lhs>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*")
         search_pos = 0
         while True:
             match = assignment_pattern.search(rewritten, search_pos)
@@ -5015,17 +5200,19 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         lines, starts = self._get_source_lines_and_starts(source)
         line_index = self._get_source_line_index(source, before_pos)
         if line_index != -1:
-            current_line_prefix = source[starts[line_index]:before_pos]
-            current_line_declarations = self._extract_declared_variable_types_from_line(current_line_prefix)
+            current_line_prefix = source[starts[line_index] : before_pos]
+            current_line_declarations = self._extract_declared_variable_types_from_line(
+                current_line_prefix
+            )
             if variable_name in current_line_declarations:
                 cache[cache_key] = current_line_declarations[variable_name]
                 return current_line_declarations[variable_name]
 
         boundary_index = self._get_enclosing_function_boundary_index(source, before_pos)
         if boundary_index is not None and line_index != -1:
-            declarations = self._get_function_local_declarations_at_boundary(source, boundary_index).get(
-                variable_name, []
-            )
+            declarations = self._get_function_local_declarations_at_boundary(
+                source, boundary_index
+            ).get(variable_name, [])
             for declaration_line, declared_type in reversed(declarations):
                 if declaration_line < line_index:
                     cache[cache_key] = declared_type
@@ -5055,7 +5242,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         if boundary_index is None:
             cache[cache_key] = None
             return None
-        parameter_type = self._get_function_parameter_types_at_boundary(source, boundary_index).get(variable_name)
+        parameter_type = self._get_function_parameter_types_at_boundary(source, boundary_index).get(
+            variable_name
+        )
         cache[cache_key] = parameter_type
         return parameter_type
 
@@ -5154,7 +5343,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 r"^[A-Za-z_][A-Za-z0-9_\s\*]*\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\([^)]*\)$",
                 signature_line,
             )
-            boundary_names[boundary_index] = signature_match.group("name") if signature_match else ""
+            boundary_names[boundary_index] = (
+                signature_match.group("name") if signature_match else ""
+            )
             return boundary_names[boundary_index]
 
         candidate_positions_by_name: Dict[str, set[int]] = {}
@@ -5173,7 +5364,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             r"\(\(ghidra_indirect_fn(?:_0)?\)\s*param_(?P<index>\d+)\)\s*\(",
             source,
         ):
-            boundary_index = self._get_enclosing_function_boundary_index(source, callback_match.start())
+            boundary_index = self._get_enclosing_function_boundary_index(
+                source, callback_match.start()
+            )
             if boundary_index is None:
                 continue
             function_name = get_function_name_at_boundary(boundary_index)
@@ -5227,10 +5420,14 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             for index, param in enumerate(params.split(",")):
                 stripped_param = param.strip()
                 replacement = stripped_param
-                if index in pointer_positions and re.search(r"\bundefined8\s*\*\s*param_\d+\b", stripped_param):
+                if index in pointer_positions and re.search(
+                    r"\bundefined8\s*\*\s*param_\d+\b", stripped_param
+                ):
                     replacement = re.sub(r"\bundefined8\s*\*", "void *", stripped_param, count=1)
                     changed = True
-                elif index in pointer_positions and re.search(r"\bundefined8\s+param_\d+\b", stripped_param):
+                elif index in pointer_positions and re.search(
+                    r"\bundefined8\s+param_\d+\b", stripped_param
+                ):
                     replacement = re.sub(r"\bundefined8\b", "uintptr_t", stripped_param, count=1)
                     changed = True
                 elif index in callback_positions and re.search(
@@ -5280,7 +5477,10 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                     if index in positions and self._is_pointer_like_expression(
                         source, arg, variable_types, int(call["start"])
                     ):
-                        if not re.match(r"^(?:GHIDRA_U64|GHIDRA_U128)\(", arg.strip()) and "(uintptr_t)" not in arg:
+                        if (
+                            not re.match(r"^(?:GHIDRA_U64|GHIDRA_U128)\(", arg.strip())
+                            and "(uintptr_t)" not in arg
+                        ):
                             replacement = f"GHIDRA_U64({arg.strip()})"
                             changed = True
                     rewritten_args.append(replacement)
@@ -5295,7 +5495,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 )
         for start, end, replacement in sorted(rewrites, key=lambda item: item[0], reverse=True):
             updated = updated[:start] + replacement + updated[end:]
-        updated = self._normalize_pointer_arguments_for_indirect_uintptr_calls(updated, variable_types)
+        updated = self._normalize_pointer_arguments_for_indirect_uintptr_calls(
+            updated, variable_types
+        )
         return updated
 
     def _normalize_pointer_arguments_for_indirect_uintptr_calls(
@@ -5349,7 +5551,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 not first_arg
                 or re.match(r"^(?:GHIDRA_U64|GHIDRA_U128)\(", first_arg)
                 or "(uintptr_t)" in first_arg
-                or not self._is_pointer_like_expression(updated, first_arg, variable_types, next_match)
+                or not self._is_pointer_like_expression(
+                    updated, first_arg, variable_types, next_match
+                )
             ):
                 index = close_paren + 1
                 continue
@@ -5362,10 +5566,13 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             index = open_paren + len(", ".join(arg.strip() for arg in args)) + 1
         return updated
 
-    def _collect_call_arguments(self, source: str, function_name: str) -> List[tuple[List[str], int]]:
+    def _collect_call_arguments(
+        self, source: str, function_name: str
+    ) -> List[tuple[List[str], int]]:
         """Collect balanced argument lists for real call sites while skipping declarations."""
         return [
-            (call["args"], int(call["start"])) for call in self._collect_calls(source, function_name)
+            (call["args"], int(call["start"]))
+            for call in self._collect_calls(source, function_name)
         ]
 
     def _looks_like_multiline_function_declaration(
@@ -5418,12 +5625,14 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         if not function_names:
             return []
         call_sites: List[Dict[str, object]] = []
-        alternation = "|".join(sorted((re.escape(name) for name in function_names), key=len, reverse=True))
+        alternation = "|".join(
+            sorted((re.escape(name) for name in function_names), key=len, reverse=True)
+        )
         pattern = re.compile(rf"\b(?P<name>{alternation})\s*\(")
         for match in pattern.finditer(source):
             function_name = match.group("name")
             line_start = source.rfind("\n", 0, match.start()) + 1
-            prefix = source[line_start:match.start()].strip()
+            prefix = source[line_start : match.start()].strip()
             if prefix and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_ \t\*]*", prefix):
                 continue
             open_paren = source.find("(", match.start())
@@ -5483,7 +5692,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
 
         def is_address_storage(declared_type: str) -> bool:
             normalized = " ".join(declared_type.split())
-            return self._is_pointer_declared_type(normalized) or ("[" in normalized and "]" in normalized)
+            return self._is_pointer_declared_type(normalized) or (
+                "[" in normalized and "]" in normalized
+            )
 
         inferred_type = self._infer_expression_declared_type(stripped, variable_types)
         if is_address_storage(inferred_type):
@@ -5506,9 +5717,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 if parameter_type is None:
                     cache[cache_key] = False
                     return False
-            base_type = variable_types.get(base_name, "") or self._find_nearest_declared_variable_type(
-                source, base_name, before_pos
-            )
+            base_type = variable_types.get(
+                base_name, ""
+            ) or self._find_nearest_declared_variable_type(source, base_name, before_pos)
             if base_type and self._is_pointer_declared_type(base_type):
                 cache[cache_key] = True
                 return True
@@ -5689,7 +5900,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             stripped = lines[boundary_index].strip()
             signature_parts: List[str] = []
             if stripped and stripped != "{":
-                signature_parts.insert(0, stripped[:-1].rstrip() if stripped.endswith("{") else stripped)
+                signature_parts.insert(
+                    0, stripped[:-1].rstrip() if stripped.endswith("{") else stripped
+                )
             for previous_index in range(boundary_index - 1, -1, -1):
                 previous = lines[previous_index].strip()
                 if not previous:
@@ -5937,7 +6150,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 ]
                 best_score = max(score for score, _candidate in scored_candidates)
                 if best_score > 0:
-                    best_candidates = [candidate for score, candidate in scored_candidates if score == best_score]
+                    best_candidates = [
+                        candidate for score, candidate in scored_candidates if score == best_score
+                    ]
                     if len(best_candidates) == 1:
                         return best_candidates[0]
             return None
@@ -5994,7 +6209,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 declared_type = " ".join(
                     f"{declaration_match.group('type').strip()}{declaration_match.group('array') or ''}".split()
                 )
-                pointer_match = re.match(r"^(?P<base>[A-Za-z_][A-Za-z0-9_\s]*?)\s*\*$", declared_type)
+                pointer_match = re.match(
+                    r"^(?P<base>[A-Za-z_][A-Za-z0-9_\s]*?)\s*\*$", declared_type
+                )
                 if not pointer_match:
                     continue
                 base_type = " ".join(pointer_match.group("base").split())
@@ -6094,7 +6311,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             return boundary_signature_cache[boundary_index]
 
         for line_index, line in enumerate(lines):
-            boundary_index = line_to_boundary[line_index] if line_index < len(line_to_boundary) else None
+            boundary_index = (
+                line_to_boundary[line_index] if line_index < len(line_to_boundary) else None
+            )
             if boundary_index is None:
                 continue
             function_name, return_type = get_function_signature_at_boundary(boundary_index)
@@ -6108,7 +6327,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                         bare_return_match.group("name"),
                         f"static {return_type} {{name}} = ({return_type})0;",
                     )
-                address_return_match = re.match(r"^return\s+&(?P<name>DAT_[0-9A-Fa-f]+)\b", stripped)
+                address_return_match = re.match(
+                    r"^return\s+&(?P<name>DAT_[0-9A-Fa-f]+)\b", stripped
+                )
                 if address_return_match:
                     base_type = strip_pointer_suffix(return_type)
                     record_symbol_template(
@@ -6117,7 +6338,9 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                     )
 
         if explicit_pointer_param_bases_by_name:
-            for call in self._collect_calls_for_names(source, set(explicit_pointer_param_bases_by_name)):
+            for call in self._collect_calls_for_names(
+                source, set(explicit_pointer_param_bases_by_name)
+            ):
                 parameter_bases = explicit_pointer_param_bases_by_name.get(str(call["name"]), {})
                 for index, arg in enumerate(call["args"]):
                     base_type = parameter_bases.get(index)
@@ -6194,7 +6417,11 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                 "static const unsigned char {name}[32] = {{0}};",
             ),
             (
-                [name for name in re.findall(r"&\s*(LAB_[A-Za-z0-9]+)\b", source) if name not in defined_labels],
+                [
+                    name
+                    for name in re.findall(r"&\s*(LAB_[A-Za-z0-9]+)\b", source)
+                    if name not in defined_labels
+                ],
                 "static const uint64_t {name} = 0;",
             ),
             (
@@ -6376,9 +6603,7 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         for name in function_stub_names:
             declarations.append(f"static inline uint64_t {name}() {{ return 0; }}")
             stub_names.remove(name)
-        declarations.extend(
-            f"#define {name}(...) ((uint64_t)0)" for name in stub_names
-        )
+        declarations.extend(f"#define {name}(...) ((uint64_t)0)" for name in stub_names)
         return "\n".join(declarations)
 
     def _should_skip_function_declaration(self, declaration_name: str) -> bool:
@@ -6526,6 +6751,7 @@ Output only the Python code, no explanations.
             json.dump(clean_results, f, indent=2)
 
         logger.info(f"\n📊 Results saved to: {output_file}")
+
     _SKIPPED_DECLARATION_NAMES = {
         "_onexit",
         "atexit",

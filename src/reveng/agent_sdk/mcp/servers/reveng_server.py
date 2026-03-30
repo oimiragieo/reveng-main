@@ -104,13 +104,19 @@ class REVENGMCPServer(MCPServer):
                 input_schema={
                     "type": "object",
                     "properties": {
-                        "path": {"type": "string", "description": "Path to app entry file or package"},
+                        "path": {
+                            "type": "string",
+                            "description": "Path to app entry file or package",
+                        },
                         "language": {
                             "type": "string",
                             "description": "Adapter language or auto",
                             "enum": ["auto", "javascript", "jvm", "python", "dotnet"],
                         },
-                        "output_dir": {"type": "string", "description": "Directory for analysis output"},
+                        "output_dir": {
+                            "type": "string",
+                            "description": "Directory for analysis output",
+                        },
                     },
                     "required": ["path"],
                 },
@@ -125,13 +131,19 @@ class REVENGMCPServer(MCPServer):
                 input_schema={
                     "type": "object",
                     "properties": {
-                        "config_path": {"type": "string", "description": "Optional corpus config path"},
+                        "config_path": {
+                            "type": "string",
+                            "description": "Optional corpus config path",
+                        },
                         "entry_names": {
                             "type": "array",
                             "items": {"type": "string"},
                             "description": "Optional list of corpus entry names to run",
                         },
-                        "output_dir": {"type": "string", "description": "Optional corpus output directory"},
+                        "output_dir": {
+                            "type": "string",
+                            "description": "Optional corpus output directory",
+                        },
                     },
                 },
                 handler=self.run_app_corpus,
@@ -433,7 +445,10 @@ class REVENGMCPServer(MCPServer):
             corpus_entries = [AppCorpusEntry(**entry) for entry in config.get("entries", [])]
             corpus_entries = select_app_corpus_entries(corpus_entries, args.get("entry_names"))
             output_dir = str(
-                Path(args.get("output_dir") or (Path.cwd() / "reports" / "app_reverse_engineering_corpus"))
+                Path(
+                    args.get("output_dir")
+                    or (Path.cwd() / "reports" / "app_reverse_engineering_corpus")
+                )
                 .expanduser()
                 .resolve()
             )
@@ -453,7 +468,11 @@ class REVENGMCPServer(MCPServer):
                 provenance={
                     "inputs": [],
                     "artifacts": [],
-                    "stages": ["mcp_tool_execution", "app_corpus_execution", "result_contract_serialization"],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "app_corpus_execution",
+                        "result_contract_serialization",
+                    ],
                     "references": [],
                     "tools": ["run_app_corpus"],
                 },

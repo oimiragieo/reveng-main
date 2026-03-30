@@ -10,14 +10,14 @@ Version: 4.0.0
 License: MIT
 """
 
-import logging
 import asyncio
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from .app_reverse_engineering import AppCorpusEntry, create_default_framework, run_app_corpus_sync
 from .analyzer import REVENGAnalyzer
+from .app_reverse_engineering import AppCorpusEntry, create_default_framework, run_app_corpus_sync
 from .core.exceptions import (
     AnalysisError,
     ValidationError,
@@ -348,7 +348,9 @@ class REVENGAPI:
                     str(path),
                     str(resolved_output_dir),
                     language=language,
-                    input_root=(str(Path(input_root).expanduser().resolve()) if input_root else None),
+                    input_root=(
+                        str(Path(input_root).expanduser().resolve()) if input_root else None
+                    ),
                     skip_patterns=skip_patterns,
                     max_snippets=max_snippets,
                     snippet_context=snippet_context,
@@ -374,7 +376,11 @@ class REVENGAPI:
 
         try:
             resolved_config = Path(config_path).expanduser().resolve() if config_path else None
-            config = load_app_corpus_config(resolved_config) if resolved_config else load_app_corpus_config()
+            config = (
+                load_app_corpus_config(resolved_config)
+                if resolved_config
+                else load_app_corpus_config()
+            )
             entries = config.get("entries", [])
             if selected_names:
                 selected = set(selected_names)

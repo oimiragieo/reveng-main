@@ -484,7 +484,9 @@ class GhidraInstaller(BaseInstaller):
             # Make executable on Unix systems
             if self.platform in (Platform.LINUX, Platform.MACOS):
                 os.chmod(headless_path, 0o755)
-                result = subprocess.run([str(headless_path), "-help"], capture_output=True, timeout=30)
+                result = subprocess.run(
+                    [str(headless_path), "-help"], capture_output=True, timeout=30
+                )
             else:
                 result = subprocess.run(
                     ["cmd", "/c", str(headless_path), "-help"], capture_output=True, timeout=30

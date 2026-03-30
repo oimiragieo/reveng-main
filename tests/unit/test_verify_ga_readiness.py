@@ -5,7 +5,6 @@ import json
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RUNNER_PATH = REPO_ROOT / "scripts" / "verify_ga_readiness.py"
 
@@ -188,7 +187,11 @@ def test_main_writes_readiness_report_and_returns_zero_for_baseline(tmp_path: Pa
     source_report = _write_json(tmp_path / "source.json", {"benchmark_count": 1, "benchmarks": []})
     bun_report = _write_json(
         tmp_path / "bun.json",
-        {"matrix_status": "pass_with_limitations", "live_bun_sample_count": 1, "hard_failure_count": 0},
+        {
+            "matrix_status": "pass_with_limitations",
+            "live_bun_sample_count": 1,
+            "hard_failure_count": 0,
+        },
     )
     app_report = _write_json(
         tmp_path / "app.json",
@@ -228,7 +231,11 @@ def test_baseline_profile_fails_without_supported_workflows(tmp_path: Path):
     source_report = _write_json(tmp_path / "source.json", {"benchmark_count": 1, "benchmarks": []})
     bun_report = _write_json(
         tmp_path / "bun.json",
-        {"matrix_status": "pass_with_limitations", "live_bun_sample_count": 1, "hard_failure_count": 0},
+        {
+            "matrix_status": "pass_with_limitations",
+            "live_bun_sample_count": 1,
+            "hard_failure_count": 0,
+        },
     )
     app_report = _write_json(
         tmp_path / "app.json",
