@@ -29,7 +29,6 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 from .deobfuscator import JavaScriptDeobfuscator
 from .detectors import ObfuscationDetector
 
-
 TOPIC_DEFINITIONS: Dict[str, Dict[str, object]] = {
     "runtime_architecture": {
         "title": "Runtime Architecture",
@@ -191,9 +190,7 @@ TOPIC_DEFINITIONS: Dict[str, Dict[str, object]] = {
     },
 }
 
-STRING_LITERAL_PATTERN = re.compile(
-    r'"((?:\\.|[^"\\]){3,220})"|\'((?:\\.|[^\'\\]){3,220})\''
-)
+STRING_LITERAL_PATTERN = re.compile(r'"((?:\\.|[^"\\]){3,220})"|\'((?:\\.|[^\'\\]){3,220})\'')
 CLI_FLAG_PATTERN = re.compile(r"--[a-z0-9][a-z0-9-]*")
 SLASH_COMMAND_PATTERN = re.compile(r"/[a-z][a-z0-9-]{1,30}")
 URL_PATTERN = re.compile(r"https?://[^\s\"'`]+")
@@ -545,7 +542,9 @@ class JavaScriptBundleReverseEngineer:
 
         return segments
 
-    def _collect_topic_matches(self, segments: Sequence[str], keywords: object) -> List[Dict[str, object]]:
+    def _collect_topic_matches(
+        self, segments: Sequence[str], keywords: object
+    ) -> List[Dict[str, object]]:
         """Collect bounded evidence snippets for one topic."""
         if not isinstance(keywords, list):
             return []
@@ -556,7 +555,9 @@ class JavaScriptBundleReverseEngineer:
 
         for index, segment in enumerate(segments):
             lowered_segment = segment.lower()
-            matched_keywords = [keyword for keyword in lowered_keywords if keyword in lowered_segment]
+            matched_keywords = [
+                keyword for keyword in lowered_keywords if keyword in lowered_segment
+            ]
             if not matched_keywords:
                 continue
 
@@ -569,7 +570,9 @@ class JavaScriptBundleReverseEngineer:
             if normalized in seen_snippets:
                 continue
 
-            score = sum(len(keyword) for keyword in matched_keywords) + len(set(matched_keywords)) * 10
+            score = (
+                sum(len(keyword) for keyword in matched_keywords) + len(set(matched_keywords)) * 10
+            )
             candidates.append(
                 {
                     "score": score,
@@ -750,10 +753,7 @@ class JavaScriptBundleReverseEngineer:
             description,
             "",
             "## Assessment",
-            (
-                f"- Evidence coverage: {len(matches)} excerpt(s) collected for "
-                f"`{topic_key}`."
-            ),
+            (f"- Evidence coverage: {len(matches)} excerpt(s) collected for " f"`{topic_key}`."),
             "- Confidence model: keyword- and snippet-driven static analysis of a bundled artifact.",
         ]
 

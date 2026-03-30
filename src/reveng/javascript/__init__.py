@@ -18,15 +18,15 @@ Integrates best-of-breed open source tools:
 - Prettier (formatting)
 """
 
+from .bundle_reverse_engineer import (
+    BundleReverseEngineeringResult,
+    JavaScriptBundleReverseEngineer,
+)
 from .deobfuscator import (
     DeobfuscationResult,
     DeobfuscationStage,
     JavaScriptDeobfuscator,
     ObfuscationType,
-)
-from .bundle_reverse_engineer import (
-    BundleReverseEngineeringResult,
-    JavaScriptBundleReverseEngineer,
 )
 from .detectors import DetectionResult, ObfuscationDetector
 from .source_map_recoverer import SourceMapRecoverer, SourceMapResult

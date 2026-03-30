@@ -294,7 +294,9 @@ class TestCLIHandlers:
             evidence=[{"kind": "analysis_summary", "path": str(output_dir / "analysis.json")}],
             provenance={
                 "inputs": [{"kind": "app_input", "path": str(input_path)}],
-                "artifacts": [{"kind": "analysis_summary", "path": str(output_dir / "analysis.json")}],
+                "artifacts": [
+                    {"kind": "analysis_summary", "path": str(output_dir / "analysis.json")}
+                ],
                 "stages": ["reverse_engineer_app"],
                 "references": [],
                 "tools": ["jvm"],
@@ -307,7 +309,9 @@ class TestCLIHandlers:
 
         framework.reverse_engineer = _fake_reverse_engineer
 
-        with patch("reveng.app_reverse_engineering.create_default_framework", return_value=framework):
+        with patch(
+            "reveng.app_reverse_engineering.create_default_framework", return_value=framework
+        ):
             result = cli.handle_reverse_engineer_app_command(
                 Namespace(
                     input_path=str(input_path),
@@ -386,7 +390,9 @@ class TestCLIMain:
 
     def test_main_routes_reverse_engineer_app_command(self):
         with (
-            patch.object(cli, "handle_reverse_engineer_app_command", return_value=0) as mock_handler,
+            patch.object(
+                cli, "handle_reverse_engineer_app_command", return_value=0
+            ) as mock_handler,
             patch.object(
                 sys,
                 "argv",

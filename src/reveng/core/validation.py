@@ -165,7 +165,8 @@ def secure_temp_file(
         ]
 
         is_allowed = any(
-            dir_path == allowed_dir or allowed_dir in dir_path.parents for allowed_dir in allowed_temp_dirs
+            dir_path == allowed_dir or allowed_dir in dir_path.parents
+            for allowed_dir in allowed_temp_dirs
         )
 
         if not is_allowed:

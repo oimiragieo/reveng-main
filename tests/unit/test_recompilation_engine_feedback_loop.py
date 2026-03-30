@@ -6,9 +6,9 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from reveng.tools.binary.validation_config import ValidationConfig, ValidationMode
 
 from reveng.ai.recompilation_engine import BinaryRecompilationEngine
+from reveng.tools.binary.validation_config import ValidationConfig, ValidationMode
 
 
 class DummyGemini:
@@ -311,7 +311,9 @@ async def test_full_pipeline_returns_graceful_failure_report_when_compilation_fa
 
 
 @pytest.mark.asyncio
-async def test_full_pipeline_surfaces_differential_validation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+async def test_full_pipeline_surfaces_differential_validation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     source_file = tmp_path / "reconstructed.c"
     source_file.write_text("int main(void) { return 0; }\n", encoding="utf-8")
     rebuilt_binary = tmp_path / "reconstructed_gcc.exe"
@@ -457,8 +459,7 @@ def test_recompilation_equivalence_summary_reports_compile_only_candidate(tmp_pa
     assert summary["confidence"] == "low"
     assert summary["evidence"]["successful_compiler_count"] == 1
     assert any(
-        item["kind"] == "characterization_smoke_test"
-        for item in summary["recommended_validations"]
+        item["kind"] == "characterization_smoke_test" for item in summary["recommended_validations"]
     )
 
 
@@ -538,8 +539,12 @@ async def test_reconstruct_c_code_includes_ghidra_compatibility_prelude(tmp_path
 
     reconstructed = await engine._reconstruct_c_code(
         {
-            "functions": [{"name": "FUN_140001000", "signature": "undefined8 __fastcall FUN_140001000(void)"}],
-            "decompiled_code": {"0x140001000": "undefined8 __fastcall FUN_140001000(void) { return 0; }"},
+            "functions": [
+                {"name": "FUN_140001000", "signature": "undefined8 __fastcall FUN_140001000(void)"}
+            ],
+            "decompiled_code": {
+                "0x140001000": "undefined8 __fastcall FUN_140001000(void) { return 0; }"
+            },
         }
     )
 
@@ -684,9 +689,18 @@ async def test_reconstruct_c_code_skips_conflicting_and_duplicate_prototypes(tmp
     reconstructed = await engine._reconstruct_c_code(
         {
             "functions": [
-                {"name": "_onexit", "signature": "_func___cdecl_int * __cdecl _onexit(_func___cdecl_int * param_1)"},
-                {"name": "memcpy", "signature": "void * __cdecl memcpy(void * _Dst, void * _Src, size_t _Size)"},
-                {"name": "operator delete", "signature": "void __cdecl operator delete(void * param_1)"},
+                {
+                    "name": "_onexit",
+                    "signature": "_func___cdecl_int * __cdecl _onexit(_func___cdecl_int * param_1)",
+                },
+                {
+                    "name": "memcpy",
+                    "signature": "void * __cdecl memcpy(void * _Dst, void * _Src, size_t _Size)",
+                },
+                {
+                    "name": "operator delete",
+                    "signature": "void __cdecl operator delete(void * param_1)",
+                },
                 {"name": "dup.one", "signature": "void __cdecl dup.one(void)"},
                 {"name": "dup$one", "signature": "void __cdecl dup$one(void)"},
             ],
@@ -719,8 +733,12 @@ async def test_reconstruct_c_code_reports_postprocessing_stages(tmp_path: Path):
     stages = []
     reconstructed = await engine._reconstruct_c_code(
         {
-            "functions": [{"name": "FUN_140001000", "signature": "undefined8 __fastcall FUN_140001000(void)"}],
-            "decompiled_code": {"0x140001000": "undefined8 __fastcall FUN_140001000(void) { return 0; }"},
+            "functions": [
+                {"name": "FUN_140001000", "signature": "undefined8 __fastcall FUN_140001000(void)"}
+            ],
+            "decompiled_code": {
+                "0x140001000": "undefined8 __fastcall FUN_140001000(void) { return 0; }"
+            },
         },
         stage_callback=stages.append,
     )
@@ -755,8 +773,12 @@ async def test_reconstruct_c_code_reports_stage_timings(tmp_path: Path):
     stage_timings = {}
     reconstructed = await engine._reconstruct_c_code(
         {
-            "functions": [{"name": "FUN_140001000", "signature": "undefined8 __fastcall FUN_140001000(void)"}],
-            "decompiled_code": {"0x140001000": "undefined8 __fastcall FUN_140001000(void) { return 0; }"},
+            "functions": [
+                {"name": "FUN_140001000", "signature": "undefined8 __fastcall FUN_140001000(void)"}
+            ],
+            "decompiled_code": {
+                "0x140001000": "undefined8 __fastcall FUN_140001000(void) { return 0; }"
+            },
         },
         stage_timing_callback=stage_timings.__setitem__,
     )
@@ -783,8 +805,12 @@ async def test_reconstruct_c_code_writes_opt_in_suspicious_function_stage_dumps(
     output_dir.mkdir()
     await engine._reconstruct_c_code(
         {
-            "functions": [{"name": "FUN_140001000", "signature": "void __fastcall FUN_140001000(void)"}],
-            "decompiled_code": {"0x140001000": "void __fastcall FUN_140001000(void) { FUN_1GHIDRA_U64(); }"},
+            "functions": [
+                {"name": "FUN_140001000", "signature": "void __fastcall FUN_140001000(void)"}
+            ],
+            "decompiled_code": {
+                "0x140001000": "void __fastcall FUN_140001000(void) { FUN_1GHIDRA_U64(); }"
+            },
         },
         debug_output_dir=output_dir,
     )
@@ -819,7 +845,9 @@ async def test_reconstruct_c_code_writes_opt_in_whole_source_stage_dumps(
     output_dir.mkdir()
     await engine._reconstruct_c_code(
         {
-            "functions": [{"name": "FUN_140001000", "signature": "void __fastcall FUN_140001000(void)"}],
+            "functions": [
+                {"name": "FUN_140001000", "signature": "void __fastcall FUN_140001000(void)"}
+            ],
             "decompiled_code": {"0x140001000": "void __fastcall FUN_140001000(void) { return 0; }"},
         },
         debug_output_dir=output_dir,
@@ -864,10 +892,22 @@ async def test_reconstruct_c_code_reapplies_helper_alias_qualification_after_gen
     reconstructed = await engine._reconstruct_c_code(
         {
             "functions": [
-                {"name": "core_fmt_num_imp_impl_16_fmt", "signature": "void __cdecl core_fmt_num_imp_impl_16_fmt(void)"},
-                {"name": "core_fmt_num_impl_16_fmt", "signature": "void __cdecl core_fmt_num_impl_16_fmt(void)"},
-                {"name": "std_io_error_impl_16_fmt", "signature": "void __cdecl std_io_error_impl_16_fmt(void)"},
-                {"name": "std_io_error_impl_0_fmt", "signature": "void __cdecl std_io_error_impl_0_fmt(void)"},
+                {
+                    "name": "core_fmt_num_imp_impl_16_fmt",
+                    "signature": "void __cdecl core_fmt_num_imp_impl_16_fmt(void)",
+                },
+                {
+                    "name": "core_fmt_num_impl_16_fmt",
+                    "signature": "void __cdecl core_fmt_num_impl_16_fmt(void)",
+                },
+                {
+                    "name": "std_io_error_impl_16_fmt",
+                    "signature": "void __cdecl std_io_error_impl_16_fmt(void)",
+                },
+                {
+                    "name": "std_io_error_impl_0_fmt",
+                    "signature": "void __cdecl std_io_error_impl_0_fmt(void)",
+                },
             ],
             "decompiled_code": {
                 "0x1": "void __cdecl core_fmt_num_imp_impl_16_fmt(void) { return; }",
@@ -905,11 +945,20 @@ async def test_reconstruct_c_code_reapplies_void_pointer_indexing_after_late_sig
             "void FUN_1400083e0(void *param_1, ulonglong *param_2)\n",
         )
 
-    monkeypatch.setattr(engine, "_normalize_pointer_arguments_for_uintptr_params", introduce_late_void_pointer_signature)
+    monkeypatch.setattr(
+        engine,
+        "_normalize_pointer_arguments_for_uintptr_params",
+        introduce_late_void_pointer_signature,
+    )
 
     reconstructed = await engine._reconstruct_c_code(
         {
-            "functions": [{"name": "FUN_1400083e0", "signature": "void FUN_1400083e0(uintptr_t param_1, ulonglong *param_2)"}],
+            "functions": [
+                {
+                    "name": "FUN_1400083e0",
+                    "signature": "void FUN_1400083e0(uintptr_t param_1, ulonglong *param_2)",
+                }
+            ],
             "decompiled_code": {
                 "0x1400083e0": (
                     "void FUN_1400083e0(uintptr_t param_1, ulonglong *param_2)\n"
@@ -928,7 +977,9 @@ async def test_reconstruct_c_code_reapplies_void_pointer_indexing_after_late_sig
 
 
 @pytest.mark.asyncio
-async def test_phase2_reconstruction_writes_progress_artifact(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+async def test_phase2_reconstruction_writes_progress_artifact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -1005,7 +1056,10 @@ def test_sanitize_generated_c_tokens_joins_wrapped_sanitized_call_identifiers(tm
 
     sanitized = engine._sanitize_generated_c_tokens(source)
 
-    assert "std_sync_once_lock_OnceLock_initialize_std_sync_poison_mutex_Mutex_std_io_buffered_bufreader_BufReader_std_io_stdio_StdinRaw_" in sanitized
+    assert (
+        "std_sync_once_lock_OnceLock_initialize_std_sync_poison_mutex_Mutex_std_io_buffered_bufreader_BufReader_std_io_stdio_StdinRaw_"
+        in sanitized
+    )
     assert "\n            ();" not in sanitized
     assert sanitized.count("();") == 1
 
@@ -1024,7 +1078,10 @@ def test_sanitize_generated_c_tokens_joins_wrapped_sanitized_declarations(tmp_pa
 
     sanitized = engine._sanitize_generated_c_tokens(source)
 
-    assert "core_ptr_drop_in_place_std_sync_nonpoison_rwlock_RwLockReadGuard_enum2_std_panicking_Hook_(uintptr_t param_1, ...);" in sanitized
+    assert (
+        "core_ptr_drop_in_place_std_sync_nonpoison_rwlock_RwLockReadGuard_enum2_std_panicking_Hook_(uintptr_t param_1, ...);"
+        in sanitized
+    )
     assert "core_ptr_\n" not in sanitized
 
 
@@ -1071,14 +1128,19 @@ def test_build_generated_symbol_prelude_declares_discovered_synthetic_symbols(tm
     assert "static uint64_t UNK_1400ca3fc = 0;" in prelude
     assert "static const uint64_t UINT_1400e2550 = 0;" in prelude
     assert "static code *HeapFree_exref = (code *)0;" in prelude
-    assert "static uint64_t DAT_1400abcd = 0;" in engine._build_generated_symbol_prelude("DAT_1400abcd = 1;")
+    assert "static uint64_t DAT_1400abcd = 0;" in engine._build_generated_symbol_prelude(
+        "DAT_1400abcd = 1;"
+    )
     assert "static uint64_t auVar97_0_4_ = 0;" in prelude
     assert "static uint64_t local_120_1_7_ = 0;" in prelude
     assert (
         "static const ghidra_uint128 ___xmm_00000010000000100000001000000010 = (ghidra_uint128)0;"
         in prelude
     )
-    assert "static const ghidra_uint128 __xmm_12bd61d70e7773488ee2be6a73d559e0 = (ghidra_uint128)0;" in prelude
+    assert (
+        "static const ghidra_uint128 __xmm_12bd61d70e7773488ee2be6a73d559e0 = (ghidra_uint128)0;"
+        in prelude
+    )
     assert "static const uint64_t _xmm_12bd61d70e7773488ee2be6a73d559e0_10_1_ = 0;" in prelude
     assert "static const uint64_t PTR_FUN_1400d0160 = 0;" in prelude
     assert "static const uint64_t core_fmt_impl_22_fmt = 0;" in prelude
@@ -1109,9 +1171,7 @@ def test_build_generated_symbol_prelude_declares_unresolved_lab_symbols(tmp_path
     )
 
     prelude = engine._build_generated_symbol_prelude(
-        "ptr = &LAB_14003d870;\n"
-        "LAB_140067b50:\n"
-        "goto LAB_140067b50;\n"
+        "ptr = &LAB_14003d870;\n" "LAB_140067b50:\n" "goto LAB_140067b50;\n"
     )
 
     assert "static const uint64_t LAB_14003d870 = 0;" in prelude
@@ -1141,8 +1201,7 @@ def test_build_generated_symbol_prelude_skips_called_helper_names(tmp_path: Path
     )
 
     prelude = engine._build_generated_symbol_prelude(
-        "core_str_converts_from_utf8();\n"
-        "alloc_raw_vec_handle_error();\n"
+        "core_str_converts_from_utf8();\n" "alloc_raw_vec_handle_error();\n"
     )
 
     assert "core_str_converts_from_utf8" not in prelude
@@ -1210,7 +1269,10 @@ def test_relax_void_non_fun_return_types_used_as_values(tmp_path: Path):
 
     normalized = engine._relax_void_return_functions_used_as_values(source)
 
-    assert "uintptr_t _text_unlikely(ulonglong *param_1,void *param_2,ulonglong param_3);" in normalized
+    assert (
+        "uintptr_t _text_unlikely(ulonglong *param_1,void *param_2,ulonglong param_3);"
+        in normalized
+    )
     assert "void _text_unlikely" not in normalized
 
 
@@ -1395,10 +1457,7 @@ def test_normalize_generated_c_semantics_preserves_indexed_vector_masks(tmp_path
         work_dir=tmp_path,
     )
 
-    source = (
-        "undefined1 auVar91 [16];\n"
-        "auVar91[0] = -(pcVar58[0] == cVar49);\n"
-    )
+    source = "undefined1 auVar91 [16];\n" "auVar91[0] = -(pcVar58[0] == cVar49);\n"
 
     normalized = engine._normalize_generated_c_semantics(source)
 
@@ -1489,7 +1548,9 @@ def test_normalize_generated_c_semantics_generalizes_non_auvar_128bit_arrays(tmp
     assert "auStack_190 = GHIDRA_U128(0x0);" in normalized
 
 
-def test_normalize_generated_c_semantics_rewrites_vector_whole_loads_from_pointer_arrays(tmp_path: Path):
+def test_normalize_generated_c_semantics_rewrites_vector_whole_loads_from_pointer_arrays(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -1552,11 +1613,19 @@ def test_normalize_generated_c_semantics_casts_pointer_values_via_uintptr_for_do
 
     normalized = engine._normalize_generated_c_semantics(source)
 
-    assert "if ((double)(uintptr_t)ppppppppppuVar48 < (double)(uintptr_t)*pppppppppppuVar65) {}" in normalized
-    assert "while ((double)(uintptr_t)ppppppppppuVar48 < *(double *)((longlong)pppppppppppuVar36 + lVar46)) {}" in normalized
+    assert (
+        "if ((double)(uintptr_t)ppppppppppuVar48 < (double)(uintptr_t)*pppppppppppuVar65) {}"
+        in normalized
+    )
+    assert (
+        "while ((double)(uintptr_t)ppppppppppuVar48 < *(double *)((longlong)pppppppppppuVar36 + lVar46)) {}"
+        in normalized
+    )
 
 
-def test_normalize_generated_c_semantics_rewrites_indexed_xmm_constants_to_vec_bytes(tmp_path: Path):
+def test_normalize_generated_c_semantics_rewrites_indexed_xmm_constants_to_vec_bytes(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -1571,8 +1640,13 @@ def test_normalize_generated_c_semantics_rewrites_indexed_xmm_constants_to_vec_b
 
     normalized = engine._normalize_generated_c_semantics(source)
 
-    assert "((const ghidra_vec128 *)&__xmm_00000000000000002020202020202020)->bytes[0]" in normalized
-    assert "((const ghidra_vec128 *)&___xmm_6c77656e2d687469772d726f68747561)->bytes[0xf]" in normalized
+    assert (
+        "((const ghidra_vec128 *)&__xmm_00000000000000002020202020202020)->bytes[0]" in normalized
+    )
+    assert (
+        "((const ghidra_vec128 *)&___xmm_6c77656e2d687469772d726f68747561)->bytes[0xf]"
+        in normalized
+    )
 
 
 def test_normalize_generated_c_semantics_rewrites_pointer_switches_to_uintptr(tmp_path: Path):
@@ -1631,7 +1705,10 @@ def test_normalize_generated_c_semantics_restores_large_integer_split_aliases(tm
     assert "((_struct_19 *)&local_678)->HighPart = 0;" in normalized
     assert "(_Var4).LowPart = 1;" in normalized
     assert "(_Var4).HighPart = 0;" in normalized
-    assert "(*(_struct_19 *)&((LARGE_INTEGER *)(ptr + 8))[((LARGE_INTEGER *)&LVar36)->QuadPart * 4]) = _Var4;" in normalized
+    assert (
+        "(*(_struct_19 *)&((LARGE_INTEGER *)(ptr + 8))[((LARGE_INTEGER *)&LVar36)->QuadPart * 4]) = _Var4;"
+        in normalized
+    )
     assert "((LARGE_INTEGER *)&LStack_100)->QuadPart = (LONGLONG)&DAT_00000008;" in normalized
 
 
@@ -1693,11 +1770,7 @@ def test_normalize_generated_c_semantics_rewrites_code_scalars_to_pointers(tmp_p
         work_dir=tmp_path,
     )
 
-    source = (
-        "code cVar21;\n"
-        "cVar21 = (code)0x1;\n"
-        "*(code *)(ptr + 0x18) = (code)0x0;\n"
-    )
+    source = "code cVar21;\n" "cVar21 = (code)0x1;\n" "*(code *)(ptr + 0x18) = (code)0x0;\n"
 
     normalized = engine._normalize_generated_c_semantics(source)
 
@@ -1791,7 +1864,10 @@ def test_normalize_generated_c_semantics_rewrites_code_pointer_subscripts_in_exp
     normalized = engine._normalize_generated_c_semantics(source)
 
     assert "if ((char)((byte *)(uintptr_t)pcVar11)[local_90] < -0x40) {" in normalized
-    assert "cVar1 = (code *)(uintptr_t)GHIDRA_U64(((byte *)(uintptr_t)(pcVar11 + local_90))[1]);" in normalized
+    assert (
+        "cVar1 = (code *)(uintptr_t)GHIDRA_U64(((byte *)(uintptr_t)(pcVar11 + local_90))[1]);"
+        in normalized
+    )
 
 
 def test_normalize_generated_c_semantics_rewrites_plain_vector_value_loads_from_pointer_arrays(
@@ -1803,11 +1879,7 @@ def test_normalize_generated_c_semantics_rewrites_plain_vector_value_loads_from_
         work_dir=tmp_path,
     )
 
-    source = (
-        "ghidra_uint128 auVar20;\n"
-        "undefined1 (*pauVar6) [16];\n"
-        "auVar20 = pauVar6[1];\n"
-    )
+    source = "ghidra_uint128 auVar20;\n" "undefined1 (*pauVar6) [16];\n" "auVar20 = pauVar6[1];\n"
 
     normalized = engine._normalize_generated_c_semantics(source)
 
@@ -1824,8 +1896,7 @@ def test_normalize_generated_c_semantics_rewrites_illegal_char_array_cast_assign
     )
 
     source = (
-        "char acStack_11e0 [8];\n"
-        "acStack_11e0 = (char [8])s_aceMutex00000000_1400dd208_8_8_;\n"
+        "char acStack_11e0 [8];\n" "acStack_11e0 = (char [8])s_aceMutex00000000_1400dd208_8_8_;\n"
     )
 
     normalized = engine._normalize_generated_c_semantics(source)
@@ -1908,7 +1979,10 @@ def test_normalize_generated_c_semantics_rewrites_large_integer_indexed_quadpart
         in normalized
     )
     assert "(*(_struct_19 *)&LVar38) = (*(_struct_19 *)&LVar28);" in normalized
-    assert "if (GHIDRA_U64(lVar14) != GHIDRA_U64(((LARGE_INTEGER *)&LVar36)->QuadPart)) {}" in normalized
+    assert (
+        "if (GHIDRA_U64(lVar14) != GHIDRA_U64(((LARGE_INTEGER *)&LVar36)->QuadPart)) {}"
+        in normalized
+    )
 
 
 def test_normalize_generated_c_semantics_preserves_large_integer_aggregate_copies(tmp_path: Path):
@@ -1996,7 +2070,9 @@ def test_normalize_generated_c_semantics_unwraps_large_integer_macro_misuse_and_
     assert "return LVar12;" in normalized
 
 
-def test_normalize_generated_c_semantics_scope_aware_large_integer_call_scalarization(tmp_path: Path):
+def test_normalize_generated_c_semantics_scope_aware_large_integer_call_scalarization(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -2028,8 +2104,14 @@ def test_normalize_generated_c_semantics_scope_aware_large_integer_call_scalariz
     normalized = engine._normalize_generated_c_semantics(source)
 
     assert "LVar38 = LVar12;" in normalized
-    assert "((LARGE_INTEGER *)&LVar36)->QuadPart = FUN_1400c76b0(((LARGE_INTEGER *)&LVar12)->QuadPart);" in normalized
-    assert "((LARGE_INTEGER *)&local_108)->QuadPart = FUN_1400ad560(((LARGE_INTEGER *)&LVar12)->QuadPart, cVar39);" in normalized
+    assert (
+        "((LARGE_INTEGER *)&LVar36)->QuadPart = FUN_1400c76b0(((LARGE_INTEGER *)&LVar12)->QuadPart);"
+        in normalized
+    )
+    assert (
+        "((LARGE_INTEGER *)&local_108)->QuadPart = FUN_1400ad560(((LARGE_INTEGER *)&LVar12)->QuadPart, cVar39);"
+        in normalized
+    )
     assert "uVar1 = FUN_1400c76b0(LVar12);" in normalized
 
 
@@ -2152,10 +2234,7 @@ def test_normalize_generated_c_semantics_repairs_struct_cast_large_integer_retur
         work_dir=tmp_path,
     )
 
-    source = (
-        "LARGE_INTEGER LVar36;\n"
-        "return GHIDRA_U64((*(_struct_19 *))&LVar36);\n"
-    )
+    source = "LARGE_INTEGER LVar36;\n" "return GHIDRA_U64((*(_struct_19 *))&LVar36);\n"
 
     normalized = engine._normalize_generated_c_semantics(source)
 
@@ -2184,7 +2263,9 @@ def test_find_nearest_declared_variable_type_ignores_control_flow_continuations(
 
     call_pos = source.index("GHIDRA_U64(local_78)")
 
-    assert engine._find_nearest_declared_variable_type(source, "local_78", call_pos) == "LARGE_INTEGER"
+    assert (
+        engine._find_nearest_declared_variable_type(source, "local_78", call_pos) == "LARGE_INTEGER"
+    )
 
 
 def test_find_nearest_declared_variable_type_falls_back_to_current_function_params(
@@ -2259,7 +2340,10 @@ def test_normalize_data_symbol_arguments_for_pointer_params_keeps_adjacent_calls
     normalized = engine._normalize_data_symbol_arguments_for_pointer_params(source)
 
     assert "memcpy(dst, (const void *)(uintptr_t)DAT_1400ff0e0, size);" in normalized
-    assert "memcmp((const void *)(uintptr_t)DAT_1400cbfd1, (const void *)(uintptr_t)DAT_1400cbff1, 0x24);" in normalized
+    assert (
+        "memcmp((const void *)(uintptr_t)DAT_1400cbfd1, (const void *)(uintptr_t)DAT_1400cbff1, 0x24);"
+        in normalized
+    )
     assert "DAT_1400ff0e0memcmp" not in normalized
     assert "DAT_1400cbff1memcpy" not in normalized
 
@@ -2386,11 +2470,7 @@ def test_normalize_generated_c_semantics_bridges_scalar_float_backed_pointer_cas
         work_dir=tmp_path,
     )
 
-    source = (
-        "double dVar7;\n"
-        "double *local_60;\n"
-        "local_60 = (double *)dVar7;\n"
-    )
+    source = "double dVar7;\n" "double *local_60;\n" "local_60 = (double *)dVar7;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -2407,8 +2487,7 @@ def test_normalize_generated_c_semantics_casts_wake_by_address_single_large_inte
     )
 
     source = (
-        "LARGE_INTEGER LVar12;\n"
-        "WakeByAddressSingle(((LARGE_INTEGER *)&LVar12)->QuadPart);\n"
+        "LARGE_INTEGER LVar12;\n" "WakeByAddressSingle(((LARGE_INTEGER *)&LVar12)->QuadPart);\n"
     )
 
     normalized = engine._normalize_generated_c_semantics(source)
@@ -2661,10 +2740,7 @@ def test_normalize_generated_c_semantics_retargets_non_code_pointer_cast_assignm
         work_dir=tmp_path,
     )
 
-    source = (
-        "ulonglong *local_370;\n"
-        "local_370 = (code *)(uintptr_t)GHIDRA_U64(param_2 + 2);\n"
-    )
+    source = "ulonglong *local_370;\n" "local_370 = (code *)(uintptr_t)GHIDRA_U64(param_2 + 2);\n"
 
     normalized = engine._normalize_generated_c_semantics(source)
 
@@ -2694,7 +2770,10 @@ def test_retarget_non_code_pointer_cast_assignments_respects_function_scope(tmp_
 
     normalized = engine._retarget_non_code_pointer_cast_assignments(source)
 
-    assert "ulonglong *local_370;\n  local_370 = (ulonglong *)(uintptr_t)GHIDRA_U64(param_2 + 2);" in normalized
+    assert (
+        "ulonglong *local_370;\n  local_370 = (ulonglong *)(uintptr_t)GHIDRA_U64(param_2 + 2);"
+        in normalized
+    )
     assert "code *local_370;\n  local_370 = (code *)(uintptr_t)GHIDRA_U64(ptr);" in normalized
 
 
@@ -2730,8 +2809,14 @@ def test_normalize_generated_c_semantics_balances_unclosed_ghidra_u64_lines(tmp_
 
     normalized = engine._normalize_generated_c_semantics(source)
 
-    assert "uStack_88 = GHIDRA_U64((ulonglong ***********)CONCAT44(uStack_88_4_4_,uVar53));" in normalized
-    assert "uStack_88 = GHIDRA_U64((ulonglong ***********)((ulonglong)uStack_88_4_4_ << 0x20));" in normalized
+    assert (
+        "uStack_88 = GHIDRA_U64((ulonglong ***********)CONCAT44(uStack_88_4_4_,uVar53));"
+        in normalized
+    )
+    assert (
+        "uStack_88 = GHIDRA_U64((ulonglong ***********)((ulonglong)uStack_88_4_4_ << 0x20));"
+        in normalized
+    )
 
 
 def test_normalize_generated_c_semantics_repairs_top_level_comma_in_ghidra_u64(tmp_path: Path):
@@ -2834,7 +2919,9 @@ def test_normalize_generated_c_semantics_rewrites_indirect_code_calls(tmp_path: 
         "(**(code **)local_98)(local_90);\n"
     )
 
-    normalized = engine._normalize_generated_c_semantics(source, normalize_pointer_assignments=False)
+    normalized = engine._normalize_generated_c_semantics(
+        source, normalize_pointer_assignments=False
+    )
 
     assert "((ghidra_indirect_fn)pppppppppppuVar64[2][7])(pppppppppppuVar64[1])" in normalized
     assert "(*(ghidra_indirect_fn *)(lVar44 + 0x18))(&local_308,puVar59);" in normalized
@@ -2856,7 +2943,9 @@ def test_normalize_generated_c_semantics_rewrites_bare_code_pointer_calls(tmp_pa
         "(*pcVar34)(uVar12,0,local_60);\n"
     )
 
-    normalized = engine._normalize_generated_c_semantics(source, normalize_pointer_assignments=False)
+    normalized = engine._normalize_generated_c_semantics(
+        source, normalize_pointer_assignments=False
+    )
 
     assert "uVar12 = GHIDRA_U64(((ghidra_indirect_fn_0)pcVar39)());" in normalized
     assert "((ghidra_indirect_fn)pcVar34)(uVar12,0,local_60);" in normalized
@@ -2877,10 +2966,12 @@ def test_normalize_generated_c_semantics_rewrites_parenthesized_indirect_code_ca
         "(**(code **)(lVar4 + 0x18))(lVar5,pcVar6,uVar7);\n"
     )
 
-    normalized = engine._normalize_generated_c_semantics(source, normalize_pointer_assignments=False)
+    normalized = engine._normalize_generated_c_semantics(
+        source, normalize_pointer_assignments=False
+    )
 
     assert (
-        'cVar2 = GHIDRA_U64((*(ghidra_indirect_fn *)(((byte *)(uintptr_t)in_RDX)[1] + 0x18))'
+        "cVar2 = GHIDRA_U64((*(ghidra_indirect_fn *)(((byte *)(uintptr_t)in_RDX)[1] + 0x18))"
         '(*in_RDX,"(",1));'
     ) in normalized
     assert (
@@ -2900,7 +2991,9 @@ def test_normalize_generated_c_semantics_restores_malformed_case_labels(tmp_path
 
     source = "switch(cVar4) {\ncase 'Q'_\ncase '\\\\'_\ncase LABEL_\ndefault_\n}\n"
 
-    normalized = engine._normalize_generated_c_semantics(source, normalize_pointer_assignments=False)
+    normalized = engine._normalize_generated_c_semantics(
+        source, normalize_pointer_assignments=False
+    )
 
     assert "case 'Q':" in normalized
     assert "case '\\\\':" in normalized
@@ -2918,24 +3011,26 @@ def test_normalize_generated_c_semantics_keeps_ghidra_u64_calls_balanced_with_st
     )
 
     source = (
-        'cVar2 = GHIDRA_U64((*(ghidra_indirect_fn *)(((byte *)(uintptr_t)in_RDX)[1] + 0x18))'
+        "cVar2 = GHIDRA_U64((*(ghidra_indirect_fn *)(((byte *)(uintptr_t)in_RDX)[1] + 0x18))"
         '(GHIDRA_U64(*in_RDX), "(",1));\n'
-        'cVar2 = GHIDRA_U64((*(ghidra_indirect_fn *)(((byte *)(uintptr_t)in_RDX)[1] + 0x18))'
+        "cVar2 = GHIDRA_U64((*(ghidra_indirect_fn *)(((byte *)(uintptr_t)in_RDX)[1] + 0x18))"
         '(GHIDRA_U64(*in_RDX), "(\\n",2));\n'
     )
 
-    normalized = engine._normalize_generated_c_semantics(source, normalize_pointer_assignments=False)
+    normalized = engine._normalize_generated_c_semantics(
+        source, normalize_pointer_assignments=False
+    )
 
     assert (
-        'cVar2 = GHIDRA_U64((*(ghidra_indirect_fn *)(((byte *)(uintptr_t)in_RDX)[1] + 0x18))'
+        "cVar2 = GHIDRA_U64((*(ghidra_indirect_fn *)(((byte *)(uintptr_t)in_RDX)[1] + 0x18))"
         '(GHIDRA_U64(*in_RDX), "(",1));'
     ) in normalized
     assert (
-        'cVar2 = GHIDRA_U64((*(ghidra_indirect_fn *)(((byte *)(uintptr_t)in_RDX)[1] + 0x18))'
+        "cVar2 = GHIDRA_U64((*(ghidra_indirect_fn *)(((byte *)(uintptr_t)in_RDX)[1] + 0x18))"
         '(GHIDRA_U64(*in_RDX), "(\\n",2));'
     ) in normalized
-    assert '1)));' not in normalized
-    assert '2)));' not in normalized
+    assert "1)));" not in normalized
+    assert "2)));" not in normalized
 
 
 def test_normalize_generated_c_semantics_fixes_malformed_vec64_cast_rewrite(tmp_path: Path):
@@ -3098,7 +3193,7 @@ def test_build_generated_symbol_prelude_infers_windows_pointer_like_global_types
         "HANDLE pvVar12;\n"
         "FARPROC pFVar6;\n"
         "if ((DAT_1400ff3a0 == (HMODULE)0x0) &&\n"
-        "   (DAT_1400ff3a0 = LoadLibraryA(\"dbghelp_dll\"), DAT_1400ff3a0 == (HMODULE)0x0)) {}\n"
+        '   (DAT_1400ff3a0 = LoadLibraryA("dbghelp_dll"), DAT_1400ff3a0 == (HMODULE)0x0)) {}\n'
         "pFVar6 = DAT_1400ff3a8;\n"
         "if (DAT_1400ff3a8 != (FARPROC)0x0) {}\n"
         "DAT_1400ff3a8 = pFVar6;\n"
@@ -3224,8 +3319,7 @@ def test_build_generated_symbol_prelude_declares_ram_pseudo_symbols(tmp_path: Pa
     )
 
     prelude = engine._build_generated_symbol_prelude(
-        "iRam00000001400ff254 = 1;\n"
-        "uRam00000001400ff24c = 0;\n"
+        "iRam00000001400ff254 = 1;\n" "uRam00000001400ff24c = 0;\n"
     )
 
     assert "static uint64_t iRam00000001400ff254 = 0;" in prelude
@@ -3257,7 +3351,9 @@ def test_join_wrapped_sanitized_call_identifiers_repairs_split_function_signatur
     ) in normalized
 
 
-def test_build_generated_helper_prelude_uses_stub_function_when_helper_is_called_and_referenced(tmp_path: Path):
+def test_build_generated_helper_prelude_uses_stub_function_when_helper_is_called_and_referenced(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -3265,8 +3361,7 @@ def test_build_generated_helper_prelude_uses_stub_function_when_helper_is_called
     )
 
     prelude = engine._build_generated_helper_prelude(
-        "local_3e0 = core_fmt_impl_22_fmt;\n"
-        "core_fmt_impl_22_fmt();\n"
+        "local_3e0 = core_fmt_impl_22_fmt;\n" "core_fmt_impl_22_fmt();\n"
     )
 
     assert "static inline uint64_t core_fmt_impl_22_fmt()" in prelude
@@ -3379,7 +3474,10 @@ def test_qualify_unresolved_function_aliases_rewrites_prefixed_calls_and_bare_ca
 
     normalized = engine._qualify_unresolved_function_aliases(source)
 
-    assert "_alloc_raw_vec_impl_4_reserve_do_reserve_and_handle_alloc_alloc_Global_();" not in normalized
+    assert (
+        "_alloc_raw_vec_impl_4_reserve_do_reserve_and_handle_alloc_alloc_Global_();"
+        not in normalized
+    )
     assert "alloc_raw_vec_impl_4_reserve_do_reserve_and_handle_alloc_alloc_Global_();" in normalized
     assert "std_backtrace_rs_dbghelp_enum_loaded_modules_callback" in normalized
     assert " backtrace_rs_dbghelp_enum_loaded_modules_callback," not in normalized
@@ -3537,7 +3635,7 @@ def test_normalize_void_pointer_parameter_indexing_recovers_after_brace_depth_dr
     source = (
         "void previous(void)\n"
         "{\n"
-        "  FUN_140000100(\"{not a real brace balancer}\");\n"
+        '  FUN_140000100("{not a real brace balancer}");\n'
         "}\n"
         "void FUN_1400083e0(void *param_1,ulonglong *param_2)\n"
         "\n"
@@ -3553,7 +3651,9 @@ def test_normalize_void_pointer_parameter_indexing_recovers_after_brace_depth_dr
     assert "*((uintptr_t *)param_1) = 2;" in normalized
 
 
-def test_normalize_void_pointer_parameter_indexing_ignores_negative_global_brace_drift(tmp_path: Path):
+def test_normalize_void_pointer_parameter_indexing_ignores_negative_global_brace_drift(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -3563,7 +3663,7 @@ def test_normalize_void_pointer_parameter_indexing_ignores_negative_global_brace
     source = (
         "void previous(void)\n"
         "{\n"
-        "  FUN_140000100(\"} stray close brace in string\");\n"
+        '  FUN_140000100("} stray close brace in string");\n'
         "}\n"
         "void FUN_1400083e0(void *param_1,ulonglong *param_2)\n"
         "\n"
@@ -3579,7 +3679,9 @@ def test_normalize_void_pointer_parameter_indexing_ignores_negative_global_brace
     assert "*((uintptr_t *)param_1) = 2;" in normalized
 
 
-def test_normalize_void_pointer_parameter_indexing_does_not_rewrite_signature_params(tmp_path: Path):
+def test_normalize_void_pointer_parameter_indexing_does_not_rewrite_signature_params(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -3589,7 +3691,7 @@ def test_normalize_void_pointer_parameter_indexing_does_not_rewrite_signature_pa
     source = (
         "void previous(void)\n"
         "{\n"
-        "  FUN_140000100(\"} stray close brace in string\");\n"
+        '  FUN_140000100("} stray close brace in string");\n'
         "}\n"
         "void FUN_1400083e0(void *param_1,ulonglong *param_2,void *param_3,size_t param_4)\n"
         "\n"
@@ -3601,13 +3703,21 @@ def test_normalize_void_pointer_parameter_indexing_does_not_rewrite_signature_pa
 
     normalized = engine._normalize_void_pointer_parameter_indexing(source)
 
-    assert "void FUN_1400083e0(void *param_1,ulonglong *param_2,void *param_3,size_t param_4)" in normalized
-    assert "void FUN_1400083e0(void *((uintptr_t *)param_1),ulonglong *param_2,void *param_3,size_t param_4)" not in normalized
+    assert (
+        "void FUN_1400083e0(void *param_1,ulonglong *param_2,void *param_3,size_t param_4)"
+        in normalized
+    )
+    assert (
+        "void FUN_1400083e0(void *((uintptr_t *)param_1),ulonglong *param_2,void *param_3,size_t param_4)"
+        not in normalized
+    )
     assert "((uintptr_t *)param_1)[1] = 0x8000000000000000;" in normalized
     assert "*((uintptr_t *)param_1) = 2;" in normalized
 
 
-def test_normalize_void_pointer_parameter_indexing_ignores_multiline_signature_continuations(tmp_path: Path):
+def test_normalize_void_pointer_parameter_indexing_ignores_multiline_signature_continuations(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -3617,7 +3727,7 @@ def test_normalize_void_pointer_parameter_indexing_ignores_multiline_signature_c
     source = (
         "void previous(void *param_1)\n"
         "{\n"
-        "  FUN_140000100(\"{ leaked brace in string\");\n"
+        '  FUN_140000100("{ leaked brace in string");\n'
         "}\n"
         "void FUN_14008f5c0(ulonglong *param_1,ulonglong *param_2,void *param_3,\n"
         "                  ulonglong *param_4,longlong param_5)\n"
@@ -3666,10 +3776,7 @@ def test_relax_mismatched_empty_prototypes_when_calls_have_arguments(tmp_path: P
     )
 
     source = (
-        "undefined FUN_14004b2f0();\n"
-        "void wrapper(void) {\n"
-        "  FUN_14004b2f0(1, 2, 3);\n"
-        "}\n"
+        "undefined FUN_14004b2f0();\n" "void wrapper(void) {\n" "  FUN_14004b2f0(1, 2, 3);\n" "}\n"
     )
 
     normalized = engine._relax_mismatched_void_prototypes(source)
@@ -3714,7 +3821,10 @@ def test_normalize_pointer_integer_assignments_rewrites_casted_pointer_expressio
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
-    assert "uStack_88 = GHIDRA_U64((ulonglong ***********)CONCAT44(uStack_88_4_4_,uVar53));" in normalized
+    assert (
+        "uStack_88 = GHIDRA_U64((ulonglong ***********)CONCAT44(uStack_88_4_4_,uVar53));"
+        in normalized
+    )
 
 
 def test_normalize_generated_c_semantics_can_skip_pointer_assignment_rewrite(tmp_path: Path):
@@ -3730,7 +3840,9 @@ def test_normalize_generated_c_semantics_can_skip_pointer_assignment_rewrite(tmp
         "local_b0 = pppppppppppuVar55;\n"
     )
 
-    normalized = engine._normalize_generated_c_semantics(source, normalize_pointer_assignments=False)
+    normalized = engine._normalize_generated_c_semantics(
+        source, normalize_pointer_assignments=False
+    )
 
     assert "local_b0 = pppppppppppuVar55;" in normalized
     assert "GHIDRA_U64" not in normalized
@@ -3839,7 +3951,10 @@ def test_relax_mismatched_pointer_prototypes_widens_nonfirst_pointer_params(tmp_
 
     normalized = engine._relax_mismatched_pointer_prototypes(source)
 
-    assert "FUN_14007c630(longlong param_1, void * param_2, longlong * param_3, longlong * param_4);" in normalized
+    assert (
+        "FUN_14007c630(longlong param_1, void * param_2, longlong * param_3, longlong * param_4);"
+        in normalized
+    )
 
 
 def test_relax_mismatched_pointer_prototypes_handles_nospace_pointer_declarations(tmp_path: Path):
@@ -3956,7 +4071,9 @@ def test_relax_mismatched_pointer_prototypes_widens_string_literal_arguments(tmp
 
     normalized = engine._relax_mismatched_pointer_prototypes(source)
 
-    assert "undefined1 FUN_1400065c0(uintptr_t param_1,undefined8 param_2,int *param_3);" in normalized
+    assert (
+        "undefined1 FUN_1400065c0(uintptr_t param_1,undefined8 param_2,int *param_3);" in normalized
+    )
 
 
 def test_relax_mismatched_pointer_prototypes_widens_scalar_param_for_pointer_locals(tmp_path: Path):
@@ -3978,7 +4095,9 @@ def test_relax_mismatched_pointer_prototypes_widens_scalar_param_for_pointer_loc
     assert "void FUN_1400970d0(uintptr_t param_1,uintptr_t param_2,longlong param_3);" in normalized
 
 
-def test_relax_mismatched_pointer_prototypes_treats_array_backed_args_as_pointer_like(tmp_path: Path):
+def test_relax_mismatched_pointer_prototypes_treats_array_backed_args_as_pointer_like(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -4106,7 +4225,10 @@ def test_normalize_pointer_arguments_for_uintptr_params_handles_multiline_calls(
 
     normalized = engine._normalize_pointer_arguments_for_uintptr_params(source)
 
-    assert "FUN_140049fa0((undefined4 *)&local_238, (longlong)local_70, GHIDRA_U64(ppppppppppuVar23 + 9));" in normalized
+    assert (
+        "FUN_140049fa0((undefined4 *)&local_238, (longlong)local_70, GHIDRA_U64(ppppppppppuVar23 + 9));"
+        in normalized
+    )
 
 
 def test_normalize_pointer_arguments_for_uintptr_params_casts_string_literals(tmp_path: Path):
@@ -4168,8 +4290,7 @@ def test_normalize_pointer_arguments_for_uintptr_params_casts_indirect_first_arg
     normalized = engine._normalize_pointer_arguments_for_uintptr_params(source)
 
     assert (
-        "((ghidra_indirect_fn)pppppppppppVar1[3])(GHIDRA_U64(&local_308), puVar59);"
-        in normalized
+        "((ghidra_indirect_fn)pppppppppppVar1[3])(GHIDRA_U64(&local_308), puVar59);" in normalized
     )
 
 
@@ -4192,7 +4313,9 @@ def test_normalize_pointer_arguments_for_uintptr_params_casts_indirect_pointer_c
 
     normalized = engine._normalize_pointer_arguments_for_uintptr_params(source)
 
-    assert "(*(ghidra_indirect_fn *)(lVar44 + 0x18))(GHIDRA_U64(&local_308), puVar59);" in normalized
+    assert (
+        "(*(ghidra_indirect_fn *)(lVar44 + 0x18))(GHIDRA_U64(&local_308), puVar59);" in normalized
+    )
 
 
 def test_normalize_pointer_arguments_for_uintptr_params_casts_bridge_indirect_first_args(
@@ -4213,7 +4336,10 @@ def test_normalize_pointer_arguments_for_uintptr_params_casts_bridge_indirect_fi
 
     normalized = engine._normalize_pointer_arguments_for_uintptr_params(source)
 
-    assert "((ghidra_indirect_fn)*((uintptr_t *)(uintptr_t)uStack_88))(GHIDRA_U64(local_100));" in normalized
+    assert (
+        "((ghidra_indirect_fn)*((uintptr_t *)(uintptr_t)uStack_88))(GHIDRA_U64(local_100));"
+        in normalized
+    )
 
 
 def test_normalize_pointer_arguments_for_uintptr_params_casts_dereferenced_pointer_first_args(
@@ -4233,7 +4359,10 @@ def test_normalize_pointer_arguments_for_uintptr_params_casts_dereferenced_point
 
     normalized = engine._normalize_pointer_arguments_for_uintptr_params(source)
 
-    assert '((ghidra_indirect_fn)param_2[1][3])(GHIDRA_U64(*param_2), "\\n\\nCaused by_", 0xc);' in normalized
+    assert (
+        '((ghidra_indirect_fn)param_2[1][3])(GHIDRA_U64(*param_2), "\\n\\nCaused by_", 0xc);'
+        in normalized
+    )
 
 
 def test_normalize_pointer_arguments_for_uintptr_params_casts_multiline_indirect_first_args(
@@ -4326,7 +4455,9 @@ def test_normalize_pointer_arguments_for_uintptr_params_preserves_multiline_rewr
     assert "FUN_1GHIDRA_U64" not in normalized
 
 
-def test_normalize_generated_c_semantics_rewrites_indirect_calls_with_whitespace_before_args(tmp_path: Path):
+def test_normalize_generated_c_semantics_rewrites_indirect_calls_with_whitespace_before_args(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -4340,7 +4471,9 @@ def test_normalize_generated_c_semantics_rewrites_indirect_calls_with_whitespace
         "                  (&DAT_1400e24bc,1);\n"
     )
 
-    normalized = engine._normalize_generated_c_semantics(source, normalize_pointer_assignments=False)
+    normalized = engine._normalize_generated_c_semantics(
+        source, normalize_pointer_assignments=False
+    )
 
     assert (
         "((ghidra_indirect_fn)(&DAT_1400e24bc +\n"
@@ -4367,7 +4500,9 @@ def test_normalize_pointer_integer_assignments_handles_indexed_pointer_expressio
     assert "local_468 = GHIDRA_U64(local_78[0x18]);" in normalized
 
 
-def test_normalize_pointer_integer_assignments_handles_multiline_pointer_cast_expressions(tmp_path: Path):
+def test_normalize_pointer_integer_assignments_handles_multiline_pointer_cast_expressions(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -4413,28 +4548,23 @@ def test_normalize_pointer_integer_assignments_handles_address_expressions(tmp_p
         work_dir=tmp_path,
     )
 
-    source = (
-        "undefined8 local_308;\n"
-        "longlong local_538;\n"
-        "local_308 = &local_538;\n"
-    )
+    source = "undefined8 local_308;\n" "longlong local_538;\n" "local_308 = &local_538;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
     assert "local_308 = GHIDRA_U64(&local_538);" in normalized
 
 
-def test_normalize_pointer_integer_assignments_casts_pointer_lvalues_from_data_symbols(tmp_path: Path):
+def test_normalize_pointer_integer_assignments_casts_pointer_lvalues_from_data_symbols(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
         work_dir=tmp_path,
     )
 
-    source = (
-        "undefined * puVar41;\n"
-        "puVar41 = &DAT_1400ce9f8;\n"
-    )
+    source = "undefined * puVar41;\n" "puVar41 = &DAT_1400ce9f8;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -4448,10 +4578,7 @@ def test_normalize_pointer_integer_assignments_casts_code_pointer_function_symbo
         work_dir=tmp_path,
     )
 
-    source = (
-        "code * local_410;\n"
-        "local_410 = FUN_1400303b0;\n"
-    )
+    source = "code * local_410;\n" "local_410 = FUN_1400303b0;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -4478,12 +4605,17 @@ def test_normalize_pointer_integer_assignments_handles_split_fragment_globals(tm
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
-    assert "local_1a8_8_8_ = GHIDRA_U64(pppppppppppuVar55[0x17] + (longlong)pppppppppppuVar55[0x18] * 0x59);" in normalized
+    assert (
+        "local_1a8_8_8_ = GHIDRA_U64(pppppppppppuVar55[0x17] + (longlong)pppppppppppuVar55[0x18] * 0x59);"
+        in normalized
+    )
     assert "local_1a8_0_8_ = GHIDRA_U64(pppppppppppuVar55[0x17]);" in normalized
     assert "auStack_190_0_8_ = GHIDRA_U64(pppppppppppuVar64);" in normalized
 
 
-def test_normalize_pointer_integer_assignments_handles_undeclared_split_fragment_names(tmp_path: Path):
+def test_normalize_pointer_integer_assignments_handles_undeclared_split_fragment_names(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -4500,7 +4632,10 @@ def test_normalize_pointer_integer_assignments_handles_undeclared_split_fragment
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
-    assert "local_1a8_8_8_ = GHIDRA_U64(pppppppppppuVar55[0x17] + (longlong)pppppppppppuVar55[0x18] * 0x59);" in normalized
+    assert (
+        "local_1a8_8_8_ = GHIDRA_U64(pppppppppppuVar55[0x17] + (longlong)pppppppppppuVar55[0x18] * 0x59);"
+        in normalized
+    )
     assert "local_1a8_0_8_ = GHIDRA_U64(pppppppppppuVar55[0x17]);" in normalized
     assert "auStack_190_0_8_ = GHIDRA_U64(pppppppppppuVar64);" in normalized
 
@@ -4523,7 +4658,9 @@ def test_normalize_pointer_integer_assignments_handles_integer_array_element_sto
     assert "puVar57[uVar60 * 4 + 1] = GHIDRA_U64(local_78);" in normalized
 
 
-def test_normalize_pointer_integer_assignments_handles_integer_pointer_dereference_stores(tmp_path: Path):
+def test_normalize_pointer_integer_assignments_handles_integer_pointer_dereference_stores(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -4544,7 +4681,9 @@ def test_normalize_pointer_integer_assignments_handles_integer_pointer_dereferen
     assert "extraout_RAX_00[1] = GHIDRA_U64(puVar68);" in normalized
 
 
-def test_normalize_pointer_integer_assignments_wraps_pointer_like_string_and_symbol_values(tmp_path: Path):
+def test_normalize_pointer_integer_assignments_wraps_pointer_like_string_and_symbol_values(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -4571,10 +4710,7 @@ def test_normalize_pointer_integer_assignments_scalarizes_bare_function_symbols(
         work_dir=tmp_path,
     )
 
-    source = (
-        "undefined8 uStack_240;\n"
-        "uStack_240 = FUN_1400367d0;\n"
-    )
+    source = "undefined8 uStack_240;\n" "uStack_240 = FUN_1400367d0;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -4610,11 +4746,7 @@ def test_normalize_pointer_integer_assignments_casts_integer_locals_to_pointer_a
         work_dir=tmp_path,
     )
 
-    source = (
-        "LPVOID local_150;\n"
-        "undefined8 uStack_140;\n"
-        "local_150 = uStack_140;\n"
-    )
+    source = "LPVOID local_150;\n" "undefined8 uStack_140;\n" "local_150 = uStack_140;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -4644,7 +4776,9 @@ def test_normalize_pointer_integer_assignments_prefers_nearest_scope_for_duplica
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
-    assert "local_108 = (ulonglong ***********)(uintptr_t)GHIDRA_U64(pppppppppppuVar55);" in normalized
+    assert (
+        "local_108 = (ulonglong ***********)(uintptr_t)GHIDRA_U64(pppppppppppuVar55);" in normalized
+    )
 
 
 def test_normalize_pointer_integer_assignments_casts_pointer_lvalue_stores_from_ghidra_u64(
@@ -4753,7 +4887,10 @@ def test_normalize_pointer_integer_assignments_casts_cast_deref_lvalue_stores(
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
-    assert "*(undefined *************)(puVar35 + idx) = (undefined ************)(uintptr_t)local_188;" in normalized
+    assert (
+        "*(undefined *************)(puVar35 + idx) = (undefined ************)(uintptr_t)local_188;"
+        in normalized
+    )
 
 
 def test_normalize_pointer_integer_assignments_scalarizes_pointer_cast_rhs_into_integer_lvalue_store(
@@ -4773,7 +4910,10 @@ def test_normalize_pointer_integer_assignments_scalarizes_pointer_cast_rhs_into_
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
-    assert "*puVar20 = GHIDRA_U64((ulonglong *)(uintptr_t)((uintptr_t *)(uintptr_t)local_50)[idx]);" in normalized
+    assert (
+        "*puVar20 = GHIDRA_U64((ulonglong *)(uintptr_t)((uintptr_t *)(uintptr_t)local_50)[idx]);"
+        in normalized
+    )
 
 
 def test_normalize_pointer_integer_assignments_retargets_code_pointer_sources_for_data_pointers(
@@ -4785,11 +4925,7 @@ def test_normalize_pointer_integer_assignments_retargets_code_pointer_sources_fo
         work_dir=tmp_path,
     )
 
-    source = (
-        "undefined1 *local_150;\n"
-        "code *pcStack_188;\n"
-        "local_150 = pcStack_188;\n"
-    )
+    source = "undefined1 *local_150;\n" "code *pcStack_188;\n" "local_150 = pcStack_188;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -4805,11 +4941,7 @@ def test_normalize_pointer_integer_assignments_casts_incompatible_pointer_assign
         work_dir=tmp_path,
     )
 
-    source = (
-        "char **local_b8;\n"
-        "undefined **param_1;\n"
-        "local_b8 = param_1;\n"
-    )
+    source = "char **local_b8;\n" "undefined **param_1;\n" "local_b8 = param_1;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -4826,9 +4958,7 @@ def test_normalize_pointer_integer_assignments_casts_pointer_rank_mismatches(
     )
 
     source = (
-        "undefined8 *******local_b8;\n"
-        "undefined8 ********local_90;\n"
-        "local_b8 = &local_90;\n"
+        "undefined8 *******local_b8;\n" "undefined8 ********local_90;\n" "local_b8 = &local_90;\n"
     )
 
     normalized = engine._normalize_pointer_integer_assignments(source)
@@ -4940,10 +5070,7 @@ def test_normalize_pointer_integer_assignments_retargets_pointer_cast_immediates
         work_dir=tmp_path,
     )
 
-    source = (
-        "undefined8 ***local_128;\n"
-        "local_128 = (undefined8 ****)0x3;\n"
-    )
+    source = "undefined8 ***local_128;\n" "local_128 = (undefined8 ****)0x3;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -4967,7 +5094,10 @@ def test_normalize_pointer_integer_assignments_scalarizes_pointer_alias_casts_in
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
-    assert "local_120 = GHIDRA_U64((LPVOID)(uintptr_t)((uintptr_t *)(uintptr_t)local_88)[1]);" in normalized
+    assert (
+        "local_120 = GHIDRA_U64((LPVOID)(uintptr_t)((uintptr_t *)(uintptr_t)local_88)[1]);"
+        in normalized
+    )
 
 
 def test_normalize_pointer_integer_assignments_scalarizes_pointer_deref_reads_into_integer_locals(
@@ -4979,11 +5109,7 @@ def test_normalize_pointer_integer_assignments_scalarizes_pointer_deref_reads_in
         work_dir=tmp_path,
     )
 
-    source = (
-        "size_t *local_a0;\n"
-        "undefined8 uVar6;\n"
-        "uVar6 = *local_a0;\n"
-    )
+    source = "size_t *local_a0;\n" "undefined8 uVar6;\n" "uVar6 = *local_a0;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -5029,11 +5155,16 @@ def test_normalize_pointer_integer_assignments_rewrites_inline_symbol_assignment
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
-    assert "ppppuVar20 = (undefined ****)(uintptr_t)&___xmm_0000002b0000002b0000002d0000002b" in normalized
+    assert (
+        "ppppuVar20 = (undefined ****)(uintptr_t)&___xmm_0000002b0000002b0000002d0000002b"
+        in normalized
+    )
     assert "pcVar23 = (code *)(uintptr_t)GHIDRA_U64(_UNK_1400ca498)" in normalized
 
 
-def test_normalize_pointer_integer_assignments_ignores_warning_comments_before_functions(tmp_path: Path):
+def test_normalize_pointer_integer_assignments_ignores_warning_comments_before_functions(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -5131,10 +5262,7 @@ def test_normalize_pointer_integer_assignments_retargets_lab_symbols_for_pointer
         work_dir=tmp_path,
     )
 
-    source = (
-        "undefined1 *puStack_e0;\n"
-        "puStack_e0 = &LAB_14003da00;\n"
-    )
+    source = "undefined1 *puStack_e0;\n" "puStack_e0 = &LAB_14003da00;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -5150,10 +5278,7 @@ def test_normalize_pointer_integer_assignments_retargets_ptr_dat_symbols_for_poi
         work_dir=tmp_path,
     )
 
-    source = (
-        "undefined **local_e8;\n"
-        "local_e8 = &PTR_DAT_1400dab90;\n"
-    )
+    source = "undefined **local_e8;\n" "local_e8 = &PTR_DAT_1400dab90;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -5169,11 +5294,7 @@ def test_normalize_pointer_integer_assignments_scalarizes_code_pointer_slot_read
         work_dir=tmp_path,
     )
 
-    source = (
-        "code *pcVar10;\n"
-        "undefined8 local_128;\n"
-        "local_128 = *(code **)pcVar10;\n"
-    )
+    source = "code *pcVar10;\n" "undefined8 local_128;\n" "local_128 = *(code **)pcVar10;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -5189,11 +5310,7 @@ def test_normalize_pointer_integer_assignments_preserves_casted_deref_comparison
         work_dir=tmp_path,
     )
 
-    source = (
-        "if (*(int *)ppppppppuVar138 == 0x68747561) {\n"
-        "  return;\n"
-        "}\n"
-    )
+    source = "if (*(int *)ppppppppuVar138 == 0x68747561) {\n" "  return;\n" "}\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -5239,7 +5356,9 @@ def test_normalize_pointer_integer_assignments_scalarizes_parenthesized_index_sl
     assert "(puVar19 + idx2)[1] = GHIDRA_U64(ppvStack_1d8);" in normalized
 
 
-def test_normalize_pointer_integer_assignments_casts_scalar_helper_results_to_pointer_lhs(tmp_path: Path):
+def test_normalize_pointer_integer_assignments_casts_scalar_helper_results_to_pointer_lhs(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
@@ -5253,7 +5372,10 @@ def test_normalize_pointer_integer_assignments_casts_scalar_helper_results_to_po
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
-    assert "ppppppppppppuVar11 = (ulonglong ************)(uintptr_t)SUB168(auVar3 * auVar4,0);" in normalized
+    assert (
+        "ppppppppppppuVar11 = (ulonglong ************)(uintptr_t)SUB168(auVar3 * auVar4,0);"
+        in normalized
+    )
 
 
 def test_normalize_integer_pointer_accesses_casts_integer_scalars_used_as_pointers(tmp_path: Path):
@@ -5279,7 +5401,9 @@ def test_normalize_integer_pointer_accesses_casts_integer_scalars_used_as_pointe
     assert "*((uintptr_t *)(uintptr_t)uStack_88) != (ulonglong **********)0x0" in normalized
     assert "((ghidra_indirect_fn)*((uintptr_t *)(uintptr_t)uStack_88))(local_100);" in normalized
     assert "((uintptr_t *)(uintptr_t)uStack_88)[1] == (ulonglong **********)0x0" in normalized
-    assert "FUN_140037ee0(local_100,(ulonglong)((uintptr_t *)(uintptr_t)uStack_88)[2]);" in normalized
+    assert (
+        "FUN_140037ee0(local_100,(ulonglong)((uintptr_t *)(uintptr_t)uStack_88)[2]);" in normalized
+    )
 
 
 def test_normalize_integer_pointer_accesses_preserves_declarations(tmp_path: Path):
@@ -5322,8 +5446,14 @@ def test_normalize_uintptr_bridge_accesses_wraps_pointer_stores(tmp_path: Path):
 
     normalized = engine._normalize_uintptr_bridge_accesses(source)
 
-    assert "((uintptr_t *)(uintptr_t)extraout_RAX_18)[2] = GHIDRA_U64((ulonglong **********)CONCAT17(cStack_341,local_348));" in normalized
-    assert "*((uintptr_t *)(uintptr_t)extraout_RAX_18) = GHIDRA_U64((ulonglong **********)CONCAT17(local_358_7_1_,(undefined7)local_358));" in normalized
+    assert (
+        "((uintptr_t *)(uintptr_t)extraout_RAX_18)[2] = GHIDRA_U64((ulonglong **********)CONCAT17(cStack_341,local_348));"
+        in normalized
+    )
+    assert (
+        "*((uintptr_t *)(uintptr_t)extraout_RAX_18) = GHIDRA_U64((ulonglong **********)CONCAT17(local_358_7_1_,(undefined7)local_358));"
+        in normalized
+    )
 
 
 def test_normalize_uintptr_bridge_accesses_casts_pointer_reads(tmp_path: Path):
@@ -5341,7 +5471,10 @@ def test_normalize_uintptr_bridge_accesses_casts_pointer_reads(tmp_path: Path):
 
     normalized = engine._normalize_uintptr_bridge_accesses(source)
 
-    assert "ppppppppppuVar20 = (ulonglong **********)(uintptr_t)((uintptr_t *)(uintptr_t)local_88)[0x12];" in normalized
+    assert (
+        "ppppppppppuVar20 = (ulonglong **********)(uintptr_t)((uintptr_t *)(uintptr_t)local_88)[0x12];"
+        in normalized
+    )
 
 
 def test_normalize_uintptr_bridge_accesses_rewrites_nested_subscripts(tmp_path: Path):
@@ -5358,7 +5491,10 @@ def test_normalize_uintptr_bridge_accesses_rewrites_nested_subscripts(tmp_path: 
 
     normalized = engine._normalize_uintptr_bridge_accesses(source)
 
-    assert "((uintptr_t *)(uintptr_t)((uintptr_t *)(uintptr_t)local_88)[0x20])[(longlong)ppppppppppuVar20 * 4 + 1]" in normalized
+    assert (
+        "((uintptr_t *)(uintptr_t)((uintptr_t *)(uintptr_t)local_88)[0x20])[(longlong)ppppppppppuVar20 * 4 + 1]"
+        in normalized
+    )
 
 
 def test_normalize_uintptr_bridge_accesses_casts_nested_bridge_assignment_reads(tmp_path: Path):
@@ -5418,7 +5554,10 @@ def test_normalize_uintptr_bridge_accesses_casts_deref_bridge_reads(tmp_path: Pa
 
     normalized = engine._normalize_uintptr_bridge_accesses(source)
 
-    assert "ppppppppppuVar20 = (ulonglong **********)(uintptr_t)*((uintptr_t *)(uintptr_t)local_b0);" in normalized
+    assert (
+        "ppppppppppuVar20 = (ulonglong **********)(uintptr_t)*((uintptr_t *)(uintptr_t)local_b0);"
+        in normalized
+    )
 
 
 def test_normalize_uintptr_bridge_accesses_casts_bridge_indirect_call_args(tmp_path: Path):
@@ -5436,7 +5575,10 @@ def test_normalize_uintptr_bridge_accesses_casts_bridge_indirect_call_args(tmp_p
 
     normalized = engine._normalize_uintptr_bridge_accesses(source)
 
-    assert "((ghidra_indirect_fn)*((uintptr_t *)(uintptr_t)uStack_88))(GHIDRA_U64(local_100));" in normalized
+    assert (
+        "((ghidra_indirect_fn)*((uintptr_t *)(uintptr_t)uStack_88))(GHIDRA_U64(local_100));"
+        in normalized
+    )
 
 
 def test_normalize_generated_c_semantics_repairs_default_and_switch_labels(tmp_path: Path):
@@ -5455,7 +5597,9 @@ def test_normalize_generated_c_semantics_repairs_default_and_switch_labels(tmp_p
         "}\n"
     )
 
-    normalized = engine._normalize_generated_c_semantics(source, normalize_pointer_assignments=False)
+    normalized = engine._normalize_generated_c_semantics(
+        source, normalize_pointer_assignments=False
+    )
 
     assert "default:" in normalized
     assert "switchD_140026d68_caseD_1:" in normalized
@@ -5487,8 +5631,7 @@ def test_normalize_pointer_integer_assignments_handles_auvar_split_fragments(tmp
     )
 
     source = (
-        "ulonglong *********** pppppppppppuStack_220;\n"
-        "auVar58_0_8_ = pppppppppppuStack_220;\n"
+        "ulonglong *********** pppppppppppuStack_220;\n" "auVar58_0_8_ = pppppppppppuStack_220;\n"
     )
 
     normalized = engine._normalize_pointer_integer_assignments(source)
@@ -5570,28 +5713,23 @@ def test_normalize_pointer_integer_assignments_scalarizes_pointer_based_split_fr
         work_dir=tmp_path,
     )
 
-    source = (
-        "longlong lVar47;\n"
-        "HANDLE auVar59;\n"
-        "lVar47 = lVar47 + auVar59_0_8_;\n"
-    )
+    source = "longlong lVar47;\n" "HANDLE auVar59;\n" "lVar47 = lVar47 + auVar59_0_8_;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
     assert "lVar47 = GHIDRA_U64(lVar47 + auVar59_0_8_);" in normalized
 
 
-def test_normalize_pointer_integer_assignments_wraps_byte_array_rhs_for_integer_fragments(tmp_path: Path):
+def test_normalize_pointer_integer_assignments_wraps_byte_array_rhs_for_integer_fragments(
+    tmp_path: Path,
+):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
         gemini_engine=None,
         work_dir=tmp_path,
     )
 
-    source = (
-        "undefined1 auVar123 [11];\n"
-        "auVar151_0_11_ = auVar123;\n"
-    )
+    source = "undefined1 auVar123 [11];\n" "auVar151_0_11_ = auVar123;\n"
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
@@ -5620,7 +5758,10 @@ def test_normalize_pointer_integer_assignments_prefers_explicit_scalar_fragment_
 
     normalized = engine._normalize_pointer_integer_assignments(source)
 
-    assert "pppppppppppuStack_220_7_1_ = GHIDRA_U64((ulonglong ***********)(uintptr_t)uStack_289);" in normalized
+    assert (
+        "pppppppppppuStack_220_7_1_ = GHIDRA_U64((ulonglong ***********)(uintptr_t)uStack_289);"
+        in normalized
+    )
     assert "auVar151_0_11_ = GHIDRA_U64(auVar123);" in normalized
 
 
@@ -5631,10 +5772,7 @@ def test_normalize_integer_pointer_accesses_does_not_rewrite_multiplication(tmp_
         work_dir=tmp_path,
     )
 
-    source = (
-        "ulonglong uVar186;\n"
-        "uVar190 = _Size - lVar188 * uVar186;\n"
-    )
+    source = "ulonglong uVar186;\n" "uVar190 = _Size - lVar188 * uVar186;\n"
 
     normalized = engine._normalize_integer_pointer_accesses(source)
 
@@ -5666,4 +5804,7 @@ def test_relax_mismatched_pointer_prototypes_handles_casted_first_args_and_nonfi
 
     normalized = engine._relax_mismatched_pointer_prototypes(source)
 
-    assert "FUN_14007c630(longlong param_1, void * param_2, longlong * param_3, longlong * param_4);" in normalized
+    assert (
+        "FUN_14007c630(longlong param_1, void * param_2, longlong * param_3, longlong * param_4);"
+        in normalized
+    )

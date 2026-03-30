@@ -1,23 +1,23 @@
 from __future__ import annotations
 
 import json
-import subprocess
 import struct
+import subprocess
 from pathlib import Path
 
 import pytest
 
 from reveng.tools.anti_analysis.bun_extractor import (
     BunExecutableExtractor,
+    BunSourcemapProvenance,
+    PEHandoffSignal,
+    PEInstructionPreview,
+    PEStartupTarget,
+    PETLSCallback,
     build_bun_equivalence_validation_summary,
     build_bun_report_severity_summary,
     build_bun_runtime_escalation_summary,
     run_bun_sea_workflow,
-    PEHandoffSignal,
-    PEInstructionPreview,
-    BunSourcemapProvenance,
-    PEStartupTarget,
-    PETLSCallback,
 )
 from reveng.tools.anti_analysis.packer_detector import PackerDetector
 from reveng.tools.anti_analysis.universal_unpacker import UniversalUnpacker
@@ -163,9 +163,7 @@ def _write_bun_fixture(tmp_path: Path) -> Path:
         return offset, len(data)
 
     js_bundle = (
-        b"// @bun\n"
-        b"console.log('hello from bun');\n"
-        b"//# sourceMappingURL=index.js.map\n"
+        b"// @bun\n" b"console.log('hello from bun');\n" b"//# sourceMappingURL=index.js.map\n"
     )
     package_json = b'{"name":"demo"}'
     sourcemap_blob = b"serialized-sourcemap"
@@ -244,12 +242,7 @@ def _write_bun_fixture(tmp_path: Path) -> Path:
 
 def _write_bun_short_record_fixture(tmp_path: Path) -> Path:
     virtual_path = b"B:/~BUN/root/droid.exe"
-    raw_bytes = (
-        virtual_path
-        + b"\x00"
-        + b"// @bun\n"
-        + b"console.log('short bun payload');\n"
-    )
+    raw_bytes = virtual_path + b"\x00" + b"// @bun\n" + b"console.log('short bun payload');\n"
     fake_module_record = struct.pack(
         "<IIIIIIII4B",
         0,
@@ -292,10 +285,7 @@ def _write_bun_short_record_fixture(tmp_path: Path) -> Path:
 def _write_bun_extended_short_record_fixture(tmp_path: Path) -> Path:
     virtual_path = b"B:/~BUN/root/app.js"
     raw_bytes = (
-        virtual_path
-        + b"\x00"
-        + b"// @bun\n"
-        + b"console.log('extended short bun payload');\n"
+        virtual_path + b"\x00" + b"// @bun\n" + b"console.log('extended short bun payload');\n"
     )
     fake_module_record = struct.pack(
         "<IIIIIIIII4B",
@@ -338,11 +328,7 @@ def _write_bun_extended_short_record_fixture(tmp_path: Path) -> Path:
 
 
 def _write_bun_fallback_fixture(tmp_path: Path) -> Path:
-    js_bundle = (
-        b"// @bun\n"
-        b"console.log('fallback bun payload');\n"
-        b"B:/~BUN/root/droid.exe\n"
-    )
+    js_bundle = b"// @bun\n" b"console.log('fallback bun payload');\n" b"B:/~BUN/root/droid.exe\n"
     fake_module_record = b"\x00" * 35
     byte_count = len(js_bundle) + len(fake_module_record)
     blob = bytearray(js_bundle)
@@ -405,7 +391,9 @@ def _write_bun_fallback_fixture_with_inline_sourcemap(tmp_path: Path) -> Path:
 
 
 def _write_bun_fallback_fixture_with_external_sourcemap(tmp_path: Path) -> Path:
-    sourcemap_json = b'{"version":3,"file":"droid.exe","sources":["droid.ts"],"names":[],"mappings":""}'
+    sourcemap_json = (
+        b'{"version":3,"file":"droid.exe","sources":["droid.ts"],"names":[],"mappings":""}'
+    )
     js_bundle = (
         b"// @bun\n"
         b"console.log('fallback bun payload');\n"
@@ -607,9 +595,7 @@ def _write_bun_fallback_fixture_with_supporting_web_and_config(tmp_path: Path) -
 
 def _write_bun_fallback_fixture_with_invalid_offsets(tmp_path: Path) -> Path:
     js_bundle = (
-        b"// @bun\n"
-        b"console.log('invalid offsets fallback');\n"
-        b"B:/~BUN/root/droid.exe\n"
+        b"// @bun\n" b"console.log('invalid offsets fallback');\n" b"B:/~BUN/root/droid.exe\n"
     )
     fake_module_record = b"\x01" * 19
     byte_count = len(js_bundle) + len(fake_module_record)
@@ -805,9 +791,13 @@ def test_bun_fixture_matrix_characterization(tmp_path: Path, case_name: str, bui
     if "discovered_path_count" in expected["manifest"]:
         assert manifest["discovered_path_count"] == expected["manifest"]["discovered_path_count"]
     if "primary_suffix" in expected["manifest"]:
-        assert manifest["artifacts"]["primary_source_path"].endswith(expected["manifest"]["primary_suffix"])
+        assert manifest["artifacts"]["primary_source_path"].endswith(
+            expected["manifest"]["primary_suffix"]
+        )
     if "sourcemap_suffix" in expected["manifest"]:
-        assert manifest["artifacts"]["recovered_sourcemap_path"].endswith(expected["manifest"]["sourcemap_suffix"])
+        assert manifest["artifacts"]["recovered_sourcemap_path"].endswith(
+            expected["manifest"]["sourcemap_suffix"]
+        )
     if "supporting_suffix" in expected["manifest"]:
         assert any(
             path.endswith(expected["manifest"]["supporting_suffix"])
@@ -854,11 +844,11 @@ def test_bun_extractor_resolves_tls_callback_metadata(tmp_path: Path):
 
 
 def test_bun_extractor_includes_instruction_previews(tmp_path: Path):
-    section_blob = bytearray(b"\xE8\x1B\x00\x00\x00\xE9\x36\x00\x00\x00\xC3")
+    section_blob = bytearray(b"\xe8\x1b\x00\x00\x00\xe9\x36\x00\x00\x00\xc3")
     section_blob.extend(b"\x00" * (0x20 - len(section_blob)))
-    section_blob.extend(b"\x31\xC0\xC3")
+    section_blob.extend(b"\x31\xc0\xc3")
     section_blob.extend(b"\x00" * (0x40 - len(section_blob)))
-    section_blob.extend(b"\x83\xF8\x01\xC3")
+    section_blob.extend(b"\x83\xf8\x01\xc3")
     section_blob.extend(b"\x00" * (0x180 - len(section_blob)))
     section_blob.extend(b"\x31\xc0\xc3")
     section_blob.extend(b"\x00" * (0x1C0 - len(section_blob)))
@@ -891,9 +881,13 @@ def test_bun_extractor_classifies_runtime_bootstrap_profile():
     extractor = BunExecutableExtractor()
     entry_preview = [
         PEInstructionPreview(0x140001000, "sub", "rsp, 0x28", None, None, None, None, None, None),
-        PEInstructionPreview(0x140001004, "call", "0x140001020", 0x140001020, 0x1020, ".text", None, None, None),
+        PEInstructionPreview(
+            0x140001004, "call", "0x140001020", 0x140001020, 0x1020, ".text", None, None, None
+        ),
         PEInstructionPreview(0x140001009, "add", "rsp, 0x28", None, None, None, None, None, None),
-        PEInstructionPreview(0x14000100d, "jmp", "0x140001040", 0x140001040, 0x1040, ".text", None, None, None),
+        PEInstructionPreview(
+            0x14000100D, "jmp", "0x140001040", 0x140001040, 0x1040, ".text", None, None, None
+        ),
     ]
     tls_callbacks = [
         PETLSCallback(0x140001180, 0x1180, ".text", 0x380, []),
@@ -921,8 +915,12 @@ def test_bun_extractor_collects_startup_targets():
     }
     entry_preview = [
         PEInstructionPreview(0x140001000, "sub", "rsp, 0x28", None, None, None, None, None, None),
-        PEInstructionPreview(0x140001004, "call", "0x140001020", 0x140001020, 0x1020, ".text", None, None, None),
-        PEInstructionPreview(0x14000100d, "jmp", "0x140001040", 0x140001040, 0x1040, ".text", None, None, None),
+        PEInstructionPreview(
+            0x140001004, "call", "0x140001020", 0x140001020, 0x1020, ".text", None, None, None
+        ),
+        PEInstructionPreview(
+            0x14000100D, "jmp", "0x140001040", 0x140001040, 0x1040, ".text", None, None, None
+        ),
     ]
     tls_callbacks = [
         PETLSCallback(
@@ -1023,11 +1021,11 @@ def test_bun_extractor_builds_bounded_startup_graph():
         "pe_magic": 0x20B,
     }
     entry_preview = [
-        PEInstructionPreview(0x140001000, "call", "0x140001020", 0x140001020, 0x1020, ".text", None, None, None)
+        PEInstructionPreview(
+            0x140001000, "call", "0x140001020", 0x140001020, 0x1020, ".text", None, None, None
+        )
     ]
-    tls_callbacks = [
-        PETLSCallback(0x140001180, 0x1180, ".text", 0x380, [])
-    ]
+    tls_callbacks = [PETLSCallback(0x140001180, 0x1180, ".text", 0x380, [])]
     startup_targets = [
         PEStartupTarget(
             source="entrypoint",
@@ -1126,8 +1124,20 @@ def test_bun_extractor_builds_runtime_readiness_surface():
         "image_base": 0x140000000,
         "entry_point_rva": 0x1000,
         "sections": [
-            {"name": ".text", "virtual_size": 0x400, "virtual_address": 0x1000, "raw_size": 0x400, "raw_address": 0x200},
-            {"name": ".bun", "virtual_size": 0x400, "virtual_address": 0x2000, "raw_size": 0x400, "raw_address": 0x600},
+            {
+                "name": ".text",
+                "virtual_size": 0x400,
+                "virtual_address": 0x1000,
+                "raw_size": 0x400,
+                "raw_address": 0x200,
+            },
+            {
+                "name": ".bun",
+                "virtual_size": 0x400,
+                "virtual_address": 0x2000,
+                "raw_size": 0x400,
+                "raw_address": 0x600,
+            },
         ],
     }
     tls_callbacks = [PETLSCallback(0x140001180, 0x1180, ".text", 0x380, [])]
@@ -1209,7 +1219,7 @@ def test_bun_extractor_builds_dump_guidance():
                 target_resolution="import_iat",
                 import_target="KERNEL32.dll!GetProcAddress",
                 target_preview=[],
-            )
+            ),
         ],
         startup_graph=extractor._build_startup_graph(
             {
@@ -1243,7 +1253,9 @@ def test_bun_extractor_builds_dump_guidance():
             ],
         ),
         handoff_signals=[
-            PEHandoffSignal("embedded_bun_section", "section_table", "Embedded Bun section", "high"),
+            PEHandoffSignal(
+                "embedded_bun_section", "section_table", "Embedded Bun section", "high"
+            ),
         ],
     )
     guidance = extractor._build_dump_guidance(
@@ -1251,7 +1263,9 @@ def test_bun_extractor_builds_dump_guidance():
         suspicious_imports=["GetProcAddress", "VirtualProtect"],
         runtime_readiness=readiness,
         handoff_signals=[
-            PEHandoffSignal("embedded_bun_section", "section_table", "Embedded Bun section", "high"),
+            PEHandoffSignal(
+                "embedded_bun_section", "section_table", "Embedded Bun section", "high"
+            ),
         ],
     )
 
@@ -1385,7 +1399,9 @@ def test_bun_extractor_parses_extended_short_module_graph_layout(tmp_path: Path)
     assert recovery.success is True
     assert recovery.recovery_mode == "module_graph"
     assert (output_dir / "root" / "app.js").exists()
-    assert "extended short bun payload" in (output_dir / "root" / "app.js").read_text(encoding="utf-8")
+    assert "extended short bun payload" in (output_dir / "root" / "app.js").read_text(
+        encoding="utf-8"
+    )
 
 
 def test_bun_extractor_recovers_metadata_when_module_graph_layout_is_unknown(tmp_path: Path):
@@ -1427,7 +1443,9 @@ def test_bun_extractor_recovers_inline_sourcemap_during_path_scan_fallback(tmp_p
     assert manifest["artifacts"]["recovered_sourcemap_path"].endswith("root\\droid.exe.bunmap")
     assert manifest["artifacts"]["recovered_sourcemap_provenance"]["origin"] == "inline_data_url"
     assert manifest["artifacts"]["recovered_sourcemap_provenance"]["parse_status"] == "valid_json"
-    assert manifest["artifacts"]["recovered_sourcemap_provenance"]["file_matches_source_name"] is True
+    assert (
+        manifest["artifacts"]["recovered_sourcemap_provenance"]["file_matches_source_name"] is True
+    )
     sourcemap = json.loads((output_dir / "root" / "droid.exe.bunmap").read_text(encoding="utf-8"))
     assert sourcemap["version"] == 3
     assert sourcemap["file"] == "droid.exe"
@@ -1450,7 +1468,9 @@ def test_bun_extractor_recovers_external_sourcemap_during_path_scan_fallback(tmp
         == "referenced_virtual_path"
     )
     assert manifest["artifacts"]["recovered_sourcemap_provenance"]["parse_status"] == "valid_json"
-    assert manifest["artifacts"]["recovered_sourcemap_provenance"]["file_matches_source_name"] is True
+    assert (
+        manifest["artifacts"]["recovered_sourcemap_provenance"]["file_matches_source_name"] is True
+    )
     sourcemap = json.loads((output_dir / "root" / "droid.exe.map").read_text(encoding="utf-8"))
     assert sourcemap["version"] == 3
     assert sourcemap["sources"] == ["droid.ts"]
@@ -1528,7 +1548,10 @@ def test_bun_extractor_recovers_supporting_web_and_config_artifacts_during_path_
     assert any(path.endswith("root\\app.yaml") for path in supporting)
     assert any(path.endswith("root\\bunfig.toml") for path in supporting)
     assert "background: #111" in (output_dir / "root" / "styles.css").read_text(encoding="utf-8")
-    assert "<!doctype html>" in (output_dir / "root" / "index.html").read_text(encoding="utf-8").lower()
+    assert (
+        "<!doctype html>"
+        in (output_dir / "root" / "index.html").read_text(encoding="utf-8").lower()
+    )
     assert "name: fallback-demo" in (output_dir / "root" / "app.yaml").read_text(encoding="utf-8")
     assert "[install]" in (output_dir / "root" / "bunfig.toml").read_text(encoding="utf-8")
 
@@ -1548,7 +1571,9 @@ def test_bun_extractor_recovers_metadata_with_invalid_offsets_path_scan(tmp_path
     assert manifest["offsets"] is None
     assert manifest["artifacts"]["module_records_path"] is None
     assert manifest["artifacts"]["primary_source_path"].endswith("root\\droid.exe")
-    assert "invalid offsets fallback" in (output_dir / "root" / "droid.exe").read_text(encoding="utf-8")
+    assert "invalid offsets fallback" in (output_dir / "root" / "droid.exe").read_text(
+        encoding="utf-8"
+    )
 
 
 def test_bun_extractor_prefers_code_path_for_sparse_mixed_path_scan(tmp_path: Path):
@@ -1615,7 +1640,7 @@ def test_bun_extractor_normalizes_recovered_project_workspace(tmp_path: Path):
     )
 
     normalized_source = Path(result.entrypoint_path).read_text(encoding="utf-8")
-    assert normalized_source.startswith("// @bun\nimport { createRequire } from \"module\";\n")
+    assert normalized_source.startswith('// @bun\nimport { createRequire } from "module";\n')
     assert 'import { dlopen, FFIType, ptr } from "./reveng-bun-ffi-shim.mjs";' in normalized_source
     assert 'import { createRequire } from "module";' in normalized_source
     assert 'import WebSocket from "ws";' in normalized_source
@@ -1636,14 +1661,28 @@ def test_bun_extractor_normalizes_recovered_project_workspace(tmp_path: Path):
         "@aws-sdk/signature-v4a",
     ]
     assert package_json["reveng"]["dependency_analysis"]["builtin_modules"] == ["fs"]
-    assert package_json["reveng"]["dependency_analysis"]["ignored_package_strings"] == ["iconv-lite"]
+    assert package_json["reveng"]["dependency_analysis"]["ignored_package_strings"] == [
+        "iconv-lite"
+    ]
     assert package_json["reveng"]["sea_entrypoint_path"].endswith("sea-entry.cjs")
     assert package_json["reveng"]["sea_config_path"].endswith("sea-config.json")
     assert package_json["reveng"]["sea_companion_files"] == ["droid.mjs", "reveng-bun-ffi-shim.mjs"]
-    assert package_json["reveng"]["suggested_install_command"] == "npm install ws @aws-sdk/signature-v4a"
-    assert package_json["reveng"]["suggested_postject_install_command"] == "npm install --save-dev postject"
-    assert any("ignored embedded package-name strings" in warning for warning in package_json["reveng"]["warnings"])
-    assert any("built-in modules were detected" in warning for warning in package_json["reveng"]["warnings"])
+    assert (
+        package_json["reveng"]["suggested_install_command"]
+        == "npm install ws @aws-sdk/signature-v4a"
+    )
+    assert (
+        package_json["reveng"]["suggested_postject_install_command"]
+        == "npm install --save-dev postject"
+    )
+    assert any(
+        "ignored embedded package-name strings" in warning
+        for warning in package_json["reveng"]["warnings"]
+    )
+    assert any(
+        "built-in modules were detected" in warning
+        for warning in package_json["reveng"]["warnings"]
+    )
     assert any(
         check["check"] == "dependency_import_sanity"
         for check in package_json["reveng"]["semantic_checks"]
@@ -1657,7 +1696,9 @@ def test_bun_extractor_normalizes_recovered_project_workspace(tmp_path: Path):
     assert any(
         "command_template" in hook for hook in package_json["reveng"]["postprocessing_hooks"]
     )
-    assert any(hook["tool"] == "webcrack" for hook in package_json["reveng"]["postprocessing_hooks"])
+    assert any(
+        hook["tool"] == "webcrack" for hook in package_json["reveng"]["postprocessing_hooks"]
+    )
 
     manifest = json.loads(Path(result.manifest_path).read_text(encoding="utf-8"))
     assert manifest["entrypoint_path"].endswith("droid.mjs")
@@ -1671,11 +1712,14 @@ def test_bun_extractor_normalizes_recovered_project_workspace(tmp_path: Path):
     assert any(check["check"] == "bun_require_shim" for check in manifest["semantic_checks"])
     assert any(hook["tool"] == "webcrack" for hook in manifest["postprocessing_hooks"])
     assert any(hook["tool"] == "restringer" for hook in manifest["postprocessing_hooks"])
-    assert all("category" in hook and "command_template" in hook for hook in manifest["postprocessing_hooks"])
+    assert all(
+        "category" in hook and "command_template" in hook
+        for hook in manifest["postprocessing_hooks"]
+    )
 
     sea_entry = Path(result.sea_entrypoint_path).read_text(encoding="utf-8")
     assert 'sea = require("node:sea");' in sea_entry
-    assert 'const runtimeRoot = resolveRuntimeRoot();' in sea_entry
+    assert "const runtimeRoot = resolveRuntimeRoot();" in sea_entry
     assert 'await import(pathToFileURL(path.join(runtimeRoot, "droid.mjs")).href);' in sea_entry
 
 
@@ -1684,10 +1728,12 @@ def test_bun_extractor_builds_node_sea_from_normalized_workspace(
 ):
     source_path = tmp_path / "droid.exe"
     source_path.write_text(
-        "// @bun\nimport WebSocket from \"ws\";\nconst fs = import.meta.require(\"fs\");\n",
+        '// @bun\nimport WebSocket from "ws";\nconst fs = import.meta.require("fs");\n',
         encoding="utf-8",
     )
-    normalized = BunExecutableExtractor().normalize_project(str(source_path), str(tmp_path / "normalized"))
+    normalized = BunExecutableExtractor().normalize_project(
+        str(source_path), str(tmp_path / "normalized")
+    )
     assert normalized.success is True
     assert normalized.sea_config_path is not None
 
@@ -1703,7 +1749,9 @@ def test_bun_extractor_builds_node_sea_from_normalized_workspace(
             Path(cwd, "sea-prep.blob").write_bytes(b"blob")
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr("reveng.tools.anti_analysis.bun_extractor.shutil.which", lambda _: str(fake_node))
+    monkeypatch.setattr(
+        "reveng.tools.anti_analysis.bun_extractor.shutil.which", lambda _: str(fake_node)
+    )
     monkeypatch.setattr(
         "reveng.tools.anti_analysis.bun_extractor.subprocess.run",
         fake_run,
@@ -1719,8 +1767,12 @@ def test_bun_extractor_builds_node_sea_from_normalized_workspace(
     assert result.verification is not None
     assert result.verification["status"] in {"pass", "pass_with_warnings"}
     assert any(check["check"] == "sea_blob_generated" for check in result.verification["checks"])
-    assert any(check["check"] == "dependency_manifest_alignment" for check in result.verification["checks"])
-    assert any(check["check"] == "sea_asset_bundle_coverage" for check in result.verification["checks"])
+    assert any(
+        check["check"] == "dependency_manifest_alignment" for check in result.verification["checks"]
+    )
+    assert any(
+        check["check"] == "sea_asset_bundle_coverage" for check in result.verification["checks"]
+    )
     assert any(check["check"] == "standalone_copy_probe" for check in result.verification["checks"])
     assert any("install ws postject --silent" in command for command in result.commands_run)
     assert any("--experimental-sea-config" in command for command in result.commands_run)
@@ -1735,7 +1787,7 @@ def test_bun_extractor_builds_node_sea_from_relative_workspace(
 ):
     monkeypatch.chdir(tmp_path)
     Path("droid.exe").write_text(
-        "// @bun\nimport WebSocket from \"ws\";\nconst fs = import.meta.require(\"fs\");\n",
+        '// @bun\nimport WebSocket from "ws";\nconst fs = import.meta.require("fs");\n',
         encoding="utf-8",
     )
     normalized = BunExecutableExtractor().normalize_project("droid.exe", "normalized")
@@ -1758,7 +1810,9 @@ def test_bun_extractor_builds_node_sea_from_relative_workspace(
             assert Path(command[blob_index + 1]).is_absolute()
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr("reveng.tools.anti_analysis.bun_extractor.shutil.which", lambda _: str(fake_node))
+    monkeypatch.setattr(
+        "reveng.tools.anti_analysis.bun_extractor.shutil.which", lambda _: str(fake_node)
+    )
     monkeypatch.setattr(
         "reveng.tools.anti_analysis.bun_extractor.subprocess.run",
         fake_run,
@@ -1841,7 +1895,7 @@ def test_bun_extractor_bootstraps_bun_global_usage(tmp_path: Path):
     source_path.write_text(
         (
             "// @bun\n"
-            'var {$: runner} = globalThis.Bun;\n'
+            "var {$: runner} = globalThis.Bun;\n"
             "const selfPath = Bun.fileURLToPath(import.meta.url);\n"
             "console.log(runner, selfPath);\n"
         ),
@@ -1855,7 +1909,7 @@ def test_bun_extractor_bootstraps_bun_global_usage(tmp_path: Path):
     assert result.success is True
     assert "bun global bootstrap" in result.shims_applied
     normalized_source = Path(result.entrypoint_path).read_text(encoding="utf-8")
-    assert normalized_source.startswith("// @bun\nimport \"./reveng-bun-global-shim.mjs\";\n")
+    assert normalized_source.startswith('// @bun\nimport "./reveng-bun-global-shim.mjs";\n')
     bun_global_shim = Path(result.output_dir) / "reveng-bun-global-shim.mjs"
     assert bun_global_shim.exists()
     assert "globalThis.Bun = bunShim;" in bun_global_shim.read_text(encoding="utf-8")
@@ -1881,7 +1935,9 @@ def test_bun_differential_validation_tracks_bun_global_bootstrap(tmp_path: Path)
         check["check"] == "bun_global_bootstrap_coverage" and check["status"] == "pass"
         for check in differential["checks"]
     )
-    assert "Bun global bootstrap -> ./reveng-bun-global-shim.mjs" in differential["expected_rewrites"]
+    assert (
+        "Bun global bootstrap -> ./reveng-bun-global-shim.mjs" in differential["expected_rewrites"]
+    )
 
 
 def test_bun_sea_workflow_reports_differential_validation(
@@ -1896,7 +1952,9 @@ def test_bun_sea_workflow_reports_differential_validation(
             Path(cwd, "sea-prep.blob").write_bytes(b"blob")
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr("reveng.tools.anti_analysis.bun_extractor.shutil.which", lambda _: str(fake_node))
+    monkeypatch.setattr(
+        "reveng.tools.anti_analysis.bun_extractor.shutil.which", lambda _: str(fake_node)
+    )
     monkeypatch.setattr(
         "reveng.tools.anti_analysis.bun_extractor.subprocess.run",
         fake_run,
@@ -1927,7 +1985,9 @@ def test_bun_sea_workflow_reports_runtime_escalation(
             Path(cwd, "sea-prep.blob").write_bytes(b"blob")
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr("reveng.tools.anti_analysis.bun_extractor.shutil.which", lambda _: str(fake_node))
+    monkeypatch.setattr(
+        "reveng.tools.anti_analysis.bun_extractor.shutil.which", lambda _: str(fake_node)
+    )
     monkeypatch.setattr(
         "reveng.tools.anti_analysis.bun_extractor.subprocess.run",
         fake_run,
@@ -1956,7 +2016,9 @@ def test_bun_sea_workflow_reports_equivalence_validation(
             Path(cwd, "sea-prep.blob").write_bytes(b"blob")
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr("reveng.tools.anti_analysis.bun_extractor.shutil.which", lambda _: str(fake_node))
+    monkeypatch.setattr(
+        "reveng.tools.anti_analysis.bun_extractor.shutil.which", lambda _: str(fake_node)
+    )
     monkeypatch.setattr(
         "reveng.tools.anti_analysis.bun_extractor.subprocess.run",
         fake_run,
@@ -1966,7 +2028,10 @@ def test_bun_sea_workflow_reports_equivalence_validation(
 
     assert workflow.report_data is not None
     assert workflow.report_data["equivalence_validation"]["dimension"] == "equivalence_validation"
-    assert workflow.report_data["equivalence_validation"]["equivalence_level"] == "structural_candidate"
+    assert (
+        workflow.report_data["equivalence_validation"]["equivalence_level"]
+        == "structural_candidate"
+    )
     assert any(
         step["kind"] == "characterization_smoke_test"
         for step in workflow.report_data["equivalence_validation"]["recommended_validations"]
@@ -2149,7 +2214,9 @@ def test_bun_runtime_escalation_summary_prioritizes_runtime_steps():
             ],
         ),
         handoff_signals=[
-            PEHandoffSignal("embedded_bun_section", "section_table", "Embedded Bun section", "high"),
+            PEHandoffSignal(
+                "embedded_bun_section", "section_table", "Embedded Bun section", "high"
+            ),
         ],
     )
     native_stub = extractor.analyze_pe_stub
@@ -2214,7 +2281,7 @@ def test_bun_extractor_tracks_aliased_create_require_dependencies():
     analysis = BunExecutableExtractor()._analyze_dependencies(
         (
             'import { createRequire } from "module";\n'
-            'var O$ = createRequire(import.meta.url);\n'
+            "var O$ = createRequire(import.meta.url);\n"
             'const ac = O$("abort-controller");\n'
         )
     )
@@ -2261,4 +2328,6 @@ def test_universal_unpacker_extracts_bun_javascript(tmp_path: Path):
     assert output_path.exists()
     assert "hello from bun" in output_path.read_text(encoding="utf-8")
     assert result.artifacts is not None
-    assert any(str(output_path.with_name("bundle_bunfs")) in artifact for artifact in result.artifacts)
+    assert any(
+        str(output_path.with_name("bundle_bunfs")) in artifact for artifact in result.artifacts
+    )

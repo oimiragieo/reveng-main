@@ -5,7 +5,6 @@ import json
 import sys
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RUNNER_PATH = REPO_ROOT / "scripts" / "generate_release_report.py"
 
@@ -98,7 +97,9 @@ def test_generate_release_report_writes_json_and_markdown(tmp_path: Path):
         support_matrix_path=support_matrix,
         skip_inventory_path=skip_inventory,
     )
-    runner.write_release_report(report, json_output_path=output_json, markdown_output_path=output_md)
+    runner.write_release_report(
+        report, json_output_path=output_json, markdown_output_path=output_md
+    )
 
     written_json = json.loads(output_json.read_text(encoding="utf-8"))
     written_markdown = output_md.read_text(encoding="utf-8")
@@ -133,7 +134,9 @@ def test_generate_release_report_marks_not_ready_when_strict_ga_fails(tmp_path: 
             ],
         },
     )
-    app_report = _write_json(tmp_path / "app.json", {"summary": {"matrix_status": "pass", "total_entries": 7}})
+    app_report = _write_json(
+        tmp_path / "app.json", {"summary": {"matrix_status": "pass", "total_entries": 7}}
+    )
     source_report = _write_json(tmp_path / "source.json", {"benchmark_count": 5, "benchmarks": []})
     bun_report = _write_json(
         tmp_path / "bun.json",
@@ -175,13 +178,34 @@ def test_generate_release_report_main_resolves_relative_paths_from_repo_root(tmp
     docs_dir.mkdir()
     (tmp_path / "VERSION").write_text("9.9.9", encoding="utf-8")
 
-    _write_json(reports_dir / "ga_readiness_baseline.json", {"summary": {"overall_status": "pass"}, "gates": []})
-    _write_json(reports_dir / "ga_readiness_target.json", {"summary": {"overall_status": "pass"}, "gates": []})
-    _write_json(reports_dir / "app_reverse_engineering_corpus_report.json", {"summary": {"matrix_status": "pass", "total_entries": 7}})
-    _write_json(reports_dir / "source_binary_benchmarks_report.json", {"benchmark_count": 5, "benchmarks": []})
-    _write_json(reports_dir / "bun_sample_matrix.json", {"matrix_status": "pass", "live_bun_sample_count": 2, "hard_failure_count": 0})
-    _write_json(reports_dir / "skip_inventory.json", {"summary": {"total_skip_sites": 4, "by_category": {"external_tooling": 4}}})
-    _write_json(docs_dir / "support_matrix.json", {"workflows": [{"id": "app_reverse_engineering", "status": "supported"}]})
+    _write_json(
+        reports_dir / "ga_readiness_baseline.json",
+        {"summary": {"overall_status": "pass"}, "gates": []},
+    )
+    _write_json(
+        reports_dir / "ga_readiness_target.json",
+        {"summary": {"overall_status": "pass"}, "gates": []},
+    )
+    _write_json(
+        reports_dir / "app_reverse_engineering_corpus_report.json",
+        {"summary": {"matrix_status": "pass", "total_entries": 7}},
+    )
+    _write_json(
+        reports_dir / "source_binary_benchmarks_report.json",
+        {"benchmark_count": 5, "benchmarks": []},
+    )
+    _write_json(
+        reports_dir / "bun_sample_matrix.json",
+        {"matrix_status": "pass", "live_bun_sample_count": 2, "hard_failure_count": 0},
+    )
+    _write_json(
+        reports_dir / "skip_inventory.json",
+        {"summary": {"total_skip_sites": 4, "by_category": {"external_tooling": 4}}},
+    )
+    _write_json(
+        docs_dir / "support_matrix.json",
+        {"workflows": [{"id": "app_reverse_engineering", "status": "supported"}]},
+    )
 
     json_output = "reports/release_report.json"
     markdown_output = "reports/release_report.md"

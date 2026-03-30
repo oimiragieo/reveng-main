@@ -105,7 +105,9 @@ async def run_app_corpus(
             if entry.required:
                 required_failed += 1
 
-    matrix_status = "pass" if failed == 0 else ("fail" if required_failed > 0 else "pass_with_limitations")
+    matrix_status = (
+        "pass" if failed == 0 else ("fail" if required_failed > 0 else "pass_with_limitations")
+    )
     report = {
         "schema_version": RESULT_SCHEMA_VERSION,
         "result_type": "app_reverse_engineering_corpus_report",

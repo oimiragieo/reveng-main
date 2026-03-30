@@ -818,7 +818,9 @@ def _normalize_bun_workspace(extractor, canonical_input: str | None, output_root
     return extractor.normalize_project(canonical_input, str(normalized_dir))
 
 
-def _run_bun_sea_build(binary_path: str, output_dir: str | None, output_path: str | None, skip_install: bool):
+def _run_bun_sea_build(
+    binary_path: str, output_dir: str | None, output_path: str | None, skip_install: bool
+):
     """Shared Bun SEA build workflow used by dedicated and delegated CLI paths."""
     from .tools.anti_analysis.bun_extractor import run_bun_sea_workflow
 
@@ -957,9 +959,7 @@ def handle_analyze_command(args):
 
     try:
         print("Running end-to-end pipeline...")
-        print(
-            f"Ghidra stage timeout: {args.ghidra_timeout}s (retries: {args.ghidra_retries})"
-        )
+        print(f"Ghidra stage timeout: {args.ghidra_timeout}s (retries: {args.ghidra_retries})")
         analysis = run_end_to_end_analysis(
             binary_path=analyzer.binary_path,
             output_dir=str(analyzer.analysis_folder),
