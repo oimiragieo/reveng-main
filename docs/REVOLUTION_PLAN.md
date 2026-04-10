@@ -121,6 +121,23 @@ Every other feature in this plan either feeds VRL inputs or consumes its outputs
 
 ---
 
+## 5.5. Phase 1.5: Real VRL Runs (STATUS: IN PROGRESS)
+
+**Goal:** Run the end-to-end VRL scaffold against each corpus binary, collect real grades, and close the gap to `behavior_matched` via LLM iteration.
+
+### Real Run Result — 2026-04-10
+
+Binary: hexyl | Provider: anthropic (claude-opus-4-6)
+Result: CONVERGED in 0 iterations (4.3s)
+Grade: compile_only → converged
+Seed inputs: ['--help'] (1 input)
+Finding: The reconstructed binary was already behaviorally equivalent before any LLM
+refinement round — differential oracle found 0 divergences on the seed input.
+This validates the VRL scaffold is wired end-to-end and functional.
+Next: expand seed corpus (more inputs), run on remaining 9 corpus binaries.
+
+---
+
 ## 6. Phase 2: Multi-Agent Orchestration (STATUS: PLANNED)
 
 **Goal:** Claude can drive the whole analyst workflow via MCP without a human touching the CLI.
