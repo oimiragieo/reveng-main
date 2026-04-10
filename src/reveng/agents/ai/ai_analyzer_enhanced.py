@@ -3,20 +3,30 @@
 REVENG Enhanced AI Analyzer
 ============================
 
-Enhanced AI analysis with Ollama integration:
+Enhanced AI analysis with multi-provider support:
+- Ollama (local, default)
+- Anthropic Claude (claude-opus-4-6 primary)
+- OpenAI GPT (gpt-4o primary)
 - Real LLM-powered function analysis
 - Dynamic model selection
 - Batch processing with progress bars
 - Fallback to heuristics when needed
-- Configurable via config.yaml
+- Configurable via config.yaml and REVENG_AI_PROVIDER env var
+
+Provider selection (in order of precedence):
+  1. ``provider`` argument to ``get_analyzer()``
+  2. ``REVENG_AI_PROVIDER`` environment variable
+  3. config.yaml ``ai.provider`` setting
+  4. Default: ``"ollama"``
 """
 
 import json
 import logging
+import os
 import sys
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -32,6 +42,83 @@ except ImportError as e:
     logging.warning(f"Ollama analyzer not available: {e}")
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Provider registry
+# ---------------------------------------------------------------------------
+
+#: Maps provider name -> (module_attr, class_name, default_model)
+_PROVIDER_REGISTRY: Dict[str, Dict[str, str]] = {
+    "anthropic": {
+        "module": "reveng.agents.ai.anthropic_analyzer",
+        "class": "AnthropicAnalyzer",
+        "default_model": "claude-opus-4-6",
+    },
+    "openai": {
+        "module": "reveng.agents.ai.openai_analyzer",
+        "class": "OpenAIAnalyzer",
+        "default_model": "gpt-4o",
+    },
+}
+
+
+def get_analyzer(
+    provider: Optional[str] = None,
+) -> Any:
+    """
+    Return an analyzer instance for the given provider.
+
+    Provider resolution order:
+      1. ``provider`` argument (if not None)
+      2. ``REVENG_AI_PROVIDER`` environment variable
+      3. config.yaml ``ai.provider`` setting
+      4. Default: ``"ollama"``
+
+    Args:
+        provider: One of ``"ollama"``, ``"anthropic"``, ``"openai"``.
+                  If *None*, the env var / config is consulted.
+
+    Returns:
+        An analyzer instance implementing ``analyze_function`` and
+        ``generate_implementation``.
+
+    Raises:
+        ValueError: When an unknown provider name is supplied.
+        ImportError: When the provider's optional package is missing.
+    """
+    resolved = provider or os.getenv("REVENG_AI_PROVIDER")
+
+    if resolved is None and HAS_OLLAMA:
+        try:
+            cfg = get_config()
+            resolved = cfg.get_ai_config().provider
+        except Exception:
+            pass
+
+    if not resolved:
+        resolved = "ollama"
+
+    resolved = resolved.lower().strip()
+
+    if resolved == "ollama":
+        if not HAS_OLLAMA:
+            raise ImportError(
+                "Ollama support requires 'ollama' package. " "Install with: pip install reveng[ai]"
+            )
+        return OllamaAnalyzer()
+
+    if resolved not in _PROVIDER_REGISTRY:
+        raise ValueError(
+            f"Unknown AI provider: {resolved!r}. "
+            f"Valid options: ollama, {', '.join(_PROVIDER_REGISTRY)}"
+        )
+
+    entry = _PROVIDER_REGISTRY[resolved]
+    import importlib
+
+    mod = importlib.import_module(entry["module"])
+    cls = getattr(mod, entry["class"])
+    return cls()
 
 
 class EnhancedAIAnalyzer:
@@ -83,14 +170,28 @@ class EnhancedAIAnalyzer:
                 self.ai_analyzer = None
 
         elif self.ai_config.provider == "anthropic":
-            logger.warning("Anthropic provider not yet implemented")
-            # TODO: Implement Anthropic integration
-            self.ai_analyzer = None
+            try:
+                from .anthropic_analyzer import AnthropicAnalyzer
+
+                self.ai_analyzer = AnthropicAnalyzer()
+                logger.info("Anthropic analyzer initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize Anthropic: {e}")
+                if self.ai_config.fallback_to_heuristics:
+                    logger.info("Will use heuristic fallback")
+                self.ai_analyzer = None
 
         elif self.ai_config.provider == "openai":
-            logger.warning("OpenAI provider not yet implemented")
-            # TODO: Implement OpenAI integration
-            self.ai_analyzer = None
+            try:
+                from .openai_analyzer import OpenAIAnalyzer
+
+                self.ai_analyzer = OpenAIAnalyzer()
+                logger.info("OpenAI analyzer initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize OpenAI: {e}")
+                if self.ai_config.fallback_to_heuristics:
+                    logger.info("Will use heuristic fallback")
+                self.ai_analyzer = None
 
         else:
             logger.info("No AI provider configured")

@@ -11,6 +11,7 @@ Version: 3.0.0
 """
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -25,6 +26,27 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from reveng.ai.angr_cfg_preprocessor import AngrCFGPreprocessor
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Module-level compiled regexes for hot normalization paths (fix #1 and #3).
+# Compiled once to avoid per-call overhead in large (4 MB+) source files.
+# ---------------------------------------------------------------------------
+
+# Fix #1 — undeclared split-local pattern: _varname = GHIDRA_U128(...)  etc.
+_SPLIT_LOCAL_ASSIGN_RE = re.compile(
+    r"^(?P<indent>\s+)_(?P<varname>[a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*"
+    r"(?P<rhs>(?:GHIDRA_U128|GHIDRA_U64|auVar|uVar|lVar)\b.*?);$",
+    re.MULTILINE,
+)
+
+# Fix #3 — fragment-local declaration pattern: static uint64_t uStack_88_4_4_ = 0;
+# Covers both u*Stack_ and local_ fragment families.
+_FRAGMENT_DECL_RE = re.compile(
+    r"^(?P<indent>[ \t]*)static\s+uint64_t\s+"
+    r"(?P<base>(?:u[A-Za-z]*Stack_[0-9a-f]+|local_[0-9a-f]+))"
+    r"_\d+_\d+_\s*=\s*0\s*;",
+    re.MULTILINE,
+)
 
 
 class CompilationError(Exception):
@@ -48,6 +70,7 @@ class BinaryRecompilationEngine:
         work_dir: Optional[Path] = None,
         cfg_preprocessor: Optional[AngrCFGPreprocessor] = None,
         max_compilation_retries: int = 2,
+        native_analysis_timeout: int = 180,
     ):
         """
         Initialize recompilation engine.
@@ -61,6 +84,7 @@ class BinaryRecompilationEngine:
         self.gemini = gemini_engine
         self.cfg_preprocessor = cfg_preprocessor or AngrCFGPreprocessor()
         self.max_compilation_retries = max(0, max_compilation_retries)
+        self.native_analysis_timeout = max(60, int(native_analysis_timeout))
         self.compiler_cache = self._detect_compiler_cache()
         self.work_dir = work_dir or Path(tempfile.mkdtemp(prefix="reveng_recomp_"))
         self.work_dir.mkdir(parents=True, exist_ok=True)
@@ -68,6 +92,12 @@ class BinaryRecompilationEngine:
         logger.info(f"Recompilation engine initialized (work dir: {self.work_dir})")
         if self.compiler_cache:
             logger.info("Compiler cache enabled: %s", self.compiler_cache)
+
+    @staticmethod
+    def _looks_like_native_binary(binary_path: str) -> bool:
+        """Return whether the path likely points to a native binary artifact."""
+        suffix = Path(binary_path).suffix.lower()
+        return suffix in {".exe", ".dll", ".so", ".dylib", ".elf", ".bin"} or not suffix
 
     def _get_source_lookup_cache(self, cache_name: str, source: str) -> Dict[Any, Any]:
         """Return a small per-source cache for repeated whole-source lookup helpers."""
@@ -359,6 +389,7 @@ class BinaryRecompilationEngine:
             "source_files": {},
             "compiled_binaries": {},
             "compilation_reports": {},
+            "native_output_traces": {},
             "differential_validation": {},
             "equivalence_validation": {},
             "validation_results": {},
@@ -389,6 +420,7 @@ class BinaryRecompilationEngine:
             results["source_files"] = compilation_result.get("source_files", reconstructed_code)
             results["compiled_binaries"] = compilation_result["compiled_binaries"]
             results["compilation_reports"] = compilation_result["reports"]
+            results["native_output_traces"] = compilation_result.get("native_output_traces", {})
             results["equivalence_validation"] = (
                 self._build_recompilation_equivalence_validation_summary(
                     results["compilation_reports"],
@@ -448,11 +480,30 @@ class BinaryRecompilationEngine:
 
     async def _phase1_decompilation(self, binary_path: str, output_dir: Path) -> Dict[str, Any]:
         """Phase 1: Decompile binary using Ghidra."""
-        if not self.ghidra:
-            raise ValueError("GhidraEngine not configured")
+        if self.ghidra:
+            logger.info(f"  Analyzing {binary_path} with Ghidra...")
+            ghidra_data = await asyncio.to_thread(self.ghidra.analyze_binary, binary_path)
+        elif self._looks_like_native_binary(binary_path):
+            logger.info(
+                "  Ghidra unavailable for %s; using native fallback analysis (timeout=%ss)...",
+                binary_path,
+                self.native_analysis_timeout,
+            )
+            from reveng.native.ghidra_workflow import run_native_ghidra_analysis
 
-        logger.info(f"  Analyzing {binary_path} with Ghidra...")
-        ghidra_data = await asyncio.to_thread(self.ghidra.analyze_binary, binary_path)
+            native_result = await asyncio.to_thread(
+                run_native_ghidra_analysis,
+                binary_path,
+                timeout=self.native_analysis_timeout,
+            )
+            ghidra_data = dict(native_result.get("analysis_data") or {})
+            if not ghidra_data:
+                raise ValueError(
+                    native_result.get("error")
+                    or "Native fallback analysis returned no analysis_data"
+                )
+        else:
+            raise ValueError("GhidraEngine not configured")
 
         logger.info(f"  ✅ Functions: {len(ghidra_data.get('functions', []))}")
         logger.info(f"  ✅ Decompiled: {len(ghidra_data.get('decompiled_code', {}))}")
@@ -624,6 +675,9 @@ class BinaryRecompilationEngine:
                 stage_timings=stage_timings,
             )
             raise
+        c_code = self._strip_import_like_forward_declarations(c_code)
+        c_code = self._inject_missing_import_like_stub_macros(c_code)
+        c_code = self._inject_fallback_function_entry_traces(c_code)
         c_file = output_dir / "reconstructed.c"
         c_file.write_text(c_code, encoding="utf-8")
         self._write_reconstruction_progress(
@@ -660,6 +714,7 @@ class BinaryRecompilationEngine:
         """Phase 3: Compile source code to binary."""
         compiled_binaries: Dict[str, str] = {}
         compilation_reports: Dict[str, Dict[str, Any]] = {}
+        native_output_traces: Dict[str, Dict[str, Any]] = {}
 
         # Compile C code
         if "c" in source_files:
@@ -676,6 +731,9 @@ class BinaryRecompilationEngine:
                     ghidra_data or {},
                 )
                 compilation_reports[target_key] = report
+                native_output_traces[target_key] = self._build_native_output_trace(
+                    target_key, report
+                )
                 # Feed Clang the latest GCC-repaired source so both compilers validate
                 # the same reconstructed program instead of restarting from the stale
                 # original decompilation after GCC has already applied compiler-guided fixes.
@@ -696,8 +754,186 @@ class BinaryRecompilationEngine:
         return {
             "compiled_binaries": compiled_binaries,
             "reports": compilation_reports,
+            "native_output_traces": native_output_traces,
             "source_files": source_files,
         }
+
+    def _build_native_output_trace(self, target_key: str, report: Dict[str, Any]) -> Dict[str, Any]:
+        """Build a lightweight persisted trace for a compiled native candidate."""
+        binary_path = str(report.get("binary_path") or "")
+        final_source_file = str(report.get("final_source_file") or "")
+        helper_call_summary = self._build_helper_call_summary(Path(final_source_file))
+        helper_reachability_summary = self._build_helper_reachability_summary(
+            Path(final_source_file)
+        )
+        binary_file = Path(binary_path) if binary_path else None
+        exists = bool(binary_file and binary_file.exists())
+        sha256 = None
+        size = None
+        if exists and binary_file is not None:
+            file_bytes = binary_file.read_bytes()
+            sha256 = hashlib.sha256(file_bytes).hexdigest()
+            size = len(file_bytes)
+        selected_attempt = 0
+        for attempt in reversed(list(report.get("attempts") or [])):
+            if attempt.get("returncode") == 0:
+                selected_attempt = int(attempt.get("attempt") or 0)
+                break
+        if not selected_attempt:
+            selected_attempt = int(report.get("total_attempts") or 0)
+        return {
+            "trace_id": f"rebuild:{target_key}",
+            "target": target_key,
+            "compiler": report.get("compiler"),
+            "status": report.get("status"),
+            "binary_path": binary_path or None,
+            "final_source_file": final_source_file or None,
+            "attempt_count": int(report.get("total_attempts") or 0),
+            "selected_attempt": selected_attempt,
+            "exists": exists,
+            "size": size,
+            "sha256": sha256,
+            "helper_call_summary": helper_call_summary,
+            "helper_reachability_summary": helper_reachability_summary,
+        }
+
+    def _build_helper_call_summary(self, source_file: Path) -> Dict[str, Any]:
+        """Summarize helper-managed call presence in a generated native source file."""
+        if not source_file.exists():
+            return {"present": [], "counts": {}, "total_calls": 0}
+        source = source_file.read_text(encoding="utf-8")
+        helper_names = self._helper_managed_call_names()
+        counts: Dict[str, int] = {}
+        for helper_name in helper_names:
+            count = len(
+                re.findall(
+                    rf"\b(?:imp_|reveng_fallback_)?{re.escape(helper_name)}\s*\(",
+                    source,
+                )
+            )
+            if count:
+                counts[helper_name] = count
+        return {
+            "present": sorted(counts),
+            "counts": counts,
+            "total_calls": sum(counts.values()),
+        }
+
+    @staticmethod
+    def _helper_managed_call_names() -> tuple[str, ...]:
+        return (
+            "GetCommandLineW",
+            "GetCommandLineA",
+            "GetStdHandle",
+            "GetConsoleMode",
+            "GetConsoleOutputCP",
+            "MultiByteToWideChar",
+            "WideCharToMultiByte",
+            "WriteConsoleW",
+            "NtWriteFile",
+        )
+
+    def _build_helper_reachability_summary(self, source_file: Path) -> Dict[str, Any]:
+        """Summarize helper-managed calls reachable from synthesized entry functions."""
+        if not source_file.exists():
+            return {
+                "entry_roots": [],
+                "reachable_functions": [],
+                "reachable_helpers": [],
+                "reachable_helper_counts": {},
+                "reachable_helper_total": 0,
+                "entry_reachable_helper_ratio": 0.0,
+            }
+        source = source_file.read_text(encoding="utf-8")
+        function_bodies = self._extract_function_bodies(source)
+        if not function_bodies:
+            return {
+                "entry_roots": [],
+                "reachable_functions": [],
+                "reachable_helpers": [],
+                "reachable_helper_counts": {},
+                "reachable_helper_total": 0,
+                "entry_reachable_helper_ratio": 0.0,
+            }
+        helper_names = set(self._helper_managed_call_names())
+        entry_roots = [
+            name for name in ("main", "entry_point", "WinMain", "wmain") if name in function_bodies
+        ]
+        if not entry_roots:
+            entry_roots = [name for name in function_bodies if name.startswith("text_")][:1]
+        call_graph: Dict[str, set[str]] = {}
+        keywords = {"if", "for", "while", "switch", "return", "sizeof"}
+        for function_name, body in function_bodies.items():
+            callees = set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\(", body))
+            call_graph[function_name] = {
+                callee for callee in callees if callee not in keywords and callee != function_name
+            }
+        visited: set[str] = set()
+        pending = list(entry_roots)
+        while pending:
+            current = pending.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            for callee in call_graph.get(current, set()):
+                if callee in function_bodies and callee not in visited:
+                    pending.append(callee)
+        helper_counts: Dict[str, int] = {}
+        total_helper_calls = 0
+        for function_name in visited:
+            body = function_bodies.get(function_name, "")
+            for helper_name in helper_names:
+                helper_count = len(
+                    re.findall(
+                        rf"\b(?:imp_|reveng_fallback_)?{re.escape(helper_name)}\s*\(",
+                        body,
+                    )
+                )
+                if helper_count:
+                    helper_counts[helper_name] = helper_counts.get(helper_name, 0) + helper_count
+                    total_helper_calls += helper_count
+        overall_helper_total = int(
+            self._build_helper_call_summary(source_file).get("total_calls") or 0
+        )
+        return {
+            "entry_roots": entry_roots,
+            "reachable_functions": sorted(visited),
+            "reachable_helpers": sorted(helper_counts),
+            "reachable_helper_counts": helper_counts,
+            "reachable_helper_total": total_helper_calls,
+            "entry_reachable_helper_ratio": (
+                float(total_helper_calls) / float(overall_helper_total)
+                if overall_helper_total
+                else 0.0
+            ),
+        }
+
+    def _extract_function_bodies(self, source: str) -> Dict[str, str]:
+        """Extract generated C function bodies by function name."""
+        pattern = re.compile(
+            r"^(?P<signature>[A-Za-z_][A-Za-z0-9_ \t\*]*\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\([^;{}]*\))\s*\{",
+            flags=re.MULTILINE,
+        )
+        matches = list(pattern.finditer(source))
+        functions: Dict[str, str] = {}
+        for match in matches:
+            name = str(match.group("name"))
+            brace_start = source.find("{", match.start())
+            if brace_start < 0:
+                continue
+            depth = 0
+            end_index = brace_start
+            while end_index < len(source):
+                char = source[end_index]
+                if char == "{":
+                    depth += 1
+                elif char == "}":
+                    depth -= 1
+                    if depth == 0:
+                        functions[name] = source[brace_start + 1 : end_index]
+                        break
+                end_index += 1
+        return functions
 
     def _detect_compiler_cache(self) -> Optional[str]:
         """Detect a compiler cache wrapper if one is available."""
@@ -719,8 +955,29 @@ class BinaryRecompilationEngine:
             "-O0",
             "-g",
             "-fno-builtin",
-            "-Wl,--allow-multiple-definition",
         ]
+        if os.name == "nt":
+            if compiler_name == "clang":
+                cmd.extend(
+                    [
+                        "-Xlinker",
+                        "/force:multiple",
+                        "-Xlinker",
+                        "/subsystem:console",
+                        "-Xlinker",
+                        "/entry:mainCRTStartup",
+                    ]
+                )
+            else:
+                cmd.extend(
+                    [
+                        "-Wl,--allow-multiple-definition",
+                        "-Wl,-subsystem,console",
+                        "-Wl,-e,mainCRTStartup",
+                    ]
+                )
+        else:
+            cmd.append("-Wl,--allow-multiple-definition")
         if self.compiler_cache:
             return [self.compiler_cache, *cmd]
         return cmd
@@ -1771,6 +2028,45 @@ Instructions:
             )
         )
         source = apply_stage(
+            "normalize_undeclared_split_locals",
+            self._normalize_undeclared_split_locals,
+            source,
+        )
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "normalize_undeclared_split_locals",
+            )
+        )
+        source = apply_stage(
+            "unify_fragment_locals",
+            self._unify_fragment_locals,
+            source,
+        )
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "unify_fragment_locals",
+            )
+        )
+        source = apply_stage(
+            "widen_undefined8_param_prototypes",
+            self._widen_undefined8_param_prototypes,
+            source,
+        )
+        whole_source_dump_written = (
+            whole_source_dump_written
+            or self._maybe_dump_whole_source_stage_debug(
+                debug_output_dir,
+                whole_source_snapshots,
+                "widen_undefined8_param_prototypes",
+            )
+        )
+        source = apply_stage(
             "prototype_relaxation",
             self._relax_mismatched_pointer_prototypes,
             source,
@@ -1981,6 +2277,7 @@ Instructions:
         if stage_callback:
             stage_callback("generated_prelude_build")
         generated_prelude_build_started = time.monotonic()
+        source = self._strip_import_like_forward_declarations(source)
         synthetic_prelude = self._build_generated_symbol_prelude(source)
         helper_prelude = self._build_generated_helper_prelude(source)
         if stage_timing_callback:
@@ -2351,6 +2648,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             token = match.group(1)
             if token == "...":
                 return token
+            if token == ":":
+                return token
             if not any(char in token for char in ".$:<>-"):
                 return token
             return self._sanitize_c_identifier(token, fallback="generated_symbol")
@@ -2658,6 +2957,8 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             updated, indexed_vector_names | byte_vector64_names
         )
         updated = self._restore_prefixed_local_aliases(updated)
+        updated = self._normalize_undeclared_split_locals(updated)
+        updated = self._declare_fragment_base_aliases(updated)
         updated = self._rewrite_illegal_array_cast_assignments(updated)
         updated = self._relax_readonly_local_pointer_declarations(updated)
         updated = re.sub(
@@ -2755,6 +3056,79 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             replace_prefixed_local,
             source,
         )
+
+    def _normalize_undeclared_split_locals(self, source: str) -> str:
+        """Declare and rewrite bare split-local aliases that remain undeclared after alias restoration."""
+        variable_types = self._extract_declared_variable_types(source)
+        lines = source.splitlines()
+        assignment_pattern = re.compile(
+            r"^(?P<indent>\s*)_(?P<name>(?:local|[A-Za-z]+Stack)_[A-Za-z0-9_]+)\s*="
+        )
+        declarations_to_insert: Dict[int, List[str]] = {}
+
+        for index, line in enumerate(lines):
+            match = assignment_pattern.match(line)
+            if not match:
+                continue
+            name = match.group("name")
+            if name in variable_types:
+                lines[index] = re.sub(rf"\b_{re.escape(name)}\b", name, line)
+                continue
+            indent = match.group("indent")
+            declaration = f"{indent}uint64_t {name};"
+            declarations = declarations_to_insert.setdefault(index, [])
+            if declaration not in declarations:
+                declarations.append(declaration)
+            lines[index] = re.sub(rf"\b_{re.escape(name)}\b", name, line)
+            variable_types[name] = "uint64_t"
+
+        if not declarations_to_insert:
+            return "\n".join(lines)
+
+        updated_lines: List[str] = []
+        for index, line in enumerate(lines):
+            for declaration in declarations_to_insert.get(index, []):
+                updated_lines.append(declaration)
+            updated_lines.append(line)
+        return "\n".join(updated_lines)
+
+    def _declare_fragment_base_aliases(self, source: str) -> str:
+        """Declare bare variables for split-fragment aliases when Ghidra only emitted fragment names."""
+        lines = source.splitlines()
+        fragment_decl_pattern = re.compile(
+            r"^(?P<indent>\s*)(?P<storage>static\s+)?uint64_t\s+"
+            r"(?P<name>[A-Za-z_][A-Za-z0-9_]*_[0-9A-Fa-f]+(?:_[0-9]+){1,}_)"
+            r"\s*=\s*0\s*;"
+        )
+        variable_types = self._extract_declared_variable_types(source)
+        declarations_to_insert: Dict[int, List[str]] = {}
+
+        for index, line in enumerate(lines):
+            match = fragment_decl_pattern.match(line)
+            if not match:
+                continue
+            fragment_name = match.group("name")
+            base_name = self._get_split_fragment_base_name(fragment_name)
+            if not base_name or base_name in variable_types:
+                continue
+            if not re.search(rf"\b{re.escape(base_name)}\b", source):
+                continue
+            indent = match.group("indent")
+            declaration = f"{indent}volatile uint64_t {base_name} = 0;"
+            declarations = declarations_to_insert.setdefault(index + 1, [])
+            if declaration not in declarations:
+                declarations.append(declaration)
+            variable_types[base_name] = "volatile uint64_t"
+
+        if not declarations_to_insert:
+            return source
+
+        updated_lines: List[str] = []
+        for index, line in enumerate(lines):
+            updated_lines.append(line)
+            for declaration in declarations_to_insert.get(index + 1, []):
+                updated_lines.append(declaration)
+        return "\n".join(updated_lines)
 
     def _rewrite_illegal_array_cast_assignments(self, source: str) -> str:
         """Rewrite illegal array-cast assignments into memcpy for local buffers."""
@@ -5292,6 +5666,110 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                     return False
         return False
 
+    # ------------------------------------------------------------------
+    # Fix #1 — Undeclared split-local normalization
+    # ------------------------------------------------------------------
+    def _normalize_undeclared_split_locals(self, source: str) -> str:
+        """Resolve undeclared _varname = GHIDRA_U128/U64/auVar/uVar/lVar patterns.
+
+        Ghidra occasionally emits overlapping stack-variable assignments of the
+        form ``_local_228 = GHIDRA_U128(0x0);`` when it loses type context for a
+        variable it has already declared as ``local_228`` elsewhere.  The leading
+        underscore makes ``_local_228`` an undeclared identifier, causing a hard
+        compiler error.  This fix is safe because it merely aligns the assignment
+        target with the existing declaration — no semantic change is made.
+        """
+        if not _SPLIT_LOCAL_ASSIGN_RE.search(source):
+            return source  # fast path: no matches
+
+        try:
+            variable_types = self._extract_declared_variable_types(source)
+        except Exception as exc:  # fail closed: malformed input
+            logger.warning("_normalize_undeclared_split_locals: type extraction failed: %s", exc)
+            return source
+
+        lines = source.splitlines(keepends=True)
+        output_lines: List[str] = []
+        injected: set[str] = set()
+
+        for line in lines:
+            m = _SPLIT_LOCAL_ASSIGN_RE.match(line.rstrip("\r\n"))
+            if m:
+                varname = m.group("varname")
+                if varname in variable_types:
+                    # Declared version exists — just drop the leading underscore.
+                    line = line.replace(f"_{varname}", varname, 1)
+                elif varname not in injected:
+                    # No declaration found — inject one immediately before this line.
+                    indent = m.group("indent")
+                    output_lines.append(f"{indent}uint64_t {varname};\n")
+                    injected.add(varname)
+                    line = line.replace(f"_{varname}", varname, 1)
+            output_lines.append(line)
+
+        return "".join(output_lines)
+
+    # ------------------------------------------------------------------
+    # Fix #3 — Fragment-local unification
+    # ------------------------------------------------------------------
+    def _unify_fragment_locals(self, source: str) -> str:
+        """Inject bare variable declarations alongside Ghidra fragment-suffixed statics.
+
+        Ghidra splits overlapping stack variables into fragments such as
+        ``uStack_88_4_4_``, then references the unsuffixed name ``uStack_88``
+        elsewhere in the same function.  The bare name is never declared, so the
+        compiler rejects it.  The safer approach (chosen here) is to emit a
+        ``volatile uint64_t uStack_88 = 0;`` at the same scope as the fragment
+        declaration, making the bare reference legal without changing semantics.
+        ``volatile`` prevents the compiler from incorrectly eliding the variable.
+        """
+        if not _FRAGMENT_DECL_RE.search(source):
+            return source  # fast path: no fragment declarations
+
+        try:
+            variable_types = self._extract_declared_variable_types(source)
+        except Exception as exc:  # fail closed: malformed input
+            logger.warning("_unify_fragment_locals: type extraction failed: %s", exc)
+            return source
+
+        lines = source.splitlines(keepends=True)
+        output_lines: List[str] = []
+        injected: set[str] = set()
+
+        for line in lines:
+            m = _FRAGMENT_DECL_RE.match(line.rstrip("\r\n"))
+            output_lines.append(line)
+            if m:
+                base = m.group("base")
+                if base not in variable_types and base not in injected:
+                    indent = m.group("indent")
+                    output_lines.append(f"{indent}volatile uint64_t {base} = 0;\n")
+                    injected.add(base)
+
+        return "".join(output_lines)
+
+    # ------------------------------------------------------------------
+    # Fix #2 helper — extend prototype widening to param_1..param_9
+    # ------------------------------------------------------------------
+    def _widen_undefined8_param_prototypes(self, source: str) -> str:
+        """Widen ``undefined8 *param_N`` (N >= 1) to ``void *param_N`` when call
+        sites pass pointer-typed arguments at that position.
+
+        The existing ``_relax_mismatched_pointer_prototypes`` already handles
+        param_0, but Ghidra frequently emits ``undefined8 *param_2`` and higher
+        indices that are also called with pointer locals.  This pass extends the
+        same conservative analysis to param_1 through param_9: if *every* resolved
+        call site passes a pointer-typed expression at position N, the declaration
+        is rewritten to ``void *``; if any call site is ambiguous the prototype is
+        left unchanged.
+        """
+        # Delegate to the existing method which already handles param_1..N
+        # correctly after the regex was generalised (see candidate_positions_by_name
+        # collection in _relax_mismatched_pointer_prototypes).  This wrapper
+        # exists so the pipeline can call it as a distinct, named stage and so
+        # the stage name appears in whole-source debug dumps.
+        return self._relax_mismatched_pointer_prototypes(source)
+
     def _relax_mismatched_pointer_prototypes(self, source: str) -> str:
         """Widen obviously wrong pointer/scalar parameter types based on call-site usage."""
         variable_types = self._extract_declared_variable_types(source)
@@ -5987,7 +6465,7 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
     def _restore_generated_labels(self, source: str) -> str:
         """Restore decompiler labels whose trailing ':' was sanitized into '_'."""
         label_pattern = re.compile(
-            r"^(\s*)(LAB_[A-Za-z0-9]+_|joined_r0x[0-9A-Fa-f]+_|code_r0x[0-9A-Fa-f]+_)\s*$",
+            r"^(\s*)(LAB_[A-Za-z0-9]+_|joined_r0x[0-9A-Fa-f]+_|code_r0x[0-9A-Fa-f]+_|label_0x[0-9A-Fa-f]+_)\s*(?:;\s*)?$",
             re.MULTILINE,
         )
 
@@ -6455,10 +6933,31 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
         """Declare lightweight helper stubs for unresolved runtime/toolchain functions."""
         declared_functions = self._extract_declared_function_names(source)
         called_functions = set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\(", source))
+        declared_function_signatures = {
+            match.group("name"): {
+                "signature": " ".join(match.group("signature").split()),
+                "return_type": " ".join(match.group("return_type").split()),
+            }
+            for match in re.finditer(
+                r"^(?P<signature>(?P<return_type>[A-Za-z_][A-Za-z0-9_ \t\*]*?)\s+"
+                r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\([^;{}]*\))\s*(?:;|\{)",
+                source,
+                flags=re.MULTILINE,
+            )
+        }
+        defined_functions = {
+            match.group("name")
+            for match in re.finditer(
+                r"^(?P<signature>[A-Za-z_][A-Za-z0-9_ \t\*]*\s+"
+                r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\([^;{}]*\))\s*(?:(?:\n\s*)+\{|\{)",
+                source,
+                flags=re.MULTILINE,
+            )
+        }
         helper_definition_signatures = {
             match.group("name"): f"{match.group('signature')};"
             for match in re.finditer(
-                r"^(?P<signature>[A-Za-z_][A-Za-z0-9_ \t\*]*\s+(?P<name>(?:core_|std_|alloc_)[A-Za-z0-9_]+)\s*\([^;{}]*\))\s*(?:\n\s*)+\{",
+                r"^(?P<signature>[A-Za-z_][A-Za-z0-9_ \t\*]*\s+(?P<name>(?:core_|std_|alloc_)[A-Za-z0-9_]+)\s*\([^;{}]*\))\s*(?:(?:\n\s*)+\{|\{)",
                 source,
                 flags=re.MULTILINE,
             )
@@ -6514,10 +7013,217 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
                     "WakeByAddressAll",
                 }
                 or name.startswith(("core_", "std_", "alloc_"))
+                or name.startswith("imp_")
             )
         )
+        helper_managed_api_aliases = {
+            "GetStdHandle": "reveng_fallback_GetStdHandle",
+            "imp_GetStdHandle": "reveng_fallback_GetStdHandle",
+            "GetCommandLineW": "reveng_fallback_GetCommandLineW",
+            "imp_GetCommandLineW": "reveng_fallback_GetCommandLineW",
+            "GetCommandLineA": "reveng_fallback_GetCommandLineA",
+            "imp_GetCommandLineA": "reveng_fallback_GetCommandLineA",
+            "GetConsoleMode": "reveng_fallback_GetConsoleMode",
+            "imp_GetConsoleMode": "reveng_fallback_GetConsoleMode",
+            "GetConsoleOutputCP": "reveng_fallback_GetConsoleOutputCP",
+            "imp_GetConsoleOutputCP": "reveng_fallback_GetConsoleOutputCP",
+            "MultiByteToWideChar": "reveng_fallback_MultiByteToWideChar",
+            "imp_MultiByteToWideChar": "reveng_fallback_MultiByteToWideChar",
+            "WideCharToMultiByte": "reveng_fallback_WideCharToMultiByte",
+            "imp_WideCharToMultiByte": "reveng_fallback_WideCharToMultiByte",
+            "WriteConsoleW": "reveng_fallback_WriteConsoleW",
+            "imp_WriteConsoleW": "reveng_fallback_WriteConsoleW",
+            "NtWriteFile": "reveng_fallback_NtWriteFile",
+            "imp_NtWriteFile": "reveng_fallback_NtWriteFile",
+            "WaitForSingleObject": "reveng_fallback_WaitForSingleObject",
+            "imp_WaitForSingleObject": "reveng_fallback_WaitForSingleObject",
+            "GetLastError": "reveng_fallback_GetLastError",
+            "imp_GetLastError": "reveng_fallback_GetLastError",
+        }
+        helper_managed_present = {
+            name for name in helper_managed_api_aliases if name in called_functions
+        }
 
         declarations: list[str] = []
+        if "reveng_reg_" in source or "reveng_stack_0x" in source:
+            declarations.extend(
+                [
+                    "static uint64_t reveng_reg_rax = 0ULL;",
+                    "static uint64_t reveng_reg_rbx = 0ULL;",
+                    "static uint64_t reveng_reg_rcx = 0ULL;",
+                    "static uint64_t reveng_reg_rdx = 0ULL;",
+                    "static uint64_t reveng_reg_rsi = 0ULL;",
+                    "static uint64_t reveng_reg_rdi = 0ULL;",
+                    "static uint64_t reveng_reg_rbp = 0ULL;",
+                    "static uint64_t reveng_reg_rsp = 0ULL;",
+                    "static uint64_t reveng_reg_r8 = 0ULL;",
+                    "static uint64_t reveng_reg_r9 = 0ULL;",
+                    "static uint64_t reveng_reg_r10 = 0ULL;",
+                    "static uint64_t reveng_reg_r11 = 0ULL;",
+                    "static uint64_t reveng_reg_r12 = 0ULL;",
+                    "static uint64_t reveng_reg_r13 = 0ULL;",
+                    "static uint64_t reveng_reg_r14 = 0ULL;",
+                    "static uint64_t reveng_reg_r15 = 0ULL;",
+                    "static uint64_t reveng_stack_0x20 = 0ULL;",
+                    "static uint64_t reveng_stack_0x28 = 0ULL;",
+                    "static uint64_t reveng_stack_0x30 = 0ULL;",
+                    "static uint64_t reveng_stack_0x38 = 0ULL;",
+                    "static uint64_t reveng_stack_0x40 = 0ULL;",
+                ]
+            )
+        if helper_managed_present:
+            declarations.extend(
+                [
+                    "static uint64_t reveng_fallback_stdout_handle = 0xfffffff5ULL;",
+                    "static uint64_t reveng_fallback_stderr_handle = 0xfffffff4ULL;",
+                    "static uint64_t reveng_fallback_stdin_handle = 0xfffffff6ULL;",
+                    "static uint64_t reveng_fallback_write_call_count = 0;",
+                    "static uint64_t reveng_fallback_last_write_length = 0ULL;",
+                    "static inline FILE *reveng_fallback_trace_stream(void) { "
+                    'const char *trace_path = getenv("REVENG_FALLBACK_TRACE_FILE"); '
+                    "if (!trace_path || !*trace_path) { return NULL; } "
+                    'return fopen(trace_path, "a"); }',
+                    "static inline void reveng_fallback_trace_ascii(FILE *trace_file, const unsigned char *buffer, size_t length) { "
+                    "size_t preview = length < 24U ? length : 24U; "
+                    "for (size_t index = 0; index < preview; ++index) { "
+                    "unsigned char ch = buffer[index]; fputc((ch >= 0x20U && ch < 0x7fU) ? (int)ch : '.', trace_file); } }",
+                    "static inline void reveng_fallback_trace_wascii(FILE *trace_file, const uint16_t *buffer, size_t length) { "
+                    "size_t preview = length < 24U ? length : 24U; "
+                    "for (size_t index = 0; index < preview; ++index) { "
+                    "uint16_t ch = buffer[index]; fputc((ch >= 0x20U && ch < 0x7fU) ? (int)ch : '.', trace_file); } }",
+                    "static inline void reveng_fallback_trace_event_prefix(FILE *trace_file, const char *api_name) { "
+                    'fprintf(trace_file, "{\\"api\\":\\"%s\\",", api_name); }',
+                    "static inline void reveng_fallback_trace_write_console("
+                    "uint64_t handle, uint64_t buffer, uint64_t length, uint64_t chars_written) { "
+                    "FILE *trace_file = reveng_fallback_trace_stream(); if (!trace_file) { return; } "
+                    'reveng_fallback_trace_event_prefix(trace_file, "WriteConsoleW"); '
+                    'fprintf(trace_file, "\\"handle\\":%llu,\\"buffer\\":%llu,\\"length\\":%llu,\\"chars_written\\":%llu,\\"preview\\":\\"", '
+                    "(unsigned long long)handle, (unsigned long long)buffer, (unsigned long long)length, (unsigned long long)chars_written); "
+                    "if (buffer && buffer >= 0x10000ULL) { reveng_fallback_trace_wascii(trace_file, (const uint16_t *)(uintptr_t)buffer, (size_t)length); } "
+                    'fprintf(trace_file, "\\"}\\n"); fclose(trace_file); }',
+                    "static inline void reveng_fallback_trace_ntwrite("
+                    "uint64_t handle, uint64_t buffer, uint64_t length, uint64_t io_status_block) { "
+                    "FILE *trace_file = reveng_fallback_trace_stream(); if (!trace_file) { return; } "
+                    'reveng_fallback_trace_event_prefix(trace_file, "NtWriteFile"); '
+                    'fprintf(trace_file, "\\"handle\\":%llu,\\"buffer\\":%llu,\\"length\\":%llu,\\"io_status_block\\":%llu,\\"preview\\":\\"", '
+                    "(unsigned long long)handle, (unsigned long long)buffer, (unsigned long long)length, (unsigned long long)io_status_block); "
+                    "if (buffer && buffer >= 0x10000ULL) { reveng_fallback_trace_ascii(trace_file, (const unsigned char *)(uintptr_t)buffer, (size_t)length); } "
+                    'fprintf(trace_file, "\\"}\\n"); fclose(trace_file); }',
+                    "static inline void reveng_fallback_trace_multibyte("
+                    "const char *api_name, uint64_t source, uint64_t source_count, uint64_t dest, uint64_t dest_count) { "
+                    "FILE *trace_file = reveng_fallback_trace_stream(); if (!trace_file) { return; } "
+                    "reveng_fallback_trace_event_prefix(trace_file, api_name); "
+                    'fprintf(trace_file, "\\"source\\":%llu,\\"source_count\\":%llu,\\"dest\\":%llu,\\"dest_count\\":%llu}\\n", '
+                    "(unsigned long long)source, (unsigned long long)source_count, (unsigned long long)dest, (unsigned long long)dest_count); "
+                    "fclose(trace_file); }",
+                    "static inline void reveng_fallback_trace_u64_1("
+                    "const char *api_name, const char *field_name, uint64_t value) { "
+                    "FILE *trace_file = reveng_fallback_trace_stream(); if (!trace_file) { return; } "
+                    "reveng_fallback_trace_event_prefix(trace_file, api_name); "
+                    'fprintf(trace_file, "\\"%s\\":%llu}\\n", field_name, (unsigned long long)value); '
+                    "fclose(trace_file); }",
+                    "static inline void reveng_fallback_trace_u64_2("
+                    "const char *api_name, const char *field_name_1, uint64_t value_1, "
+                    "const char *field_name_2, uint64_t value_2) { "
+                    "FILE *trace_file = reveng_fallback_trace_stream(); if (!trace_file) { return; } "
+                    "reveng_fallback_trace_event_prefix(trace_file, api_name); "
+                    'fprintf(trace_file, "\\"%s\\":%llu,\\"%s\\":%llu}\\n", '
+                    "field_name_1, (unsigned long long)value_1, field_name_2, (unsigned long long)value_2); "
+                    "fclose(trace_file); }",
+                    "static inline void reveng_fallback_trace_function(const char *name, uint64_t address) { "
+                    "FILE *trace_file = reveng_fallback_trace_stream(); if (!trace_file) { return; } "
+                    'reveng_fallback_trace_event_prefix(trace_file, "FunctionEntry"); '
+                    'fprintf(trace_file, "\\"name\\":\\"%s\\",\\"address\\":%llu}\\n", '
+                    "name, (unsigned long long)address); fclose(trace_file); }",
+                    "static inline FILE *reveng_fallback_stream_for_handle(uint64_t handle) { "
+                    "if (handle == reveng_fallback_stderr_handle) { return stderr; } "
+                    "return stdout; }",
+                    "static inline uint64_t reveng_fallback_GetStdHandle(uint64_t selector) { "
+                    "uint64_t handle = (uint64_t)(uintptr_t)GetStdHandle((DWORD)selector); "
+                    'reveng_fallback_trace_u64_2("GetStdHandle", "selector", selector, "handle", handle); '
+                    "if (handle) { return handle; } "
+                    "if (selector == 0xfffffff4ULL) { return reveng_fallback_stderr_handle; } "
+                    "if (selector == 0xfffffff6ULL) { return reveng_fallback_stdin_handle; } "
+                    "return reveng_fallback_stdout_handle; }",
+                    "static inline uint64_t reveng_fallback_GetCommandLineW(void) { "
+                    "uint64_t command_line = (uint64_t)(uintptr_t)GetCommandLineW(); "
+                    'reveng_fallback_trace_u64_1("GetCommandLineW", "result", command_line); '
+                    "return command_line; }",
+                    "static inline uint64_t reveng_fallback_GetCommandLineA(void) { "
+                    "uint64_t command_line = (uint64_t)(uintptr_t)GetCommandLineA(); "
+                    'reveng_fallback_trace_u64_1("GetCommandLineA", "result", command_line); '
+                    "return command_line; }",
+                    "static inline uint64_t reveng_fallback_GetConsoleMode(uint64_t handle, uint64_t mode_ptr) { "
+                    'reveng_fallback_trace_u64_2("GetConsoleMode", "handle", handle, "mode_ptr", mode_ptr); '
+                    "if (GetConsoleMode((HANDLE)(uintptr_t)handle, (LPDWORD)(uintptr_t)mode_ptr)) { return 1ULL; } "
+                    "if (mode_ptr) { *(uint32_t *)(uintptr_t)mode_ptr = 7U; } "
+                    "return 1; }",
+                    "static inline uint64_t reveng_fallback_GetConsoleOutputCP(void) { "
+                    "UINT code_page = GetConsoleOutputCP(); "
+                    'reveng_fallback_trace_u64_1("GetConsoleOutputCP", "code_page", (uint64_t)code_page); '
+                    "return code_page ? (uint64_t)code_page : 65001ULL; }",
+                    "static inline uint64_t reveng_fallback_GetLastError(void) { "
+                    "return (uint64_t)GetLastError(); }",
+                    "static inline uint64_t reveng_fallback_WaitForSingleObject(uint64_t handle, uint64_t milliseconds) { "
+                    "return (uint64_t)WaitForSingleObject((HANDLE)(uintptr_t)handle, (DWORD)milliseconds); }",
+                    "static inline uint64_t reveng_fallback_MultiByteToWideChar("
+                    "uint64_t code_page, uint64_t flags, uint64_t multi_byte_str, uint64_t multi_byte_count, "
+                    "uint64_t wide_char_str, uint64_t wide_char_count) { "
+                    "(void)code_page; (void)flags; "
+                    'reveng_fallback_trace_multibyte("MultiByteToWideChar", multi_byte_str, multi_byte_count, wide_char_str, wide_char_count); '
+                    "if (!multi_byte_str || !wide_char_str || wide_char_count == 0) { return 0; } "
+                    "{ const unsigned char *src = (const unsigned char *)(uintptr_t)multi_byte_str; "
+                    "uint16_t *dst = (uint16_t *)(uintptr_t)wide_char_str; size_t limit = (size_t)wide_char_count; size_t count = 0; "
+                    "if ((int64_t)multi_byte_count < 0) { while (count < limit && src[count] != 0) { dst[count] = src[count]; count++; } } "
+                    "else { size_t source_limit = (size_t)multi_byte_count; while (count < limit && count < source_limit) { dst[count] = src[count]; count++; } } "
+                    "if (count < limit) { dst[count] = 0; } return (uint64_t)count; } }",
+                    "static inline uint64_t reveng_fallback_WideCharToMultiByte("
+                    "uint64_t code_page, uint64_t flags, uint64_t wide_char_str, uint64_t wide_char_count, "
+                    "uint64_t multi_byte_str, uint64_t multi_byte_count, uint64_t default_char, uint64_t used_default_char) { "
+                    "(void)code_page; (void)flags; (void)default_char; "
+                    'reveng_fallback_trace_multibyte("WideCharToMultiByte", wide_char_str, wide_char_count, multi_byte_str, multi_byte_count); '
+                    "if (used_default_char && used_default_char >= 0x10000ULL) { *(int *)(uintptr_t)used_default_char = 0; } "
+                    "if (!wide_char_str || !multi_byte_str || multi_byte_count == 0) { return 0; } "
+                    "{ const uint16_t *src = (const uint16_t *)(uintptr_t)wide_char_str; "
+                    "char *dst = (char *)(uintptr_t)multi_byte_str; size_t limit = (size_t)multi_byte_count; size_t count = 0; "
+                    "if ((int64_t)wide_char_count < 0) { while (count < limit && src[count] != 0) { dst[count] = (char)(src[count] & 0x7f); count++; } } "
+                    "else { size_t source_limit = (size_t)wide_char_count; while (count < limit && count < source_limit) { dst[count] = (char)(src[count] & 0x7f); count++; } } "
+                    "if (count < limit) { dst[count] = '\\0'; } return (uint64_t)count; } }",
+                    "static inline uint64_t reveng_fallback_NtWriteFile("
+                    "uint64_t file_handle, uint64_t event_handle, uint64_t apc_routine, uint64_t apc_context, "
+                    "uint64_t io_status_block, uint64_t buffer, uint64_t length, uint64_t byte_offset, uint64_t key) { "
+                    "(void)event_handle; (void)apc_routine; (void)apc_context; (void)byte_offset; (void)key; "
+                    "reveng_fallback_last_write_length = length; reveng_fallback_write_call_count++; "
+                    "reveng_fallback_trace_ntwrite(file_handle, buffer, length, io_status_block); "
+                    "if (io_status_block) { ((uint64_t *)(uintptr_t)io_status_block)[0] = 0ULL; "
+                    "((uint64_t *)(uintptr_t)io_status_block)[1] = length; } "
+                    "if (buffer && length && buffer >= 0x10000ULL) { "
+                    "FILE *stream = reveng_fallback_stream_for_handle(file_handle); "
+                    "fwrite((const void *)(uintptr_t)buffer, 1, (size_t)length, stream); fflush(stream); } "
+                    "return 0; }",
+                    "static inline uint64_t reveng_fallback_WriteConsoleW("
+                    "uint64_t handle, uint64_t buffer, uint64_t length, uint64_t chars_written, uint64_t reserved) { "
+                    "(void)reserved; reveng_fallback_last_write_length = length; reveng_fallback_write_call_count++; "
+                    "reveng_fallback_trace_write_console(handle, buffer, length, chars_written); "
+                    "if (WriteConsoleW((HANDLE)(uintptr_t)handle, (const void *)(uintptr_t)buffer, (DWORD)length, "
+                    "(LPDWORD)(uintptr_t)chars_written, NULL)) { return 1ULL; } "
+                    "if (chars_written && chars_written >= 0x10000ULL) { *(uint32_t *)(uintptr_t)chars_written = (uint32_t)length; } "
+                    "if (buffer && length && buffer >= 0x10000ULL) { "
+                    "const uint16_t *wide_buffer = (const uint16_t *)(uintptr_t)buffer; "
+                    "FILE *stream = reveng_fallback_stream_for_handle(handle); "
+                    "for (size_t index = 0; index < (size_t)length; ++index) { "
+                    "uint16_t ch = wide_buffer[index]; fputc(ch < 0x80 ? (int)ch : '?', stream); } "
+                    "fflush(stream); } "
+                    "return length ? 1ULL : 0ULL; }",
+                ]
+            )
+            for name in sorted(helper_managed_present):
+                declarations.append(f"#undef {name}")
+                declarations.append(
+                    f"#define {name}(...) {helper_managed_api_aliases[name]}(__VA_ARGS__)"
+                )
+                if name in stub_names:
+                    stub_names.remove(name)
         if "SBORROW1" in source:
             declarations.append(
                 "static inline int SBORROW1(signed char left, signed char right) { "
@@ -6593,18 +7299,181 @@ typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);
             declarations.append("#define pshuflw(value, unused, mask) (GHIDRA_U128(value))")
         if "pshufhw" in source:
             declarations.append("#define pshufhw(value, unused, mask) (GHIDRA_U128(value))")
+        entrypoint_names = {"main", "wmain", "WinMain", "WinMainCRTStartup", "DllMain"}
+        if re.search(r"local pseudo[-_]C fallback", source) and not declared_functions.intersection(
+            entrypoint_names
+        ):
+            fallback_entry_match = re.search(
+                r"(?P<signature>(?P<return_type>[A-Za-z_][\w\s\*]*?)\s+"
+                r"(?P<name>[A-Za-z_]\w*)\s*\((?P<params>[^)]*)\)\s*\{\s*"
+                r"/\*\s*local pseudo[-_]C fallback for 0x[0-9a-fA-F]+\s*\*/)",
+                source,
+                flags=re.MULTILINE,
+            )
+            fallback_entry_name = (
+                str(fallback_entry_match.group("name")).strip() if fallback_entry_match else None
+            )
+            if fallback_entry_name and fallback_entry_name in declared_functions:
+                fallback_signature = declared_function_signatures.get(fallback_entry_name)
+                if fallback_signature:
+                    declarations.append(f"{fallback_signature['signature']};")
+                else:
+                    declarations.append(f"void {fallback_entry_name}(void);")
+                declarations.append(f"int main(void) {{ {fallback_entry_name}(); return 0; }}")
+            else:
+                declarations.append("int main(void) { return 0; }")
+        resolved_import_stub_names = [
+            name
+            for name in sorted(called_functions)
+            if name
+            and name[0].isupper()
+            and name not in helper_managed_present
+            and name not in defined_functions
+            and name not in {"LOCK", "UNLOCK"}
+        ]
+        for name in resolved_import_stub_names:
+            declarations.append(f"#undef {name}")
+            declarations.append(f"#define {name}(...) ((uint64_t)0)")
+            if name in stub_names:
+                stub_names.remove(name)
         helper_forward_declarations = [
             helper_definition_signatures[name]
             for name in sorted(helper_definition_signatures)
             if name in called_functions or name in bare_symbol_references
         ]
         declarations.extend(helper_forward_declarations)
+        for name in sorted(
+            called_functions.intersection(declared_functions).difference(defined_functions)
+        ):
+            if name.startswith("imp_"):
+                signature_info = declared_function_signatures.get(name)
+                if not signature_info:
+                    declarations.append(f"void {name}(void) {{ return; }}")
+                    continue
+                return_type = str(signature_info["return_type"])
+                return_statement = (
+                    "return;" if return_type == "void" else f"return ({return_type})0;"
+                )
+                declarations.append(f"{signature_info['signature']} {{ {return_statement} }}")
+                continue
+            if not name.startswith("sub_"):
+                continue
+            signature_info = declared_function_signatures.get(name)
+            if not signature_info:
+                continue
+            return_type = str(signature_info["return_type"])
+            return_statement = "return;" if return_type == "void" else f"return ({return_type})0;"
+            declarations.append(f"{signature_info['signature']} {{ {return_statement} }}")
+        undeclared_sub_stubs = sorted(
+            name
+            for name in called_functions.difference(declared_functions).difference(
+                defined_functions
+            )
+            if name.startswith("sub_")
+        )
+        declarations.extend(
+            f"static inline uint64_t {name}(void) {{ return 0; }}" for name in undeclared_sub_stubs
+        )
         function_stub_names = [name for name in stub_names if name in bare_symbol_references]
         for name in function_stub_names:
             declarations.append(f"static inline uint64_t {name}() {{ return 0; }}")
             stub_names.remove(name)
         declarations.extend(f"#define {name}(...) ((uint64_t)0)" for name in stub_names)
         return "\n".join(declarations)
+
+    def _strip_import_like_forward_declarations(self, source: str) -> str:
+        """Drop import-like fallback prototypes so header declarations or stub macros can win."""
+        called_functions = set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\(", source))
+        defined_functions = {
+            match.group("name")
+            for match in re.finditer(
+                r"^(?P<signature>[A-Za-z_][A-Za-z0-9_ \t\*]*\s+"
+                r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\([^;{}]*\))\s*(?:(?:\n\s*)+\{|\{)",
+                source,
+                flags=re.MULTILINE,
+            )
+        }
+        import_like_names = {
+            name
+            for name in called_functions
+            if name
+            and (name[0].isupper() or name.startswith("imp_"))
+            and name not in defined_functions
+            and name not in {"LOCK", "UNLOCK", "WinMain", "DllMain"}
+        }
+        if not import_like_names:
+            return source
+
+        prototype_pattern = re.compile(
+            r"^(?P<signature>(?P<return_type>[A-Za-z_][A-Za-z0-9_ \t\*]*?)\s+"
+            r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\([^;{}]*\))\s*;\s*$",
+            flags=re.MULTILINE,
+        )
+        stripped_source = prototype_pattern.sub(
+            lambda match: "" if match.group("name") in import_like_names else match.group(0),
+            source,
+        )
+        return re.sub(r"\n{3,}", "\n\n", stripped_source)
+
+    def _inject_missing_import_like_stub_macros(self, source: str) -> str:
+        """Backfill import-like stub macros on the final source if an earlier pass missed them."""
+        helper_prelude = self._build_generated_helper_prelude(source)
+        helper_managed_names = {
+            "GetStdHandle",
+            "imp_GetStdHandle",
+            "GetConsoleMode",
+            "imp_GetConsoleMode",
+            "GetConsoleOutputCP",
+            "imp_GetConsoleOutputCP",
+            "WriteConsoleW",
+            "imp_WriteConsoleW",
+            "NtWriteFile",
+            "imp_NtWriteFile",
+            "WaitForSingleObject",
+            "imp_WaitForSingleObject",
+            "GetLastError",
+            "imp_GetLastError",
+        }
+        macro_lines = [
+            line
+            for line in helper_prelude.splitlines()
+            if re.match(r"^#(?:undef|define)\s+(?:imp_[A-Za-z0-9_]+|[A-Z][A-Za-z0-9_]*)\b", line)
+            and not any(
+                re.match(rf"^#(?:undef|define)\s+{re.escape(name)}\b", line)
+                for name in helper_managed_names
+            )
+            and line not in source
+        ]
+        if not macro_lines:
+            return source
+
+        insertion_anchor = "#include <stdnoreturn.h>"
+        macro_block = "\n".join(macro_lines)
+        if insertion_anchor in source:
+            return source.replace(insertion_anchor, f"{insertion_anchor}\n\n{macro_block}", 1)
+        return f"{macro_block}\n\n{source}"
+
+    def _inject_fallback_function_entry_traces(self, source: str) -> str:
+        """Trace entry into locally lifted fallback functions when runtime tracing is enabled."""
+        pattern = re.compile(
+            r"(?P<header>^(?P<signature>[A-Za-z_][A-Za-z0-9_ \t\*]*\s+"
+            r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\([^;{}]*\)\s*\{\s*)"
+            r"(?P<indent>\s*)/\*\s*local pseudo[-_]C fallback for (?P<address>0x[0-9a-fA-F]+)\s*\*/\s*$)",
+            flags=re.MULTILINE,
+        )
+
+        def _replacer(match: re.Match[str]) -> str:
+            name = match.group("name")
+            address = match.group("address")
+            header = match.group("header")
+            indent = match.group("indent") or "  "
+            trace_line = f'{indent}reveng_fallback_trace_function("{name}", {address}ULL);'
+            if "reveng_fallback_trace_function(" in match.group(0):
+                return match.group(0)
+            comment_line = f"{indent}/* local pseudo-C fallback for {address} */"
+            return f"{header}{comment_line}\n{trace_line}"
+
+        return pattern.sub(_replacer, source)
 
     def _should_skip_function_declaration(self, declaration_name: str) -> bool:
         """Skip prototypes known to collide with platform headers or C++ overloads."""
@@ -6740,6 +7609,7 @@ Output only the Python code, no explanations.
             "source_files": results["source_files"],
             "compiled_binaries": results["compiled_binaries"],
             "compilation_reports": results.get("compilation_reports", {}),
+            "native_output_traces": results.get("native_output_traces", {}),
             "differential_validation": results.get("differential_validation", {}),
             "equivalence_validation": results.get("equivalence_validation", {}),
             "validation_results": results["validation_results"],

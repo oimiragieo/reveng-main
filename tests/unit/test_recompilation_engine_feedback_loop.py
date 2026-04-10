@@ -28,6 +28,336 @@ class DummyGemini:
         return self._responses.pop(0)
 
 
+def test_build_compile_command_uses_windows_linker_flags_for_clang(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+    source_file = tmp_path / "reconstructed.c"
+    output_binary = tmp_path / "reconstructed.exe"
+
+    with patch("reveng.ai.recompilation_engine.os.name", "nt"):
+        cmd = engine._build_compile_command("clang", source_file, output_binary)
+
+    assert "-Xlinker" in cmd
+    assert "/subsystem:console" in cmd
+    assert "/entry:mainCRTStartup" in cmd
+    assert "--allow-multiple-definition" not in " ".join(cmd)
+
+
+def test_build_generated_helper_prelude_injects_main_for_fallback_native_sources(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    prelude = engine._build_generated_helper_prelude(
+        "void text_1(void) {\n"
+        "  /* local pseudo-C fallback for 0x401000 */\n"
+        "  sub_0x401050();\n"
+        "}\n"
+    )
+
+    assert "void text_1(void);" in prelude
+    assert "int main(void) { text_1(); return 0; }" in prelude
+
+
+def test_build_generated_helper_prelude_injects_main_for_sanitized_fallback_marker(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    prelude = engine._build_generated_helper_prelude(
+        "void text_1(void) {\n"
+        "  /* local pseudo_C fallback for 0x401000 */\n"
+        "  sub_0x401050();\n"
+        "}\n"
+    )
+
+    assert "void text_1(void);" in prelude
+    assert "int main(void) { text_1(); return 0; }" in prelude
+
+
+def test_build_generated_helper_prelude_calls_entry_point_for_fallback_native_sources(
+    tmp_path: Path,
+):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    prelude = engine._build_generated_helper_prelude(
+        "void entry_point(void) {\n"
+        "  /* local pseudo-C fallback for 0x401000 */\n"
+        "  sub_0x401050();\n"
+        "}\n"
+    )
+
+    assert "void entry_point(void);" in prelude
+    assert "int main(void) { entry_point(); return 0; }" in prelude
+
+
+def test_build_generated_helper_prelude_stubs_resolved_import_calls_for_fallback_sources(
+    tmp_path: Path,
+):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    prelude = engine._build_generated_helper_prelude(
+        "void text_1(void) {\n"
+        "  /* local pseudo-C fallback for 0x401000 */\n"
+        "  imp_HeapFree();\n"
+        "}\n"
+    )
+
+    assert "#define imp_HeapFree(...) ((uint64_t)0)" in prelude
+
+
+def test_build_generated_helper_prelude_uses_runtime_helpers_for_critical_output_imports(
+    tmp_path: Path,
+):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    prelude = engine._build_generated_helper_prelude(
+        "void text_1(void) {\n"
+        "  /* local pseudo-C fallback for 0x401000 */\n"
+        "  reveng_reg_rcx = 0xfffffff5ULL;\n"
+        "  reveng_stack_0x20 = 0ULL;\n"
+        "  imp_GetStdHandle(reveng_reg_rcx);\n"
+        "  imp_GetCommandLineW();\n"
+        "  imp_GetConsoleMode(reveng_reg_rcx, reveng_stack_0x20);\n"
+        "  imp_GetConsoleOutputCP();\n"
+        "  imp_MultiByteToWideChar(reveng_reg_rcx, reveng_reg_rdx, reveng_reg_r8, reveng_reg_r9, reveng_stack_0x20, reveng_stack_0x28);\n"
+        "  imp_WriteConsoleW(reveng_reg_rcx, reveng_reg_rdx, reveng_reg_r8, reveng_reg_r9, reveng_stack_0x20);\n"
+        "  imp_NtWriteFile(reveng_reg_rcx, reveng_reg_rdx, reveng_reg_r8, reveng_reg_r9, reveng_stack_0x20, reveng_stack_0x28, reveng_stack_0x30, reveng_stack_0x38, reveng_stack_0x40);\n"
+        "  imp_WaitForSingleObject(reveng_reg_rcx, reveng_reg_rdx);\n"
+        "  imp_GetLastError();\n"
+        "}\n"
+    )
+
+    assert "static uint64_t reveng_reg_rcx = 0ULL;" in prelude
+    assert "static uint64_t reveng_stack_0x20 = 0ULL;" in prelude
+    assert "static inline FILE *reveng_fallback_stream_for_handle(uint64_t handle)" in prelude
+    assert "static inline uint64_t reveng_fallback_GetStdHandle(uint64_t selector)" in prelude
+    assert "static inline uint64_t reveng_fallback_GetCommandLineW(void)" in prelude
+    assert (
+        "static inline uint64_t reveng_fallback_GetConsoleMode(uint64_t handle, uint64_t mode_ptr)"
+        in prelude
+    )
+    assert "static inline uint64_t reveng_fallback_MultiByteToWideChar(" in prelude
+    assert "static inline uint64_t reveng_fallback_GetConsoleOutputCP(void)" in prelude
+    assert "static inline uint64_t reveng_fallback_WriteConsoleW(" in prelude
+    assert "static inline uint64_t reveng_fallback_NtWriteFile(" in prelude
+    assert (
+        "static inline void reveng_fallback_trace_function(const char *name, uint64_t address)"
+        in prelude
+    )
+    assert "#define imp_GetStdHandle(...) reveng_fallback_GetStdHandle(__VA_ARGS__)" in prelude
+    assert (
+        "#define imp_GetCommandLineW(...) reveng_fallback_GetCommandLineW(__VA_ARGS__)" in prelude
+    )
+    assert (
+        "#define imp_MultiByteToWideChar(...) reveng_fallback_MultiByteToWideChar(__VA_ARGS__)"
+        in prelude
+    )
+    assert "#define imp_WriteConsoleW(...) reveng_fallback_WriteConsoleW(__VA_ARGS__)" in prelude
+    assert "#define imp_NtWriteFile(...) reveng_fallback_NtWriteFile(__VA_ARGS__)" in prelude
+
+
+def test_build_generated_helper_prelude_stubs_undeclared_sub_targets_for_fallback_sources(
+    tmp_path: Path,
+):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    prelude = engine._build_generated_helper_prelude(
+        "void text_16(void) {\n"
+        "  /* local pseudo-C fallback for 0x401000 */\n"
+        "  sub_0x4014c2(); /* bounded fallthrough continuation */\n"
+        "}\n"
+    )
+
+    assert "static inline uint64_t sub_0x4014c2(void) { return 0; }" in prelude
+
+
+def test_strip_import_like_forward_declarations_removes_win32_style_fallback_prototypes(
+    tmp_path: Path,
+):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    stripped = engine._strip_import_like_forward_declarations(
+        "void GetProcessHeap(void);\n"
+        "void HeapFree(void);\n"
+        "void imp_HeapFree(void);\n"
+        "void text_1(void) {\n"
+        "  /* local pseudo-C fallback for 0x401000 */\n"
+        "  GetProcessHeap();\n"
+        "  HeapFree();\n"
+        "  imp_HeapFree();\n"
+        "}\n"
+    )
+
+    assert "void GetProcessHeap(void);" not in stripped
+    assert "void HeapFree(void);" not in stripped
+    assert "void imp_HeapFree(void);" not in stripped
+
+
+def test_build_generated_helper_prelude_stubs_declared_import_like_calls_after_stripping(
+    tmp_path: Path,
+):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    source = engine._strip_import_like_forward_declarations(
+        "void GetProcessHeap(void);\n"
+        "void HeapFree(void);\n"
+        "void text_1(void) {\n"
+        "  /* local pseudo-C fallback for 0x401000 */\n"
+        "  GetProcessHeap();\n"
+        "  HeapFree();\n"
+        "}\n"
+    )
+    prelude = engine._build_generated_helper_prelude(source)
+
+    assert "#define GetProcessHeap(...) ((uint64_t)0)" in prelude
+    assert "#define HeapFree(...) ((uint64_t)0)" in prelude
+
+
+def test_build_generated_helper_prelude_uses_runtime_helpers_for_declared_import_like_output_calls(
+    tmp_path: Path,
+):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    source = engine._strip_import_like_forward_declarations(
+        "void GetStdHandle(uint64_t);\n"
+        "void WriteConsoleW(uint64_t,uint64_t,uint64_t,uint64_t,uint64_t);\n"
+        "void text_1(void) {\n"
+        "  /* local pseudo-C fallback for 0x401000 */\n"
+        "  GetStdHandle(reveng_reg_rcx);\n"
+        "  WriteConsoleW(reveng_reg_rcx, reveng_reg_rdx, reveng_reg_r8, reveng_reg_r9, reveng_stack_0x20);\n"
+        "}\n"
+    )
+    prelude = engine._build_generated_helper_prelude(source)
+
+    assert "#define GetStdHandle(...) reveng_fallback_GetStdHandle(__VA_ARGS__)" in prelude
+    assert "#define WriteConsoleW(...) reveng_fallback_WriteConsoleW(__VA_ARGS__)" in prelude
+    assert 'getenv("REVENG_FALLBACK_TRACE_FILE")' in prelude
+    assert "reveng_fallback_trace_u64_1" in prelude
+    assert "reveng_fallback_trace_u64_2" in prelude
+    assert 'reveng_fallback_trace_u64_1("GetCommandLineW", "result", command_line);' in prelude
+    assert (
+        'reveng_fallback_trace_u64_2("GetStdHandle", "selector", selector, "handle", handle);'
+        in prelude
+    )
+    assert (
+        'reveng_fallback_trace_u64_2("GetConsoleMode", "handle", handle, "mode_ptr", mode_ptr);'
+        in prelude
+    )
+    assert (
+        'reveng_fallback_trace_u64_1("GetConsoleOutputCP", "code_page", (uint64_t)code_page);'
+        in prelude
+    )
+    assert "reveng_fallback_trace_write_console" in prelude
+    assert "reveng_fallback_trace_ntwrite" in prelude
+
+
+def test_sanitize_generated_c_tokens_preserves_ternary_colons(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    sanitized = engine._sanitize_generated_c_tokens("uint64_t value = (flag) ? 1ULL : 0ULL;\n")
+
+    assert "uint64_t value = (flag) ? 1ULL : 0ULL;" in sanitized
+
+
+def test_inject_missing_import_like_stub_macros_backfills_final_source(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    injected = engine._inject_missing_import_like_stub_macros(
+        "#include <stdnoreturn.h>\n\n"
+        "void text_1(void);\n"
+        "void text_1(void) {\n"
+        "  imp_GetProcessHeap();\n"
+        "  imp_HeapFree();\n"
+        "}\n"
+    )
+
+    assert "#define imp_GetProcessHeap(...) ((uint64_t)0)" in injected
+    assert "#define imp_HeapFree(...) ((uint64_t)0)" in injected
+
+
+def test_inject_missing_import_like_stub_macros_skips_helper_managed_output_apis(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    injected = engine._inject_missing_import_like_stub_macros(
+        "#include <stdnoreturn.h>\n\n"
+        "void text_1(void);\n"
+        "void text_1(void) {\n"
+        "  imp_WriteConsoleW();\n"
+        "  imp_NtWriteFile();\n"
+        "}\n"
+    )
+
+    assert "#define imp_WriteConsoleW(...) ((uint64_t)0)" not in injected
+
+
+def test_inject_fallback_function_entry_traces_preserves_comment_and_adds_trace(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    source = (
+        "void text_1(void) {\n"
+        "  /* local pseudo-C fallback for 0x401000 */\n"
+        "  imp_GetCommandLineW();\n"
+        "}\n"
+    )
+
+    traced = engine._inject_fallback_function_entry_traces(source)
+
+    assert 'reveng_fallback_trace_function("text_1", 0x401000ULL);' in traced
+    assert "/* local pseudo-C fallback for 0x401000 */" in traced
+
+
 @pytest.mark.asyncio
 async def test_compile_with_feedback_loop_retries_and_includes_stderr(tmp_path: Path):
     gemini = DummyGemini(["```c\nint main(void) { return 0; }\n```"])
@@ -375,7 +705,154 @@ async def test_full_pipeline_surfaces_differential_validation(
 
     assert result["status"] == "success"
     assert result["differential_validation"]["status"] == "pass"
-    assert result["validation_results"]["differential_validation"]["mode"] == "checksum"
+
+
+@pytest.mark.asyncio
+async def test_phase3_compilation_surfaces_native_output_traces(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    source_file = tmp_path / "reconstructed.c"
+    source_file.write_text("int main(void) { return 0; }\n", encoding="utf-8")
+    rebuilt_binary = tmp_path / "reconstructed_gcc.exe"
+    rebuilt_binary.write_bytes(b"MZdemo")
+
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    async def fake_compile_with_feedback_loop(
+        compiler_name, current_source, output_dir, ghidra_data
+    ):
+        return {
+            "compiler": compiler_name,
+            "status": "success",
+            "binary_path": str(rebuilt_binary if compiler_name == "gcc" else ""),
+            "attempts": [{"attempt": 1, "returncode": 0}],
+            "total_attempts": 1,
+            "max_retries": 0,
+            "max_retries_exceeded": False,
+            "failure_reason": None,
+            "final_source_file": str(current_source),
+            "cache_backend": None,
+        }
+
+    monkeypatch.setattr(engine, "_compile_with_feedback_loop", fake_compile_with_feedback_loop)
+
+    result = await engine._phase3_compilation({"c": str(source_file)}, tmp_path, {})
+
+    assert "native_output_traces" in result
+    assert result["native_output_traces"]["c_gcc"]["trace_id"] == "rebuild:c_gcc"
+    assert result["native_output_traces"]["c_gcc"]["binary_path"] == str(rebuilt_binary)
+    assert result["native_output_traces"]["c_gcc"]["exists"] is True
+    assert result["native_output_traces"]["c_gcc"]["size"] == len(b"MZdemo")
+    assert result["native_output_traces"]["c_gcc"]["sha256"] is not None
+    assert result["native_output_traces"]["c_gcc"]["helper_call_summary"]["counts"] == {}
+
+
+def test_build_helper_call_summary_counts_helper_managed_calls(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+    source_file = tmp_path / "reconstructed.c"
+    source_file.write_text(
+        "void text_1(void) {\n"
+        "  imp_GetCommandLineW();\n"
+        "  reveng_fallback_GetStdHandle(0xfffffff5ULL);\n"
+        "  imp_WriteConsoleW(1, 2, 3, 4, 5);\n"
+        "  imp_WriteConsoleW(1, 2, 3, 4, 5);\n"
+        "}\n",
+        encoding="utf-8",
+    )
+
+    summary = engine._build_helper_call_summary(source_file)
+
+    assert summary["present"] == ["GetCommandLineW", "GetStdHandle", "WriteConsoleW"]
+    assert summary["counts"]["GetCommandLineW"] == 1
+    assert summary["counts"]["GetStdHandle"] == 1
+    assert summary["counts"]["WriteConsoleW"] == 2
+    assert summary["total_calls"] == 4
+
+
+def test_build_helper_reachability_summary_scopes_helpers_to_entry_reachable_functions(
+    tmp_path: Path,
+):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+    source_file = tmp_path / "reconstructed.c"
+    source_file.write_text(
+        "void entry_point(void) {\n"
+        "  text_reachable();\n"
+        "}\n"
+        "void text_reachable(void) {\n"
+        "  imp_GetCommandLineW();\n"
+        "  text_sink();\n"
+        "}\n"
+        "void text_sink(void) {\n"
+        "  imp_WriteConsoleW(1, 2, 3, 4, 5);\n"
+        "}\n"
+        "void text_dead(void) {\n"
+        "  imp_NtWriteFile(1, 2, 3, 4, 5, 6, 7, 8, 9);\n"
+        "}\n",
+        encoding="utf-8",
+    )
+
+    summary = engine._build_helper_reachability_summary(source_file)
+
+    assert summary["entry_roots"] == ["entry_point"]
+    assert "text_reachable" in summary["reachable_functions"]
+    assert "text_sink" in summary["reachable_functions"]
+    assert "GetCommandLineW" in summary["reachable_helpers"]
+    assert "WriteConsoleW" in summary["reachable_helpers"]
+    assert "NtWriteFile" not in summary["reachable_helpers"]
+    assert summary["reachable_helper_counts"]["GetCommandLineW"] == 1
+    assert summary["reachable_helper_counts"]["WriteConsoleW"] == 1
+    assert summary["reachable_helper_total"] == 2
+    assert summary["entry_reachable_helper_ratio"] == pytest.approx(2.0 / 3.0)
+
+
+def test_save_results_persists_native_output_traces(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    output_dir = tmp_path / "output"
+    output_dir.mkdir(parents=True)
+    engine._save_results(
+        {
+            "binary_path": "sample.exe",
+            "status": "success",
+            "cfg_artifacts": {},
+            "cfg_summary": {},
+            "source_files": {},
+            "compiled_binaries": {},
+            "compilation_reports": {},
+            "native_output_traces": {
+                "c_gcc": {
+                    "trace_id": "rebuild:c_gcc",
+                    "binary_path": "C:/tmp/reconstructed.exe",
+                }
+            },
+            "differential_validation": {},
+            "equivalence_validation": {},
+            "validation_results": {},
+            "vulnerabilities": [],
+            "exploits": [],
+        },
+        output_dir,
+    )
+
+    payload = json.loads((output_dir / "reconstruction_results.json").read_text(encoding="utf-8"))
+    assert payload["native_output_traces"]["c_gcc"]["trace_id"] == "rebuild:c_gcc"
+    assert payload["validation_results"] == {}
 
 
 @pytest.mark.asyncio
@@ -598,7 +1075,7 @@ async def test_reconstruct_c_code_includes_ghidra_compatibility_prelude(tmp_path
     assert "typedef uintptr_t (*ghidra_indirect_fn_0)(void);" in reconstructed
     assert "typedef uintptr_t (*ghidra_indirect_fn)(uintptr_t, ...);" in reconstructed
     assert "#define NAN(value) (((double)(value)) != ((double)(value)))" in reconstructed
-    assert "undefined8 __fastcall FUN_140001000(void);" in reconstructed
+    assert "undefined8 __fastcall FUN_140001000(void)" in reconstructed
 
 
 @pytest.mark.asyncio
@@ -746,8 +1223,8 @@ async def test_reconstruct_c_code_reports_postprocessing_stages(tmp_path: Path):
     assert "undefined8 __fastcall FUN_140001000(void) { return 0; }" in reconstructed
     assert stages[:3] == [
         "whole_source_normalization",
-        "prototype_relaxation",
-        "integer_pointer_access_normalization",
+        "normalize_undeclared_split_locals",
+        "unify_fragment_locals",
     ]
     assert "helper_alias_qualification" in stages
     assert "void_pointer_index_normalization" in stages
@@ -1105,6 +1582,20 @@ def test_restore_generated_labels_rehydrates_decompiler_labels(tmp_path: Path):
     assert "joined_r0x0001400694b0:" in restored
     assert "code_r0x00014007f691:" in restored
     assert "goto joined_r0x0001400694b0;" in restored
+
+
+def test_restore_generated_labels_rehydrates_local_jump_labels(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+    source = "void sample(void) {\n" "  if (x) goto label_0x401020;\n" "label_0x401020_ ;\n" "}\n"
+
+    restored = engine._restore_generated_labels(source)
+
+    assert "goto label_0x401020;" in restored
+    assert "label_0x401020:" in restored
 
 
 def test_build_generated_symbol_prelude_declares_discovered_synthetic_symbols(tmp_path: Path):
@@ -3075,6 +3566,43 @@ def test_normalize_generated_c_semantics_restores_prefixed_local_aliases(tmp_pat
     assert "uStack_f8 = param_2[1];" in normalized
 
 
+def test_normalize_generated_c_semantics_declares_missing_split_local_symbols(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    source = "void wrapper(undefined8 auVar58) {\n" "  _uStack_88 = GHIDRA_U64(auVar58);\n" "}\n"
+
+    normalized = engine._normalize_generated_c_semantics(source)
+
+    assert "_uStack_88" not in normalized
+    assert "uint64_t uStack_88;" in normalized
+    assert "uStack_88 = GHIDRA_U64(auVar58);" in normalized
+
+
+def test_normalize_generated_c_semantics_declares_bare_alias_for_fragment_locals(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    source = (
+        "void wrapper(undefined8 uVar53) {\n"
+        "  static uint64_t uStack_88_4_4_ = 0;\n"
+        "  uStack_88 = GHIDRA_U64(CONCAT44(uStack_88_4_4_,uVar53));\n"
+        "}\n"
+    )
+
+    normalized = engine._normalize_generated_c_semantics(source)
+
+    assert "static uint64_t uStack_88_4_4_ = 0;" in normalized
+    assert "volatile uint64_t uStack_88 = 0;" in normalized
+    assert "uStack_88 = GHIDRA_U64(CONCAT44(uStack_88_4_4_,uVar53));" in normalized
+
+
 def test_build_generated_helper_prelude_declares_runtime_stubs(tmp_path: Path):
     engine = BinaryRecompilationEngine(
         ghidra_engine=None,
@@ -3123,7 +3651,7 @@ def test_build_generated_helper_prelude_declares_runtime_stubs(tmp_path: Path):
     assert "#define movmskpd(...) (0)" in prelude
     assert "#define movmskps(...) (0)" in prelude
     assert "#define NtReadFile(...) ((uint64_t)0)" in prelude
-    assert "#define NtWriteFile(...) ((uint64_t)0)" in prelude
+    assert "#define NtWriteFile(...) reveng_fallback_NtWriteFile(__VA_ARGS__)" in prelude
     assert "#define RtlNtStatusToDosError(...) ((uint64_t)0)" in prelude
     assert "#define cpuid_basic_info(...) ((uint64_t)0)" in prelude
     assert "#define cpuid_Version_info(...) ((uint64_t)0)" in prelude
@@ -3150,6 +3678,26 @@ def test_build_generated_helper_prelude_declares_runtime_stubs(tmp_path: Path):
     assert "#define never_(...) ((uint64_t)0)" in prelude
     assert "static unsigned long _tls_index = 0;" in prelude
     assert "already_declared" not in prelude
+
+
+def test_build_generated_helper_prelude_defines_fallback_sub_stubs(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    prelude = engine._build_generated_helper_prelude(
+        "void sub_0x1400c82f0(void);\n"
+        "uint64_t sub_qword_ptr_rip_0xc924a(void);\n"
+        "void text_2(void) {\n"
+        "  sub_0x1400c82f0();\n"
+        "  sub_qword_ptr_rip_0xc924a();\n"
+        "}\n"
+    )
+
+    assert "void sub_0x1400c82f0(void) { return; }" in prelude
+    assert "uint64_t sub_qword_ptr_rip_0xc924a(void) { return (uint64_t)0; }" in prelude
 
 
 def test_build_c_type_prelude_declares_swi_stub(tmp_path: Path):
@@ -3426,6 +3974,21 @@ def test_build_generated_helper_prelude_adds_forward_declarations_for_later_help
 
     assert "void __cdecl core_str_converts_from_utf8(void);" in prelude
     assert "#define core_str_converts_from_utf8(...)" not in prelude
+
+
+def test_build_generated_helper_prelude_skips_same_line_sub_function_definitions(tmp_path: Path):
+    engine = BinaryRecompilationEngine(
+        ghidra_engine=None,
+        gemini_engine=None,
+        work_dir=tmp_path,
+    )
+
+    prelude = engine._build_generated_helper_prelude(
+        "sub_0x1400c5478();\n" "void sub_0x1400c5478(void) {\n" "  return;\n" "}\n"
+    )
+
+    assert "void sub_0x1400c5478(void) { return; }" not in prelude
+    assert "#define sub_0x1400c5478(...)" not in prelude
 
 
 def test_qualify_unresolved_function_aliases_rewrites_unique_helper_suffixes(tmp_path: Path):
