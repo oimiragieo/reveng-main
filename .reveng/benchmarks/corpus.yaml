@@ -1,0 +1,150 @@
+# .reveng/benchmarks/corpus.yaml
+# Tracked corpus for the Verified Recompilation Loop (VRL) benchmark.
+# Every entry declares a target binary and the current best validation grade
+# achieved. Regression-gated: the VRL CI suite (Phase 1.5) will fail if any
+# entry drops below its recorded grade.
+#
+# Validation grades (ascending priority):
+#   unknown (-1)
+#   analysis_only (0)
+#   compile_only (1)
+#   structural_candidate (2)
+#   launches_but_divergent (3)
+#   partial_equivalence (4)
+#   behavior_matched (5)
+#   source_reconstruction_match (6)
+#   evidence_backed (7)
+
+schema_version: 1
+updated: "2026-04-10"
+owner: "reveng-core"
+
+binaries:
+  - name: hexyl
+    source: https://github.com/sharkdp/hexyl
+    category: rust-cli-utility
+    architecture: x86_64
+    format: PE
+    current_grade: compile_only
+    target_grade: behavior_matched
+    notes: "Live HARDENING_PRIORITIES benchmark — ~7.5K LOC reconstructed.c"
+    last_analyzed: "2026-03-29"
+    blockers:
+      - "Split-local undeclared vars — FIXED Phase 0 (4e88e1c4)"
+      - "undefined8* param prototype widening — FIXED Phase 0 (4e88e1c4)"
+      - "Fragment locals unification — FIXED Phase 0 (4e88e1c4)"
+
+  - name: fd
+    source: https://github.com/sharkdp/fd
+    category: rust-cli-utility
+    architecture: x86_64
+    format: PE
+    current_grade: unknown
+    target_grade: behavior_matched
+    notes: "Sister project to hexyl — similar Rust idioms expected"
+    blockers:
+      - "Not yet onboarded to VRL"
+
+  - name: ripgrep
+    source: https://github.com/BurntSushi/ripgrep
+    category: rust-cli-utility
+    architecture: x86_64
+    format: PE
+    current_grade: unknown
+    target_grade: behavior_matched
+    notes: "Large Rust binary — tests VRL scale characteristics"
+
+  - name: hyperfine
+    source: https://github.com/sharkdp/hyperfine
+    category: rust-cli-utility
+    architecture: x86_64
+    format: PE
+    current_grade: unknown
+    target_grade: behavior_matched
+    notes: "Small Rust binary — fast iteration candidate"
+
+  - name: notepad
+    source: windows-system
+    category: windows-native-gui
+    architecture: x86_64
+    format: PE
+    current_grade: unknown
+    target_grade: partial_equivalence
+    notes: "GUI subsystem, SEH/TLS complexity, COM dependencies"
+    blockers:
+      - "Exception tables not reconstructed (Phase 1.5)"
+      - "SEH handlers dropped by decompiler"
+
+  - name: go-helloworld
+    source: locally-built
+    category: go-small-binary
+    architecture: x86_64
+    format: ELF
+    current_grade: unknown
+    target_grade: compile_only
+    notes: "Go runtime tests recognition of Go-specific ABI, goroutines, GC"
+
+  - name: dotnet-helloworld-aot
+    source: locally-built
+    category: dotnet-aot
+    architecture: x86_64
+    format: PE
+    current_grade: unknown
+    target_grade: compile_only
+    notes: "Native AOT-compiled .NET; tests CIL-free native path"
+
+  - name: cpp-rtti-sample
+    source: locally-built
+    category: cpp-rtti-vtable
+    architecture: x86_64
+    format: PE
+    current_grade: unknown
+    target_grade: partial_equivalence
+    notes: "Vtable + RTTI reconstruction exercise"
+    blockers:
+      - "Vtable RE pipeline not implemented (Phase 1.5)"
+
+  - name: wasm-add
+    source: locally-built
+    category: wasm-module
+    architecture: wasm32
+    format: wasm
+    current_grade: unknown
+    target_grade: behavior_matched
+    notes: "WASM RE is an uncontested blue-ocean target"
+
+  - name: arm64-macho-sample
+    source: locally-built
+    category: arm64-macho
+    architecture: arm64
+    format: Mach-O
+    current_grade: unknown
+    target_grade: compile_only
+    notes: "Apple Silicon native code RE"
+
+targets_summary:
+  total: 10
+  grade_distribution:
+    unknown: 9
+    compile_only: 1
+  reached_target_grade: 0
+  remaining_to_target: 10
+
+phase_gates:
+  phase_1_exit:
+    description: "Hexyl reaches behavior_matched via VRL oracle"
+    threshold:
+      hexyl: behavior_matched
+    blocking_items:
+      - "DifferentialOracle + LibAFL integration"
+      - "Iterative LLM refinement loop"
+      - "Whole-program context decompilation pass"
+
+  phase_2_exit:
+    description: "3+ binaries reach behavior_matched autonomously via MCP"
+    threshold:
+      behavior_matched_count: 3
+    blocking_items:
+      - "MCP server hardened for multi-tenant"
+      - "Sandboxing (Firecracker/gVisor)"
+      - "Specialized sub-agents per pipeline phase"
