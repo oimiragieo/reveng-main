@@ -212,7 +212,9 @@ def test_analyze_invokes_subprocess_with_shell_false():
     # First positional arg should be a list (argv), not a string
     argv = mock_run.call_args.args[0]
     assert isinstance(argv, list)
-    assert "claude" in argv[0].lower()  # full path resolved via shutil.which
+    # On Windows the .CMD shim is wrapped: ["cmd", "/c", "<path>/claude.CMD", ...]
+    # On other platforms argv[0] is the direct claude path.
+    assert any("claude" in a.lower() for a in argv)  # full path resolved via shutil.which
     assert "--bare" in argv
     assert "-p" in argv
     # The prompt must be the final element

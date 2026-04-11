@@ -23,6 +23,7 @@ CLAUDE.md, or memory files are injected into the prompt.
 
 import json
 import logging
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -127,6 +128,9 @@ class ClaudeCodeCLIAnalyzer:
             resolved = shutil.which("claude")
             if resolved:
                 self._cmd[0] = resolved
+        # Windows: .CMD/.BAT shims cannot be directly exec'd with shell=False
+        if os.name == "nt" and self._cmd and self._cmd[0].lower().endswith((".cmd", ".bat")):
+            self._cmd = ["cmd", "/c"] + self._cmd
         logger.info(
             "ClaudeCodeCLIAnalyzer ready: timeout=%ds cmd=%s",
             self.timeout_seconds,
