@@ -284,3 +284,14 @@ reports/app_reverse_engineering_corpus_packaged_test/
 
 # Root __pycache__ (already covered by __pycache__/ pattern above, explicit for clarity)
 /__pycache__/
+
+# VRL run artifacts
+.reveng/vrl-runs/*.txt
+.reveng/vrl-runs/workspaces/
+
+# Ad-hoc scripts
+_find_hexyl.py
+
+# Local config overrides
+.reveng/*.local.*.json
+.reveng/*.pr.json
