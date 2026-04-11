@@ -1,6 +1,16 @@
 # REVENG Revolution Plan
 ## The World's First AI-Verified Binary ↔ Source Toolkit
 
+## Current Status — 2026-04-10
+
+**Pipeline:** Wired end-to-end — compile adapter, oracle adapter, iterative refiner, CLI runner
+**Oracle:** Confirmed working — detects real divergences on hexyl (3/3 seed inputs diverged; 0 bytes vs 615–768 bytes stdout)
+**LLM loop:** NOT YET PROVEN — API key required for subprocess; pending user credential setup
+**Highest grade achieved:** `compile_only` (no binary has reached `behavior_matched` via LLM refinement)
+**Branch:** ghidramcp-eval (8 commits, pushed to origin)
+
+---
+
 **Version:** 1.0
 **Date:** 2026-04-10
 **Status:** Phase 0 complete (`4e88e1c4`), Phase 1 scaffolding in progress
@@ -137,6 +147,21 @@ This validates the VRL scaffold is wired end-to-end and functional.
 Next: expand seed corpus (more inputs), run on remaining 9 corpus binaries.
 
 ---
+
+---
+
+## Phase 2 Gate — LOCKED
+
+Phase 2 and beyond are locked until ALL of the following receipts exist:
+
+- [ ] At least 1 complete LLM round-trip proven: divergence detected → Claude fix → recompile → grade improves
+- [ ] 3 distinct binaries reach `behavior_matched` grade via the VRL loop
+- [ ] Seed corpus has ≥5 non-trivial inputs per binary (no `--help`-only convergence)
+
+**Rationale:** The pitch is defensible only with receipts. Building MCP integrations on an
+unproven VRL compounds unverified assumptions. Earn Phase 2.
+
+### Phase 2+ Aspirational Scope (deferred)
 
 ## 6. Phase 2: Multi-Agent Orchestration (STATUS: PLANNED)
 
