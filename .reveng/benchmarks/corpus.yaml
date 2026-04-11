@@ -25,10 +25,15 @@ binaries:
     category: rust-cli-utility
     architecture: x86_64
     format: PE
-    current_grade: converged
+    current_grade: llm_error
     target_grade: behavior_matched
     notes: "Live HARDENING_PRIORITIES benchmark — ~7.5K LOC reconstructed.c"
     last_analyzed: "2026-03-29"
+    binary_path: external/ga_binaries/hexyl/hexyl.exe
+    seed_inputs:
+      - "--help"
+      - "--version"
+      - "tests/fixtures/hexyl/sample.bin"
     blockers:
       - "Split-local undeclared vars — FIXED Phase 0 (4e88e1c4)"
       - "undefined8* param prototype widening — FIXED Phase 0 (4e88e1c4)"

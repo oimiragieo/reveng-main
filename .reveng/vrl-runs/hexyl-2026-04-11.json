@@ -1,0 +1,13 @@
+{
+  "binary_name": "hexyl",
+  "date": "2026-04-11",
+  "status": "llm_error",
+  "final_grade": "llm_error",
+  "iterations": 1,
+  "total_elapsed_seconds": 4.235361200000625,
+  "total_tokens": 0,
+  "notes": "LLM provider raised on round 1: 'AnthropicAnalyzer' object has no attribute 'analyze'",
+  "workspace": "C:\\dev\\projects\\reveng-main\\.reveng\\vrl-runs\\workspaces\\hexyl",
+  "original_binary": "C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\hexyl\\hexyl.exe",
+  "seed_inputs_count": 3
+}
