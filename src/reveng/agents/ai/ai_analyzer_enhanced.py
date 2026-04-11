@@ -59,6 +59,18 @@ _PROVIDER_REGISTRY: Dict[str, Dict[str, str]] = {
         "class": "OpenAIAnalyzer",
         "default_model": "gpt-4o",
     },
+    "claude-cli": {
+        "module": "reveng.agents.ai.claude_cli_analyzer",
+        "class": "ClaudeCodeCLIAnalyzer",
+        "default_model": "sonnet",
+    },
+}
+
+#: Aliases that resolve to canonical provider keys in ``_PROVIDER_REGISTRY``.
+_PROVIDER_ALIASES: Dict[str, str] = {
+    "claude_code": "claude-cli",
+    "claude-code": "claude-cli",
+    "claude_cli": "claude-cli",
 }
 
 
@@ -99,6 +111,7 @@ def get_analyzer(
         resolved = "ollama"
 
     resolved = resolved.lower().strip()
+    resolved = _PROVIDER_ALIASES.get(resolved, resolved)
 
     if resolved == "ollama":
         if not HAS_OLLAMA:
