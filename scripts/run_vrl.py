@@ -17,11 +17,15 @@ Environment:
 
 from __future__ import annotations
 
+import os
+import sys
+
+# Ensure src/ is on the path regardless of how the script is invoked
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "src"))
+
 import argparse
 import json
 import logging
-import os
-import sys
 from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Optional

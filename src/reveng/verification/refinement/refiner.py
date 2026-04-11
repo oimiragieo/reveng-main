@@ -111,7 +111,24 @@ class IterativeRefiner:
             )
 
         initial_oracle = self.oracle_factory(initial_binary)
-        initial_divergence = initial_oracle.verify(seed_list)
+        try:
+            initial_divergence = initial_oracle.verify(seed_list)
+        except TimeoutError as exc:
+            self.logger.error("Initial oracle.verify() timed out: %s", exc)
+            return RefinementResult(
+                status=RefinementStatus.TIMEOUT,
+                final_source=source,
+                total_elapsed_seconds=time.monotonic() - wall_start,
+                notes=f"Initial oracle.verify() raised TimeoutError: {exc}",
+            )
+        except Exception as exc:
+            self.logger.error("Initial oracle.verify() raised: %s", exc)
+            return RefinementResult(
+                status=RefinementStatus.ERROR,
+                final_source=source,
+                total_elapsed_seconds=time.monotonic() - wall_start,
+                notes=f"Initial oracle.verify() raised: {exc}",
+            )
 
         if initial_divergence.verdict == VerificationVerdict.EQUIVALENT:
             return RefinementResult(
@@ -232,7 +249,66 @@ class IterativeRefiner:
 
             # --- verify ---
             oracle = self.oracle_factory(new_binary)
-            new_divergence = oracle.verify(seed_list)
+            try:
+                new_divergence = oracle.verify(seed_list)
+            except TimeoutError as exc:
+                self.logger.warning("oracle.verify() timed out on round %d: %s", iteration, exc)
+                elapsed = time.monotonic() - round_start
+                rounds.append(
+                    RefinementRound(
+                        index=iteration,
+                        prompt=prompt,
+                        response=response_text,
+                        source_before=source,
+                        source_after=new_source,
+                        divergence=None,
+                        elapsed_seconds=elapsed,
+                        tokens_used=_count_tokens(llm_result),
+                    )
+                )
+                if time.monotonic() - wall_start >= self.budget.max_wall_seconds:
+                    return RefinementResult(
+                        status=RefinementStatus.BUDGET_EXHAUSTED,
+                        rounds=rounds,
+                        final_source=source,
+                        final_divergence=divergence,
+                        total_elapsed_seconds=time.monotonic() - wall_start,
+                        total_tokens=sum(r.tokens_used for r in rounds),
+                        notes=(
+                            f"Wall-clock budget exhausted after oracle timeout "
+                            f"on round {iteration}."
+                        ),
+                    )
+                continue
+            except Exception as exc:
+                self.logger.error("oracle.verify() raised on round %d: %s", iteration, exc)
+                elapsed = time.monotonic() - round_start
+                rounds.append(
+                    RefinementRound(
+                        index=iteration,
+                        prompt=prompt,
+                        response=response_text,
+                        source_before=source,
+                        source_after=new_source,
+                        divergence=None,
+                        elapsed_seconds=elapsed,
+                        tokens_used=_count_tokens(llm_result),
+                    )
+                )
+                if time.monotonic() - wall_start >= self.budget.max_wall_seconds:
+                    return RefinementResult(
+                        status=RefinementStatus.BUDGET_EXHAUSTED,
+                        rounds=rounds,
+                        final_source=source,
+                        final_divergence=divergence,
+                        total_elapsed_seconds=time.monotonic() - wall_start,
+                        total_tokens=sum(r.tokens_used for r in rounds),
+                        notes=(
+                            f"Wall-clock budget exhausted after oracle error "
+                            f"on round {iteration}."
+                        ),
+                    )
+                continue
             elapsed = time.monotonic() - round_start
 
             round_record = RefinementRound(

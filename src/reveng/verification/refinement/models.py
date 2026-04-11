@@ -21,6 +21,8 @@ class RefinementStatus(str, Enum):
     NO_PROGRESS = "no_progress"  # LLM echoed identical source twice
     LLM_ERROR = "llm_error"  # provider raised an exception
     ABORTED = "aborted"  # caller cancelled (reserved for future use)
+    TIMEOUT = "timeout"  # oracle.verify() raised TimeoutError
+    ERROR = "error"  # oracle.verify() raised an unexpected exception
 
 
 @dataclass(frozen=True)

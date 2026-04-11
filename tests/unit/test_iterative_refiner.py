@@ -380,3 +380,287 @@ def test_extract_code_block_returns_raw_when_no_fence_present():
     text = "int main(void) { return 0; }"
     result = _extract_code_block(text)
     assert result == text
+
+
+# ---------------------------------------------------------------------------
+# Fault-injection tests (Tests 11–18)
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Test 11: Malformed LLM response — empty string
+# ---------------------------------------------------------------------------
+
+
+def test_refiner_handles_empty_string_llm_response():
+    """
+    analyzer returns "" — the extracted code is also "".
+    compile_fn will be called with "" (or raise).  Either way the refiner
+    must not crash and must return a terminal status.
+    """
+    factory = _make_oracle_factory(_diverge_report())
+    analyzer = _make_analyzer(content="")
+    compile_fn = MagicMock(side_effect=RuntimeError("empty source"))
+
+    refiner = IterativeRefiner(
+        analyzer=analyzer,
+        compile_fn=compile_fn,
+        oracle_factory=factory,
+        budget=RefinementBudget(max_iterations=2),
+    )
+    result = refiner.refine(_INITIAL_SOURCE, _SEED_INPUTS)
+
+    # Must not raise; must reach a terminal status
+    assert result.status in {
+        RefinementStatus.BUDGET_EXHAUSTED,
+        RefinementStatus.NO_PROGRESS,
+        RefinementStatus.LLM_ERROR,
+    }
+    assert not result.converged
+
+
+# ---------------------------------------------------------------------------
+# Test 12: Malformed LLM response — non-C garbage
+# ---------------------------------------------------------------------------
+
+
+def test_refiner_handles_garbage_llm_response():
+    """
+    analyzer returns "SYNTAX ERROR: %%%@@@".  compile_fn raises because the
+    source is not valid C.  The refiner should record the failed round and
+    continue to budget exhaustion.
+    """
+    factory = _make_oracle_factory(_diverge_report())
+    garbage = "SYNTAX ERROR: %%%@@@"
+    analyzer = _make_analyzer(content=garbage)
+    compile_fn = MagicMock()
+
+    # Initial compile succeeds; subsequent (garbage) compile fails
+    initial_binary = Path("/tmp/initial.bin")
+    compile_fn.side_effect = [initial_binary, RuntimeError("compile failed: bad syntax")]
+
+    refiner = IterativeRefiner(
+        analyzer=analyzer,
+        compile_fn=compile_fn,
+        oracle_factory=factory,
+        budget=RefinementBudget(max_iterations=1),
+    )
+    result = refiner.refine(_INITIAL_SOURCE, _SEED_INPUTS)
+
+    assert result.status == RefinementStatus.BUDGET_EXHAUSTED
+    assert not result.converged
+    # One round was recorded even though compile failed
+    assert len(result.rounds) == 1
+
+
+# ---------------------------------------------------------------------------
+# Test 13: Malformed LLM response — valid JSON, not C
+# ---------------------------------------------------------------------------
+
+
+def test_refiner_handles_json_llm_response():
+    """
+    analyzer returns '{"error": "rate limited"}' — valid JSON but not C.
+    compile_fn raises on the JSON string.  The refiner handles it gracefully
+    and exhausts budget.
+    """
+    factory = _make_oracle_factory(_diverge_report())
+    json_response = '{"error": "rate limited"}'
+    analyzer = _make_analyzer(content=json_response)
+
+    initial_binary = Path("/tmp/initial.bin")
+    compile_fn = MagicMock(
+        side_effect=[initial_binary, RuntimeError("compile failed: not valid C")]
+    )
+
+    refiner = IterativeRefiner(
+        analyzer=analyzer,
+        compile_fn=compile_fn,
+        oracle_factory=factory,
+        budget=RefinementBudget(max_iterations=1),
+    )
+    result = refiner.refine(_INITIAL_SOURCE, _SEED_INPUTS)
+
+    assert result.status == RefinementStatus.BUDGET_EXHAUSTED
+    assert not result.converged
+
+
+# ---------------------------------------------------------------------------
+# Test 14: compile_fn raises RuntimeError every round
+# ---------------------------------------------------------------------------
+
+
+def test_refiner_budget_exhausted_when_compile_always_fails():
+    """
+    compile_fn raises RuntimeError on every call after the initial compile.
+    The refiner must exhaust the iteration budget without infinite looping.
+    """
+    diverge = _diverge_report()
+    factory = _make_oracle_factory(diverge)
+
+    # Return a different source each LLM call to avoid no-progress short-circuit
+    call_count = [0]
+
+    def make_result(*args, **kwargs):
+        call_count[0] += 1
+        r = MagicMock()
+        r.content = f"```c\nint main(void) {{ return {call_count[0]}; }}\n```"
+        return r
+
+    analyzer = MagicMock()
+    analyzer.analyze.side_effect = make_result
+
+    initial_binary = Path("/tmp/initial.bin")
+    # First compile (initial) succeeds; all subsequent fail
+    compile_fn = MagicMock(side_effect=[initial_binary] + [RuntimeError("compile error")] * 5)
+
+    refiner = IterativeRefiner(
+        analyzer=analyzer,
+        compile_fn=compile_fn,
+        oracle_factory=factory,
+        budget=RefinementBudget(max_iterations=3),
+    )
+    result = refiner.refine(_INITIAL_SOURCE, _SEED_INPUTS)
+
+    # Must terminate — not loop forever
+    assert result.status == RefinementStatus.BUDGET_EXHAUSTED
+    assert not result.converged
+    # compile_fn should have been called: once initial + once per iteration
+    assert compile_fn.call_count == 4  # 1 initial + 3 iterations
+
+
+# ---------------------------------------------------------------------------
+# Test 15: oracle.verify() raises TimeoutError every round
+# ---------------------------------------------------------------------------
+
+
+def test_refiner_handles_oracle_timeout_gracefully():
+    """
+    oracle.verify() raises TimeoutError on each call.
+
+    The refiner catches TimeoutError from oracle.verify() and handles it
+    gracefully: each timed-out round is recorded and the loop continues
+    until the budget is exhausted.  The exception must NOT propagate to
+    the caller.
+    """
+    oracle = MagicMock()
+    oracle.verify.side_effect = TimeoutError("oracle timed out")
+    factory = MagicMock(return_value=oracle)
+
+    refiner = IterativeRefiner(
+        analyzer=_make_analyzer(),
+        compile_fn=_make_compile_fn(),
+        oracle_factory=factory,
+        budget=RefinementBudget(max_iterations=2),
+    )
+
+    # Must not raise; must reach a terminal status gracefully
+    result = refiner.refine(_INITIAL_SOURCE, _SEED_INPUTS)
+
+    assert result.status in {
+        RefinementStatus.TIMEOUT,
+        RefinementStatus.BUDGET_EXHAUSTED,
+    }
+    assert not result.converged
+
+
+# ---------------------------------------------------------------------------
+# Test 16: budget exhausted before convergence (max_iterations=2)
+# ---------------------------------------------------------------------------
+
+
+def test_refiner_budget_exhausted_reflects_iterations_count():
+    """
+    max_iterations=2 with an analyzer that always returns subtly wrong C.
+    The result must reflect budget exhaustion, not an error, and the
+    iterations count must equal max_iterations.
+    """
+    factory = _make_oracle_factory(_diverge_report())
+
+    call_count = [0]
+
+    def make_result(*args, **kwargs):
+        call_count[0] += 1
+        r = MagicMock()
+        # Subtly wrong C: wrong return value each time
+        r.content = f"```c\nint main(void) {{ return {100 + call_count[0]}; }}\n```"
+        return r
+
+    analyzer = MagicMock()
+    analyzer.analyze.side_effect = make_result
+
+    refiner = IterativeRefiner(
+        analyzer=analyzer,
+        compile_fn=_make_compile_fn(),
+        oracle_factory=factory,
+        budget=RefinementBudget(max_iterations=2, abort_on_no_progress=True),
+    )
+    result = refiner.refine(_INITIAL_SOURCE, _SEED_INPUTS)
+
+    assert result.status == RefinementStatus.BUDGET_EXHAUSTED
+    assert not result.converged
+    assert result.iterations == 2
+
+
+# ---------------------------------------------------------------------------
+# Test 17: LLM returns identical code as input every round
+# ---------------------------------------------------------------------------
+
+
+def test_refiner_no_progress_when_llm_returns_identical_code():
+    """
+    analyzer always returns the exact same source that was passed in.
+    With abort_on_no_progress=True, the refiner must detect no-progress
+    and stop on the first such occurrence without looping forever.
+    """
+    factory = _make_oracle_factory(_diverge_report())
+    # Return the initial source verbatim (no code fence — _extract_code_block
+    # returns the stripped text, which equals _INITIAL_SOURCE.strip())
+    identical_content = _INITIAL_SOURCE.strip()
+    analyzer = _make_analyzer(content=identical_content)
+
+    refiner = IterativeRefiner(
+        analyzer=analyzer,
+        compile_fn=_make_compile_fn(),
+        oracle_factory=factory,
+        budget=RefinementBudget(max_iterations=5, abort_on_no_progress=True),
+    )
+    result = refiner.refine(_INITIAL_SOURCE.strip(), _SEED_INPUTS)
+
+    assert result.status == RefinementStatus.NO_PROGRESS
+    assert not result.converged
+    # Should have stopped after just 1 round
+    assert result.iterations == 1
+
+
+# ---------------------------------------------------------------------------
+# Test 18: oracle.verify() raises RuntimeError (unexpected exception)
+# ---------------------------------------------------------------------------
+
+
+def test_refiner_handles_oracle_runtime_error_gracefully():
+    """
+    oracle.verify() raises RuntimeError — an unexpected exception.
+
+    The refiner catches the RuntimeError from oracle.verify() and handles it
+    gracefully: each failed round is recorded and the loop continues until
+    the budget is exhausted.  The exception must NOT propagate to the caller.
+    """
+    oracle = MagicMock()
+    oracle.verify.side_effect = RuntimeError("unexpected oracle failure")
+    factory = MagicMock(return_value=oracle)
+
+    refiner = IterativeRefiner(
+        analyzer=_make_analyzer(),
+        compile_fn=_make_compile_fn(),
+        oracle_factory=factory,
+        budget=RefinementBudget(max_iterations=2),
+    )
+
+    # Must not raise; must reach a terminal status gracefully
+    result = refiner.refine(_INITIAL_SOURCE, _SEED_INPUTS)
+
+    assert result.status in {
+        RefinementStatus.ERROR,
+        RefinementStatus.BUDGET_EXHAUSTED,
+    }
+    assert not result.converged
