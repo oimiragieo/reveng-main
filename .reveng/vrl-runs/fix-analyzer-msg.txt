@@ -1,0 +1,10 @@
+chore(vrl): record hexyl VRL run 2026-04-11 — llm_error (missing API key)
+
+Run completed 1 iteration in 3.2s. Differential oracle confirmed 3/3
+seed inputs diverged (reco_stdout_len=0 vs orig 615–768 bytes). LLM
+refiner failed on round 1 with authentication error — ANTHROPIC_API_KEY
+not set in the shell environment that invoked run_vrl.py.
+
+No source changes. Only run log updated.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
