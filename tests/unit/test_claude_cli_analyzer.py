@@ -215,7 +215,11 @@ def test_analyze_invokes_subprocess_with_shell_false():
     # On Windows the .CMD shim is wrapped: ["cmd", "/c", "<path>/claude.CMD", ...]
     # On other platforms argv[0] is the direct claude path.
     assert any("claude" in a.lower() for a in argv)  # full path resolved via shutil.which
-    assert "--bare" in argv
+    # --bare was intentionally removed (it disabled credential loading in
+    # claude-code v2). Context isolation is now achieved via
+    # --no-session-persistence + bypassPermissions instead.
+    assert "--no-session-persistence" in argv
+    assert "--permission-mode" in argv and "bypassPermissions" in argv
     assert "-p" in argv
     # The prompt must be the final element
     assert argv[-1] == "some prompt"
