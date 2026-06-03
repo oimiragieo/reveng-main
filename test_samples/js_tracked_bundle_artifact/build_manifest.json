@@ -1,0 +1,25 @@
+{
+  "schema": "reveng.tracked_js_bundle/1",
+  "toolchain": {
+    "esbuild": "0.21.5"
+  },
+  "built_at": "2026-04-06T00:28:42Z",
+  "command": [
+    "node_modules/.bin/esbuild",
+    "src/index.ts",
+    "--bundle",
+    "--platform=node",
+    "--format=cjs",
+    "--sourcemap=external",
+    "--outfile=../js_tracked_bundle_artifact/bundle.js"
+  ],
+  "files": {
+    "bundle.js": {
+      "sha256": "e7af4e50936ae07a5f8eb9cca440c553bf6b8ad317e671de4f4ba26206ff9fc3"
+    },
+    "bundle.js.map": {
+      "sha256": "d15dc59b5b49d24df3afaa868a8b971ddcf4f6cbe1b65335e1453dbe3ecd7bd4"
+    }
+  },
+  "source_root": "test_samples/js_tracked_bundle_source"
+}

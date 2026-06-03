@@ -1,0 +1,9 @@
+{
+  "name": "sample-tsx-cli-oracle",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/entrypoints/cli.tsx",
+  "bin": {
+    "sample-tsx-cli": "src/entrypoints/cli.tsx"
+  }
+}

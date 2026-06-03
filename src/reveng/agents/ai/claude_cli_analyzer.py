@@ -44,7 +44,14 @@ _CLAUDE_CMD = [
     "sonnet",
     "--permission-mode",
     "bypassPermissions",
-    "--bare",  # skip hooks, CLAUDE.md, auto-memory, MCP
+    # NOTE: --bare was removed. In claude-code v2, --bare triggers D9()=true which
+    # makes s7() return null unconditionally, bypassing ALL credential loading
+    # (OAuth, CLAUDE_CODE_OAUTH_TOKEN, and API key env vars). The result is always
+    # "Not logged in" regardless of ~/.claude/.credentials.json content.
+    # Isolation is achieved instead via:
+    #   --no-session-persistence  (no session state written/read)
+    #   CLAUDE_CODE_DISABLE_CLAUDE_MDS=1  (env var, set in analyze(), skips CLAUDE.md)
+    "--no-session-persistence",
     "--max-turns",
     "1",  # single-turn only — no agentic loops
     "-p",  # prompt follows as next arg
@@ -160,6 +167,13 @@ class ClaudeCodeCLIAnalyzer:
         """
         argv = self._cmd + [prompt]
 
+        # Inject CLAUDE_CODE_DISABLE_CLAUDE_MDS=1 so the subprocess does not
+        # load CLAUDE.md files from the working directory or parent dirs.
+        # This replaces the context-isolation previously provided by --bare
+        # (which was removed because it also disables credential loading in v2).
+        env = os.environ.copy()
+        env["CLAUDE_CODE_DISABLE_CLAUDE_MDS"] = "1"
+
         try:
             completed = subprocess.run(  # noqa: S603  (shell=False, argv list)
                 argv,
@@ -167,6 +181,7 @@ class ClaudeCodeCLIAnalyzer:
                 text=True,
                 timeout=self.timeout_seconds,
                 shell=False,
+                env=env,
             )
         except subprocess.TimeoutExpired as exc:
             msg = (
