@@ -295,3 +295,18 @@ _find_hexyl.py
 # Local config overrides
 .reveng/*.local.*.json
 .reveng/*.pr.json
+
+# --- professionalization cleanup (2026-06-03): regenerable run artifacts ---
+# Existing reports/ rules are dir-only (trailing slash) and miss the .json FILES.
+reports/app_reverse_engineering_corpus_claude_*.json
+reports/_tmp_*.json
+reports/source_binary_benchmarks*
+reports/ralph_tracked_bundle_*/
+reports/app_reverse_engineering_tool_eval_*/
+reports/app_reverse_engineering_corpus_js_oracle*.json
+reports/cli_js_user_proof_run/
+reports/tracked_js_bundle_benchmark/
+reports/app_reverse_engineering_corpus_javascript_test/
+external/ga_binaries/
+external/ghidramcp/
+.reveng/vrl-runs/*.json
