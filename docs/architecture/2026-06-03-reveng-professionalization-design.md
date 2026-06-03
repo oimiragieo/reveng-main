@@ -110,3 +110,29 @@ Static bugs (regression test each):
 
 ## 6. Execution note
 Implementation will be driven by per-phase **workflows** (parallel subagents) under a written implementation plan (next step: `writing-plans`). Each workflow phase ends by running the four gates and reporting results before the next phase begins.
+
+## 7. Council review amendments (2026-06-03 thinktank — unanimous SHIP-WITH-CHANGES)
+
+An 8-seat multi-model council (claude, gemini, kimi, minimax, glm, copilot, cursor — codex discarded for a read-failure, not fabrication) audited this spec; **7 valid seats unanimously approved it with the following required changes**, folded in here. These take precedence over the original §1/§4 wording where they conflict.
+
+1. **Gate 3 ("VRL convergence") cannot be a per-move gate.** It needs an LLM provider + network, is **not wired into CI today** (`.github/workflows/ci.yml` runs only pytest with `--cov-fail-under=10`), and the argv fix will *correctly* flip hexyl red. Redefine the per-move gate as a **deterministic harness/oracle unit test** (fake binary; asserts seed tokens reach **argv**, and a known-divergent pair is graded divergent) plus a `run_vrl.py --mock-oracle/--smoke` mode. Full `run_vrl.py` convergence becomes a **phase-boundary / `requires_network`** smoke run when `REVENG_AI_PROVIDER` is set — never per move.
+
+2. **Expand every gate cycle beyond "imports succeed."** Add: (a) **clean wheel install** (`pip install .` in a fresh venv) — not just editable — resolving `reveng`/`reveng-app`/`reveng-js` via the installed console-scripts and asserting `reveng.cli.__file__` ends with `__init__.py`; (b) **`__file__`/Path-based resource-load scan** of moved modules; (c) **dynamic loader / plugin & MCP discovery smoke** (`agent_sdk/skills/loader.py`, `plugins/manager.py`, `agent_sdk/mcp/servers/*`, any `importlib`/`pkgutil.iter_modules`/`os.listdir`); (d) **pickling** of relocated frozen dataclasses (`ExecutionResult`, `RefinementResult`); (e) grep `__getattr__` / `try/except ImportError` and assert each relocated symbol is *actually importable*, not just that the module loads.
+
+3. **The `run_vrl` grade fix is incomplete — sequence it.** `verification/models.py:26` sets `ValidationGrade = Any`; `DivergenceReport.grade` defaults to `None` and is **not populated by the oracle today**; and `result.final_divergence` is itself **`None` on the LLM_ERROR/timeout paths** (the very paths that produced today's `current_grade: llm_error`). Before changing the write: (i) define the real `ValidationGrade` vocabulary/enum, (ii) make `DifferentialOracle.verify()` compute+assign a grade, (iii) **null-guard** `result.final_divergence`/`.grade` so a failed run records a valid fallback grade, never `None`/`null`/an `AttributeError`.
+
+4. **`cli.py`→`cli/` is a namespace-collision flip, not a normal move** — handle as one dedicated, atomic step. Creating `cli/__init__.py` instantly re-points `reveng.cli` from the module to the package. Re-export `main` **and every symbol `cli.py` exposed** (`create_parser`, the `handle_*`/command set), delete `cli.py` in the **same commit**, and gate with an **installed-entrypoint smoke** (`reveng --version`) under editable **and** clean install; clear stale `.pyc`.
+
+5. **The argv fix needs a seed contract, not just plumbing.** Signature: `ExecutionHarness.run(argv: Optional[List[str]] = None, input_bytes: bytes = b"")`, `cmd = [str(self._binary_path), *argv]`, `input=input_bytes` kept **distinct**. Extend the corpus `seed_inputs` schema to **distinguish argv vs stdin**, `shlex`-split multi-token invocations, ensure file-path seeds exist relative to cwd at runtime, and prefer **behaviorally-discriminating** seeds (`--help`/`--version` are weak — both binaries trivially agree). Thread argv through `DifferentialOracle.verify` and `run_vrl`.
+
+6. **Fix `cli/reveng.py` correctly: keep the dedup guard.** Do **not** drop `not in sys.path` (it prevents duplicate path entries on repeated invocation). Force `SRC_ROOT` (`parents[2]` = `src/`) to the **front** (strip any stale script-dir entry; insert `src/` at index 0 only if not already first).
+
+7. **Verify the real `babel_transformer` unsafe site.** `_constant_folding` already uses a safe lambda; the injectable `re.sub` replacement is in the string-array/opaque-predicate path (`_replace_accessors` / `_remove_opaque_predicates` / `_simplify_strings`). Confirm the exact method(s) before editing.
+
+8. **Stand up import-cycle/-direction tooling in Phase 0** (was Phase 4). Pin `import-linter` (or a custom cycle-failing pytest) into the lint gate from the start, as a regression baseline, so the Phase-3 `ai`↔`security` break is mechanically gated and masked `NameError`s surface immediately.
+
+9. **Add CI / branch / rollback + back-compat policy (new).** Execute on a `refactor/professionalization` branch; **per-phase PRs** posting four-gate results; squash-merge to `main` only when all gates pass on a clean checkout (`main` stays green; recovery = don't-merge, not "clean checkout"). Wire the four gates into `.github/workflows/ci.yml`. **Decide and document** whether `reveng.<oldpath>` is public API before Phase 4 shim removal (deprecation window vs. "internal, no guarantee").
+
+10. **Add Phase 1.5 — VRL re-baseline.** After the argv fix, audit every VRL test that may have passed *because of* stdin-only behavior and re-record the hexyl corpus `current_grade` against genuine argv-driven runs.
+
+11. **Two Phase-3 design refinements to weigh:** consider keeping `security/` **standalone** rather than folding it into `intelligence/` (cleaner cycle-break isolation); give `tools/` dissolution an explicit **end-state + completion gate** so it does not become permanent shim debt.
