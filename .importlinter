@@ -1,0 +1,9 @@
+[importlinter]
+root_package = reveng
+
+[importlinter:contract:no-ai-security-cycle]
+name = ai and security must not form an import cycle
+type = independence
+modules =
+    reveng.ai
+    reveng.security
