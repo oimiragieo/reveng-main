@@ -1,0 +1,21 @@
+[
+  {
+    "label": "custom_high_snippets",
+    "run_webcrack": true,
+    "run_restringer": false,
+    "run_deobfuscator": false,
+    "run_wakaru": false,
+    "run_js_deobfuscator": false,
+    "max_snippets": 32,
+    "snippet_context": 3
+  },
+  {
+    "label": "custom_full_stack_light",
+    "run_webcrack": true,
+    "run_restringer": true,
+    "run_deobfuscator": true,
+    "run_wakaru": false,
+    "run_js_deobfuscator": false,
+    "max_snippets": 20
+  }
+]
