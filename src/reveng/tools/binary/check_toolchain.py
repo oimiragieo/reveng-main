@@ -322,6 +322,11 @@ def main():
         action="store_true",
         help="Show installation instructions for missing components",
     )
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="Only check the toolchain without showing fix instructions (default behavior)",
+    )
     parser.add_argument("--json", action="store_true", help="Output results in JSON format")
     parser.add_argument("--no-color", action="store_true", help="Disable colored output")
 
