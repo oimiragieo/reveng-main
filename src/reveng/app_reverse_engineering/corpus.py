@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
-from reveng.result_contracts import RESULT_SCHEMA_VERSION
+from reveng.core.result_contracts import RESULT_SCHEMA_VERSION
 
 from .framework import AppReverseEngineeringFramework
 

@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
-from reveng.ir import IR_SCHEMA_VERSION, REEdge, RENode, REProjectIR
+from reveng.core.ir import IR_SCHEMA_VERSION, REEdge, RENode, REProjectIR
 
 URL_PATTERN = re.compile(r"https?://[^\s\"'`]+")
 CLI_FLAG_PATTERN = re.compile(r"--[a-z0-9][a-z0-9-]*")

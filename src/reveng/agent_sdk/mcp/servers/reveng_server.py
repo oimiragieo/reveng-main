@@ -15,7 +15,7 @@ from ....app_reverse_engineering import (
     run_app_corpus,
     select_app_corpus_entries,
 )
-from ....result_contracts import build_mcp_tool_response, make_evidence_item
+from ....core.result_contracts import build_mcp_tool_response, make_evidence_item
 from ..server import MCPServer, MCPTool
 
 try:

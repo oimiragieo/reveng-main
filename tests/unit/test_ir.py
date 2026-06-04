@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from reveng.ir import (
+from reveng.core.ir import (
     IR_SCHEMA_VERSION,
     SCHEMA_VERSION,
     EdgeKind,

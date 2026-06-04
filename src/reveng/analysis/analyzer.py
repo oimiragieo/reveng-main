@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 from reveng.core.error_codes import ErrorCode, REVENGError
-from reveng.result_contracts import AnalyzerCapabilitiesContract, make_trace_reference
+from reveng.core.result_contracts import AnalyzerCapabilitiesContract, make_trace_reference
 
 # Lazy imports for performance optimization
 # Heavy modules imported only when needed

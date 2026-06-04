@@ -6,7 +6,7 @@ import asyncio
 import json
 from pathlib import Path
 
-from reveng.ir import REEdge, RENode, REProjectIR
+from reveng.core.ir import REEdge, RENode, REProjectIR
 from reveng.javascript.bundle_reverse_engineer import JavaScriptBundleReverseEngineer
 
 

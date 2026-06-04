@@ -50,7 +50,7 @@ from ....app_reverse_engineering import (
     select_app_corpus_entries,
 )
 from ....integrations.ghidra.ghidra_engine import GhidraEngine
-from ....result_contracts import (
+from ....core.result_contracts import (
     RESULT_SCHEMA_VERSION,
     build_mcp_resource_result,
     build_mcp_tool_response,

@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
-from reveng.ir import REEdge, RENode, REProjectIR
+from reveng.core.ir import REEdge, RENode, REProjectIR
 
 from .deobfuscator import JavaScriptDeobfuscator
 from .detectors import ObfuscationDetector

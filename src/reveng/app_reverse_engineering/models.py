@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from reveng.result_contracts import RESULT_SCHEMA_VERSION
+from reveng.core.result_contracts import RESULT_SCHEMA_VERSION
 
 
 @dataclass

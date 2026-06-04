@@ -24,7 +24,7 @@ from .core.exceptions import (
 )
 from .core.validation import validate_analysis_config, validate_file_path
 from .ml import MLIntegration
-from .result_contracts import (
+from .core.result_contracts import (
     AnalysisResultContract,
     MalwareDetectionResultContract,
     ReconstructionResultContract,

@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from reveng import ai_api, analyzer, api
+from reveng import ai_api, api
+from reveng.analysis import analyzer
 from reveng.app_reverse_engineering.models import AppReverseEngineeringResult
 
 

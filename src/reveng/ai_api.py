@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Union
 # Import REVENG components
 from .agents.ai.ai_enhanced.instant_triage import InstantTriageEngine, ThreatLevel
 from .agents.ai.ai_enhanced.nl_interface import NaturalLanguageInterface, NLResponse
-from .result_contracts import (
+from .core.result_contracts import (
     AIBinaryAnalysisContract,
     make_evidence_item,
     make_trace_reference,
