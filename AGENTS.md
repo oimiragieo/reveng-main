@@ -1,15 +1,21 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Primary code lives in `src/reveng/`. Add new runtime code to the closest domain package, such as `analyzers/`, `cli/`, `ghidra/`, `pipeline/`, `security/`, `tools/`, or `validation/`, instead of creating new root scripts. Tests are split by intent under `tests/unit`, `tests/integration`, `tests/e2e`, `tests/performance`, `tests/poc`, `tests/security`, and `tests/manual`. Keep examples in `examples/`, documentation in `docs/`, sample inputs in `test_samples/`, and third-party integrations in `external/`. Generated outputs in `analysis_*` and `reports/` are not the place for new source code.
+Primary code lives in `src/reveng/`. Add new runtime code to the closest domain package instead of creating new root scripts (there is **no** repo-root `reveng.py` — it was removed because it shadowed the package; use the `reveng` / `python -m reveng` entry points or `src/reveng/cli/reveng.py`). Key packages:
+- `reveng.core` — foundation layer (exceptions, error codes, validation, config, `result_contracts`, `ir`, `ai_models`); must not import higher-level domains.
+- `reveng.analysis` — binary/source analysis (`analyzer`, `pe`, `native`, `lifting`, `devirtualization`, `deobfuscation`, `diffing`, `analyzers`).
+- `reveng.cli` (a package), `reveng.agents.ai` (LLM providers), `reveng.security`, `reveng.verification` (VRL), `reveng.app_reverse_engineering`, `reveng.agent_sdk` (MCP), `reveng.tools`, `reveng.integrations`/`ghidra`.
+
+These boundaries are enforced by **import-linter** (`.importlinter`): `reveng.core` must not import higher domains, and `reveng.security` must not import `reveng.ai`/`reveng.agents.ai`. New code that violates a contract fails `make lint`. Tests are split by intent under `tests/unit`, `tests/integration`, `tests/e2e`, `tests/performance`, `tests/poc`, `tests/security`, and `tests/manual`. Keep examples in `examples/`, documentation in `docs/`, sample inputs in `test_samples/`, and third-party integrations in `external/`. Generated outputs in `analysis_*` and `reports/` are not the place for new source code.
 
 ## Build, Test, and Development Commands
-Use `make install-dev` for the full local toolchain, or install directly with `pip install -r requirements.txt -r requirements-dev.txt -r requirements-java.txt`. Run `reveng --help` as a quick CLI smoke test. Common commands:
+Use `make install-dev` for the full local toolchain, or install directly with `pip install -r requirements.txt -r requirements-dev.txt -r requirements-java.txt`. Also run `pip install -e . --no-deps` (editable install) — import-linter/grimp need the `reveng` package resolvable as a top-level package. Run `reveng --help` (or `python -m reveng --help`) as a quick CLI smoke test. Common commands:
 
 - `make test-unit` or `pytest tests/unit -v`
 - `make test-integration` or `pytest tests/integration -v`
 - `pytest -m "not requires_external_tools and not slow"`
-- `make lint`
+- `make lint` (black/isort/pylint/mypy + `lint-imports` architecture contracts + hadolint)
+- `lint-imports --no-cache` (run the `.importlinter` architecture contracts on their own)
 - `make format`
 - `python -m build`
 - `mkdocs build`

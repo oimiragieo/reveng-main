@@ -11,9 +11,10 @@
 - **Docstrings**: Document all classes, functions, and modules (Google style)
 
 ### Code Quality Checks
-- **Linting**: Code must pass `flake8` with max-line-length=100
+- **Linting**: Code must pass `flake8`/`pylint` with max-line-length=100
 - **Security**: Code must pass `bandit` security scan (level -ll)
-- **Test Coverage**: Maintain ≥90% test coverage (target: 95%)
+- **Architecture contracts**: Code must pass `import-linter` (`.importlinter`, run by `make lint` / `lint-imports --no-cache`). `reveng.core` is the foundation and must not import higher-level domains; `reveng.security` must not import `reveng.ai`/`reveng.agents.ai`. Needs an editable install (`pip install -e .`).
+- **Test Coverage**: Keep coverage steady in touched areas (no enforced `fail-under`); add a regression test for every bug fix.
 - **No Dead Code**: Remove unused imports, functions, and variables
 - **No TODO Comments**: Convert TODOs to GitHub issues before committing
 
@@ -214,8 +215,9 @@ pip-audit
 ### Code Organization
 - **Single Responsibility**: Each module/class should have one clear purpose
 - **DRY (Don't Repeat Yourself)**: Extract common code into reusable functions
+- **Layered domains**: `reveng.core` (foundation) → analysis/intelligence/orchestration domains → entrypoints (`reveng.cli`, MCP). Dependencies point downward toward `core`; never import upward. The `ai`↔`security` cycle is broken (shared models live in `reveng.core.ai_models`) and locked by an import-linter contract — keep it that way.
 - **Separation of Concerns**: Keep UI, business logic, and data layers separate
-- **Dependency Injection**: Pass dependencies rather than hardcoding them
+- **Dependency Injection**: Pass dependencies rather than hardcoding them (e.g. the VRL `IterativeRefiner` takes analyzer/compile_fn/oracle_factory)
 - **Configuration over Code**: Use configuration files for flexibility
 
 ### Error Handling

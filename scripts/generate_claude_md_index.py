@@ -643,15 +643,84 @@ def write_test_samples_claude() -> Path | None:
 
 def write_master_claude() -> Path:
     lines: list[str] = [
-        "# `claude.md` — REVENG master index (AI navigation)",
+        "# CLAUDE.md",
         "",
-        "This file is the **entry point** for large language models mapping the repository. Each major folder also contains a `claude.md` that lists local files and (for Python) top-level symbols.",
+        "This file provides guidance to Claude Code (claude.ai/code) when working with code in "
+        "this repository. The hand-written guidance below is emitted by "
+        "`scripts/generate_claude_md_index.py`; the machine-derived navigation index follows it.",
         "",
-        "## How to use",
+        "REVENG is a large, beta Python reverse-engineering platform (`reveng`, version `4.0.0`). "
+        "Real core: the CLI, MCP servers, Ghidra integration, the app reverse-engineering adapters, "
+        "and the Verified Recompilation Loop (VRL). Treat advanced claims (exploit gen, full "
+        "binary↔source equivalence, broad JS deobfuscation) as experimental until verified on a "
+        "tracked corpus. Keep behavior changes tied to tests.",
         "",
-        "1. Start at the area below that matches your task (CLI, tests, docs, etc.).",
-        "2. Open the linked `claude.md` in that folder, then drill into subfolders.",
-        "3. Regenerate machine-derived breadcrumbs after large refactors: `python scripts/generate_claude_md_index.py`.",
+        "## Commands",
+        "",
+        "`src/` layout (`src/reveng/`), Python 3.9+. Config in `pyproject.toml`; task shortcuts in "
+        "the `Makefile`; contributor conventions in `AGENTS.md`.",
+        "",
+        "```bash",
+        "make install-dev                 # runtime + dev + java deps",
+        "pip install -e . --no-deps       # editable install (required for import-linter / grimp)",
+        "",
+        "# Entry points (there is NO repo-root reveng.py; that launcher was removed):",
+        "reveng --help                    # main CLI            (reveng.cli:main)",
+        "reveng-app --help                # app reverse-eng     (reveng.app_reverse_engineering.cli)",
+        "reveng-js --help                 # JS analysis         (reveng.javascript.cli)",
+        "python -m reveng --help          # module entry        (reveng.__main__)",
+        "python src/reveng/cli/reveng.py --help   # source-tree wrapper (self-bootstraps sys.path)",
+        "",
+        "# Tests (coverage auto-added via pyproject addopts; use --no-cov to skip)",
+        "make test                        # full suite",
+        "pytest tests/unit/test_foo.py::TestX::test_y      # a single test",
+        'pytest -m "not requires_external_tools and not slow and not requires_network"',
+        "# Markers: poc, slow, integration, unit, requires_external_tools, requires_network",
+        "",
+        "# Lint / format (black & isort at 100 cols)",
+        "make format                      # black + isort (writes)",
+        "make lint                        # black/isort/pylint/mypy + lint-imports (architecture) + hadolint",
+        "lint-imports --no-cache          # import-linter architecture contracts (.importlinter)",
+        "```",
+        "",
+        "## Architecture (the big picture)",
+        "",
+        "**Three surfaces over one package.** Analysis logic is exposed through (a) the CLI "
+        "(`reveng.cli`, plus `reveng-app`/`reveng-js`), (b) a Python API (`reveng.api`), and (c) MCP "
+        "servers (`reveng.agent_sdk.mcp.servers`). Outputs carry versioned validation/evidence/"
+        "provenance contracts (`reveng.core.result_contracts`).",
+        "",
+        "**Domain layout (enforced by import-linter; see `.importlinter`):**",
+        "",
+        "- `reveng.core` — foundation layer: exceptions, error codes, validation, config, the shared "
+        "`result_contracts`, the `ir` (VRL IR), and `ai_models` (shared AI data models). Must not "
+        "import any higher-level domain (the `core-is-foundation` contract).",
+        "- `reveng.analysis` — binary/source analysis: `analyzer` (REVENGAnalyzer), `pe`, `native`, "
+        "`lifting`, `devirtualization`, `deobfuscation`, `diffing`, `analyzers`.",
+        "- `reveng.cli` — a real package (was a 1900-line `cli.py`); `reveng.cli:main` is the console "
+        "entry; `cli/reveng.py` is the source-tree wrapper.",
+        "- `reveng.security` must not import `reveng.ai`/`reveng.agents.ai` (the cycle was broken by "
+        "moving shared models to `reveng.core.ai_models`; enforced contract).",
+        "- AI providers live in `reveng.agents.ai` (`ai_provider_registry` → `get_analyzer`, "
+        "`anthropic`/`openai`/`ollama`/`claude_cli` analyzers, `ai_enhanced_orchestrator`).",
+        "",
+        "**Verified Recompilation Loop (VRL) — the flagship.** `reveng.verification.refinement."
+        "refiner.IterativeRefiner` drives decompile → compile → differentially-verify → LLM-refine to "
+        "convergence. It is dependency-injected (analyzer / compile_fn / oracle_factory). The "
+        "differential oracle passes corpus seed tokens as **argv** (not stdin) and records a real "
+        "`ValidationGrade` into `.reveng/benchmarks/corpus.yaml`. Runner: `scripts/run_vrl.py` "
+        "(`REVENG_AI_PROVIDER`=ollama|anthropic|openai; ollama is local/free).",
+        "",
+        "**App reverse-engineering** (`reveng.app_reverse_engineering`) dispatches JS/JVM/Python/.NET "
+        "inputs to language adapters; it is the corpus-gated, most mature multi-language path.",
+        "",
+        "**Generated/vendored, do not edit or lint:** `analysis_*/`, `reports/`, `external/ghidra*/`. "
+        "Regenerate these breadcrumbs after refactors: `python scripts/generate_claude_md_index.py`.",
+        "",
+        "## Navigation index",
+        "",
+        "Each major folder also contains a `claude.md` listing its files and (for Python) top-level "
+        "symbols. Start at the area below that matches your task, then drill into subfolders.",
         "",
         "## Repository map",
         "",
