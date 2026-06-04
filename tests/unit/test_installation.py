@@ -39,7 +39,7 @@ class TestInstallation:
     def test_reveng_analyzer_import(self):
         """Test that main analyzer can be imported"""
         try:
-            assert importlib.import_module("reveng.analyzer").REVENGAnalyzer is not None
+            assert importlib.import_module("reveng.analysis.analyzer").REVENGAnalyzer is not None
         except ImportError as e:
             pytest.fail(f"REVENGAnalyzer import failed: {e}")
 
@@ -102,7 +102,7 @@ class TestInstallation:
 
     def test_analysis_pipeline(self):
         """Test that analysis pipeline can be initialized"""
-        from reveng.analyzer import REVENGAnalyzer
+        from reveng.analysis.analyzer import REVENGAnalyzer
 
         # Test initialization without binary
         analyzer = REVENGAnalyzer()

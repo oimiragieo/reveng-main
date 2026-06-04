@@ -6,7 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
-    from reveng.analyzer import REVENGAnalyzer
+    from reveng.analysis.analyzer import REVENGAnalyzer
 
 
 logger = logging.getLogger(__name__)

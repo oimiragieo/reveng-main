@@ -448,7 +448,7 @@ class REVENG_AI_API:
         logger.info(f"Performing {mode.value} analysis...")
 
         # Run full analysis using REVENG analyzer
-        from .analyzer import REVENGAnalyzer
+        from .analysis.analyzer import REVENGAnalyzer
 
         analyzer = REVENGAnalyzer(binary_path)
         analysis_summary = analyzer.analyze_binary()

@@ -201,7 +201,7 @@ def _fake_corpus_report() -> dict:
 
 
 def test_simple_mcp_analyze_binary_returns_versioned_contract(monkeypatch):
-    import reveng.analyzer as analyzer_module
+    import reveng.analysis.analyzer as analyzer_module
 
     monkeypatch.setattr(analyzer_module, "REVENGAnalyzer", _FakeAnalyzer)
 
@@ -218,7 +218,7 @@ def test_simple_mcp_analyze_binary_returns_versioned_contract(monkeypatch):
 
 
 def test_enterprise_mcp_analyze_binary_wraps_analysis_result(monkeypatch):
-    import reveng.analyzer as analyzer_module
+    import reveng.analysis.analyzer as analyzer_module
 
     monkeypatch.setattr(analyzer_module, "REVENGAnalyzer", _FakeAnalyzer)
     monkeypatch.setattr(reveng_enterprise_server, "GhidraEngine", _FakeGhidraEngine)

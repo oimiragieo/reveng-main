@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from .analyzer import REVENGAnalyzer
+from .analysis.analyzer import REVENGAnalyzer
 from .app_reverse_engineering import AppCorpusEntry, create_default_framework, run_app_corpus_sync
 from .core.exceptions import (
     AnalysisError,

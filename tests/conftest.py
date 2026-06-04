@@ -112,7 +112,7 @@ def mock_python_pyc(temp_dir):
 @pytest.fixture
 def mock_enhanced_features():
     """Mock enhanced analysis features"""
-    from reveng.analyzer import EnhancedAnalysisFeatures
+    from reveng.analysis.analyzer import EnhancedAnalysisFeatures
 
     features = EnhancedAnalysisFeatures()
     features.enable_enhanced_analysis = True

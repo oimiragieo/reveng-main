@@ -248,7 +248,7 @@ class AIEnhancedAnalyzer:
 
         try:
             # Import and run existing REVENG analyzer (updated path)
-            from reveng.analyzer import REVENGAnalyzer
+            from reveng.analysis.analyzer import REVENGAnalyzer
 
             # Create REVENG analyzer instance
             reveng_analyzer = REVENGAnalyzer(self.binary_path, check_ollama=False)

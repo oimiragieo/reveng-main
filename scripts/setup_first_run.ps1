@@ -150,7 +150,7 @@ if (-not $VerifyOnly -and -not $SkipPythonInstall) {
 Write-Step "Validating REVENG package imports"
 Push-Location $RepoRoot
 try {
-    $importCheck = "import sys; from pathlib import Path; sys.path.insert(0, str(Path(r'$RepoRoot\src'))); from reveng.analyzer import REVENGAnalyzer; from reveng.integrations.ghidra.ghidra_engine import GhidraEngine; print('reveng-imports-ok')"
+    $importCheck = "import sys; from pathlib import Path; sys.path.insert(0, str(Path(r'$RepoRoot\src'))); from reveng.analysis.analyzer import REVENGAnalyzer; from reveng.integrations.ghidra.ghidra_engine import GhidraEngine; print('reveng-imports-ok')"
     Invoke-Python -Python $Python -Arguments @("-c", $importCheck)
 } finally {
     Pop-Location

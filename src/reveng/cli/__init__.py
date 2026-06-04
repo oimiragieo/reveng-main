@@ -15,7 +15,7 @@ import json
 import sys
 from pathlib import Path
 
-from ..analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
+from ..analysis.analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
 from ..version import get_version_string
 
 
@@ -1778,7 +1778,7 @@ def handle_generate_exploit_command(args):
         else:
             print("Running vulnerability analysis...")
             # Run analysis first
-            from ..analyzer import REVENGAnalyzer
+            from ..analysis.analyzer import REVENGAnalyzer
 
             analyzer = REVENGAnalyzer()
             analysis = analyzer.analyze(args.binary_path)

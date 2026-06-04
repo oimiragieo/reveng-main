@@ -153,7 +153,7 @@ class REVENGMCPServer(MCPServer):
     async def analyze_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze a binary file"""
         try:
-            from reveng.analyzer import REVENGAnalyzer
+            from reveng.analysis.analyzer import REVENGAnalyzer
 
             path = args["path"]
             quick_mode = args.get("quick_mode", False)

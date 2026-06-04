@@ -1026,7 +1026,7 @@ class REVENGEnterpriseServer(MCPServer):
     async def analyze_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Comprehensive binary analysis"""
         try:
-            from reveng.analyzer import REVENGAnalyzer
+            from reveng.analysis.analyzer import REVENGAnalyzer
 
             path = args["path"]
             # TODO: Pass these parameters to REVENGAnalyzer when supported

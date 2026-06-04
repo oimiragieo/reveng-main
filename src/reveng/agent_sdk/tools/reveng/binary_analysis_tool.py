@@ -57,7 +57,7 @@ The analysis takes 10-60 seconds depending on binary size."""
 
         try:
             # Import REVENG analyzer
-            from reveng.analyzer import REVENGAnalyzer
+            from reveng.analysis.analyzer import REVENGAnalyzer
 
             analyzer = REVENGAnalyzer(binary_path=path)
 

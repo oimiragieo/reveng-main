@@ -255,7 +255,7 @@ asyncio.run(tool.execute({'path': 'test.exe'}))
 ### Integration with REVENG
 
 Tools can access all REVENG features:
-- `reveng.analyzer` - Binary analysis
+- `reveng.analysis.analyzer` - Binary analysis
 - `reveng.javascript` - JS deobfuscation
 - `reveng.ai` - AI/ML features
 - `reveng.exploits` - Exploit generation

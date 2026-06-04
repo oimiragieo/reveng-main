@@ -15,7 +15,7 @@ from unittest.mock import patch
 import psutil
 import pytest
 
-from src.reveng.analyzer import REVENGAnalyzer
+from src.reveng.analysis.analyzer import REVENGAnalyzer
 
 BASE_ANALYSIS_STEPS = [
     "_step1_ai_analysis",

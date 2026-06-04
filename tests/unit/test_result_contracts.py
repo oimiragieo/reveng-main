@@ -282,7 +282,7 @@ def test_ai_api_analysis_result_is_versioned(monkeypatch, tmp_path: Path):
 
     api_instance = ai_api.REVENG_AI_API(use_ollama=False)
 
-    import reveng.analyzer as analyzer_module
+    import reveng.analysis.analyzer as analyzer_module
 
     monkeypatch.setattr(analyzer_module, "REVENGAnalyzer", _FakeREVENGAnalyzer)
 

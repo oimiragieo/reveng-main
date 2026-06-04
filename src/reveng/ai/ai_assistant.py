@@ -21,7 +21,7 @@ from ..agents.ai.ai_enhanced_analyzer import AIEnhancedAnalyzer
 from ..agents.ai.ollama_analyzer import OllamaAnalyzer
 
 # Import REVENG components
-from ..analyzer import REVENGAnalyzer
+from ..analysis.analyzer import REVENGAnalyzer
 from ..ghidra.scripting_engine import GhidraScriptingEngine
 from ..integrations.ghidra.ghidra_mcp_connector import GhidraMCPConnector
 from ..security.threat_intelligence_correlator import ThreatIntelligenceCorrelator

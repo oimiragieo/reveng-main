@@ -39,7 +39,7 @@ __all__ = [
 ]
 
 _LAZY_IMPORTS = {
-    "REVENGAnalyzer": ("reveng.analyzer", "REVENGAnalyzer"),
+    "REVENGAnalyzer": ("reveng.analysis.analyzer", "REVENGAnalyzer"),
     "main": ("reveng.cli", "main"),
     "get_version": ("reveng.version", "get_version"),
     "get_version_info": ("reveng.version", "get_version_info"),
