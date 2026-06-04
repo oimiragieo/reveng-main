@@ -51,6 +51,14 @@ class AnalysisResult:
     reasoning: str
 
 
+@dataclass
+class _OllamaTextResult:
+    """Minimal LLM result exposing ``.content`` for the refiner contract."""
+
+    content: str
+    tokens_used: int = 0
+
+
 class OllamaAnalyzer:
     """Ollama-powered code analysis"""
 
@@ -301,6 +309,16 @@ Respond with ONLY valid JSON, no other text."""
                     time.sleep(1)
 
         raise Exception("Failed to call Ollama after retries")
+
+    def analyze(self, prompt: str) -> "_OllamaTextResult":
+        """Generic prompt -> text completion conforming to the refiner contract.
+
+        The Verified Recompilation Loop's ``IterativeRefiner`` (and other callers)
+        expect ``analyzer.analyze(prompt)`` to return an object exposing a
+        ``.content`` string (mirroring AnthropicAnalyzer / ClaudeCodeCLIAnalyzer).
+        """
+        text = self._call_ollama(prompt)
+        return _OllamaTextResult(content=text)
 
     def _parse_analysis_response(self, response: str) -> AnalysisResult:
         """Parse LLM response into AnalysisResult"""
