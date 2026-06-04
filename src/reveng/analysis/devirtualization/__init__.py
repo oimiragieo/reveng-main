@@ -8,7 +8,7 @@ Based on "The Modern Hacker's Playbook" - Part 3: Deobfuscation
 """
 
 from .devirtualization_engine import DevirtualizationEngine, VMType
-from .llvm_flattening import LLVMFlattener
+from .llvm_flattener import LLVMFlattener
 from .symbolic_devirtualizer import SymbolicDevirtualizer
 from .vm_analyzer import VMAnalyzer
 

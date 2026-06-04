@@ -16,11 +16,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 # Import our reporting engines
-from ..visualization.executive_reporting_engine import (
+from ...reporting.visualization.executive_reporting_engine import (
     ExecutiveReportingEngine,
     ExecutiveSummary,
 )
-from ..visualization.technical_reporting_engine import (
+from ...reporting.visualization.technical_reporting_engine import (
     Dataset,
     Evidence,
     EvidenceType,
