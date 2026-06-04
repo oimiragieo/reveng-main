@@ -314,3 +314,11 @@ external/ghidramcp/
 # Claude Code workflow worktrees + transcripts (scratch)
 .claude/worktrees/
 .claude/thinktank_*.md
+
+# Reconstructed/normalized node artifacts under reports/ (regenerable RE outputs;
+# were triggering Dependabot false positives on recovered third-party deps)
+reports/**/reconstructed_project/
+reports/**/normalized_project/
+reports/**/package.json
+reports/**/package-lock.json
+reports/**/node_modules/
