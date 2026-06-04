@@ -26,6 +26,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+from reveng.ir import REEdge, RENode, REProjectIR
+
 from .deobfuscator import JavaScriptDeobfuscator
 from .detectors import ObfuscationDetector
 
@@ -260,6 +262,7 @@ class BundleReverseEngineeringResult:
     slash_commands: List[str]
     warnings: List[str]
     deep_deobfuscation_output: Optional[Path] = None
+    ir_file: Optional[Path] = None
 
 
 class JavaScriptBundleReverseEngineer:
@@ -412,6 +415,14 @@ class JavaScriptBundleReverseEngineer:
             analysis_payload["deep_deobfuscation_output"] = str(deep_deobfuscation_output)
         analysis_file.write_text(json.dumps(analysis_payload, indent=2), encoding="utf-8")
 
+        ir_file = self._emit_project_ir(
+            bundle_path=bundle_path,
+            root_path=root_path,
+            artifacts_dir=artifacts_dir,
+            code=code,
+            topic_match_counts=topic_match_counts,
+        )
+
         return BundleReverseEngineeringResult(
             input_path=bundle_path,
             input_root=root_path,
@@ -431,7 +442,70 @@ class JavaScriptBundleReverseEngineer:
             slash_commands=slash_commands,
             warnings=warnings,
             deep_deobfuscation_output=deep_deobfuscation_output,
+            ir_file=ir_file,
         )
+
+    # Canonical recovered-domain signals, mapped to stable IR node ids.
+    _IR_DOMAIN_KEYWORDS: Dict[str, Tuple[str, ...]] = {
+        "auth": (r"\bauth\b", r"\blogin\b", r"\boauth\b"),
+        "mcp": (r"\bmcp\b",),
+        "config": (r"\bconfig\b", r"\bsettings\b"),
+        "tools": (r"\btools?\b", r"\bpermission"),
+        "session": (r"\bsession\b",),
+        "prompts": (r"\bprompt",),
+        "telemetry": (r"\btelemetry\b", r"\banalytics\b"),
+    }
+
+    def _emit_project_ir(
+        self,
+        *,
+        bundle_path: Path,
+        root_path: Path,
+        artifacts_dir: Path,
+        code: str,
+        topic_match_counts: Dict[str, int],
+    ) -> Path:
+        """Emit a shared REProjectIR artifact for the recovered bundle.
+
+        The IR always carries a ``cli`` entrypoint node plus one ``domain`` node
+        per canonical recovered domain (auth, mcp, ...) detected in the bundle,
+        each wired to ``cli`` via a ``references`` edge. Serialized to
+        ``artifacts_dir/project.re_project_ir.json``.
+        """
+        nodes = [
+            RENode(
+                node_id="cli",
+                kind="entrypoint",
+                label="CLI entrypoint",
+                attributes={"input": bundle_path.name},
+            )
+        ]
+        edges = []
+        for domain, patterns in self._IR_DOMAIN_KEYWORDS.items():
+            hits = sum(len(re.findall(p, code, re.IGNORECASE)) for p in patterns)
+            if hits:
+                nodes.append(
+                    RENode(
+                        node_id=domain,
+                        kind="domain",
+                        label=domain.replace("_", " ").title(),
+                        attributes={"evidence": hits},
+                    )
+                )
+                edges.append(REEdge(source="cli", target=domain, kind="references"))
+
+        ir = REProjectIR(
+            schema_version="1.0",
+            project_name=root_path.name or bundle_path.stem,
+            input_path=str(bundle_path),
+            language="javascript",
+            nodes=nodes,
+            edges=edges,
+            metadata={"topic_match_counts": dict(topic_match_counts)},
+        )
+        ir_file = artifacts_dir / "project.re_project_ir.json"
+        ir.to_json(ir_file)
+        return ir_file
 
     async def _run_optional_deobfuscator(
         self,
