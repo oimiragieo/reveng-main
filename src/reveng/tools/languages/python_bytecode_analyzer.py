@@ -325,12 +325,19 @@ class PythonDecompiler:
         # Try decompilers in order
         decompilers = []
 
+        # Compare versions numerically (e.g. (3, 10)) so that "3.10" is not
+        # mis-ordered before "3.8" by lexicographic string comparison.
+        try:
+            ver = tuple(int(p) for p in python_version.split(".")[:2])
+        except (ValueError, AttributeError):
+            ver = None
+
         # uncompyle6 for Python <= 3.8
-        if self.uncompyle6_available and python_version <= "3.8":
+        if self.uncompyle6_available and ver is not None and ver <= (3, 8):
             decompilers.append(("uncompyle6", self._run_uncompyle6))
 
         # decompyle3 for Python 3.7-3.9
-        if self.decompyle3_available and "3.7" <= python_version <= "3.9":
+        if self.decompyle3_available and ver is not None and (3, 7) <= ver <= (3, 9):
             decompilers.append(("decompyle3", self._run_decompyle3))
 
         # pycdc as fallback

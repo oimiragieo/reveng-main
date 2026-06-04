@@ -3073,6 +3073,8 @@ class BunExecutableExtractor:
                 "output_tail": "",
                 "error": str(exc),
             }
+        finally:
+            shutil.rmtree(probe_dir, ignore_errors=True)
 
     def _ensure_module_import(self, source_text: str, import_line: str) -> str:
         if import_line in source_text:

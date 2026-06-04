@@ -2331,3 +2331,34 @@ def test_universal_unpacker_extracts_bun_javascript(tmp_path: Path):
     assert any(
         str(output_path.with_name("bundle_bunfs")) in artifact for artifact in result.artifacts
     )
+
+
+def test_probe_standalone_output_cleans_up_temp_dir(tmp_path: Path, monkeypatch):
+    """Regression: _probe_standalone_output must not leak its mkdtemp probe dir."""
+    import tempfile as _tempfile
+
+    from reveng.tools.anti_analysis import bun_extractor as _bun_module
+
+    output_exe = tmp_path / "standalone.exe"
+    output_exe.write_bytes(b"not a real executable")
+
+    created_dirs: list[Path] = []
+    real_mkdtemp = _tempfile.mkdtemp
+
+    def _tracking_mkdtemp(*args, **kwargs):
+        path = real_mkdtemp(*args, **kwargs)
+        if kwargs.get("prefix", "").startswith("reveng_bun_sea_probe_") or (
+            args and str(args[0]).startswith("reveng_bun_sea_probe_")
+        ):
+            created_dirs.append(Path(path))
+        return path
+
+    monkeypatch.setattr(_bun_module.tempfile, "mkdtemp", _tracking_mkdtemp)
+
+    extractor = BunExecutableExtractor()
+    result = extractor._probe_standalone_output(output_exe)
+
+    assert isinstance(result, dict)
+    assert created_dirs, "expected _probe_standalone_output to create a probe temp dir"
+    for probe_dir in created_dirs:
+        assert not probe_dir.exists(), f"probe temp dir leaked: {probe_dir}"

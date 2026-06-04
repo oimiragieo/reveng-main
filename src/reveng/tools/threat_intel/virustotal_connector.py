@@ -334,11 +334,11 @@ class VirusTotalConnector:
         # Lookup on VirusTotal
         vt_intel = self.lookup_hash(sha256)
 
+        # Ensure the threat_intel container exists for both branches below.
+        enriched.setdefault("threat_intel", {})
+
         if vt_intel:
             # Add VT intelligence to results
-            if "threat_intel" not in enriched:
-                enriched["threat_intel"] = {}
-
             enriched["threat_intel"]["virustotal"] = {
                 "detection_score": vt_intel.detection_score,
                 "detections": vt_intel.detections,
