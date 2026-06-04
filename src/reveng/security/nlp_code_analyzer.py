@@ -36,17 +36,9 @@ except ImportError:
     logging.info("NLTK not available - using basic NLP features")
 
 try:
-    from .ai_enhanced_data_models import (
-        CodeSummary,
-        DocumentationSuggestion,
-        EvidenceTracker,
-    )
+    from .ai_enhanced_data_models import CodeSummary, DocumentationSuggestion, EvidenceTracker
 except ImportError:
-    from ..core.ai_models import (
-        CodeSummary,
-        DocumentationSuggestion,
-        EvidenceTracker,
-    )
+    from ..core.ai_models import CodeSummary, DocumentationSuggestion, EvidenceTracker
 
 
 @dataclass
