@@ -517,7 +517,7 @@ class TestGetAnalyzer(unittest.TestCase):
         """Re-import get_analyzer after clearing cached module."""
         if "reveng.agents.ai.ai_analyzer_enhanced" in sys.modules:
             del sys.modules["reveng.agents.ai.ai_analyzer_enhanced"]
-        from reveng.agents.ai.ai_analyzer_enhanced import get_analyzer
+        from reveng.agents.ai.ai_provider_registry import get_analyzer
 
         return get_analyzer
 

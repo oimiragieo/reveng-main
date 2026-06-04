@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ..agents.ai.ai_enhanced_analyzer import AIEnhancedAnalyzer
+from ..agents.ai.ai_enhanced_orchestrator import AIEnhancedAnalyzer
 from ..agents.ai.ollama_analyzer import OllamaAnalyzer
 
 # Import REVENG components

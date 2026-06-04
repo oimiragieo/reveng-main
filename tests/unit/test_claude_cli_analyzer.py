@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from reveng.agents.ai.ai_analyzer_enhanced import get_analyzer
+from reveng.agents.ai.ai_provider_registry import get_analyzer
 from reveng.agents.ai.claude_cli_analyzer import ClaudeCLIResult, ClaudeCodeCLIAnalyzer
 
 # ---------------------------------------------------------------------------
