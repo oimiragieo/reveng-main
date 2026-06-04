@@ -14,7 +14,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import List
 
-from ..ai.ai_enhanced_data_models import EvidenceTracker, MITREMapping
+from ..core.ai_models import EvidenceTracker, MITREMapping
 
 
 @dataclass

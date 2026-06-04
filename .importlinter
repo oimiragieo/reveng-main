@@ -1,9 +1,11 @@
 [importlinter]
 root_package = reveng
 
-[importlinter:contract:no-ai-security-cycle]
-name = ai and security must not form an import cycle
-type = independence
-modules =
-    reveng.ai
+[importlinter:contract:security-must-not-import-ai]
+name = security must not import ai (cycle broken; shared models live in reveng.core)
+type = forbidden
+source_modules =
     reveng.security
+forbidden_modules =
+    reveng.ai
+    reveng.agents.ai

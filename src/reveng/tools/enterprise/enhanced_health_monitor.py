@@ -218,7 +218,7 @@ class EnhancedModulesHealthChecker(HealthChecker):
 
         # Check data models
         try:
-            from ..ai.ai_enhanced_data_models import UniversalAnalysisResult
+            from ...core.ai_models import UniversalAnalysisResult
 
             metrics.append(
                 HealthMetric(

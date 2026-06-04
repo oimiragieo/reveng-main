@@ -42,7 +42,7 @@ try:
         EvidenceTracker,
     )
 except ImportError:
-    from ..ai.ai_enhanced_data_models import (
+    from ..core.ai_models import (
         CodeSummary,
         DocumentationSuggestion,
         EvidenceTracker,

@@ -19,7 +19,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 def test_importlinter_contract_config_exists():
     cfg = _REPO_ROOT / ".importlinter"
     assert cfg.is_file(), ".importlinter contract config must exist for Phase 3 enforcement"
-    assert "no-ai-security-cycle" in cfg.read_text(encoding="utf-8")
+    assert "security-must-not-import-ai" in cfg.read_text(encoding="utf-8")
 
 
 @pytest.mark.skipif(
@@ -31,8 +31,8 @@ def test_import_contracts_evaluated_when_graph_buildable():
     )
     combined = result.stdout + result.stderr
     contract_seen = (
-        "ai and security must not form an import cycle" in combined
-        or "no-ai-security-cycle" in combined
+        "security must not import ai" in combined
+        or "security-must-not-import-ai" in combined
     )
     if not contract_seen:
         # Pre-restructure tree is not yet graph-clean / package not editable-installed.
