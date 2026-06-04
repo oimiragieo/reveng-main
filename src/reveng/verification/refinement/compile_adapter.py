@@ -71,6 +71,12 @@ def make_compile_fn(workspace_dir: Path | str | None = None) -> Callable[[str], 
         # Write source to disk.
         source_path.write_text(c_source, encoding="utf-8")
 
+        # Freshness: remove any stale binary left over from a previous run with
+        # the same content hash.  Otherwise a compiler that silently fails to
+        # emit a fresh artifact could leave us returning an outdated binary.
+        if binary_path.exists():
+            binary_path.unlink()
+
         # Try compilers in fallback order: gcc → clang → cl (MSVC).
         compilers = ["gcc", "clang", "cl"]
         last_error: str = ""
@@ -90,7 +96,15 @@ def make_compile_fn(workspace_dir: Path | str | None = None) -> Callable[[str], 
                     shell=False,
                 )
                 if result.returncode == 0:
-                    return binary_path
+                    # A zero exit code must be backed by a real artifact on
+                    # disk; otherwise treat it as a failure and fall through to
+                    # the next compiler rather than returning a phantom path.
+                    if binary_path.exists():
+                        return binary_path
+                    last_error = (
+                        f"{compiler}: returncode 0 but no binary at {binary_path}"
+                    )
+                    continue
 
                 last_error = result.stderr.decode(errors="replace")
 

@@ -161,7 +161,7 @@ class TestExecutionHarness:
 
         h = ExecutionHarness(binary_path=Path("/nonexistent/binary"), timeout_seconds=1.0)
         with pytest.raises(HarnessError, match="not found"):
-            h.run(b"test input")
+            h.run(input_bytes=b"test input")
 
     def test_timeout_returns_timed_out_result(self):
         """A subprocess.TimeoutExpired should produce timed_out=True, not raise."""
@@ -175,7 +175,7 @@ class TestExecutionHarness:
         exc.stderr = b""
 
         with patch("subprocess.run", side_effect=exc):
-            result = h.run(b"input")
+            result = h.run(input_bytes=b"input")
 
         assert result.timed_out is True
         assert result.exit_code == -1
@@ -187,7 +187,7 @@ class TestExecutionHarness:
         h = ExecutionHarness(binary_path=Path("/root/secret"), timeout_seconds=1.0)
         with patch("subprocess.run", side_effect=PermissionError("denied")):
             with pytest.raises(HarnessError, match="Permission"):
-                h.run(b"input")
+                h.run(input_bytes=b"input")
 
     def test_run_with_sys_executable_construction(self):
         """

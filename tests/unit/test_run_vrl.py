@@ -74,6 +74,10 @@ def _make_mock_result(status_value: str = "budget_exhausted", iterations: int = 
     result.total_elapsed_seconds = 4.2
     result.total_tokens = 1024
     result.notes = f"Ran {iterations} iterations."
+    # No verified divergence report by default → grade resolver uses the
+    # status-based fallback (a real ValidationGrade ladder value, never the
+    # RefinementStatus string).
+    result.final_divergence = None
     return result
 
 
@@ -265,7 +269,9 @@ def test_result_grade_recorded_in_corpus_update(tmp_path: Path) -> None:
     assert rc == 0
     mock_update.assert_called_once()
     _path, _name, grade = mock_update.call_args[0]
-    assert grade == "converged", f"Expected grade='converged', got {grade!r}"
+    # Grade is a ValidationGrade ladder value, NOT the RefinementStatus string.
+    # CONVERGED (with no divergence report) maps to behavior_matched.
+    assert grade == "behavior_matched", f"Expected grade='behavior_matched', got {grade!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -324,7 +330,9 @@ def test_json_log_fields_are_correct(tmp_path: Path) -> None:
     assert log_data["binary_name"] == "hexyl"
     assert log_data["iterations"] == 3
     assert log_data["status"] == "no_progress"
-    assert log_data["final_grade"] == "no_progress"
+    # final_grade is now a ValidationGrade ladder value (not the status string).
+    # NO_PROGRESS with no divergence report falls back to analysis_only.
+    assert log_data["final_grade"] == "analysis_only"
     # Date must be a valid ISO date string
     from datetime import date
 

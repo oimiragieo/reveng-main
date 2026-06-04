@@ -36,6 +36,30 @@ def _successful_run() -> MagicMock:
     return result
 
 
+def _output_path_from_cmd(cmd) -> Path:
+    """Extract the compiler's intended output binary path from *cmd*."""
+    if "-o" in cmd:
+        return Path(cmd[cmd.index("-o") + 1])
+    for token in cmd:
+        if token.startswith("/Fe"):  # MSVC
+            return Path(token[len("/Fe") :])
+    raise AssertionError(f"No output path found in compiler cmd: {cmd}")
+
+
+def _compile_ok(cmd, **kwargs) -> MagicMock:
+    """
+    side_effect mimicking a real successful compiler invocation.
+
+    A real compiler writes the output binary to disk; the compile_adapter now
+    asserts that the artifact exists after returncode==0 (freshness guard), so
+    the mock must create the file to faithfully emulate success.
+    """
+    out = _output_path_from_cmd(cmd)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(b"\x7fELF-mock-binary")
+    return _successful_run()
+
+
 def _failed_run(stderr: bytes = b"compilation failed") -> MagicMock:
     result = MagicMock(spec=subprocess.CompletedProcess)
     result.returncode = 1
@@ -59,7 +83,7 @@ def test_make_compile_fn_returns_callable():
 
 
 def test_compile_fn_writes_source_file_and_calls_compiler(tmp_path):
-    with patch("subprocess.run", return_value=_successful_run()) as mock_run:
+    with patch("subprocess.run", side_effect=_compile_ok) as mock_run:
         fn = make_compile_fn(workspace_dir=tmp_path)
         binary = fn(_SIMPLE_SOURCE)
 
@@ -83,7 +107,7 @@ def test_compile_fn_writes_source_file_and_calls_compiler(tmp_path):
 
 
 def test_compile_fn_returns_path_object(tmp_path):
-    with patch("subprocess.run", return_value=_successful_run()):
+    with patch("subprocess.run", side_effect=_compile_ok):
         fn = make_compile_fn(workspace_dir=tmp_path)
         result = fn(_SIMPLE_SOURCE)
         assert isinstance(result, Path), f"Expected Path, got {type(result)}"
@@ -95,7 +119,7 @@ def test_compile_fn_returns_path_object(tmp_path):
 
 
 def test_compile_fn_same_source_same_filename(tmp_path):
-    with patch("subprocess.run", return_value=_successful_run()):
+    with patch("subprocess.run", side_effect=_compile_ok):
         fn = make_compile_fn(workspace_dir=tmp_path)
         path_a = fn(_SIMPLE_SOURCE)
         path_b = fn(_SIMPLE_SOURCE)
@@ -109,7 +133,7 @@ def test_compile_fn_same_source_same_filename(tmp_path):
 
 def test_compile_fn_different_source_different_filename(tmp_path):
     other_source = "#include <stdlib.h>\nint main(void) { return 1; }\n"
-    with patch("subprocess.run", return_value=_successful_run()):
+    with patch("subprocess.run", side_effect=_compile_ok):
         fn = make_compile_fn(workspace_dir=tmp_path)
         path_a = fn(_SIMPLE_SOURCE)
         path_b = fn(other_source)
@@ -124,7 +148,7 @@ def test_compile_fn_different_source_different_filename(tmp_path):
 def test_compile_fn_uses_system_temp_when_workspace_dir_is_none():
     import tempfile
 
-    with patch("subprocess.run", return_value=_successful_run()):
+    with patch("subprocess.run", side_effect=_compile_ok):
         fn = make_compile_fn(workspace_dir=None)
         result = fn(_SIMPLE_SOURCE)
 
@@ -141,7 +165,7 @@ def test_compile_fn_uses_system_temp_when_workspace_dir_is_none():
 
 def test_compile_fn_uses_given_workspace_dir(tmp_path):
     custom_dir = tmp_path / "my_workspace"
-    with patch("subprocess.run", return_value=_successful_run()):
+    with patch("subprocess.run", side_effect=_compile_ok):
         fn = make_compile_fn(workspace_dir=custom_dir)
         result = fn(_SIMPLE_SOURCE)
         assert result.parent == custom_dir, f"Expected parent {custom_dir}, got {result.parent}"
@@ -166,7 +190,7 @@ def test_compile_fn_propagates_runtime_error_when_all_compilers_fail(tmp_path):
 
 
 def test_compile_fn_binary_has_exe_suffix_on_windows(tmp_path):
-    with patch("subprocess.run", return_value=_successful_run()):
+    with patch("subprocess.run", side_effect=_compile_ok):
         with patch("reveng.verification.refinement.compile_adapter.sys") as mock_sys:
             mock_sys.platform = "win32"
             fn = make_compile_fn(workspace_dir=tmp_path)
@@ -180,7 +204,7 @@ def test_compile_fn_binary_has_exe_suffix_on_windows(tmp_path):
 
 
 def test_compile_fn_source_file_content_matches_input(tmp_path):
-    with patch("subprocess.run", return_value=_successful_run()):
+    with patch("subprocess.run", side_effect=_compile_ok):
         fn = make_compile_fn(workspace_dir=tmp_path)
         fn(_SIMPLE_SOURCE)
 
@@ -200,8 +224,8 @@ def test_compile_fn_falls_back_to_clang_when_gcc_not_found(tmp_path):
         compiler = cmd[0]
         if compiler == "gcc":
             raise FileNotFoundError("gcc not found")
-        # clang succeeds
-        return _successful_run()
+        # clang succeeds — emulate a real compiler by writing the artifact.
+        return _compile_ok(cmd, **kwargs)
 
     with patch("subprocess.run", side_effect=side_effect) as mock_run:
         fn = make_compile_fn(workspace_dir=tmp_path)
@@ -222,7 +246,7 @@ def test_compile_fn_falls_back_to_clang_when_gcc_not_found(tmp_path):
 def test_compile_fn_creates_workspace_dir_if_missing(tmp_path):
     new_dir = tmp_path / "does" / "not" / "exist"
     assert not new_dir.exists(), "Precondition: directory must not exist yet"
-    with patch("subprocess.run", return_value=_successful_run()):
+    with patch("subprocess.run", side_effect=_compile_ok):
         fn = make_compile_fn(workspace_dir=new_dir)
         fn(_SIMPLE_SOURCE)
     assert new_dir.exists(), "make_compile_fn must create workspace_dir if missing"

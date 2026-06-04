@@ -67,12 +67,26 @@ class DifferentialOracle:
     # Public API
     # ------------------------------------------------------------------
 
-    def verify(self, inputs: Iterable[bytes]) -> DivergenceReport:
+    def verify(
+        self,
+        inputs: Iterable[bytes],
+        argv: Optional[List[str]] = None,
+    ) -> DivergenceReport:
         """
         Run both binaries on each input in *inputs* and return a report.
 
         Comparison criteria: stdout bytes and exit code must match.
         Stderr divergence is noted but does not count as a failure.
+
+        Parameters
+        ----------
+        inputs:
+            Iterable of byte strings written to each binary's stdin.
+        argv:
+            Optional command-line arguments applied to *every* invocation of
+            both binaries.  When ``None`` the binaries run with no extra args.
+            This keeps argv (flags) distinct from stdin payloads so CLI tools
+            that read their arguments from argv behave correctly.
 
         The verdict is:
         * ``EQUIVALENT``  — no divergences found on any input.
@@ -99,8 +113,8 @@ class DifferentialOracle:
             iteration += 1
 
             try:
-                r_orig = harness_orig.run(inp)
-                r_reco = harness_reco.run(inp)
+                r_orig = harness_orig.run(argv=argv, input_bytes=inp)
+                r_reco = harness_reco.run(argv=argv, input_bytes=inp)
             except HarnessError as exc:
                 elapsed = time.monotonic() - t_start
                 logger.error("Harness error on iteration %d: %s", iteration, exc)
@@ -110,6 +124,7 @@ class DifferentialOracle:
                     diverging_outputs=diverging_outputs,
                     iterations=iteration,
                     elapsed_seconds=elapsed,
+                    grade="analysis_only",
                     notes=str(exc),
                 )
 

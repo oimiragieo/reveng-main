@@ -152,6 +152,55 @@ def _get_seed_inputs(entry: Dict[str, Any]) -> List[bytes]:
     return seeds
 
 
+def _classify_seeds(entry: Dict[str, Any]) -> "tuple[List[str], List[bytes]]":
+    """
+    Split a corpus entry's seeds into ARGV tokens and STDIN payloads.
+
+    Seed contract
+    -------------
+    * Each string item under ``seed_inputs`` / ``test_inputs`` is treated as a
+      command-line seed: it is ``shlex.split`` so multi-token strings (e.g.
+      ``"--color always sample.bin"``) expand to multiple argv tokens.
+    * A token is recognised as ARGV when it either starts with ``-`` (a flag)
+      or resolves to an existing file on disk (relative to the repo root).  In
+      practice every token in a ``seed_inputs`` string is argv — CLI tools take
+      flags and file operands from argv, not stdin.
+    * Explicit STDIN payloads are provided separately under a ``stdin_inputs``
+      key (list of strings/bytes).  These are NEVER appended to argv.
+
+    Returns
+    -------
+    (argv, stdin_inputs)
+        ``argv`` is the flat list of argv tokens applied to every invocation.
+        ``stdin_inputs`` is the list of stdin byte payloads (at least ``[b""]``
+        so the oracle always runs the binary once).
+    """
+    import shlex
+
+    raw: Optional[List[Any]] = entry.get("seed_inputs") or entry.get("test_inputs") or []
+    argv: List[str] = []
+    for item in raw:
+        text = item.decode("utf-8", "replace") if isinstance(item, bytes) else str(item)
+        for token in shlex.split(text):
+            if token.startswith("-") or (_REPO_ROOT / token).exists() or Path(token).exists():
+                argv.append(token)
+            else:
+                # Non-flag, non-file token: still an argv operand for a CLI tool.
+                argv.append(token)
+
+    stdin_raw: List[Any] = entry.get("stdin_inputs") or []
+    stdin_inputs: List[bytes] = []
+    for item in stdin_raw:
+        if isinstance(item, bytes):
+            stdin_inputs.append(item)
+        else:
+            stdin_inputs.append(str(item).encode("utf-8"))
+    if not stdin_inputs:
+        stdin_inputs = [b""]
+
+    return argv, stdin_inputs
+
+
 def _resolve_binary_path(entry: Dict[str, Any]) -> Path:
     """
     Resolve a filesystem path for the original binary referenced by *entry*.
@@ -192,6 +241,48 @@ def _resolve_binary_path(entry: Dict[str, Any]) -> Path:
     )
 
 
+def _grade_for_result(result: Any) -> str:
+    """
+    Resolve a ValidationGrade ladder value for a RefinementResult.
+
+    The corpus ``current_grade`` field expects a ValidationGrade (e.g.
+    ``behavior_matched``), NOT a RefinementStatus (e.g. ``llm_error``).  The
+    grade is read from ``result.final_divergence.grade`` when available.
+
+    ``result.final_divergence`` may be ``None`` on LLM_ERROR / TIMEOUT / ERROR
+    (the loop bailed before any successful verification).  In that case we fall
+    back to a low but valid ladder value:
+
+      * a status that never launched the binary  -> ``unknown``
+      * a status that may have analysed but not verified -> ``analysis_only``
+
+    This function never returns ``None`` and never raises ``AttributeError``.
+    """
+    divergence = getattr(result, "final_divergence", None)
+    if divergence is not None:
+        grade = getattr(divergence, "grade", None)
+        if grade:
+            return str(grade)
+
+    # No usable divergence report — derive a safe fallback from the status.
+    status = getattr(result, "status", None)
+    status_value = getattr(status, "value", status)
+
+    # CONVERGED implies the oracle reported EQUIVALENT even if the report
+    # object is missing — map it to the matched-behaviour ladder rung.
+    if status_value == "converged":
+        return "behavior_matched"
+
+    # Statuses where the binary was launched/compiled but never verified
+    # equivalent.
+    _ANALYSIS_ONLY = {"budget_exhausted", "no_progress", "timeout", "error"}
+    if status_value in _ANALYSIS_ONLY:
+        return "analysis_only"
+
+    # LLM_ERROR / ABORTED / anything unexpected: we have essentially nothing.
+    return "unknown"
+
+
 def _update_corpus_grade(
     corpus_path: Path,
     binary_name: str,
@@ -209,12 +300,11 @@ def _update_corpus_grade(
 
     for line in lines:
         stripped = line.lstrip()
-        # Detect start of the matching binary entry.
-        if stripped.startswith("- name:") and binary_name in line:
-            inside_entry = True
-        elif stripped.startswith("- name:") and inside_entry:
-            # We've moved to the next entry.
-            inside_entry = False
+        # Detect start of the matching binary entry (EXACT name compare, not a
+        # substring — otherwise 'hex' would wrongly match 'hexyl').
+        if stripped.startswith("- name:"):
+            entry_name = stripped[len("- name:") :].strip().strip("\"'")
+            inside_entry = entry_name == binary_name
 
         if inside_entry and "current_grade:" in line and not wrote_grade:
             indent = len(line) - len(line.lstrip())
@@ -346,19 +436,25 @@ def main(argv: Optional[List[str]] = None) -> int:  # noqa: C901  (complexity is
     # ------------------------------------------------------------------
     # 7. Get seed inputs
     # ------------------------------------------------------------------
-    seed_inputs = _get_seed_inputs(entry)
-    logger.info("Seed inputs: %d item(s)", len(seed_inputs))
+    seed_argv, stdin_inputs = _classify_seeds(entry)
+    logger.info(
+        "Seed contract: %d argv token(s), %d stdin payload(s)",
+        len(seed_argv),
+        len(stdin_inputs),
+    )
 
     # ------------------------------------------------------------------
     # 8. Run refinement loop
     # ------------------------------------------------------------------
     logger.info("Starting refinement loop (max_iterations=%d)…", args.max_iterations)
-    result = refiner.refine(initial_source, seed_inputs)
+    result = refiner.refine(initial_source, stdin_inputs, argv=seed_argv)
 
     # ------------------------------------------------------------------
     # 9. Record results
     # ------------------------------------------------------------------
-    final_grade = result.status.value  # e.g. "converged", "budget_exhausted"
+    # The corpus current_grade expects a ValidationGrade ladder value, NOT a
+    # RefinementStatus.  Resolve it (guarded against final_divergence is None).
+    final_grade = _grade_for_result(result)
 
     # 9a. Update corpus.yaml
     _update_corpus_grade(_CORPUS_YAML, args.binary, final_grade)
@@ -378,7 +474,7 @@ def main(argv: Optional[List[str]] = None) -> int:  # noqa: C901  (complexity is
         "notes": result.notes,
         "workspace": str(workspace_dir),
         "original_binary": str(original_binary),
-        "seed_inputs_count": len(seed_inputs),
+        "seed_inputs_count": len(seed_argv) + len(stdin_inputs),
     }
     log_path.write_text(json.dumps(log_data, indent=2), encoding="utf-8")
     logger.info("Run log written to %s", log_path)

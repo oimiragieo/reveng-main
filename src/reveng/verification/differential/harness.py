@@ -11,7 +11,7 @@ import subprocess
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -78,9 +78,14 @@ class ExecutionHarness:
     def timeout_seconds(self) -> float:
         return self._timeout
 
-    def run(self, input_bytes: bytes) -> ExecutionResult:
+    def run(
+        self,
+        argv: Optional[List[str]] = None,
+        input_bytes: bytes = b"",
+    ) -> ExecutionResult:
         """
-        Execute the binary with *input_bytes* on stdin.
+        Execute the binary with *argv* command-line arguments and *input_bytes*
+        on stdin.
 
         Returns an :class:`ExecutionResult`.  Never raises on normal
         execution failures (non-zero exit, timeout) — those are encoded in
@@ -89,14 +94,20 @@ class ExecutionHarness:
 
         Parameters
         ----------
+        argv:
+            Command-line arguments appended after the binary path.  ``None``
+            (the default) runs the binary with no extra arguments.  These reach
+            the child process via ``sys.argv`` — they are NOT piped to stdin.
         input_bytes:
-            Raw bytes written to the child process stdin.
+            Raw bytes written to the child process stdin.  Kept distinct from
+            *argv* so CLI tools that read from argv still receive their flags.
         """
         t0 = time.monotonic()
+        cmd = [str(self._binary_path), *(argv or [])]
 
         try:
             proc = subprocess.run(
-                [str(self._binary_path)],
+                cmd,
                 input=input_bytes,
                 capture_output=True,
                 timeout=self._timeout,

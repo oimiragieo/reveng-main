@@ -79,6 +79,7 @@ class IterativeRefiner:
         self,
         initial_source: str,
         seed_inputs: Iterable[bytes],
+        argv: Optional[list] = None,
     ) -> RefinementResult:
         """
         Run the iterative refinement loop.
@@ -87,14 +88,20 @@ class IterativeRefiner:
             initial_source:
                 Decompiled C source to start from.
             seed_inputs:
-                Iterable of byte strings used as test inputs by the oracle.
-                Will be fully materialised once at the start of the loop.
+                Iterable of byte strings used as stdin test inputs by the
+                oracle.  Will be fully materialised once at the start of the
+                loop.
+            argv:
+                Optional command-line arguments applied to every oracle
+                invocation (flags / file operands).  Kept distinct from
+                ``seed_inputs`` (stdin) so CLI tools receive their arguments.
 
         Returns:
             A ``RefinementResult`` describing the terminal state.
         """
         wall_start = time.monotonic()
         seed_list = list(seed_inputs)
+        argv_list = list(argv) if argv else None
         rounds: list = []
         source = initial_source
 
@@ -112,7 +119,7 @@ class IterativeRefiner:
 
         initial_oracle = self.oracle_factory(initial_binary)
         try:
-            initial_divergence = initial_oracle.verify(seed_list)
+            initial_divergence = initial_oracle.verify(seed_list, argv=argv_list)
         except TimeoutError as exc:
             self.logger.error("Initial oracle.verify() timed out: %s", exc)
             return RefinementResult(
@@ -154,6 +161,11 @@ class IterativeRefiner:
             )
 
             # --- call LLM ---
+            # Bind telemetry holders OUTSIDE the try so any partial result
+            # computed before the failure is preserved on the LLM_ERROR round
+            # (freshness: do not discard response_text / tokens on error).
+            llm_result = None
+            response_text = ""
             try:
                 llm_result = self.analyzer.analyze(prompt)
                 response_text = llm_result.content
@@ -164,12 +176,12 @@ class IterativeRefiner:
                     RefinementRound(
                         index=iteration,
                         prompt=prompt,
-                        response="",
+                        response=response_text,
                         source_before=source,
                         source_after=source,
                         divergence=divergence,
                         elapsed_seconds=elapsed,
-                        tokens_used=0,
+                        tokens_used=_count_tokens(llm_result) if llm_result is not None else 0,
                     )
                 )
                 total_elapsed = time.monotonic() - wall_start
@@ -250,7 +262,7 @@ class IterativeRefiner:
             # --- verify ---
             oracle = self.oracle_factory(new_binary)
             try:
-                new_divergence = oracle.verify(seed_list)
+                new_divergence = oracle.verify(seed_list, argv=argv_list)
             except TimeoutError as exc:
                 self.logger.warning("oracle.verify() timed out on round %d: %s", iteration, exc)
                 elapsed = time.monotonic() - round_start

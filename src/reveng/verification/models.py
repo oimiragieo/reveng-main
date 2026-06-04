@@ -14,6 +14,39 @@ from typing import Any, List, Optional, Tuple
 
 logger_name = __name__
 
+#: Ordered ValidationGrade ladder (ascending priority).
+#:
+#: This is the canonical vocabulary recorded in
+#: ``.reveng/benchmarks/corpus.yaml`` (see the file header comment).  Each
+#: value's rank is its index in this tuple; lower ranks are weaker results.
+VALIDATION_GRADE_LADDER: Tuple[str, ...] = (
+    "unknown",  # -1: no information
+    "analysis_only",  # 0: static analysis only, never executed
+    "compile_only",  # 1: source compiles, behaviour unverified
+    "structural_candidate",  # 2: plausible structure, not launched
+    "launches_but_divergent",  # 3: runs but output diverges
+    "partial_equivalence",  # 4: some inputs match
+    "behavior_matched",  # 5: all sampled inputs match
+    "source_reconstruction_match",  # 6: source-level match
+    "evidence_backed",  # 7: match with corroborating evidence
+)
+
+
+def grade_rank(grade: Optional[str]) -> int:
+    """
+    Return the ladder rank of *grade*.
+
+    ``unknown`` and any unrecognised / ``None`` value map to rank ``-1`` so the
+    ladder is totally ordered and a missing grade always sorts lowest.
+    """
+    if grade is None:
+        return -1
+    try:
+        return VALIDATION_GRADE_LADDER.index(grade) - 1
+    except ValueError:
+        return -1
+
+
 try:
     from reveng.validation.differential_fuzzer import (  # noqa: F401
         ValidationResult as _ValidationResult,
@@ -23,9 +56,10 @@ try:
     # package (as of Phase 1 reconnaissance). Declare stubs below.
     raise ImportError("ValidationGrade not present in validation package")
 except ImportError:
-    # Stub: ValidationGrade used only for typing grade fields; consumers
-    # should treat this as an opaque string when the real enum is absent.
-    ValidationGrade = Any  # type: ignore[assignment, misc]
+    # ValidationGrade is an ordered string vocabulary (the ladder above).
+    # We type it as ``str`` so consumers can compare against ladder members
+    # while still treating values as plain strings on disk / in YAML.
+    ValidationGrade = str  # type: ignore[assignment, misc]
 
     @dataclass
     class EvidenceItem:  # type: ignore[no-redef]
