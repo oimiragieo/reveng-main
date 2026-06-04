@@ -7,8 +7,12 @@ import sys
 from pathlib import Path
 
 SRC_ROOT = Path(__file__).resolve().parents[2]
-if str(SRC_ROOT) not in sys.path:
-    sys.path.insert(0, str(SRC_ROOT))
+_SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path[:] = [p for p in sys.path if p and Path(p).resolve() != _SCRIPT_DIR]
+_src = str(SRC_ROOT)
+if _src in sys.path:
+    sys.path.remove(_src)
+sys.path.insert(0, _src)
 
 from reveng.cli import main  # noqa: E402
 
