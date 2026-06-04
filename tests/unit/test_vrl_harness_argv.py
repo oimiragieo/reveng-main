@@ -21,15 +21,13 @@ import pytest
 from reveng.verification.differential.harness import ExecutionHarness
 
 # A tiny "binary": echoes argv on stdout, echoes stdin length on stderr.
-_ECHO_SCRIPT = textwrap.dedent(
-    """\
+_ECHO_SCRIPT = textwrap.dedent("""\
     import sys
     argv = sys.argv[1:]
     sys.stdout.write("ARGV:" + "|".join(argv))
     data = sys.stdin.buffer.read()
     sys.stderr.write("STDIN:" + str(len(data)))
-    """
-)
+    """)
 
 
 @pytest.fixture()

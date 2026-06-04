@@ -29,14 +29,8 @@ _spec = importlib.util.spec_from_file_location("run_vrl_under_test", _RUN_VRL_PA
 run_vrl = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(run_vrl)
 
-from reveng.verification.models import (  # noqa: E402
-    DivergenceReport,
-    VerificationVerdict,
-)
-from reveng.verification.refinement.models import (  # noqa: E402
-    RefinementResult,
-    RefinementStatus,
-)
+from reveng.verification.models import DivergenceReport, VerificationVerdict  # noqa: E402
+from reveng.verification.refinement.models import RefinementResult, RefinementStatus  # noqa: E402
 
 # Valid ladder values (ascending) from .reveng/benchmarks/corpus.yaml.
 _VALID_GRADES = {

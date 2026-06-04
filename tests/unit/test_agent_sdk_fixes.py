@@ -117,9 +117,7 @@ def test_binary_analysis_tool_calls_analyze_binary(monkeypatch):
 
     fake_module = types.ModuleType("reveng.analyzer")
     fake_module.REVENGAnalyzer = FakeAnalyzer
-    monkeypatch.setitem(
-        __import__("sys").modules, "reveng.analyzer", fake_module
-    )
+    monkeypatch.setitem(__import__("sys").modules, "reveng.analyzer", fake_module)
 
     tool = bat.BinaryAnalysisTool()
     result = asyncio.run(tool.execute({"path": "/tmp/sample.bin"}))

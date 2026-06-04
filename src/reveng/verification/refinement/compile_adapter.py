@@ -101,9 +101,7 @@ def make_compile_fn(workspace_dir: Path | str | None = None) -> Callable[[str], 
                     # the next compiler rather than returning a phantom path.
                     if binary_path.exists():
                         return binary_path
-                    last_error = (
-                        f"{compiler}: returncode 0 but no binary at {binary_path}"
-                    )
+                    last_error = f"{compiler}: returncode 0 but no binary at {binary_path}"
                     continue
 
                 last_error = result.stderr.decode(errors="replace")

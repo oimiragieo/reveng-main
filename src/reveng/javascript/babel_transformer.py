@@ -367,7 +367,6 @@ class StringArrayDeobfuscator:
 
         # Find accessor function
         # _0x5678(index) → string_array[index]
-
         # Simple replacement for demo
         # Would need proper AST traversal in production
 

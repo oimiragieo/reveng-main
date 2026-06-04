@@ -36,9 +36,7 @@ _PASSING_AGAINST_MINIMAL_FALLBACK = {
 }
 
 
-_RENDERER_XFAIL = pytest.mark.xfail(
-    reason=_RENDERER_NOT_IMPLEMENTED_REASON, strict=False
-)
+_RENDERER_XFAIL = pytest.mark.xfail(reason=_RENDERER_NOT_IMPLEMENTED_REASON, strict=False)
 
 
 def _apply_renderer_xfail(namespace):
@@ -134,7 +132,12 @@ def test_to_ghidra_format_prioritizes_direct_call_targets_from_entry_point():
         imports=[],
         disassembly={
             ".text": [
-                {"address": "0x401000", "mnemonic": "call", "op_str": "0x401050", "bytes": "e84b000000"},
+                {
+                    "address": "0x401000",
+                    "mnemonic": "call",
+                    "op_str": "0x401050",
+                    "bytes": "e84b000000",
+                },
                 {"address": "0x401005", "mnemonic": "ret", "op_str": "", "bytes": "c3"},
                 {"address": "0x401050", "mnemonic": "push", "op_str": "rbp", "bytes": "55"},
                 {"address": "0x401051", "mnemonic": "ret", "op_str": "", "bytes": "c3"},
@@ -264,7 +267,12 @@ def test_render_pseudocode_function_preserves_windows_x64_register_args_for_impo
             {"address": "0x401000", "mnemonic": "mov", "op_str": "rcx, rdi", "bytes": "4889f9"},
             {"address": "0x401003", "mnemonic": "mov", "op_str": "rdx, rbx", "bytes": "4889da"},
             {"address": "0x401006", "mnemonic": "mov", "op_str": "r8d, eax", "bytes": "4189c0"},
-            {"address": "0x401009", "mnemonic": "lea", "op_str": "r9, [rbp + 0x1fb4]", "bytes": "4c8d8db41f0000"},
+            {
+                "address": "0x401009",
+                "mnemonic": "lea",
+                "op_str": "r9, [rbp + 0x1fb4]",
+                "bytes": "4c8d8db41f0000",
+            },
             {
                 "address": "0x401010",
                 "mnemonic": "mov",
@@ -284,7 +292,10 @@ def test_render_pseudocode_function_preserves_windows_x64_register_args_for_impo
     assert "reveng_reg_rdx = reveng_reg_rbx; /* 0x401003: mov rdx, rbx */" in rendered
     assert "reveng_reg_r8 = reveng_reg_rax; /* 0x401006: mov r8d, eax */" in rendered
     assert "static uint8_t reveng_frame_p0x1fb4[4096] = {0};" in rendered
-    assert "reveng_reg_r9 = ((uint64_t)(uintptr_t)reveng_frame_p0x1fb4); /* 0x401009: lea r9, [rbp + 0x1fb4] */" in rendered
+    assert (
+        "reveng_reg_r9 = ((uint64_t)(uintptr_t)reveng_frame_p0x1fb4); /* 0x401009: lea r9, [rbp + 0x1fb4] */"
+        in rendered
+    )
     assert (
         "imp_WriteConsoleW(reveng_reg_rcx, reveng_reg_rdx, reveng_reg_r8, "
         "reveng_reg_r9, "
@@ -315,8 +326,7 @@ def test_render_pseudocode_function_emits_local_cmp_jump_labels_and_gotos():
 
     assert "/* 0x401005: cmp eax, 4 */" in rendered
     assert (
-        "if ((reveng_reg_rax) >= (4ULL)) goto label_0x401010; "
-        "/* 0x401008: jae 0x401010 */"
+        "if ((reveng_reg_rax) >= (4ULL)) goto label_0x401010; " "/* 0x401008: jae 0x401010 */"
     ) in rendered
     assert "label_0x401010: ;" in rendered
     assert "reveng_reg_rcx = 2ULL; /* 0x401010: mov ecx, 2 */" in rendered
@@ -359,8 +369,18 @@ def test_render_pseudocode_function_emits_setcc_assignments_from_cmp_state():
         "sub_0x401000",
         "0x401000",
         [
-            {"address": "0x401000", "mnemonic": "mov", "op_str": "ecx, 0x312", "bytes": "b912030000"},
-            {"address": "0x401005", "mnemonic": "cmp", "op_str": "ecx, 0x312", "bytes": "81f912030000"},
+            {
+                "address": "0x401000",
+                "mnemonic": "mov",
+                "op_str": "ecx, 0x312",
+                "bytes": "b912030000",
+            },
+            {
+                "address": "0x401005",
+                "mnemonic": "cmp",
+                "op_str": "ecx, 0x312",
+                "bytes": "81f912030000",
+            },
             {"address": "0x40100b", "mnemonic": "setae", "op_str": "r8b", "bytes": "410f93c0"},
             {"address": "0x40100f", "mnemonic": "ret", "op_str": "", "bytes": "c3"},
         ],
@@ -425,10 +445,7 @@ def test_render_pseudocode_function_materializes_rbp_relative_local_buffers():
         "reveng_reg_rbx = ((uint64_t)(uintptr_t)reveng_frame_m0x4c); "
         "/* 0x40100a: lea rbx, [rbp - 0x4c] */"
     ) in rendered
-    assert (
-        "reveng_reg_rdx = reveng_reg_rbx; "
-        "/* 0x40100e: mov rdx, rbx */"
-    ) in rendered
+    assert ("reveng_reg_rdx = reveng_reg_rbx; " "/* 0x40100e: mov rdx, rbx */") in rendered
 
 
 def test_render_pseudocode_function_materializes_indexed_frame_pointers_for_lea():
@@ -438,7 +455,12 @@ def test_render_pseudocode_function_materializes_indexed_frame_pointers_for_lea(
         "sub_0x401000",
         "0x401000",
         [
-            {"address": "0x401000", "mnemonic": "lea", "op_str": "rdx, [r15*2 - 0x4c]", "bytes": "498d54"}  # bytes unused for this pattern
+            {
+                "address": "0x401000",
+                "mnemonic": "lea",
+                "op_str": "rdx, [r15*2 - 0x4c]",
+                "bytes": "498d54",
+            }  # bytes unused for this pattern
         ],
         [],
         {},
@@ -498,9 +520,24 @@ def test_render_pseudocode_function_materializes_register_relative_reads_and_sto
         "0x401000",
         [
             {"address": "0x401000", "mnemonic": "mov", "op_str": "rdx, rbx", "bytes": "4889da"},
-            {"address": "0x401003", "mnemonic": "movzx", "op_str": "ecx, word ptr [rbx]", "bytes": "0fb70b"},
-            {"address": "0x401006", "mnemonic": "mov", "op_str": "byte ptr [rdx + rax], cl", "bytes": "88040a"},
-            {"address": "0x401009", "mnemonic": "cmp", "op_str": "byte ptr [r8 + rsi], 0xbf", "bytes": "41803c3000"},
+            {
+                "address": "0x401003",
+                "mnemonic": "movzx",
+                "op_str": "ecx, word ptr [rbx]",
+                "bytes": "0fb70b",
+            },
+            {
+                "address": "0x401006",
+                "mnemonic": "mov",
+                "op_str": "byte ptr [rdx + rax], cl",
+                "bytes": "88040a",
+            },
+            {
+                "address": "0x401009",
+                "mnemonic": "cmp",
+                "op_str": "byte ptr [r8 + rsi], 0xbf",
+                "bytes": "41803c3000",
+            },
         ],
         [],
         {},
@@ -526,8 +563,18 @@ def test_render_pseudocode_function_materializes_register_relative_lea():
         "sub_0x401000",
         "0x401000",
         [
-            {"address": "0x401000", "mnemonic": "lea", "op_str": "rdx, [r15 + r14]", "bytes": "4b8d1437"},
-            {"address": "0x401004", "mnemonic": "lea", "op_str": "rcx, [r8 + rsi - 1]", "bytes": "498d4c30ff"},
+            {
+                "address": "0x401000",
+                "mnemonic": "lea",
+                "op_str": "rdx, [r15 + r14]",
+                "bytes": "4b8d1437",
+            },
+            {
+                "address": "0x401004",
+                "mnemonic": "lea",
+                "op_str": "rcx, [r8 + rsi - 1]",
+                "bytes": "498d4c30ff",
+            },
         ],
         [],
         {},
@@ -552,7 +599,12 @@ def test_render_pseudocode_function_materializes_scaled_register_relative_lea():
         "sub_0x401000",
         "0x401000",
         [
-            {"address": "0x401000", "mnemonic": "lea", "op_str": "r8, [r8*2 + 1]", "bytes": "4f8d0440"},
+            {
+                "address": "0x401000",
+                "mnemonic": "lea",
+                "op_str": "r8, [r8*2 + 1]",
+                "bytes": "4f8d0440",
+            },
         ],
         [],
         {},
@@ -597,7 +649,12 @@ def test_render_pseudocode_function_does_not_double_add_rbp_to_frame_pointers():
         "sub_0x401000",
         "0x401000",
         [
-            {"address": "0x401000", "mnemonic": "lea", "op_str": "rdx, [r15*2 - 0x4c]", "bytes": "498d54"},
+            {
+                "address": "0x401000",
+                "mnemonic": "lea",
+                "op_str": "rdx, [r15*2 - 0x4c]",
+                "bytes": "498d54",
+            },
             {"address": "0x401004", "mnemonic": "add", "op_str": "rdx, rbp", "bytes": "4801ea"},
         ],
         [],
@@ -623,7 +680,12 @@ def test_render_pseudocode_function_preserves_multibytetowidechar_arguments():
         "sub_0x401000",
         "0x401000",
         [
-            {"address": "0x401000", "mnemonic": "mov", "op_str": "ecx, 65001", "bytes": "b9e9fd0000"},
+            {
+                "address": "0x401000",
+                "mnemonic": "mov",
+                "op_str": "ecx, 65001",
+                "bytes": "b9e9fd0000",
+            },
             {"address": "0x401005", "mnemonic": "xor", "op_str": "edx, edx", "bytes": "31d2"},
             {
                 "address": "0x401007",
@@ -631,7 +693,12 @@ def test_render_pseudocode_function_preserves_multibytetowidechar_arguments():
                 "op_str": "r8, [rbp - 0x60]",
                 "bytes": "4c8d45a0",
             },
-            {"address": "0x40100b", "mnemonic": "mov", "op_str": "r9d, 0xffffffff", "bytes": "41b9ffffffff"},
+            {
+                "address": "0x40100b",
+                "mnemonic": "mov",
+                "op_str": "r9d, 0xffffffff",
+                "bytes": "41b9ffffffff",
+            },
             {
                 "address": "0x401011",
                 "mnemonic": "mov",
@@ -673,7 +740,12 @@ def test_render_pseudocode_function_uses_live_register_vars_for_overwritten_args
             {"address": "0x401000", "mnemonic": "mov", "op_str": "r8, rdx", "bytes": "4989d0"},
             {"address": "0x401003", "mnemonic": "mov", "op_str": "edx, 8", "bytes": "ba08000000"},
             {"address": "0x401008", "mnemonic": "mov", "op_str": "r9d, esi", "bytes": "4489f1"},
-            {"address": "0x40100b", "mnemonic": "mov", "op_str": "ecx, 65001", "bytes": "b9e9fd0000"},
+            {
+                "address": "0x40100b",
+                "mnemonic": "mov",
+                "op_str": "ecx, 65001",
+                "bytes": "b9e9fd0000",
+            },
             {
                 "address": "0x401010",
                 "mnemonic": "call",
@@ -747,7 +819,10 @@ def test_render_pseudocode_function_materializes_rip_relative_addressed_strings(
         {0x401027: b"hello\x00"},
     )
 
-    assert "static const unsigned char reveng_data_0x401027[] = { 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x00 };" in rendered
+    assert (
+        "static const unsigned char reveng_data_0x401027[] = { 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x00 };"
+        in rendered
+    )
     assert (
         "reveng_reg_rdx = ((uint64_t)(uintptr_t)reveng_data_0x401027); "
         "/* 0x401000: lea rdx, [rip + 0x20] */"
@@ -765,11 +840,36 @@ def test_render_pseudocode_function_preserves_shadow_space_args_for_windows_x64_
             {"address": "0x401003", "mnemonic": "mov", "op_str": "rdx, rbx", "bytes": "4889da"},
             {"address": "0x401006", "mnemonic": "mov", "op_str": "r8, rsi", "bytes": "4c89f0"},
             {"address": "0x401009", "mnemonic": "mov", "op_str": "r9, r15", "bytes": "4d89f9"},
-            {"address": "0x40100c", "mnemonic": "mov", "op_str": "qword ptr [rsp + 0x20], 0", "bytes": "48c744242000000000"},
-            {"address": "0x401015", "mnemonic": "mov", "op_str": "qword ptr [rsp + 0x28], rbx", "bytes": "48895c2428"},
-            {"address": "0x40101a", "mnemonic": "mov", "op_str": "dword ptr [rsp + 0x30], 0x20", "bytes": "c744243020000000"},
-            {"address": "0x401022", "mnemonic": "mov", "op_str": "qword ptr [rsp + 0x38], 0", "bytes": "48c744243800000000"},
-            {"address": "0x40102b", "mnemonic": "mov", "op_str": "qword ptr [rsp + 0x40], 0", "bytes": "48c744244000000000"},
+            {
+                "address": "0x40100c",
+                "mnemonic": "mov",
+                "op_str": "qword ptr [rsp + 0x20], 0",
+                "bytes": "48c744242000000000",
+            },
+            {
+                "address": "0x401015",
+                "mnemonic": "mov",
+                "op_str": "qword ptr [rsp + 0x28], rbx",
+                "bytes": "48895c2428",
+            },
+            {
+                "address": "0x40101a",
+                "mnemonic": "mov",
+                "op_str": "dword ptr [rsp + 0x30], 0x20",
+                "bytes": "c744243020000000",
+            },
+            {
+                "address": "0x401022",
+                "mnemonic": "mov",
+                "op_str": "qword ptr [rsp + 0x38], 0",
+                "bytes": "48c744243800000000",
+            },
+            {
+                "address": "0x40102b",
+                "mnemonic": "mov",
+                "op_str": "qword ptr [rsp + 0x40], 0",
+                "bytes": "48c744244000000000",
+            },
             {
                 "address": "0x401034",
                 "mnemonic": "call",
@@ -785,8 +885,13 @@ def test_render_pseudocode_function_preserves_shadow_space_args_for_windows_x64_
     )
 
     assert "reveng_stack_0x20 = 0ULL; /* 0x40100c: mov qword ptr [rsp + 0x20], 0 */" in rendered
-    assert "reveng_stack_0x28 = reveng_reg_rbx; /* 0x401015: mov qword ptr [rsp + 0x28], rbx */" in rendered
-    assert "reveng_stack_0x30 = 0x20ULL; /* 0x40101a: mov dword ptr [rsp + 0x30], 0x20 */" in rendered
+    assert (
+        "reveng_stack_0x28 = reveng_reg_rbx; /* 0x401015: mov qword ptr [rsp + 0x28], rbx */"
+        in rendered
+    )
+    assert (
+        "reveng_stack_0x30 = 0x20ULL; /* 0x40101a: mov dword ptr [rsp + 0x30], 0x20 */" in rendered
+    )
     assert (
         "imp_NtWriteFile(reveng_reg_rcx, reveng_reg_rdx, reveng_reg_r8, reveng_reg_r9, "
         "reveng_stack_0x20, reveng_stack_0x28, reveng_stack_0x30, reveng_stack_0x38, "
@@ -801,7 +906,12 @@ def test_render_pseudocode_function_clears_volatile_arg_state_after_call():
         "sub_0x401000",
         "0x401000",
         [
-            {"address": "0x401000", "mnemonic": "mov", "op_str": "ecx, 0xfffffff5", "bytes": "b9f5ffffff"},
+            {
+                "address": "0x401000",
+                "mnemonic": "mov",
+                "op_str": "ecx, 0xfffffff5",
+                "bytes": "b9f5ffffff",
+            },
             {
                 "address": "0x401005",
                 "mnemonic": "call",
@@ -822,8 +932,12 @@ def test_render_pseudocode_function_clears_volatile_arg_state_after_call():
         [],
     )
 
-    assert "imp_GetStdHandle(reveng_reg_rcx); /* 0x401005: call qword ptr [rip + 0x8] */" in rendered
-    assert "imp_GetStdHandle(reveng_reg_rcx); /* 0x40100b: call qword ptr [rip + 0x10] */" in rendered
+    assert (
+        "imp_GetStdHandle(reveng_reg_rcx); /* 0x401005: call qword ptr [rip + 0x8] */" in rendered
+    )
+    assert (
+        "imp_GetStdHandle(reveng_reg_rcx); /* 0x40100b: call qword ptr [rip + 0x10] */" in rendered
+    )
 
 
 def test_render_pseudocode_function_resolves_register_loaded_local_code_calls():
@@ -896,7 +1010,9 @@ def test_to_ghidra_format_only_emits_continuations_for_generated_functions():
     generated_addresses = set(payload["decompiled_code"])
 
     for source in payload["decompiled_code"].values():
-        for match in re.finditer(r"sub_0x([0-9a-fA-F]+)\(\); /\* bounded fallthrough continuation \*/", source):
+        for match in re.finditer(
+            r"sub_0x([0-9a-fA-F]+)\(\); /\* bounded fallthrough continuation \*/", source
+        ):
             assert hex(int(match.group(1), 16)) in generated_addresses
 
 
@@ -1037,7 +1153,12 @@ def test_collect_behavioral_seed_targets_includes_local_callers_of_behavior_regi
             ".text": [
                 {"address": "0x480000", "mnemonic": "push", "op_str": "rbp", "bytes": "55"},
                 {"address": "0x480001", "mnemonic": "mov", "op_str": "rbp, rsp", "bytes": "4889e5"},
-                {"address": "0x480010", "mnemonic": "call", "op_str": "0x500000", "bytes": "e8eb1f0000"},
+                {
+                    "address": "0x480010",
+                    "mnemonic": "call",
+                    "op_str": "0x500000",
+                    "bytes": "e8eb1f0000",
+                },
                 {"address": "0x480015", "mnemonic": "ret", "op_str": "", "bytes": "c3"},
                 {"address": "0x500000", "mnemonic": "push", "op_str": "rbp", "bytes": "55"},
                 {"address": "0x500001", "mnemonic": "mov", "op_str": "rbp, rsp", "bytes": "4889e5"},
@@ -1105,11 +1226,21 @@ def test_expand_behavioral_predecessor_targets_walks_multiple_local_hops():
             ".text": [
                 {"address": "0x470000", "mnemonic": "push", "op_str": "rbp", "bytes": "55"},
                 {"address": "0x470001", "mnemonic": "mov", "op_str": "rbp, rsp", "bytes": "4889e5"},
-                {"address": "0x470010", "mnemonic": "call", "op_str": "0x480000", "bytes": "e8eb0f0000"},
+                {
+                    "address": "0x470010",
+                    "mnemonic": "call",
+                    "op_str": "0x480000",
+                    "bytes": "e8eb0f0000",
+                },
                 {"address": "0x470015", "mnemonic": "ret", "op_str": "", "bytes": "c3"},
                 {"address": "0x480000", "mnemonic": "push", "op_str": "rbp", "bytes": "55"},
                 {"address": "0x480001", "mnemonic": "mov", "op_str": "rbp, rsp", "bytes": "4889e5"},
-                {"address": "0x480010", "mnemonic": "call", "op_str": "0x500000", "bytes": "e8eb1f0000"},
+                {
+                    "address": "0x480010",
+                    "mnemonic": "call",
+                    "op_str": "0x500000",
+                    "bytes": "e8eb1f0000",
+                },
                 {"address": "0x480015", "mnemonic": "ret", "op_str": "", "bytes": "c3"},
                 {"address": "0x500000", "mnemonic": "push", "op_str": "rbp", "bytes": "55"},
                 {"address": "0x500001", "mnemonic": "mov", "op_str": "rbp, rsp", "bytes": "4889e5"},
@@ -1239,7 +1370,9 @@ def test_find_pe_behavioral_call_targets_promotes_direct_thunk_calls_to_enclosin
     ]
 
     monkeypatch.setattr("reveng.integrations.local_disassembler.pefile.PE", lambda _: FakePE())
-    monkeypatch.setattr(disassembler, "_collect_register_behavioral_call_targets", lambda *args, **kwargs: [])
+    monkeypatch.setattr(
+        disassembler, "_collect_register_behavioral_call_targets", lambda *args, **kwargs: []
+    )
 
     class FakeCs:
         def disasm(self, *_args, **_kwargs):
