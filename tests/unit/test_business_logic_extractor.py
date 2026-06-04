@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from reveng.analyzers.business_logic_extractor import (
+from reveng.analysis.analyzers.business_logic_extractor import (
     ApplicationDomain,
     BusinessLogicAnalysis,
     BusinessLogicExtractor,

@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
-from reveng.analyzers.dotnet_analyzer import DotNetAnalysisResult
+from reveng.analysis.analyzers.dotnet_analyzer import DotNetAnalysisResult
 from reveng.app_reverse_engineering import create_default_framework
 from reveng.tools.languages.csharp_il_analyzer import (
     CSharpILAnalyzer,

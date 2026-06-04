@@ -839,10 +839,10 @@ class AnalysisPipeline:
         """Execute static analysis stage"""
         try:
             # Import analyzers
-            from ..analyzers.business_logic_extractor import (
+            from ..analysis.analyzers.business_logic_extractor import (
                 BusinessLogicExtractor,
             )
-            from ..analyzers.dotnet_analyzer import DotNetAnalyzer
+            from ..analysis.analyzers.dotnet_analyzer import DotNetAnalyzer
 
             results = {}
 
@@ -868,8 +868,8 @@ class AnalysisPipeline:
         """Execute PE analysis stage"""
         try:
             # Import PE analyzers
-            from ..pe.import_analyzer import ImportAnalyzer
-            from ..pe.resource_extractor import PEResourceExtractor
+            from ..analysis.pe.import_analyzer import ImportAnalyzer
+            from ..analysis.pe.resource_extractor import PEResourceExtractor
 
             results = {}
 

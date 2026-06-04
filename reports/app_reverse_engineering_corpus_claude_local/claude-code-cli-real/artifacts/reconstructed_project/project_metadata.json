@@ -1,0 +1,14 @@
+{
+  "reconstruction_mode": "webcrack_project",
+  "input_bundle": "C:\\Users\\oimir\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\cli.js",
+  "source_map_detected": false,
+  "webcrack_promoted": true,
+  "entrypoint": "deobfuscated.js",
+  "entrypoint_suffix": ".js",
+  "runtime_contract": "node",
+  "file_count": 2,
+  "files": [
+    "deobfuscated.js",
+    "package.json"
+  ]
+}

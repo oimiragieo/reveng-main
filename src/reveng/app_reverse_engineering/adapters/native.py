@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
-from reveng.native.ghidra_workflow import (
+from reveng.analysis.native.ghidra_workflow import (
     build_native_project_ir,
     build_native_source_segments,
     materialize_decompiled_functions,

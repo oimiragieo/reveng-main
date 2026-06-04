@@ -1,0 +1,483 @@
+{
+  "obfuscation_types": [
+    "minified"
+  ],
+  "bundler_signals": {
+    "source_map_markers": 1
+  },
+  "dependency_candidates": [
+    "./lib/greet"
+  ],
+  "cli_flags": [
+    "--name"
+  ],
+  "slash_commands": [
+    "/greet",
+    "/lib"
+  ],
+  "topic_match_counts": {
+    "runtime_architecture": 1,
+    "cli_surface": 1,
+    "agent_runtime_and_prompts": 0,
+    "tools_and_permissions": 0,
+    "integrations_and_networking": 0,
+    "storage_state_and_artifacts": 0,
+    "observability_and_telemetry": 0,
+    "dependencies_and_binaries": 2
+  },
+  "reconstruction_mode": "source_map_recovery",
+  "benchmark_scorecard": {
+    "oracle_domain_count": 1,
+    "reconstructed_domain_count": 13,
+    "matched_oracle_domains": [],
+    "missing_oracle_domains": [
+      "src"
+    ],
+    "extra_reconstructed_domains": [
+      "api",
+      "auth",
+      "cli",
+      "config",
+      "core",
+      "mcp",
+      "monitoring",
+      "permissions",
+      "sdk",
+      "session",
+      "tools",
+      "types",
+      "utils"
+    ],
+    "domain_recall": 0.0,
+    "domain_precision": 0.0,
+    "oracle_project_file_count": 2,
+    "reconstructed_project_file_count": 2,
+    "matched_oracle_project_files": [
+      "entrypoints/cli",
+      "lib/greet"
+    ],
+    "missing_oracle_project_files": [],
+    "extra_reconstructed_project_files": [],
+    "project_file_recall": 1.0,
+    "project_file_precision": 1.0,
+    "token_signal_score": 0.0667,
+    "overall_score": 0.02
+  },
+  "schema_version": "1.0",
+  "result_type": "app_reverse_engineering_result",
+  "validation": {
+    "grade": "partial_recovery",
+    "summary": "Recovered 4 source artifact(s), 4 topic evidence snippet(s), and 3 primary artifact(s); warnings=0.",
+    "evidence_count": 21,
+    "topic_evidence_count": 4,
+    "artifact_count": 3,
+    "warning_count": 0
+  },
+  "evidence": [
+    {
+      "kind": "input_sample",
+      "path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_tsx_cli.tsx",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "input_app"
+    },
+    {
+      "kind": "analysis_summary",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\analysis.json",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "analysis_summary",
+      "metadata": {
+        "source_count": 4
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\01-runtime-architecture.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "runtime_architecture",
+        "match_count": 1
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\02-cli-surface.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "cli_surface",
+        "match_count": 1
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\03-agent-runtime-and-prompts.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "agent_runtime_and_prompts",
+        "match_count": 0
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\04-tools-and-permissions.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "tools_and_permissions",
+        "match_count": 0
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\05-integrations-and-networking.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "integrations_and_networking",
+        "match_count": 0
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\06-storage-state-and-artifacts.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "storage_state_and_artifacts",
+        "match_count": 0
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\07-observability-and-telemetry.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "observability_and_telemetry",
+        "match_count": 0
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\08-dependencies-and-binaries.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "dependencies_and_binaries",
+        "match_count": 2
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\runtime-architecture.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "runtime_architecture"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\cli-surface.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "cli_surface"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\agent-runtime-and-prompts.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "agent_runtime_and_prompts"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\tools-and-permissions.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "tools_and_permissions"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\integrations-and-networking.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "integrations_and_networking"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\storage-state-and-artifacts.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "storage_state_and_artifacts"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\observability-and-telemetry.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "observability_and_telemetry"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\dependencies-and-binaries.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "dependencies_and_binaries"
+      }
+    },
+    {
+      "kind": "primary_artifact",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\artifacts\\normalized.js",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "primary_artifact",
+      "metadata": {
+        "artifact_name": "normalized_bundle"
+      }
+    },
+    {
+      "kind": "primary_artifact",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\artifacts\\reconstructed_project",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "primary_artifact",
+      "metadata": {
+        "artifact_name": "reconstructed_project"
+      }
+    },
+    {
+      "kind": "primary_artifact",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\artifacts\\reconstructed_project\\project_metadata.json",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "primary_artifact",
+      "metadata": {
+        "artifact_name": "reconstructed_project_manifest"
+      }
+    }
+  ],
+  "provenance": {
+    "inputs": [
+      {
+        "kind": "app_input",
+        "path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_tsx_cli.tsx",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "input_app",
+        "metadata": {
+          "input_root": "C:\\dev\\projects\\reveng-main\\test_samples"
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "kind": "analysis_summary",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\analysis.json",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "analysis_summary"
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\01-runtime-architecture.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "runtime_architecture"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\02-cli-surface.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "cli_surface"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\03-agent-runtime-and-prompts.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "agent_runtime_and_prompts"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\04-tools-and-permissions.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "tools_and_permissions"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\05-integrations-and-networking.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "integrations_and_networking"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\06-storage-state-and-artifacts.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "storage_state_and_artifacts"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\07-observability-and-telemetry.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "observability_and_telemetry"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\08-dependencies-and-binaries.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "dependencies_and_binaries"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\runtime-architecture.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "runtime_architecture"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\cli-surface.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "cli_surface"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\agent-runtime-and-prompts.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "agent_runtime_and_prompts"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\tools-and-permissions.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "tools_and_permissions"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\integrations-and-networking.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "integrations_and_networking"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\storage-state-and-artifacts.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "storage_state_and_artifacts"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\observability-and-telemetry.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "observability_and_telemetry"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\SPECS\\domains\\dependencies-and-binaries.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "dependencies_and_binaries"
+        }
+      },
+      {
+        "kind": "primary_artifact",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\artifacts\\normalized.js",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "primary_artifact",
+        "metadata": {
+          "artifact_name": "normalized_bundle"
+        }
+      },
+      {
+        "kind": "primary_artifact",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\artifacts\\reconstructed_project",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "primary_artifact",
+        "metadata": {
+          "artifact_name": "reconstructed_project"
+        }
+      },
+      {
+        "kind": "primary_artifact",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli\\artifacts\\reconstructed_project\\project_metadata.json",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "primary_artifact",
+        "metadata": {
+          "artifact_name": "reconstructed_project_manifest"
+        }
+      }
+    ],
+    "stages": [
+      "input_inventory",
+      "spec_generation",
+      "domain_split",
+      "analysis_summary_serialization"
+    ],
+    "references": [
+      {
+        "relationship": "analyzed_under",
+        "target": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\javascript-tsx-source-cli",
+        "trace_id": "app-re::javascript::analysis",
+        "metadata": {
+          "adapter_name": "javascript_bundle_workflow"
+        }
+      }
+    ],
+    "tools": [
+      "javascript_bundle_workflow"
+    ]
+  }
+}

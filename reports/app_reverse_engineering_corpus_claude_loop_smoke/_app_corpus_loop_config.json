@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "notes": [
+    "Local-only real-world JavaScript corpus row for the installed Claude Code bundle.",
+    "Set REVENG_CLAUDE_CLI_JS and REVENG_CLAUDE_ORACLE_DIR before running this config."
+  ],
+  "entries": [
+    {
+      "name": "claude-code-cli-real",
+      "input_path": "C:\\Users\\oimir\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\cli.js",
+      "oracle_dir": "C:\\dev\\projects\\claude-code-main",
+      "language": "javascript",
+      "required": false,
+      "loop_max_attempts": 2,
+      "loop_plateau_attempts": 1,
+      "target_project_file_recall": 1.0,
+      "target_project_file_precision": 1.0,
+      "run_webcrack": true,
+      "tags": [
+        "local",
+        "javascript",
+        "bundle",
+        "oracle",
+        "claude-code",
+        "real-world"
+      ],
+      "run_deobfuscator": false
+    }
+  ]
+}

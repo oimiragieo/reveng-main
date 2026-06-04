@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from reveng.native.ghidra_workflow import _analyze_with_lock_retry, candidate_ghidra_urls
+from reveng.analysis.native.ghidra_workflow import _analyze_with_lock_retry, candidate_ghidra_urls
 
 
 def test_candidate_ghidra_urls_prefers_current_server_port():

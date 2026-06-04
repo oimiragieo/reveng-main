@@ -489,7 +489,7 @@ class BinaryRecompilationEngine:
                 binary_path,
                 self.native_analysis_timeout,
             )
-            from reveng.native.ghidra_workflow import run_native_ghidra_analysis
+            from reveng.analysis.native.ghidra_workflow import run_native_ghidra_analysis
 
             native_result = await asyncio.to_thread(
                 run_native_ghidra_analysis,

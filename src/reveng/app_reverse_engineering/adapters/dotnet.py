@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 from xml.etree import ElementTree
 
-from reveng.analyzers.dotnet_analyzer import DotNetAnalyzer
+from reveng.analysis.analyzers.dotnet_analyzer import DotNetAnalyzer
 from reveng.tools.languages.csharp_il_analyzer import CSharpILAnalyzer, DotNetDetector
 
 from ..models import AppReverseEngineeringResult

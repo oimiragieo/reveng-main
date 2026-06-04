@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from reveng.analyzers.dotnet_analyzer import (
+from reveng.analysis.analyzers.dotnet_analyzer import (
     AssemblyInfo,
     DotNetAnalysisResult,
     DotNetAnalyzer,

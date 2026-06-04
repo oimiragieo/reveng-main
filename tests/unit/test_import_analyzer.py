@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from reveng.pe.import_analyzer import (
+from reveng.analysis.pe.import_analyzer import (
     APICategory,
     APIInfo,
     ImportAnalysis,
@@ -39,12 +39,12 @@ class TestImportAnalyzer:
         assert hasattr(self.analyzer, "suspicious_patterns")
         assert hasattr(self.analyzer, "behavioral_indicators")
 
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._parse_import_table")
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._extract_dlls")
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._extract_api_calls")
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._categorize_apis")
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._detect_suspicious_apis")
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._analyze_behavioral_indicators")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._parse_import_table")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._extract_dlls")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._extract_api_calls")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._categorize_apis")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._detect_suspicious_apis")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._analyze_behavioral_indicators")
     def test_analyze_imports_success(
         self,
         mock_behavioral,

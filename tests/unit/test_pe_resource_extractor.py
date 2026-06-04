@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
-from reveng.pe.resource_extractor import (
+from reveng.analysis.pe.resource_extractor import (
     CustomResource,
     IconResource,
     ManifestResource,
@@ -37,13 +37,13 @@ class TestPEResourceExtractor:
         assert hasattr(self.extractor, "logger")
         assert hasattr(self.extractor, "temp_dir")
 
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_icons")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_bitmaps")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_string_table")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_manifests")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_version_info")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_custom_resources")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.detect_embedded_files")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_icons")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_bitmaps")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_string_table")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_manifests")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_version_info")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_custom_resources")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.detect_embedded_files")
     def test_extract_all_resources_success(
         self,
         mock_embedded,
@@ -144,7 +144,7 @@ class TestPEResourceExtractor:
         assert result.icons == []
         assert result.bitmaps == []
 
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
     def test_extract_icons_with_rh(self, mock_rh_path):
         """Test icon extraction with Resource Hacker"""
         # Create a temporary test file
@@ -177,7 +177,7 @@ class TestPEResourceExtractor:
                 assert len(result) == 1
                 assert result[0].id == "1"
 
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
     def test_extract_strings_with_rh(self, mock_rh_path):
         """Test string extraction with Resource Hacker"""
         # Create a temporary test file
@@ -210,7 +210,7 @@ class TestPEResourceExtractor:
                 assert len(result) == 1
                 assert result[0].value == "Test String"
 
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
     def test_extract_manifests_with_rh(self, mock_rh_path):
         """Test manifest extraction with Resource Hacker"""
         # Create a temporary test file
@@ -259,7 +259,7 @@ class TestPEResourceExtractor:
                 assert len(result) == 1
                 assert result[0].content == "<manifest>"
 
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
     def test_extract_version_info_with_rh(self, mock_rh_path):
         """Test version info extraction with Resource Hacker"""
         # Create a temporary test file
