@@ -2,7 +2,7 @@
 Tool registry for managing available tools.
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from ..exceptions import ToolError
 from .base import BaseTool
@@ -25,6 +25,10 @@ class ToolRegistry:
         if name not in self._tools:
             raise ToolError(name, f"Tool '{name}' not found in registry")
         return self._tools[name]
+
+    def try_get(self, name: str) -> Optional[BaseTool]:
+        """Get a tool by name, returning None if it is not registered."""
+        return self._tools.get(name)
 
     def list_tools(self) -> List[str]:
         """List all registered tool names."""

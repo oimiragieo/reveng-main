@@ -59,11 +59,11 @@ The analysis takes 10-60 seconds depending on binary size."""
             # Import REVENG analyzer
             from reveng.analyzer import REVENGAnalyzer
 
-            analyzer = REVENGAnalyzer()
+            analyzer = REVENGAnalyzer(binary_path=path)
 
             # Run analysis (async)
             loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(None, analyzer.analyze, path)
+            result = await loop.run_in_executor(None, analyzer.analyze_binary)
 
             # Format result
             analysis_text = self._format_analysis(result, path, quick_mode)

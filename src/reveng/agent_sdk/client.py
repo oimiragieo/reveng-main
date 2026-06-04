@@ -181,16 +181,16 @@ class ClaudeSDKClient:
         """Execute a tool with permission checks"""
         # Check permissions
         if not self.permission_manager.can_execute(tool_name):
-            raise ToolError(f"Permission denied for tool: {tool_name}")
+            raise ToolError(tool_name, "Permission denied")
 
         # Get tool from registry
-        tool = self.tool_registry.get(tool_name)
+        tool = self.tool_registry.try_get(tool_name)
         if not tool:
-            raise ToolError(f"Tool not found: {tool_name}")
+            raise ToolError(tool_name, "Tool not found")
 
         # Run pre-hooks
         if not await self.permission_manager.run_pre_hooks(tool_name, args):
-            raise ToolError(f"Pre-hook blocked execution of tool: {tool_name}")
+            raise ToolError(tool_name, "Pre-hook blocked execution")
 
         # Execute tool
         result = await tool.safe_execute(args)
@@ -218,9 +218,9 @@ class ClaudeSDKClient:
         else:
             # Get only specified tools
             all_tools = [
-                self.tool_registry.get(name)
+                tool
                 for name in tool_names
-                if self.tool_registry.get(name) is not None
+                if (tool := self.tool_registry.try_get(name)) is not None
             ]
 
         # Filter by permissions
