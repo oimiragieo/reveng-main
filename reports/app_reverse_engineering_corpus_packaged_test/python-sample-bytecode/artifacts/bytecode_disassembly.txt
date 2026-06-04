@@ -12,9 +12,9 @@
             18       STORE_NAME               2 (Path)
             20       POP_TOP
 
-  5         22       LOAD_CONST               3 (<code object __annotate__ at 0x000002284D8088A0, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>)
+  5         22       LOAD_CONST               3 (<code object __annotate__ at 0x000001A2536225B0, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>)
             24       MAKE_FUNCTION
-            26       LOAD_CONST               4 (<code object main at 0x000002284EDFA3F0, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>)
+            26       LOAD_CONST               4 (<code object main at 0x000001A25331B430, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>)
             28       MAKE_FUNCTION
             30       SET_FUNCTION_ATTRIBUTE  16 (annotate)
             32       STORE_NAME               3 (main)
@@ -35,7 +35,7 @@
  12   L1:   66       LOAD_CONST               1 (None)
             68       RETURN_VALUE
 
-Disassembly of <code object __annotate__ at 0x000002284D8088A0, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>:
+Disassembly of <code object __annotate__ at 0x000001A2536225B0, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>:
   5          0       RESUME                   0
              2       LOAD_FAST_BORROW         0 (format)
              4       LOAD_SMALL_INT           2
@@ -49,7 +49,7 @@ Disassembly of <code object __annotate__ at 0x000002284D8088A0, file "C:\dev\pro
             24       BUILD_MAP                1
             26       RETURN_VALUE
 
-Disassembly of <code object main at 0x000002284EDFA3F0, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>:
+Disassembly of <code object main at 0x000001A25331B430, file "C:\dev\projects\reveng-main\test_samples\sample_app.py", line 5>:
   5          0       RESUME                   0
 
   6          2       LOAD_GLOBAL              0 (argparse)

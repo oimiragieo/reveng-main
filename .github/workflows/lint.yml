@@ -32,8 +32,7 @@ jobs:
         run: mypy src/
 
       - name: Run import-linter (architecture contracts)
-        # Run from src/ so the reveng package is not shadowed by the repo-root reveng.py launcher.
-        run: cd src && lint-imports --config ../.importlinter --no-cache
+        run: lint-imports --no-cache
 
   lint-javascript:
     runs-on: ubuntu-latest

@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CLI_BASE = [sys.executable, str(REPO_ROOT / "reveng.py")]
+CLI_BASE = [sys.executable, str(REPO_ROOT / "src" / "reveng" / "cli" / "reveng.py")]
 PYTHON = sys.executable
 
 

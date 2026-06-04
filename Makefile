@@ -83,7 +83,7 @@ lint:
 	isort --check-only src/ tests/
 	pylint src/
 	mypy src/
-	cd src && lint-imports --config ../.importlinter --no-cache
+	lint-imports --no-cache
 	hadolint Dockerfile
 
 format:
