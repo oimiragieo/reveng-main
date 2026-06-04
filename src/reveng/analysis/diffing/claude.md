@@ -1,6 +1,6 @@
-# `claude.md` — `diffing`
+# `claude.md` — `analysis/diffing`
 
-**Repository path:** `src/reveng/diffing/`
+**Repository path:** `src/reveng/analysis/diffing/`
 
 Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 

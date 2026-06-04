@@ -28,12 +28,7 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
   - `def quick_ask()` — Quick natural language query, returns just the answer string.
 
 ### `analyzer.py`
-- **Summary:** REVENG Universal Reverse Engineering Platform - Core Analyzer
-- **Classes:**
-  - `EnhancedAnalysisFeatures` — Feature flags for enhanced analysis capabilities
-  - `REVENGAnalyzer` — REVENG Analyzer - Enterprise Binary Analysis
-- **Functions / coroutines:**
-  - `def _utc_timestamp()`
+- **Summary:** Backwards-compatibility shim — moved to :mod:`reveng.analysis.analyzer`.
 
 ### `api.py`
 - **Summary:** REVENG Unified API

@@ -1,6 +1,6 @@
-# `claude.md` — `lifting`
+# `claude.md` — `analysis/lifting`
 
-**Repository path:** `src/reveng/lifting/`
+**Repository path:** `src/reveng/analysis/lifting/`
 
 Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 

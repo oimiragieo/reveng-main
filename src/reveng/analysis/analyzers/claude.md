@@ -1,6 +1,6 @@
-# `claude.md` — `analyzers`
+# `claude.md` — `analysis/analyzers`
 
-**Repository path:** `src/reveng/analyzers/`
+**Repository path:** `src/reveng/analysis/analyzers/`
 
 Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 

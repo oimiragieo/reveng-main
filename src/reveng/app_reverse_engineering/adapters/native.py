@@ -112,9 +112,7 @@ class NativeAppAdapter:
         warnings: List[str] = []
         primary_artifacts: Dict[str, Path] = {}
 
-        analysis_result = run_native_ghidra_analysis(
-            str(entry_path), timeout=effective_timeout
-        )
+        analysis_result = run_native_ghidra_analysis(str(entry_path), timeout=effective_timeout)
         analysis_data = analysis_result.get("analysis_data", {})
         if analysis_result.get("warning"):
             warnings.append(str(analysis_result["warning"]))
@@ -253,11 +251,15 @@ class NativeAppAdapter:
         imports = self._normalize_named_items(analysis_data.get("imports", []))
         exports = self._normalize_named_items(analysis_data.get("exports", []))
         namespaces = self._normalize_named_items(analysis_data.get("namespaces", []))
-        data_items = self._normalize_data_items(analysis_data.get("data_items", analysis_data.get("data", [])))
+        data_items = self._normalize_data_items(
+            analysis_data.get("data_items", analysis_data.get("data", []))
+        )
         xref_targets, xref_records = self._normalize_xref_map(analysis_data.get("xrefs", {}))
         functions = self._normalize_function_names(analysis_data.get("functions", []))
         strings = self._normalize_string_items(analysis_data.get("strings", []))
-        function_details = self._build_function_detail_summary(analysis_data.get("functions", []), xref_targets)
+        function_details = self._build_function_detail_summary(
+            analysis_data.get("functions", []), xref_targets
+        )
 
         analysis_payload = {
             "language": self.language,
@@ -417,7 +419,9 @@ class NativeAppAdapter:
             if isinstance(item, str):
                 value = item.strip()
             elif isinstance(item, dict):
-                value = str(item.get("value") or item.get("string") or item.get("text") or "").strip()
+                value = str(
+                    item.get("value") or item.get("string") or item.get("text") or ""
+                ).strip()
             else:
                 value = str(item).strip()
             if value and value not in strings:
@@ -447,7 +451,9 @@ class NativeAppAdapter:
         return data_items
 
     @staticmethod
-    def _normalize_xref_map(values: object) -> tuple[List[tuple[str, List[Dict[str, object]]]], List[Dict[str, object]]]:
+    def _normalize_xref_map(
+        values: object,
+    ) -> tuple[List[tuple[str, List[Dict[str, object]]]], List[Dict[str, object]]]:
         targets: List[tuple[str, List[Dict[str, object]]]] = []
         records: List[Dict[str, object]] = []
 
@@ -535,7 +541,7 @@ class NativeAppAdapter:
 
     @staticmethod
     def _summarize_xref_targets(
-        xref_targets: Sequence[tuple[str, List[Dict[str, object]]]]
+        xref_targets: Sequence[tuple[str, List[Dict[str, object]]]],
     ) -> List[Dict[str, object]]:
         summary: List[Dict[str, object]] = []
         for target, refs in xref_targets[:80]:
@@ -728,7 +734,9 @@ class NativeAppAdapter:
                 if isinstance(item, str):
                     value = item.strip()
                 elif isinstance(item, dict):
-                    value = str(item.get("string") or item.get("decoded_string") or item.get("value") or "").strip()
+                    value = str(
+                        item.get("string") or item.get("decoded_string") or item.get("value") or ""
+                    ).strip()
                 else:
                     value = str(item).strip()
                 if value and value not in decoded_strings:

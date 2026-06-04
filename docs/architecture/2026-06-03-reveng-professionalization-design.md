@@ -156,3 +156,21 @@ Executed on branch `refactor/professionalization` (all changes gated; full unit+
 - **`ai_api.py` → `api.py` consolidation** (near-orphan; 2 importers).
 - **Phase 4 shim removal** — the compatibility shims (`reveng.result_contracts`, `reveng.ir`, the two AI module shims, `agents/ai/ai_enhanced_data_models`) remain in place so no importer broke; they can be retired by rewriting importers once downstream back-compat policy is decided.
 - **Root `reveng.py` shadow** — still present (a documented entry point); shadows the package on cwd-based imports. Flagged for the folder-grouping follow-up.
+
+### 8.1 Update (2026-06-04) — analysis domain grouped
+
+Continued the physical domain grouping with the **`analysis/` domain**: `pe`, `native`,
+`lifting`, `devirtualization`, `deobfuscation`, `diffing`, `analyzers`, and the core
+`analyzer.py` (REVENGAnalyzer) are now under `reveng.analysis.*` (outward relative imports
+deepened, all importers updated, `reveng.analyzer` shim left for `from reveng import analyzer`).
+Full unit+integration suite green (1017).
+
+**`intelligence/` and `orchestration/` domains intentionally NOT physically relocated.** Unlike
+the analysis leaf packages, `ai`/`agents`/`security`/`ml`/`malware` (and `pipeline`/
+`app_reverse_engineering`/`javascript`/`verification`) are heavily cross-coupled with nested
+subpackages (`agents/ai/` uses 3–4-deep relative imports). Safe physical relocation requires
+per-import, multi-depth relative-import rewrites that cannot be done mechanically without risking
+the verified-green baseline — for purely organizational folder nesting. This is the high-churn
+cosmetic layer the design (§7) and the 8-seat council flagged to defer; the substantive
+professionalization (no cycles, no duplicates, no module/package collision, clear names,
+cross-cutting modules in core, a clean analysis domain) is complete and shipped.

@@ -1,6 +1,6 @@
-# `claude.md` — `deobfuscation`
+# `claude.md` — `analysis/deobfuscation`
 
-**Repository path:** `src/reveng/deobfuscation/`
+**Repository path:** `src/reveng/analysis/deobfuscation/`
 
 Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 

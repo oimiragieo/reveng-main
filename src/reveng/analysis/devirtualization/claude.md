@@ -1,6 +1,6 @@
-# `claude.md` — `devirtualization`
+# `claude.md` — `analysis/devirtualization`
 
-**Repository path:** `src/reveng/devirtualization/`
+**Repository path:** `src/reveng/analysis/devirtualization/`
 
 Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 

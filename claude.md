@@ -44,9 +44,16 @@ This file is the **entry point** for large language models mapping the repositor
 
 - [`ai/claude.md`](src/reveng/ai/claude.md)
 
-### `analyzers`
+### `analysis`
 
-- [`analyzers/claude.md`](src/reveng/analyzers/claude.md)
+- [`analysis/analyzers/claude.md`](src/reveng/analysis/analyzers/claude.md)
+- [`analysis/claude.md`](src/reveng/analysis/claude.md)
+- [`analysis/deobfuscation/claude.md`](src/reveng/analysis/deobfuscation/claude.md)
+- [`analysis/devirtualization/claude.md`](src/reveng/analysis/devirtualization/claude.md)
+- [`analysis/diffing/claude.md`](src/reveng/analysis/diffing/claude.md)
+- [`analysis/lifting/claude.md`](src/reveng/analysis/lifting/claude.md)
+- [`analysis/native/claude.md`](src/reveng/analysis/native/claude.md)
+- [`analysis/pe/claude.md`](src/reveng/analysis/pe/claude.md)
 
 ### `app_reverse_engineering`
 
@@ -68,18 +75,6 @@ This file is the **entry point** for large language models mapping the repositor
 ### `core`
 
 - [`core/claude.md`](src/reveng/core/claude.md)
-
-### `deobfuscation`
-
-- [`deobfuscation/claude.md`](src/reveng/deobfuscation/claude.md)
-
-### `devirtualization`
-
-- [`devirtualization/claude.md`](src/reveng/devirtualization/claude.md)
-
-### `diffing`
-
-- [`diffing/claude.md`](src/reveng/diffing/claude.md)
 
 ### `evasion`
 
@@ -114,10 +109,6 @@ This file is the **entry point** for large language models mapping the repositor
 
 - [`javascript/claude.md`](src/reveng/javascript/claude.md)
 
-### `lifting`
-
-- [`lifting/claude.md`](src/reveng/lifting/claude.md)
-
 ### `malware`
 
 - [`malware/claude.md`](src/reveng/malware/claude.md)
@@ -125,14 +116,6 @@ This file is the **entry point** for large language models mapping the repositor
 ### `ml`
 
 - [`ml/claude.md`](src/reveng/ml/claude.md)
-
-### `native`
-
-- [`native/claude.md`](src/reveng/native/claude.md)
-
-### `pe`
-
-- [`pe/claude.md`](src/reveng/pe/claude.md)
 
 ### `performance`
 

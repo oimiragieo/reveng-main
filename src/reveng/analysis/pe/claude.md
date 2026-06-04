@@ -1,6 +1,6 @@
-# `claude.md` — `pe`
+# `claude.md` — `analysis/pe`
 
-**Repository path:** `src/reveng/pe/`
+**Repository path:** `src/reveng/analysis/pe/`
 
 Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 

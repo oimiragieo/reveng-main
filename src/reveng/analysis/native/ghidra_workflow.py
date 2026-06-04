@@ -10,7 +10,6 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from reveng.ir import IR_SCHEMA_VERSION, REEdge, RENode, REProjectIR
 
-
 URL_PATTERN = re.compile(r"https?://[^\s\"'`]+")
 CLI_FLAG_PATTERN = re.compile(r"--[a-z0-9][a-z0-9-]*")
 
@@ -109,14 +108,18 @@ def _analyze_with_lock_retry(*, ghidra_engine: Any, binary_path: str) -> Dict[st
 def _is_ghidra_lock_error(exc: Exception) -> bool:
     """Identify Ghidra temp-project lock failures that are worth retrying once."""
     message = str(exc).lower()
-    return "lock~" in message or "winerror 32" in message or "being used by another process" in message
+    return (
+        "lock~" in message or "winerror 32" in message or "being used by another process" in message
+    )
 
 
 def summarize_native_analysis(analysis_data: Dict[str, Any]) -> Dict[str, int]:
     """Return bounded counts for native analysis."""
     xref_targets, xref_records = _normalize_xref_map(analysis_data.get("xrefs", {}))
     namespaces = _normalize_named_items(analysis_data.get("namespaces", []))
-    data_items = _normalize_data_items(analysis_data.get("data_items", analysis_data.get("data", [])))
+    data_items = _normalize_data_items(
+        analysis_data.get("data_items", analysis_data.get("data", []))
+    )
     return {
         "functions": len(analysis_data.get("functions", []) or []),
         "imports": len(analysis_data.get("imports", []) or []),
@@ -175,7 +178,9 @@ def build_native_project_ir(
     imports = _normalize_named_items(analysis_data.get("imports", []))
     exports = _normalize_named_items(analysis_data.get("exports", []))
     namespaces = _normalize_named_items(analysis_data.get("namespaces", []))
-    data_items = _normalize_data_items(analysis_data.get("data_items", analysis_data.get("data", [])))
+    data_items = _normalize_data_items(
+        analysis_data.get("data_items", analysis_data.get("data", []))
+    )
     xref_targets, xref_records = _normalize_xref_map(analysis_data.get("xrefs", {}))
     strings = _normalize_string_items(analysis_data.get("strings", []))
     endpoints = _extract_urls(strings)
@@ -270,21 +275,31 @@ def build_native_source_segments(analysis_data: Dict[str, Any]) -> List[Dict[str
         if source:
             segments.append({"source": f"function:{name}", "segments": _segment_text(str(source))})
 
-    import_lines = [f"import {name}" for name in _normalize_named_items(analysis_data.get("imports", []))]
+    import_lines = [
+        f"import {name}" for name in _normalize_named_items(analysis_data.get("imports", []))
+    ]
     if import_lines:
         segments.append({"source": "imports", "segments": _segment_text("\n".join(import_lines))})
 
-    export_lines = [f"export {name}" for name in _normalize_named_items(analysis_data.get("exports", []))]
+    export_lines = [
+        f"export {name}" for name in _normalize_named_items(analysis_data.get("exports", []))
+    ]
     if export_lines:
         segments.append({"source": "exports", "segments": _segment_text("\n".join(export_lines))})
 
-    namespace_lines = [f"namespace {name}" for name in _normalize_named_items(analysis_data.get("namespaces", []))]
+    namespace_lines = [
+        f"namespace {name}" for name in _normalize_named_items(analysis_data.get("namespaces", []))
+    ]
     if namespace_lines:
-        segments.append({"source": "namespaces", "segments": _segment_text("\n".join(namespace_lines))})
+        segments.append(
+            {"source": "namespaces", "segments": _segment_text("\n".join(namespace_lines))}
+        )
 
     data_lines = [
         f"data {name}"
-        for name in _normalize_data_items(analysis_data.get("data_items", analysis_data.get("data", [])))
+        for name in _normalize_data_items(
+            analysis_data.get("data_items", analysis_data.get("data", []))
+        )
     ]
     if data_lines:
         segments.append({"source": "data_items", "segments": _segment_text("\n".join(data_lines))})
@@ -373,7 +388,9 @@ def _normalize_data_items(values: Any) -> List[str]:
     return normalized
 
 
-def _normalize_xref_map(values: Any) -> tuple[List[tuple[str, List[Dict[str, Any]]]], List[Dict[str, Any]]]:
+def _normalize_xref_map(
+    values: Any,
+) -> tuple[List[tuple[str, List[Dict[str, Any]]]], List[Dict[str, Any]]]:
     targets: List[tuple[str, List[Dict[str, Any]]]] = []
     records: List[Dict[str, Any]] = []
 

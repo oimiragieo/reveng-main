@@ -485,8 +485,7 @@ def test_sample_files(temp_dir):
     # Create mock .nessus file
     nessus_file = sample_dir / "test_scan.nessus"
     with open(nessus_file, "w") as f:
-        f.write(
-            """<?xml version="1.0"?>
+        f.write("""<?xml version="1.0"?>
 <report>
     <host>
         <name>test-host</name>
@@ -498,8 +497,7 @@ def test_sample_files(temp_dir):
             </item>
         </vulnerabilities>
     </host>
-</report>"""
-        )
+</report>""")
 
     return {"test_exe": test_exe, "nessus_file": nessus_file, "sample_dir": sample_dir}
 
@@ -517,13 +515,11 @@ def test_scripts_dir(temp_dir):
     # Create test Ghidra script
     test_script = ghidra_dir / "test_script.py"
     with open(test_script, "w") as f:
-        f.write(
-            """# Test Ghidra script
+        f.write("""# Test Ghidra script
 def main():
     print("Test Ghidra script executed")
     return "SUCCESS"
-"""
-        )
+""")
 
     return {"scripts_dir": scripts_dir, "ghidra_dir": ghidra_dir, "test_script": test_script}
 

@@ -1,6 +1,6 @@
-# `claude.md` — `native`
+# `claude.md` — `analysis/native`
 
-**Repository path:** `src/reveng/native/`
+**Repository path:** `src/reveng/analysis/native/`
 
 Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
