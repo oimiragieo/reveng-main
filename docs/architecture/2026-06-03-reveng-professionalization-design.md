@@ -136,3 +136,23 @@ An 8-seat multi-model council (claude, gemini, kimi, minimax, glm, copilot, curs
 10. **Add Phase 1.5 — VRL re-baseline.** After the argv fix, audit every VRL test that may have passed *because of* stdin-only behavior and re-record the hexyl corpus `current_grade` against genuine argv-driven runs.
 
 11. **Two Phase-3 design refinements to weigh:** consider keeping `security/` **standalone** rather than folding it into `intelligence/` (cleaner cycle-break isolation); give `tools/` dissolution an explicit **end-state + completion gate** so it does not become permanent shim debt.
+
+## 8. Execution status (2026-06-03)
+
+Executed on branch `refactor/professionalization` (all changes gated; full unit+integration suite green throughout).
+
+**Done:**
+- **Phase 0** — cruft removed (~135 regenerable dumps), `.gitignore` hardened, baseline ledger recorded, `import-linter` scaffolded, workflow worktrees gitignored.
+- **Phase 1** — all 46 baseline unit failures + 15 audited bugs fixed (incl. the critical VRL argv-vs-stdin oracle bug, the ValidationGrade ladder, the agent_sdk crashes, the `re.sub` injection, path-containment, etc.); a regression the unit gate missed (corpus `oracle_dir` breaking the MCP tool) was caught against the pre-Phase-1 commit and fixed. **0 failures.**
+- **Phase 2** — deleted the byte-duplicate `cli/recompile_command.py`; **`cli.py`→`cli/` package flip** (module-vs-package collision resolved, `reveng.cli` canonical).
+- **Phase 3 (core moves)** — **broke the `ai`↔`security` import cycle** (shared data models → `reveng.core.ai_models`, fixing a latent top-level broken import; import-linter contract flipped to `forbidden`); relocated `result_contracts.py` and `ir.py` into `reveng.core` (shim-backed); renamed the swap-word pair → `ai_provider_registry` / `ai_enhanced_orchestrator` (shim-backed).
+
+**Audit corrections found during execution** (the read-only audit was not reliable for destructive moves):
+- `pipelines/` is **not** dead — `tests/conftest.py` imports it. Kept.
+- `business_logic_analyzer.py` is unimported but harmless — left in place.
+
+**Deferred (documented, lower value / higher churn):**
+- **Full 7-domain physical folder grouping** (re-homing the ~30 leaf packages into `analysis/intelligence/orchestration/...`). The substantive smells (cycle, duplicates, module/package collision, confusing names, misplaced cross-cutting modules) are all resolved; the remaining work is organizational nesting and is best done as a focused follow-up with whole-package namespace shims.
+- **`ai_api.py` → `api.py` consolidation** (near-orphan; 2 importers).
+- **Phase 4 shim removal** — the compatibility shims (`reveng.result_contracts`, `reveng.ir`, the two AI module shims, `agents/ai/ai_enhanced_data_models`) remain in place so no importer broke; they can be retired by rewriting importers once downstream back-compat policy is decided.
+- **Root `reveng.py` shadow** — still present (a documented entry point); shadows the package on cwd-based imports. Flagged for the folder-grouping follow-up.
