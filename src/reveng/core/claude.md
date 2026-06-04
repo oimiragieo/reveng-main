@@ -6,6 +6,9 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
 
 ## Python modules
 
+### `__init__.py`
+- **Summary:** REVENG core foundation layer.
+
 ### `ai_models.py`
 - **Summary:** AI-Enhanced Universal Analysis Data Models
 - **Classes:**

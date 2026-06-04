@@ -13,12 +13,6 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
 ### `__init__.py`
 - **Summary:** AI/ML Tools
 
-### `ai_analyzer_enhanced.py`
-- **Summary:** Backwards-compatibility shim — renamed to :mod:`reveng.agents.ai.ai_provider_registry`.
-
-### `ai_enhanced_analyzer.py`
-- **Summary:** Backwards-compatibility shim — renamed to :mod:`reveng.agents.ai.ai_enhanced_orchestrator`.
-
 ### `ai_enhanced_data_models.py`
 - **Summary:** Backwards-compatibility shim.
 
@@ -57,6 +51,7 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
 - **Classes:**
   - `OllamaModel` — Ollama model information
   - `AnalysisResult` — LLM analysis result
+  - `_OllamaTextResult` — Minimal LLM result exposing ``.content`` for the refiner contract.
   - `OllamaAnalyzer` — Ollama-powered code analysis
 
 ### `ollama_preflight.py`

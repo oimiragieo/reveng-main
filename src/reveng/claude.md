@@ -27,9 +27,6 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
   - `def quick_triage()` — Quick triage of a binary.
   - `def quick_ask()` — Quick natural language query, returns just the answer string.
 
-### `analyzer.py`
-- **Summary:** Backwards-compatibility shim — moved to :mod:`reveng.analysis.analyzer`.
-
 ### `api.py`
 - **Summary:** REVENG Unified API
 - **Classes:**
@@ -42,9 +39,6 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
   - `def reverse_engineer_app()` — Convenience function for app reverse engineering.
   - `def run_app_reverse_engineering_corpus()` — Convenience function for the app reverse-engineering corpus.
 
-### `ir.py`
-- **Summary:** Backwards-compatibility shim — moved to :mod:`reveng.core.ir`.
-
 ### `recompile_command.py`
 - **Summary:** Recompile Command - Binary to Source to Binary Pipeline
 - **Functions / coroutines:**
@@ -54,9 +48,6 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
   - `def print_reconstruction_summary()` — Print a beautiful summary of reconstruction results.
   - `def generate_reconstruction_report()` — Generate a comprehensive markdown report.
   - `def run_recompile_command()` — Synchronous wrapper for asyncio command.
-
-### `result_contracts.py`
-- **Summary:** Backwards-compatibility shim — moved to :mod:`reveng.core.result_contracts`.
 
 ### `version.py`
 - **Summary:** REVENG Version Information

@@ -451,9 +451,9 @@ Pytest layout: markers and heavy tools are gated in `pytest.ini`. **Parent index
   - `TestImportAnalyzer.test_parse_pe_header_valid`
 
 ### `test_import_contracts.py`
-- **Summary:** Import-direction / cycle baseline (tooling presence + deferred enforcement).
+- **Summary:** Import-direction / architecture contracts (enforced).
 - **Tests (2):**
-  - `test_import_contracts_evaluated_when_graph_buildable`
+  - `test_import_contracts_are_enforced`
   - `test_importlinter_contract_config_exists`
 
 ### `test_imports.py`
