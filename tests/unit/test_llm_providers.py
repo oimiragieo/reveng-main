@@ -515,8 +515,8 @@ class TestGetAnalyzer(unittest.TestCase):
 
     def _import_get_analyzer(self):
         """Re-import get_analyzer after clearing cached module."""
-        if "reveng.agents.ai.ai_analyzer_enhanced" in sys.modules:
-            del sys.modules["reveng.agents.ai.ai_analyzer_enhanced"]
+        if "reveng.agents.ai.ai_provider_registry" in sys.modules:
+            del sys.modules["reveng.agents.ai.ai_provider_registry"]
         from reveng.agents.ai.ai_provider_registry import get_analyzer
 
         return get_analyzer
@@ -535,7 +535,7 @@ class TestGetAnalyzer(unittest.TestCase):
         finally:
             sys.modules.pop("anthropic", None)
             sys.modules.pop("reveng.agents.ai.anthropic_analyzer", None)
-            sys.modules.pop("reveng.agents.ai.ai_analyzer_enhanced", None)
+            sys.modules.pop("reveng.agents.ai.ai_provider_registry", None)
 
     def test_get_analyzer_openai_returns_instance(self):
         openai_mod = _make_openai_stub()
@@ -551,7 +551,7 @@ class TestGetAnalyzer(unittest.TestCase):
         finally:
             sys.modules.pop("openai", None)
             sys.modules.pop("reveng.agents.ai.openai_analyzer", None)
-            sys.modules.pop("reveng.agents.ai.ai_analyzer_enhanced", None)
+            sys.modules.pop("reveng.agents.ai.ai_provider_registry", None)
 
     def test_get_analyzer_unknown_provider_raises_value_error(self):
         get_analyzer = self._import_get_analyzer()
@@ -575,7 +575,7 @@ class TestGetAnalyzer(unittest.TestCase):
         finally:
             sys.modules.pop("anthropic", None)
             sys.modules.pop("reveng.agents.ai.anthropic_analyzer", None)
-            sys.modules.pop("reveng.agents.ai.ai_analyzer_enhanced", None)
+            sys.modules.pop("reveng.agents.ai.ai_provider_registry", None)
 
     def test_get_analyzer_explicit_arg_overrides_env(self):
         import os
@@ -595,7 +595,7 @@ class TestGetAnalyzer(unittest.TestCase):
         finally:
             sys.modules.pop("openai", None)
             sys.modules.pop("reveng.agents.ai.openai_analyzer", None)
-            sys.modules.pop("reveng.agents.ai.ai_analyzer_enhanced", None)
+            sys.modules.pop("reveng.agents.ai.ai_provider_registry", None)
 
     def test_get_analyzer_case_insensitive(self):
         anthropic_mod = _make_anthropic_stub()
@@ -611,7 +611,7 @@ class TestGetAnalyzer(unittest.TestCase):
         finally:
             sys.modules.pop("anthropic", None)
             sys.modules.pop("reveng.agents.ai.anthropic_analyzer", None)
-            sys.modules.pop("reveng.agents.ai.ai_analyzer_enhanced", None)
+            sys.modules.pop("reveng.agents.ai.ai_provider_registry", None)
 
 
 if __name__ == "__main__":

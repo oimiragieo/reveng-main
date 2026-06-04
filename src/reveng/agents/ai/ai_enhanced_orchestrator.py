@@ -704,7 +704,7 @@ def main():
 
     if not args.binary_path:
         print("Error: Binary path required")
-        print("Usage: python ai_enhanced_analyzer.py <binary_path>")
+        print("Usage: python ai_enhanced_orchestrator.py <binary_path>")
         sys.exit(1)
 
     if not Path(args.binary_path).exists():

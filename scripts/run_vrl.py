@@ -357,7 +357,7 @@ def main(argv: Optional[List[str]] = None) -> int:  # noqa: C901  (complexity is
     Returns 0 on success, 1 on any error that prevents a meaningful run.
     """
     # --- delayed imports (allow mocking in tests) --------------------------
-    from reveng.agents.ai.ai_analyzer_enhanced import get_analyzer
+    from reveng.agents.ai.ai_provider_registry import get_analyzer
     from reveng.verification.refinement.compile_adapter import make_compile_fn
     from reveng.verification.refinement.models import RefinementBudget
     from reveng.verification.refinement.oracle_adapter import make_oracle_factory

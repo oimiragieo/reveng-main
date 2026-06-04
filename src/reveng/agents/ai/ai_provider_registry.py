@@ -493,9 +493,9 @@ if __name__ == "__main__":
     print()
 
     if len(sys.argv) < 2:
-        print("Usage: python ai_analyzer_enhanced.py <binary_path>")
+        print("Usage: python ai_provider_registry.py <binary_path>")
         print()
-        print("Example: python ai_analyzer_enhanced.py droid.exe")
+        print("Example: python ai_provider_registry.py droid.exe")
         sys.exit(1)
 
     binary_path = sys.argv[1]

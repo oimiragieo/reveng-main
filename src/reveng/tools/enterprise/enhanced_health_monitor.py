@@ -184,7 +184,7 @@ class EnhancedModulesHealthChecker(HealthChecker):
 
         # Check enhanced analysis modules
         enhanced_modules = [
-            "reveng.agents.ai.ai_enhanced_analyzer",
+            "reveng.agents.ai.ai_enhanced_orchestrator",
             "tools.corporate_exposure_detector",
             "tools.vulnerability_discovery_engine",
             "tools.threat_intelligence_correlator",

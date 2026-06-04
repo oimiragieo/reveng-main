@@ -108,7 +108,7 @@ def test_main_happy_path_produces_json_log(tmp_path: Path) -> None:
         patch.object(run_vrl, "_WORKSPACE_BASE", workspace_base),
         patch.object(run_vrl, "_load_initial_source", return_value="/* stub */"),
         patch.object(run_vrl, "_resolve_binary_path", return_value=original_binary),
-        patch("reveng.agents.ai.ai_analyzer_enhanced.get_analyzer") as mock_get_analyzer,
+        patch("reveng.agents.ai.ai_provider_registry.get_analyzer") as mock_get_analyzer,
         patch("reveng.verification.refinement.compile_adapter.make_compile_fn") as mock_compile,
         patch("reveng.verification.refinement.oracle_adapter.make_oracle_factory") as mock_oracle,
         patch("reveng.verification.refinement.refiner.IterativeRefiner") as mock_refiner_cls,
@@ -161,7 +161,7 @@ def test_binary_arg_selects_correct_corpus_entry(tmp_path: Path) -> None:
         patch.object(run_vrl, "_WORKSPACE_BASE", workspace_base),
         patch.object(run_vrl, "_load_initial_source", return_value="/* stub */"),
         patch.object(run_vrl, "_resolve_binary_path", return_value=original_binary),
-        patch("reveng.agents.ai.ai_analyzer_enhanced.get_analyzer", return_value=MagicMock()),
+        patch("reveng.agents.ai.ai_provider_registry.get_analyzer", return_value=MagicMock()),
         patch(
             "reveng.verification.refinement.compile_adapter.make_compile_fn",
             return_value=MagicMock(),
@@ -247,7 +247,7 @@ def test_result_grade_recorded_in_corpus_update(tmp_path: Path) -> None:
         patch.object(run_vrl, "_load_initial_source", return_value="/* stub */"),
         patch.object(run_vrl, "_resolve_binary_path", return_value=original_binary),
         patch.object(run_vrl, "_update_corpus_grade") as mock_update,
-        patch("reveng.agents.ai.ai_analyzer_enhanced.get_analyzer", return_value=MagicMock()),
+        patch("reveng.agents.ai.ai_provider_registry.get_analyzer", return_value=MagicMock()),
         patch(
             "reveng.verification.refinement.compile_adapter.make_compile_fn",
             return_value=MagicMock(),
@@ -301,7 +301,7 @@ def test_json_log_fields_are_correct(tmp_path: Path) -> None:
         patch.object(run_vrl, "_WORKSPACE_BASE", workspace_base),
         patch.object(run_vrl, "_load_initial_source", return_value="/* stub */"),
         patch.object(run_vrl, "_resolve_binary_path", return_value=original_binary),
-        patch("reveng.agents.ai.ai_analyzer_enhanced.get_analyzer", return_value=MagicMock()),
+        patch("reveng.agents.ai.ai_provider_registry.get_analyzer", return_value=MagicMock()),
         patch(
             "reveng.verification.refinement.compile_adapter.make_compile_fn",
             return_value=MagicMock(),
