@@ -50,7 +50,6 @@
     {
       "name": "javascript-tracked-bundle",
       "input_path": "..\\test_samples\\js_tracked_bundle_artifact\\bundle.js",
-      "oracle_dir": "..\\test_samples\\js_tracked_bundle_source",
       "language": "javascript",
       "required": false,
       "tags": ["javascript", "bundle", "tracked"]
