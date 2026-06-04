@@ -374,7 +374,9 @@ class StringArrayDeobfuscator:
         for i, string in enumerate(string_array):
             # Replace _0x...(i) with 'string'
             pattern = r"_0x[0-9a-f]+\(" + str(i) + r"\)"
-            replacement = f"'{string}'"
-            code = re.sub(pattern, replacement, code)
+            # Use a callable replacement so backslash escapes (\x41) and group
+            # references (\1) in the decoded string are inserted literally
+            # instead of being interpreted by re.sub.
+            code = re.sub(pattern, lambda m, s=string: "'" + s + "'", code)
 
         return code

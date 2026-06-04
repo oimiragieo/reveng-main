@@ -376,6 +376,7 @@ class JavaScriptDeobfuscator:
         Predicts meaningful variable names based on context
         Accuracy: 60-80%
         """
+        input_file = None
         try:
             with tempfile.NamedTemporaryFile(mode="w", suffix=".js", delete=False) as f:
                 f.write(code)
@@ -402,10 +403,11 @@ class JavaScriptDeobfuscator:
 
         finally:
             # Clean up temp file
-            try:
-                os.unlink(input_file)
-            except OSError:
-                pass
+            if input_file is not None:
+                try:
+                    os.unlink(input_file)
+                except (OSError, FileNotFoundError):
+                    pass
 
     async def _enhance_with_llm(self, code: str) -> Tuple[str, Dict]:
         """
