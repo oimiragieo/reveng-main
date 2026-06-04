@@ -14,11 +14,15 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
 - **Summary:** AI/ML Tools
 
 ### `ai_analyzer_enhanced.py`
-- **Summary:** REVENG Enhanced AI Analyzer
-- **Classes:**
-  - `EnhancedAIAnalyzer` — Enhanced AI analyzer with Ollama support
+- **Summary:** Backwards-compatibility shim — renamed to :mod:`reveng.agents.ai.ai_provider_registry`.
 
 ### `ai_enhanced_analyzer.py`
+- **Summary:** Backwards-compatibility shim — renamed to :mod:`reveng.agents.ai.ai_enhanced_orchestrator`.
+
+### `ai_enhanced_data_models.py`
+- **Summary:** Backwards-compatibility shim.
+
+### `ai_enhanced_orchestrator.py`
 - **Summary:** AI-Enhanced Universal Binary Analysis Engine
 - **Classes:**
   - `EnhancedAnalysisConfig` — Configuration for enhanced analysis modules
@@ -26,60 +30,27 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
 - **Functions / coroutines:**
   - `def main()` — Main function for AI-Enhanced Analyzer
 
-### `ai_enhanced_data_models.py`
-- **Summary:** AI-Enhanced Universal Analysis Data Models
+### `ai_provider_registry.py`
+- **Summary:** REVENG Enhanced AI Analyzer
 - **Classes:**
-  - `RiskLevel` — Risk level enumeration
-  - `Severity` — Vulnerability severity enumeration
-  - `ConfidenceLevel` — Confidence level enumeration
-  - `Evidence` — Evidence item with confidence scoring
-  - `FileInfo` — File information and metadata
-  - `CredentialExposure` — Exposed credential information
-  - `BusinessLogicExposure` — Exposed business logic information
-  - `APIEndpoint` — Discovered API endpoint
-  - `CompetitiveIntel` — Competitive intelligence finding
-  - `CorporateExposureReport` — Corporate data exposure analysis report
-  - `MemoryVulnerability` — Memory-related vulnerability
-  - `InjectionVulnerability` — Injection vulnerability
-  - `AuthenticationIssue` — Authentication/authorization issue
-  - `CryptographicWeakness` — Cryptographic implementation weakness
-  - `VulnerabilityReport` — Comprehensive vulnerability analysis report
-  - `IOC` — Indicator of Compromise
-  - `APTAttribution` — APT group attribution analysis
-  - `AttackChain` — Attack chain representation for MITRE ATT&CK analysis
-  - `MITREMapping` — MITRE ATT&CK framework mapping
-  - `MalwareClassification` — Malware classification result
-  - `CampaignCorrelation` — Campaign correlation analysis
-  - `ThreatIntelligenceReport` — Threat intelligence correlation report
-  - `ReconstructionDemo` — Binary reconstruction demonstration
-  - `ExecutiveSummary` — Executive-level summary
-  - `UniversalAnalysisResult` — Universal analysis result containing all findings
-  - `ExecutiveReport` — Executive-level report for CISOs and leadership
-  - `DemonstrationComponent` — Component of a security demonstration
-  - `DemonstrationPackage` — Security demonstration package
-  - `CorporateRiskAssessment` — Corporate risk assessment result
-  - `UniversalAnalysisSerializer` — Serialization utilities for analysis results
-  - `EvidenceTracker` — Evidence tracking and confidence scoring system
-  - `VulnerabilityPrediction` — ML-based vulnerability prediction result
-  - `MLModelResult` — Result from machine learning model
-  - `FeatureVector` — Feature vector for ML models
-  - `BehavioralPattern` — Behavioral pattern detected in malware
-  - `ThreatFamily` — Malware family information
-  - `MLMalwareClassificationResult` — ML-based malware classification result (advanced version)
-  - `CodeSummary` — NLP-generated code summary
-  - `SemanticAnalysis` — Semantic analysis of code using NLP
-  - `DocumentationSuggestion` — Suggestion for improving code documentation
-  - `MLTrainingData` — Training data for ML models
-  - `ModelPerformanceMetrics` — Performance metrics for ML models
-  - `NeuralNetworkArchitecture` — Neural network architecture description
-  - `DeepLearningResult` — Result from deep learning model
-  - `EmbeddingVector` — Vector embedding for similarity analysis
-  - `SimilarityAnalysis` — Code/malware similarity analysis using embeddings
-  - `MLPipelineResult` — Complete ML pipeline execution result
-  - `EnhancedUniversalAnalysisResult` — Enhanced universal analysis result with ML capabilities
+  - `EnhancedAIAnalyzer` — Enhanced AI analyzer with Ollama support
 - **Functions / coroutines:**
-  - `def create_file_info_from_path()` — Create FileInfo from file path
-  - `def merge_confidence_scores()` — Merge multiple confidence scores with optional weights
+  - `def get_analyzer()` — Return an analyzer instance for the given provider.
+
+### `anthropic_analyzer.py`
+- **Summary:** REVENG Anthropic Claude Integration
+- **Classes:**
+  - `AnthropicAnalyzer` — Anthropic Claude-powered code analysis.
+- **Functions / coroutines:**
+  - `def _import_anthropic()` — Lazy-import anthropic and raise a clear error when absent.
+  - `def _extract_code_block()` — Extract the first code block from a markdown-fenced response, or return as-is.
+
+### `claude_cli_analyzer.py`
+- **Summary:** LLM provider that calls the Claude Code CLI (``claude -p``) as a subprocess.
+- **Classes:**
+  - `_Usage` — Lightweight usage object exposing ``input_tokens`` / ``output_tokens``.
+  - `ClaudeCLIResult` — Result of a single ``claude -p`` invocation.
+  - `ClaudeCodeCLIAnalyzer` — OAuth-based LLM provider that shells out to the ``claude`` CLI.
 
 ### `ollama_analyzer.py`
 - **Summary:** REVENG Ollama Integration
@@ -92,6 +63,14 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
 - **Summary:** REVENG Ollama Preflight Checker
 - **Classes:**
   - `OllamaPreflightChecker` — Preflight checker for Ollama AI integration
+
+### `openai_analyzer.py`
+- **Summary:** REVENG OpenAI Integration
+- **Classes:**
+  - `OpenAIAnalyzer` — OpenAI GPT-powered code analysis.
+- **Functions / coroutines:**
+  - `def _extract_code_block()` — Extract the first code block from a markdown-fenced response, or return as-is.
+  - `def _import_openai()` — Lazy-import openai and raise a clear error when absent.
 
 ---
 *Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*
