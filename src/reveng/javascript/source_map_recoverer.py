@@ -11,6 +11,7 @@ Based on research:
 - Most production sites accidentally ship source maps
 """
 
+import base64
 import json
 import logging
 import re
@@ -108,7 +109,7 @@ class SourceMapRecoverer:
         maps = []
 
         try:
-            with open(filepath, "r") as f:
+            with open(filepath, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
 
             # Check for sourceMappingURL
@@ -117,15 +118,19 @@ class SourceMapRecoverer:
             if match:
                 map_file = match.group(1).strip()
 
-                # Resolve relative path
-                base_dir = Path(filepath).parent
-                map_path = base_dir / map_file
+                if map_file.startswith("data:"):
+                    # Inline data URI - keep verbatim, do not treat as a path
+                    maps.append(map_file)
+                else:
+                    # Resolve relative path
+                    base_dir = Path(filepath).parent
+                    map_path = base_dir / map_file
 
-                if map_path.exists():
-                    maps.append(str(map_path))
+                    if map_path.exists():
+                        maps.append(str(map_path))
 
             # Also try .map extension
-            map_path_direct = Path(filepath).with_suffix(filepath + ".map")
+            map_path_direct = Path(str(filepath) + ".map")
             if map_path_direct.exists():
                 if str(map_path_direct) not in maps:
                     maps.append(str(map_path_direct))
@@ -149,11 +154,16 @@ class SourceMapRecoverer:
 
         try:
             # Load source map
-            if sourcemap_url_or_file.startswith("http"):
+            if sourcemap_url_or_file.startswith("data:"):
+                # Inline data URI: data:[<mediatype>][;base64],<payload>
+                _, _, payload = sourcemap_url_or_file.partition(",")
+                decoded = base64.b64decode(payload)
+                sourcemap = json.loads(decoded)
+            elif sourcemap_url_or_file.startswith("http"):
                 response = requests.get(sourcemap_url_or_file, timeout=10)
                 sourcemap = response.json()
             else:
-                with open(sourcemap_url_or_file, "r") as f:
+                with open(sourcemap_url_or_file, "r", encoding="utf-8", errors="replace") as f:
                     sourcemap = json.load(f)
 
             # Extract sources
@@ -169,6 +179,7 @@ class SourceMapRecoverer:
 
             source_files = sourcemap.get("sources", [])
             source_contents = sourcemap.get("sourcesContent", [])
+            source_root = sourcemap.get("sourceRoot", "")
 
             if len(source_files) != len(source_contents):
                 logger.warning(
@@ -179,7 +190,7 @@ class SourceMapRecoverer:
             for i, filename in enumerate(source_files):
                 if i < len(source_contents) and source_contents[i]:
                     # Clean up filename (remove webpack:// prefix, etc.)
-                    clean_name = self._clean_filename(filename)
+                    clean_name = self._clean_filename(filename, source_root=source_root)
                     sources[clean_name] = source_contents[i]
 
             logger.info(f"Recovered {len(sources)} source files")
@@ -190,13 +201,25 @@ class SourceMapRecoverer:
             logger.error(f"Source map recovery failed: {e}")
             return SourceMapResult(success=False, sources={}, error=str(e))
 
-    def _clean_filename(self, filename: str) -> str:
+    def _clean_filename(self, filename: str, source_root: str = "") -> str:
         """Clean up source map filename"""
         # Remove webpack:// prefix
         filename = re.sub(r"^webpack:///?", "", filename)
 
         # Remove leading ./
         filename = re.sub(r"^\./", "", filename)
+
+        # Strip the sourceRoot prefix if present (also tolerate a "./" lead-in)
+        if source_root:
+            for prefix in (source_root, "./" + source_root):
+                if filename.startswith(prefix):
+                    filename = filename[len(prefix) :]
+                    break
+            # Strip any leading "./" or "/" left after removing the sourceRoot prefix.
+            filename = re.sub(r"^[./]+", "", filename)
+
+        # Strip query string / fragment suffixes
+        filename = re.sub(r"[?#].*$", "", filename)
 
         # Convert to valid path
         filename = filename.replace("..", "_")
