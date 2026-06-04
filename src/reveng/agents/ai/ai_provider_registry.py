@@ -28,13 +28,10 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 try:
-    from tools.config_manager import get_config
-    from tools.ollama_analyzer import OllamaAnalyzer
-    from tools.progress_reporter import get_progress_reporter
+    from ...tools.config.config_manager import get_config
+    from ...tools.utils.progress_reporter import get_progress_reporter
+    from .ollama_analyzer import OllamaAnalyzer
 
     HAS_OLLAMA = True
 except ImportError as e:

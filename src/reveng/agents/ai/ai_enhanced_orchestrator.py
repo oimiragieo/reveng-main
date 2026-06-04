@@ -23,8 +23,8 @@ from typing import TYPE_CHECKING, List
 
 # Import existing REVENG components
 try:
-    from ..config.config_manager import get_config
-    from ..languages.language_detector import LanguageDetector
+    from ...tools.config.config_manager import get_config
+    from ...tools.languages.language_detector import LanguageDetector
 except ImportError as e:
     logging.warning(f"REVENG components not available: {e}")
 
