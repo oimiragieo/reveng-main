@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional
 
 import requests
 
-from reveng.agents.ai.ai_enhanced_data_models import (
+from reveng.core.ai_models import (
     IOC,
     APTAttribution,
     CampaignCorrelation,
@@ -1440,7 +1440,7 @@ class ThreatIntelligenceCorrelator:
 
     def _analyze_attack_chain_enhanced(self, mapping: MITREMapping):
         """Enhanced attack chain analysis with timeline and progression"""
-        from .ai_enhanced_data_models import AttackChain
+        from reveng.core.ai_models import AttackChain
 
         attack_chain = AttackChain()
 

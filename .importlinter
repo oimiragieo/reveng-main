@@ -9,3 +9,22 @@ source_modules =
 forbidden_modules =
     reveng.ai
     reveng.agents.ai
+
+[importlinter:contract:core-is-foundation]
+name = core is the foundation layer (must not import higher-level domains)
+type = forbidden
+source_modules =
+    reveng.core
+forbidden_modules =
+    reveng.analysis
+    reveng.security
+    reveng.ai
+    reveng.agents
+    reveng.ml
+    reveng.malware
+    reveng.tools
+    reveng.agent_sdk
+    reveng.pipeline
+    reveng.app_reverse_engineering
+    reveng.javascript
+    reveng.verification

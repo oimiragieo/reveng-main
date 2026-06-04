@@ -1,10 +1,13 @@
-"""Import-direction / cycle baseline (tooling presence + deferred enforcement).
+"""Import-direction / architecture contracts (enforced).
 
-Today the ``reveng.ai`` <-> ``reveng.security`` import cycle EXISTS; it is broken in the
-Phase 3 restructure. import-linter (grimp) also cannot build the graph until the package is
-editable-installed and the src tree is graph-clean. This test therefore only verifies that the
-tooling and the ``.importlinter`` contract config are present and that the contract is evaluated
-*when the graph can be built*. Phase 3 flips ``no-ai-security-cycle`` into a hard gate.
+The ``ai`` <-> ``security`` import cycle was broken (shared models moved to
+``reveng.core``); ``reveng.core`` is the foundation layer. These boundaries are now
+enforced by import-linter contracts in ``.importlinter`` and must stay green.
+
+import-linter (grimp) resolves the ``reveng`` *package* only when it is not shadowed
+by the repo-root ``reveng.py`` launcher, so the check runs from ``src/`` with
+``--config``. When the package is not importable as a top-level package in the current
+environment (e.g. not editable-installed), the enforcement test skips rather than fail.
 """
 
 import shutil
@@ -14,30 +17,30 @@ from pathlib import Path
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
+_SRC = _REPO_ROOT / "src"
+_CONFIG = _REPO_ROOT / ".importlinter"
 
 
 def test_importlinter_contract_config_exists():
-    cfg = _REPO_ROOT / ".importlinter"
-    assert cfg.is_file(), ".importlinter contract config must exist for Phase 3 enforcement"
-    assert "security-must-not-import-ai" in cfg.read_text(encoding="utf-8")
+    assert _CONFIG.is_file(), ".importlinter contract config must exist"
+    text = _CONFIG.read_text(encoding="utf-8")
+    assert "security-must-not-import-ai" in text
+    assert "core-is-foundation" in text
 
 
-@pytest.mark.skipif(
-    shutil.which("lint-imports") is None, reason="import-linter not installed"
-)
-def test_import_contracts_evaluated_when_graph_buildable():
+@pytest.mark.skipif(shutil.which("lint-imports") is None, reason="import-linter not installed")
+def test_import_contracts_are_enforced():
+    """Run the import-linter contracts; every contract must be KEPT (0 broken)."""
     result = subprocess.run(
-        ["lint-imports"], capture_output=True, text=True, cwd=str(_REPO_ROOT)
+        ["lint-imports", "--config", str(_CONFIG), "--no-cache"],
+        capture_output=True,
+        text=True,
+        cwd=str(_SRC),
     )
     combined = result.stdout + result.stderr
-    contract_seen = (
-        "security must not import ai" in combined
-        or "security-must-not-import-ai" in combined
-    )
-    if not contract_seen:
-        # Pre-restructure tree is not yet graph-clean / package not editable-installed.
-        pytest.skip(
-            "import graph not buildable pre-restructure; cycle enforcement deferred to Phase 3"
-        )
-    # When the graph builds, the contract must be present in the report (pass or fail).
-    assert contract_seen
+    if "does not exist" in combined or "Could not find" in combined:
+        pytest.skip("reveng package not resolvable as top-level here (needs editable install)")
+    assert "Contracts:" in combined, f"import-linter did not run contracts:\n{combined}"
+    assert (
+        result.returncode == 0 and "0 broken" in combined
+    ), f"import-linter contracts BROKEN:\n{combined}"

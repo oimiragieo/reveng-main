@@ -17,6 +17,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+          pip install -e . --no-deps
 
       - name: Run black
         run: black --check src/ tests/
@@ -29,6 +30,10 @@ jobs:
 
       - name: Run mypy
         run: mypy src/
+
+      - name: Run import-linter (architecture contracts)
+        # Run from src/ so the reveng package is not shadowed by the repo-root reveng.py launcher.
+        run: cd src && lint-imports --config ../.importlinter --no-cache
 
   lint-javascript:
     runs-on: ubuntu-latest
