@@ -310,3 +310,7 @@ reports/app_reverse_engineering_corpus_javascript_test/
 external/ga_binaries/
 external/ghidramcp/
 .reveng/vrl-runs/*.json
+
+# Claude Code workflow worktrees + transcripts (scratch)
+.claude/worktrees/
+.claude/thinktank_*.md

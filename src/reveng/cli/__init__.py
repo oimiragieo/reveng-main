@@ -15,8 +15,8 @@ import json
 import sys
 from pathlib import Path
 
-from .analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
-from .version import get_version_string
+from ..analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
+from ..version import get_version_string
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -520,7 +520,7 @@ def create_enhanced_features(args) -> EnhancedAnalysisFeatures:
 
 def _detect_bun_executable(binary_path: str):
     """Return a Bun extractor and detection info for the given binary."""
-    from .tools.anti_analysis.bun_extractor import BunExecutableExtractor
+    from ..tools.anti_analysis.bun_extractor import BunExecutableExtractor
 
     extractor = BunExecutableExtractor()
     return extractor, extractor.detect(binary_path)
@@ -528,7 +528,7 @@ def _detect_bun_executable(binary_path: str):
 
 def _maybe_handle_bun_analysis(binary_path: str, output_dir: str) -> int | None:
     """Route Bun executables to bundle extraction instead of native analysis."""
-    from .tools.anti_analysis.bun_extractor import (
+    from ..tools.anti_analysis.bun_extractor import (
         build_bun_report_severity_summary,
         build_bun_runtime_escalation_summary,
     )
@@ -804,7 +804,7 @@ def _default_bun_decompile_output(binary_path: str) -> str:
 
 def _select_bun_recompilation_input(bundle_output: str | None, recovery) -> tuple[str | None, str]:
     """Choose the cleanest recovered Bun artifact for downstream recompilation."""
-    from .tools.anti_analysis.bun_extractor import select_bun_recompilation_input
+    from ..tools.anti_analysis.bun_extractor import select_bun_recompilation_input
 
     return select_bun_recompilation_input(bundle_output, recovery)
 
@@ -822,7 +822,7 @@ def _run_bun_sea_build(
     binary_path: str, output_dir: str | None, output_path: str | None, skip_install: bool
 ):
     """Shared Bun SEA build workflow used by dedicated and delegated CLI paths."""
-    from .tools.anti_analysis.bun_extractor import run_bun_sea_workflow
+    from ..tools.anti_analysis.bun_extractor import run_bun_sea_workflow
 
     workflow = run_bun_sea_workflow(
         binary_path=binary_path,
@@ -862,7 +862,7 @@ def _maybe_handle_bun_decompile(args) -> int | None:
     if args.enhance and decompiled_code:
         print("Applying AI enhancement...")
         try:
-            from .agents.ai.ai_enhanced import AICodeQualityEnhancer
+            from ..agents.ai.ai_enhanced import AICodeQualityEnhancer
 
             enhancer = AICodeQualityEnhancer()
             enhanced = enhancer.enhance_function(
@@ -909,7 +909,7 @@ def run_end_to_end_analysis(
     ghidra_retry_count: int,
 ) -> dict:
     """Run the integrated async CLI analysis lifecycle."""
-    from .pipeline.e2e_integration import EndToEndPipelineRunner
+    from ..pipeline.e2e_integration import EndToEndPipelineRunner
 
     runner = EndToEndPipelineRunner(
         output_dir=output_dir,
@@ -1003,7 +1003,7 @@ def handle_reverse_engineer_app_command(args):
     """Handle the language-agnostic app reverse-engineering command."""
     import asyncio
 
-    from .app_reverse_engineering import create_default_framework
+    from ..app_reverse_engineering import create_default_framework
 
     input_path = Path(args.input_path).expanduser().resolve()
     if not input_path.exists():
@@ -1059,7 +1059,7 @@ def handle_serve_command(args):
     """Handle the serve command (web interface)."""
     try:
         # Import web interface components
-        from .web_interface.server import start_server
+        from ..web_interface.server import start_server
 
         print("Starting REVENG Web Interface...")
         print(f"Server will be available at: http://{args.host}:{args.port}")
@@ -1085,7 +1085,7 @@ def handle_ask_command(args):
     try:
         import asyncio
 
-        from .ai.ai_assistant import ask_about_binary
+        from ..ai.ai_assistant import ask_about_binary
 
         # Run async function
         answer = asyncio.run(ask_about_binary(args.question, args.binary_path))
@@ -1127,13 +1127,13 @@ def handle_ai_command(args):
     try:
         import asyncio
 
-        from .ai.ai_assistant import AIAnalysisRequest, REVENGAIAssistant
+        from ..ai.ai_assistant import AIAnalysisRequest, REVENGAIAssistant
 
         # Create AI assistant
         assistant = REVENGAIAssistant()
 
         # Create analysis request
-        from .ai.analysis_models import AnalysisType
+        from ..ai.analysis_models import AnalysisType
 
         analysis_type = (
             AnalysisType(args.analysis_type)
@@ -1218,7 +1218,7 @@ def handle_ai_command(args):
 def handle_triage_command(args):
     """Handle the triage command (Instant Triage)."""
     try:
-        from .agents.ai.ai_enhanced import InstantTriageEngine
+        from ..agents.ai.ai_enhanced import InstantTriageEngine
 
         engine = InstantTriageEngine()
 
@@ -1255,7 +1255,7 @@ def handle_vt_lookup_command(args):
     try:
         import os
 
-        from .tools.threat_intel import VirusTotalConnector
+        from ..tools.threat_intel import VirusTotalConnector
 
         api_key = args.api_key or os.getenv("VT_API_KEY")
         if not api_key:
@@ -1301,7 +1301,7 @@ def handle_vt_submit_command(args):
     try:
         import os
 
-        from .tools.threat_intel import VirusTotalConnector
+        from ..tools.threat_intel import VirusTotalConnector
 
         api_key = args.api_key or os.getenv("VT_API_KEY")
         if not api_key:
@@ -1335,7 +1335,7 @@ def handle_vt_submit_command(args):
 def handle_generate_yara_command(args):
     """Handle the generate-yara command."""
     try:
-        from .tools.threat_intel import YARAGenerator
+        from ..tools.threat_intel import YARAGenerator
 
         # Load analysis results if provided
         analysis_results = None
@@ -1372,7 +1372,7 @@ def handle_generate_yara_command(args):
 def handle_scan_yara_command(args):
     """Handle the scan-yara command."""
     try:
-        from .tools.threat_intel import YARAScanner
+        from ..tools.threat_intel import YARAScanner
 
         scanner = YARAScanner(rules_dir=args.rules_dir, rule_file=args.rule_file)
 
@@ -1404,7 +1404,7 @@ def handle_scan_yara_command(args):
 def handle_diff_command(args):
     """Handle the diff command."""
     try:
-        from .tools.diffing import BinaryDiffer
+        from ..tools.diffing import BinaryDiffer
 
         differ = BinaryDiffer()
         result = differ.diff(
@@ -1446,7 +1446,7 @@ def handle_diff_command(args):
 def handle_patch_analysis_command(args):
     """Handle the patch-analysis command."""
     try:
-        from .tools.diffing import PatchAnalyzer
+        from ..tools.diffing import PatchAnalyzer
 
         analyzer = PatchAnalyzer()
         vulnerabilities = analyzer.analyze_patch(
@@ -1472,7 +1472,7 @@ def handle_patch_analysis_command(args):
 def handle_detect_packer_command(args):
     """Handle the detect-packer command."""
     try:
-        from .tools.anti_analysis import PackerDetector
+        from ..tools.anti_analysis import PackerDetector
 
         detector = PackerDetector()
         info = detector.detect(args.binary_path)
@@ -1511,7 +1511,7 @@ def handle_detect_packer_command(args):
 def handle_unpack_command(args):
     """Handle the unpack command."""
     try:
-        from .tools.anti_analysis import UniversalUnpacker
+        from ..tools.anti_analysis import UniversalUnpacker
 
         unpacker = UniversalUnpacker()
         result = unpacker.unpack(
@@ -1535,7 +1535,7 @@ def handle_unpack_command(args):
 def handle_enhance_code_command(args):
     """Handle the enhance-code command."""
     try:
-        from .agents.ai.ai_enhanced import AICodeQualityEnhancer
+        from ..agents.ai.ai_enhanced import AICodeQualityEnhancer
 
         # Read code file
         with open(args.code_file, "r") as f:
@@ -1601,7 +1601,7 @@ def handle_recompile_command(args):
             print(f"Build report: {result['report_path']}")
             return 0
 
-        from .recompile_command import run_recompile_command
+        from ..recompile_command import run_recompile_command
 
         return run_recompile_command(
             binary_path=args.binary_path,
@@ -1685,7 +1685,7 @@ def _flatten_decompiled_output(result: dict) -> str:
 def handle_decompile_command(args):
     """Handle the decompile command."""
     try:
-        from .integrations.ghidra.ghidra_engine import GhidraConnectionError, GhidraEngine
+        from ..integrations.ghidra.ghidra_engine import GhidraConnectionError, GhidraEngine
 
         print("=" * 70)
         print("  REVENG Binary Decompilation")
@@ -1726,7 +1726,7 @@ def handle_decompile_command(args):
         if args.enhance and decompiled_code:
             print("Applying AI enhancement...")
             try:
-                from .agents.ai.ai_enhanced import AICodeQualityEnhancer
+                from ..agents.ai.ai_enhanced import AICodeQualityEnhancer
 
                 enhancer = AICodeQualityEnhancer()
                 enhanced = enhancer.enhance_function(
@@ -1778,7 +1778,7 @@ def handle_generate_exploit_command(args):
         else:
             print("Running vulnerability analysis...")
             # Run analysis first
-            from .analyzer import REVENGAnalyzer
+            from ..analyzer import REVENGAnalyzer
 
             analyzer = REVENGAnalyzer()
             analysis = analyzer.analyze(args.binary_path)
@@ -1821,7 +1821,7 @@ def handle_generate_exploit_command(args):
 
         # Generate exploit
         print("\nGenerating exploit...")
-        from .exploits.exploit_chain_generator import ExploitChainGenerator
+        from ..exploits.exploit_chain_generator import ExploitChainGenerator
 
         generator = ExploitChainGenerator()
         exploit = generator.generate_exploit(
