@@ -18,14 +18,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from reveng.analysis.analyzers.business_logic_extractor import BusinessLogicExtractor  # noqa: E402
 from reveng.analysis.analyzers.dotnet_analyzer import DotNetAnalyzer  # noqa: E402
+from reveng.analysis.pe.import_analyzer import ImportAnalyzer  # noqa: E402
+from reveng.analysis.pe.resource_extractor import PEResourceExtractor  # noqa: E402
 from reveng.core.dependency_manager import DependencyManager  # noqa: E402
 from reveng.core.logger import setup_logging  # noqa: E402
 from reveng.ghidra.scripting_engine import GhidraScriptingEngine  # noqa: E402
 from reveng.malware.behavioral_monitor import BehavioralMonitor  # noqa: E402
 from reveng.malware.memory_forensics import MemoryForensics  # noqa: E402
 from reveng.ml import MLIntegration  # noqa: E402
-from reveng.analysis.pe.import_analyzer import ImportAnalyzer  # noqa: E402
-from reveng.analysis.pe.resource_extractor import PEResourceExtractor  # noqa: E402
 from reveng.pipelines.automated_analysis import AutomatedAnalysisPipeline  # noqa: E402
 from reveng.plugins.manager import PluginManager  # noqa: E402
 from reveng.tools.hex_editor import HexEditor  # noqa: E402

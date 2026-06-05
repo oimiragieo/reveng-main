@@ -33,9 +33,7 @@ logger = logging.getLogger(__name__)
 
 # Import the robust C type parser
 try:
-    from reveng.tools.quality.c_type_parser import (
-        CTypeParser,
-    )
+    from reveng.tools.quality.c_type_parser import CTypeParser
 
     HAS_C_TYPE_PARSER = True
 except ImportError:

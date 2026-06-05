@@ -11,10 +11,7 @@ from reveng.malware.behavioral_monitor import (
     BehaviorType,
     ThreatLevel,
 )
-from reveng.ml.forensics_anomaly_models import (
-    BehavioralAnomalyModel,
-    ForensicsAnomalyModel,
-)
+from reveng.ml.forensics_anomaly_models import BehavioralAnomalyModel, ForensicsAnomalyModel
 
 
 def _event(

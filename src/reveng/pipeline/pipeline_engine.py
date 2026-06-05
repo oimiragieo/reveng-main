@@ -16,10 +16,7 @@ from typing import Any, Callable, Coroutine, Dict, List, Optional, TypeVar, cast
 
 import yaml
 
-from ..core.errors import (
-    PipelineExecutionError,
-    create_error_context,
-)
+from ..core.errors import PipelineExecutionError, create_error_context
 from ..core.logger import get_logger
 
 TResult = TypeVar("TResult")
@@ -839,9 +836,7 @@ class AnalysisPipeline:
         """Execute static analysis stage"""
         try:
             # Import analyzers
-            from ..analysis.analyzers.business_logic_extractor import (
-                BusinessLogicExtractor,
-            )
+            from ..analysis.analyzers.business_logic_extractor import BusinessLogicExtractor
             from ..analysis.analyzers.dotnet_analyzer import DotNetAnalyzer
 
             results = {}

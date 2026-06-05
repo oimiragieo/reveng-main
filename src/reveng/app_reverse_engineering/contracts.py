@@ -6,7 +6,11 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Sequence
 
-from reveng.core.result_contracts import RESULT_SCHEMA_VERSION, make_evidence_item, make_trace_reference
+from reveng.core.result_contracts import (
+    RESULT_SCHEMA_VERSION,
+    make_evidence_item,
+    make_trace_reference,
+)
 
 APP_RESULT_TYPE = "app_reverse_engineering_result"
 

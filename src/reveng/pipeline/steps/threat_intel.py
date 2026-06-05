@@ -17,9 +17,7 @@ def run_threat_intelligence(analyzer: "REVENGAnalyzer") -> None:
 
     try:
         if not getattr(analyzer, "threat_intelligence_correlator", None):
-            from reveng.security.threat_intelligence_correlator import (
-                ThreatIntelligenceCorrelator,
-            )
+            from reveng.security.threat_intelligence_correlator import ThreatIntelligenceCorrelator
 
             analyzer.threat_intelligence_correlator = ThreatIntelligenceCorrelator()
 

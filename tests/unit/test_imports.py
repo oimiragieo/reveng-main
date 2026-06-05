@@ -1,10 +1,6 @@
 """Sanity checks for AI enhanced data model imports."""
 
-from reveng.agents.ai.ai_enhanced_data_models import (
-    ConfidenceLevel,
-    EvidenceTracker,
-    MITREMapping,
-)
+from reveng.agents.ai.ai_enhanced_data_models import ConfidenceLevel, EvidenceTracker, MITREMapping
 
 
 def test_confidence_level_enum_contains_expected_members():

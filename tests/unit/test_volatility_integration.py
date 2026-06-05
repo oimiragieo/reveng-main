@@ -4,9 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from reveng.agent_sdk.mcp.servers.reveng_enterprise_server import (
-    REVENGEnterpriseServer,
-)
+from reveng.agent_sdk.mcp.servers.reveng_enterprise_server import REVENGEnterpriseServer
 from reveng.malware.memory_forensics import MemoryForensics
 from reveng.malware.volatility_analyzer import VolatilityAnalyzer
 

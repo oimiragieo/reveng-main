@@ -9,13 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ...core.logger import get_logger
-from ..base import (
-    AIPlugin,
-    PluginCategory,
-    PluginContext,
-    PluginMetadata,
-    PluginPriority,
-)
+from ..base import AIPlugin, PluginCategory, PluginContext, PluginMetadata, PluginPriority
 
 logger = get_logger()
 

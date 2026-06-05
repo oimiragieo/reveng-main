@@ -12,10 +12,7 @@ from enum import Enum
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-from ...core.errors import (
-    AnalysisFailureError,
-    create_error_context,
-)
+from ...core.errors import AnalysisFailureError, create_error_context
 from ...core.logger import get_logger
 
 

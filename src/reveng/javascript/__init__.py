@@ -18,10 +18,7 @@ Integrates best-of-breed open source tools:
 - Prettier (formatting)
 """
 
-from .bundle_reverse_engineer import (
-    BundleReverseEngineeringResult,
-    JavaScriptBundleReverseEngineer,
-)
+from .bundle_reverse_engineer import BundleReverseEngineeringResult, JavaScriptBundleReverseEngineer
 from .deobfuscator import (
     DeobfuscationResult,
     DeobfuscationStage,

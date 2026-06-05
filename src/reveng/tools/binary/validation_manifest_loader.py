@@ -34,11 +34,7 @@ except ImportError:
     logging.warning("PyYAML not installed - only JSON manifests supported")
     logging.warning("Install with: pip install pyyaml")
 
-from reveng.tools.binary.validation_config import (
-    SmokeTest,
-    ValidationConfig,
-    ValidationMode,
-)
+from reveng.tools.binary.validation_config import SmokeTest, ValidationConfig, ValidationMode
 
 logger = logging.getLogger(__name__)
 

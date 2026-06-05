@@ -10,11 +10,7 @@ from dataclasses import asdict, dataclass
 from typing import Dict, List, Optional
 
 from .api_mappings import get_api_mapping
-from .pattern_matcher import (
-    detect_api_calls,
-    detect_api_patterns,
-    get_translation_complexity,
-)
+from .pattern_matcher import detect_api_calls, detect_api_patterns, get_translation_complexity
 
 
 @dataclass

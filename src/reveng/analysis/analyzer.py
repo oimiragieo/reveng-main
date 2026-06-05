@@ -942,9 +942,7 @@ class REVENGAnalyzer:
         logger.info("Running Java bytecode analysis")
 
         try:
-            from reveng.tools.languages.java_bytecode_analyzer import (
-                JavaBytecodeAnalyzer,
-            )
+            from reveng.tools.languages.java_bytecode_analyzer import JavaBytecodeAnalyzer
 
             # Run Java analyzer
             analyzer = JavaBytecodeAnalyzer(output_dir=str(self.analysis_folder / "java_analysis"))
@@ -1011,9 +1009,7 @@ class REVENGAnalyzer:
         logger.info("Running Python bytecode analysis")
 
         try:
-            from reveng.tools.languages.python_bytecode_analyzer import (
-                PythonBytecodeAnalyzer,
-            )
+            from reveng.tools.languages.python_bytecode_analyzer import PythonBytecodeAnalyzer
 
             # Run Python analyzer
             analyzer = PythonBytecodeAnalyzer(
@@ -1107,9 +1103,7 @@ class REVENGAnalyzer:
                 logger.info("=" * 70)
 
                 try:
-                    from reveng.integrations.local_disassembler import (
-                        get_local_disassembler,
-                    )
+                    from reveng.integrations.local_disassembler import get_local_disassembler
 
                     local_disasm = get_local_disassembler()
                     if local_disasm:
@@ -1293,9 +1287,7 @@ class REVENGAnalyzer:
 
         # Run human readable converter directly
         try:
-            from reveng.tools.core.human_readable_converter_fixed import (
-                HumanReadableConverter,
-            )
+            from reveng.tools.core.human_readable_converter_fixed import HumanReadableConverter
 
             # Pass analysis folder so converter can find Functions directory
             converter = HumanReadableConverter(source_folder=str(self.analysis_folder))
@@ -1390,9 +1382,7 @@ class REVENGAnalyzer:
 
         # Run binary validator
         try:
-            from reveng.tools.binary.validation_manifest_loader import (
-                load_validation_manifest,
-            )
+            from reveng.tools.binary.validation_manifest_loader import load_validation_manifest
             from reveng.tools.core.binary_validator import BinaryValidator
 
             validator = BinaryValidator()
@@ -1455,9 +1445,7 @@ class REVENGAnalyzer:
         try:
             # Lazy load corporate exposure detector
             if not self.corporate_exposure_detector:
-                from reveng.security.corporate_exposure_detector import (
-                    CorporateExposureDetector,
-                )
+                from reveng.security.corporate_exposure_detector import CorporateExposureDetector
 
                 self.corporate_exposure_detector = CorporateExposureDetector()
 

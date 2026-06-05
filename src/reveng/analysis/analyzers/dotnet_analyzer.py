@@ -12,11 +12,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ...core.errors import (
-    AnalysisFailureError,
-    MissingDependencyError,
-    create_error_context,
-)
+from ...core.errors import AnalysisFailureError, MissingDependencyError, create_error_context
 from ...core.logger import get_logger
 
 

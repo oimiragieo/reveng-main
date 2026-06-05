@@ -18,12 +18,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .analysis.analyzer import REVENGAnalyzer
 from .app_reverse_engineering import AppCorpusEntry, create_default_framework, run_app_corpus_sync
-from .core.exceptions import (
-    AnalysisError,
-    ValidationError,
-)
-from .core.validation import validate_analysis_config, validate_file_path
-from .ml import MLIntegration
+from .core.exceptions import AnalysisError, ValidationError
 from .core.result_contracts import (
     AnalysisResultContract,
     MalwareDetectionResultContract,
@@ -31,6 +26,8 @@ from .core.result_contracts import (
     make_evidence_item,
     make_trace_reference,
 )
+from .core.validation import validate_analysis_config, validate_file_path
+from .ml import MLIntegration
 
 logger = logging.getLogger(__name__)
 

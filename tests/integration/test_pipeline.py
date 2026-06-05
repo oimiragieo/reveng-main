@@ -7,10 +7,7 @@ Tests critical stages of the REVENG binary analysis pipeline
 import unittest
 from pathlib import Path
 
-from reveng.tools.binary.validation_config import (
-    ValidationConfig,
-    ValidationMode,
-)
+from reveng.tools.binary.validation_config import ValidationConfig, ValidationMode
 from reveng.tools.quality.c_type_parser import CTypeParser
 
 

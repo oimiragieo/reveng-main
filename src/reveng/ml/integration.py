@@ -13,11 +13,7 @@ from typing import Any, Dict, List, Optional
 
 from ..core.logger import get_logger
 from .anomaly_detection import MLAnomalyDetection
-from .code_reconstruction import (
-    CodeFragment,
-    MLCodeReconstruction,
-    ReconstructionTask,
-)
+from .code_reconstruction import CodeFragment, MLCodeReconstruction, ReconstructionTask
 
 logger = get_logger(__name__)
 

@@ -10,18 +10,15 @@ from reveng.javascript.source_map_recoverer import SourceMapRecoverer
 
 
 def test_find_sourcemaps_local_returns_inline_data_url(tmp_path: Path):
-    inline_map = (
-        "data:application/json;base64,"
-        + base64.b64encode(
-            json.dumps(
-                {
-                    "version": 3,
-                    "sources": ["src/index.tsx"],
-                    "sourcesContent": ["export const main = () => 'ok';\n"],
-                }
-            ).encode("utf-8")
-        ).decode("ascii")
-    )
+    inline_map = "data:application/json;base64," + base64.b64encode(
+        json.dumps(
+            {
+                "version": 3,
+                "sources": ["src/index.tsx"],
+                "sourcesContent": ["export const main = () => 'ok';\n"],
+            }
+        ).encode("utf-8")
+    ).decode("ascii")
     bundle_path = tmp_path / "cli.tsx"
     bundle_path.write_text(
         f"export const run = () => 'ok';\n//# sourceMappingURL={inline_map}\n",
@@ -50,22 +47,19 @@ def test_find_sourcemaps_local_tolerates_non_utf8_bundle_bytes(tmp_path: Path):
 
 
 def test_recover_decodes_inline_data_url_and_normalizes_duplicate_src_root():
-    inline_map = (
-        "data:application/json;base64,"
-        + base64.b64encode(
-            json.dumps(
-                {
-                    "version": 3,
-                    "sourceRoot": "src",
-                    "sources": ["src/entrypoints/cli.tsx?cache=1", "./src/lib/greet.ts"],
-                    "sourcesContent": [
-                        "export const main = () => 'ok';\n",
-                        "export const greet = () => 'hi';\n",
-                    ],
-                }
-            ).encode("utf-8")
-        ).decode("ascii")
-    )
+    inline_map = "data:application/json;base64," + base64.b64encode(
+        json.dumps(
+            {
+                "version": 3,
+                "sourceRoot": "src",
+                "sources": ["src/entrypoints/cli.tsx?cache=1", "./src/lib/greet.ts"],
+                "sourcesContent": [
+                    "export const main = () => 'ok';\n",
+                    "export const greet = () => 'hi';\n",
+                ],
+            }
+        ).encode("utf-8")
+    ).decode("ascii")
 
     result = SourceMapRecoverer().recover(inline_map)
 

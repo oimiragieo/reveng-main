@@ -49,7 +49,6 @@ from ....app_reverse_engineering import (
     run_app_corpus,
     select_app_corpus_entries,
 )
-from ....integrations.ghidra.ghidra_engine import GhidraEngine
 from ....core.result_contracts import (
     RESULT_SCHEMA_VERSION,
     build_mcp_resource_result,
@@ -57,6 +56,7 @@ from ....core.result_contracts import (
     make_evidence_item,
     make_trace_reference,
 )
+from ....integrations.ghidra.ghidra_engine import GhidraEngine
 from ....tools.anti_analysis.bun_extractor import run_bun_sea_workflow
 from ..server import MCPPrompt, MCPResource, MCPServer, MCPTool
 

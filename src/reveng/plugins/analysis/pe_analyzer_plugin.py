@@ -9,13 +9,7 @@ from typing import Any, Dict
 
 from ...core.errors import PluginError
 from ...core.logger import get_logger
-from ..base import (
-    AnalysisPlugin,
-    PluginCategory,
-    PluginContext,
-    PluginMetadata,
-    PluginPriority,
-)
+from ..base import AnalysisPlugin, PluginCategory, PluginContext, PluginMetadata, PluginPriority
 
 logger = get_logger()
 
