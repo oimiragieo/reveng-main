@@ -149,13 +149,11 @@ class ToolchainChecker:
 
         for flag in version_flags:
             try:
-                result = subprocess.run(
-                    [cmd, flag], capture_output=True, text=True, timeout=5
-                )
+                result = subprocess.run([cmd, flag], capture_output=True, text=True, timeout=5)
                 if result.returncode == 0:
                     # Extract first line
                     return result.stdout.split("\n")[0][:80]
-            except:
+            except Exception:
                 continue
 
         return None
@@ -168,7 +166,7 @@ class ToolchainChecker:
             try:
                 mod = __import__(module)
                 version = getattr(mod, "__version__", "installed")
-            except:
+            except Exception:
                 version = "installed"
 
             return {"available": True, "version": version}
@@ -213,9 +211,7 @@ class ToolchainChecker:
     def _generate_summary(self):
         """Generate summary statistics"""
         total_compilers = len(self.results["compilers"])
-        available_compilers = sum(
-            1 for r in self.results["compilers"].values() if r["available"]
-        )
+        available_compilers = sum(1 for r in self.results["compilers"].values() if r["available"])
 
         total_packages = len(self.results["python_packages"])
         available_packages = sum(
@@ -223,9 +219,7 @@ class ToolchainChecker:
         )
 
         total_optional = len(self.results["optional"])
-        available_optional = sum(
-            1 for r in self.results["optional"].values() if r["available"]
-        )
+        available_optional = sum(1 for r in self.results["optional"].values() if r["available"])
 
         self.results["summary"] = {
             "compilers": {
@@ -264,20 +258,14 @@ class ToolchainChecker:
         print()
 
         if summary["ready"]:
-            print(
-                f"{Colors.GREEN}{Colors.BOLD}[OK] Toolchain ready for reassembly{Colors.END}"
-            )
+            print(f"{Colors.GREEN}{Colors.BOLD}[OK] Toolchain ready for reassembly{Colors.END}")
         else:
-            print(
-                f"{Colors.YELLOW}{Colors.BOLD}[WARNING] Missing required components{Colors.END}"
-            )
+            print(f"{Colors.YELLOW}{Colors.BOLD}[WARNING] Missing required components{Colors.END}")
 
     def show_fix_instructions(self):
         """Show installation instructions for missing components"""
         missing_compilers = [
-            name
-            for name, result in self.results["compilers"].items()
-            if not result["available"]
+            name for name, result in self.results["compilers"].items() if not result["available"]
         ]
         missing_packages = [
             name
@@ -319,9 +307,7 @@ class ToolchainChecker:
                 print("xcode-select --install")
 
         print()
-        print(
-            f"{Colors.YELLOW}After installing, run: python tools/check_toolchain.py{Colors.END}"
-        )
+        print(f"{Colors.YELLOW}After installing, run: python tools/check_toolchain.py{Colors.END}")
 
 
 def main():
@@ -337,11 +323,12 @@ def main():
         help="Show installation instructions for missing components",
     )
     parser.add_argument(
-        "--json", action="store_true", help="Output results in JSON format"
+        "--check-only",
+        action="store_true",
+        help="Only check the toolchain without showing fix instructions (default behavior)",
     )
-    parser.add_argument(
-        "--no-color", action="store_true", help="Disable colored output"
-    )
+    parser.add_argument("--json", action="store_true", help="Output results in JSON format")
+    parser.add_argument("--no-color", action="store_true", help="Disable colored output")
 
     args = parser.parse_args()
 

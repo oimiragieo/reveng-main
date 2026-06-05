@@ -1,61 +1,26 @@
-# Tools - Decompilers
+# `claude.md` — `tools/decompilers`
 
-## Overview
+**Repository path:** `src/reveng/tools/decompilers/`
 
-Decompiler integration and management tools, providing interfaces to various decompilation engines including Ghidra, IDA, Binary Ninja, and custom decompilers.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/tools/decompilers/`
+## Python modules
 
-**File Count:** 2 Python files
+### `__init__.py`
+- **Summary:** Decompiler Integration Tools
 
-## Key Capabilities
+### `download_decompilers.py`
+- **Summary:** REVENG Decompiler Download Script
+- **Functions / coroutines:**
+  - `def download_file()` — Download file with progress indicator
+  - `def verify_checksum()` — Verify file SHA256 checksum
+  - `def test_jar()` — Test if JAR file is valid
+  - `def download_decompilers()` — Download all decompilers
+  - `def main()` — Main function
 
-### Decompiler Integration
-- Ghidra headless decompiler
-- IDA Pro integration
-- Binary Ninja integration
-- Custom REVENG decompiler
+## Other files in this folder
 
-### Decompilation Management
-- Batch decompilation
-- Result caching
-- Output formatting
-- Error handling
-
-## Usage Examples
-
-### Example 1: Decompile with Ghidra
-
-```python
-from reveng.tools.decompilers import GhidraDecompiler
-
-decompiler = GhidraDecompiler()
-result = decompiler.decompile("/path/to/binary.exe")
-
-for function_name, code in result['functions'].items():
-    print(f"Function: {function_name}")
-    print(code)
-```
-
-### Example 2: Batch Decompilation
-
-```python
-from reveng.tools.decompilers import BatchDecompiler
-
-batch = BatchDecompiler(engine="ghidra")
-results = batch.decompile_directory("/path/to/binaries/")
-
-for binary, result in results.items():
-    print(f"{binary}: {len(result['functions'])} functions")
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/integrations/ghidra/` - Ghidra integration
-- `/home/user/reveng-main/src/reveng/lifting/` - Code lifting
+- `README.md`
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

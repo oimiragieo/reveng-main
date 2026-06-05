@@ -1,0 +1,338 @@
+{
+  "language": "dotnet",
+  "adapter_name": "dotnet_app_workflow",
+  "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_dotnet.dll",
+  "input_root": "C:\\dev\\projects\\reveng-main\\test_samples",
+  "output_dir": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app",
+  "source_count": 1,
+  "framework_version": "Unknown",
+  "runtime_version": "Unknown",
+  "gui_framework": "Unknown",
+  "entrypoints": [
+    ""
+  ],
+  "dependencies": [],
+  "namespaces": [],
+  "types": [],
+  "resources": {
+    "icons": [],
+    "strings": [],
+    "manifests": [],
+    "custom_resources": []
+  },
+  "obfuscation_level": "None",
+  "analysis_confidence": 0.0,
+  "il_metadata": {
+    "has_clr_header": true,
+    "architecture": "x86",
+    "clr_rva": "0x1100",
+    "clr_size": 72,
+    "tooling": {
+      "ildasm": {
+        "available": true,
+        "used": false,
+        "output": null
+      },
+      "ilspy": {
+        "available": false,
+        "used": false,
+        "output_dir": null
+      }
+    }
+  },
+  "tooling": {
+    "ildasm": {
+      "available": true,
+      "used": false,
+      "output": null
+    },
+    "ilspy": {
+      "available": false,
+      "used": false,
+      "output_dir": null
+    }
+  },
+  "decompiled_project": {
+    "available": false,
+    "project_file_count": 0,
+    "project_files": [],
+    "source_file_count": 0,
+    "config_file_count": 0,
+    "package_references": [],
+    "project_references": [],
+    "target_frameworks": []
+  },
+  "topic_match_counts": {
+    "project_structure": 2,
+    "assemblies_and_types": 2,
+    "dependencies_and_resources": 0,
+    "entrypoints_and_gui": 0,
+    "runtime_and_obfuscation": 0
+  },
+  "warnings": [],
+  "schema_version": "1.0",
+  "result_type": "app_reverse_engineering_result",
+  "validation": {
+    "grade": "partial_recovery",
+    "summary": "Recovered 1 source artifact(s), 4 topic evidence snippet(s), and 0 primary artifact(s); warnings=0.",
+    "evidence_count": 12,
+    "topic_evidence_count": 4,
+    "artifact_count": 0,
+    "warning_count": 0
+  },
+  "evidence": [
+    {
+      "kind": "input_sample",
+      "path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_dotnet.dll",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "input_app"
+    },
+    {
+      "kind": "analysis_summary",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\analysis.json",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "analysis_summary",
+      "metadata": {
+        "source_count": 1
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\01-project-structure.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "project_structure",
+        "match_count": 2
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\02-assemblies-and-types.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "assemblies_and_types",
+        "match_count": 2
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\03-dependencies-and-resources.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "dependencies_and_resources",
+        "match_count": 0
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\04-entrypoints-and-gui.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "entrypoints_and_gui",
+        "match_count": 0
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\05-runtime-and-obfuscation.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "runtime_and_obfuscation",
+        "match_count": 0
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\domains\\project-structure.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "project_structure"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\domains\\assemblies-and-types.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "assemblies_and_types"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\domains\\dependencies-and-resources.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "dependencies_and_resources"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\domains\\entrypoints-and-gui.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "entrypoints_and_gui"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\domains\\runtime-and-obfuscation.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "runtime_and_obfuscation"
+      }
+    }
+  ],
+  "provenance": {
+    "inputs": [
+      {
+        "kind": "app_input",
+        "path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_dotnet.dll",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "input_app",
+        "metadata": {
+          "input_root": "C:\\dev\\projects\\reveng-main\\test_samples"
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "kind": "analysis_summary",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\analysis.json",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "analysis_summary"
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\01-project-structure.md",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "project_structure"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\02-assemblies-and-types.md",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "assemblies_and_types"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\03-dependencies-and-resources.md",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "dependencies_and_resources"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\04-entrypoints-and-gui.md",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "entrypoints_and_gui"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\05-runtime-and-obfuscation.md",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "runtime_and_obfuscation"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\domains\\project-structure.md",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "project_structure"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\domains\\assemblies-and-types.md",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "assemblies_and_types"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\domains\\dependencies-and-resources.md",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "dependencies_and_resources"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\domains\\entrypoints-and-gui.md",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "entrypoints_and_gui"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app\\SPECS\\domains\\runtime-and-obfuscation.md",
+        "trace_id": "app-re::dotnet::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "runtime_and_obfuscation"
+        }
+      }
+    ],
+    "stages": [
+      "input_inventory",
+      "spec_generation",
+      "domain_split",
+      "capability_assessment",
+      "analysis_summary_serialization"
+    ],
+    "references": [
+      {
+        "relationship": "analyzed_under",
+        "target": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app_attempt_1\\dotnet-sample-app",
+        "trace_id": "app-re::dotnet::analysis",
+        "metadata": {
+          "adapter_name": "dotnet_app_workflow"
+        }
+      }
+    ],
+    "tools": [
+      "dotnet_app_workflow"
+    ]
+  },
+  "capability_report": {
+    "schema_version": "1.0",
+    "headline": "capability_baseline",
+    "dimensions": {
+      "artifacts": {},
+      "oracle_alignment": {
+        "present": false
+      },
+      "javascript_smoke": null,
+      "javascript_behavior_probe": null
+    }
+  }
+}

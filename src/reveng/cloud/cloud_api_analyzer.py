@@ -5,7 +5,7 @@ Reverse engineers undocumented cloud APIs (GCP Discovery Service, Azure APIs).
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 class CloudAPIAnalyzer:

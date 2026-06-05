@@ -13,10 +13,9 @@ Uses Python's ast module for transformations (similar to Babel but pure Python)
 For production, would integrate with Node.js Babel via subprocess.
 """
 
-import ast
 import logging
-from typing import Any, Dict, List, Optional, Set
 from dataclasses import dataclass
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -368,14 +367,15 @@ class StringArrayDeobfuscator:
 
         # Find accessor function
         # _0x5678(index) → string_array[index]
-
         # Simple replacement for demo
         # Would need proper AST traversal in production
 
         for i, string in enumerate(string_array):
             # Replace _0x...(i) with 'string'
             pattern = r"_0x[0-9a-f]+\(" + str(i) + r"\)"
-            replacement = f"'{string}'"
-            code = re.sub(pattern, replacement, code)
+            # Use a callable replacement so backslash escapes (\x41) and group
+            # references (\1) in the decoded string are inserted literally
+            # instead of being interpreted by re.sub.
+            code = re.sub(pattern, lambda m, s=string: "'" + s + "'", code)
 
         return code

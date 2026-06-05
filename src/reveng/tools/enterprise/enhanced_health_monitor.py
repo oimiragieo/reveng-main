@@ -184,7 +184,7 @@ class EnhancedModulesHealthChecker(HealthChecker):
 
         # Check enhanced analysis modules
         enhanced_modules = [
-            "tools.ai_enhanced_analyzer",
+            "reveng.agents.ai.ai_enhanced_orchestrator",
             "tools.corporate_exposure_detector",
             "tools.vulnerability_discovery_engine",
             "tools.threat_intelligence_correlator",
@@ -218,7 +218,7 @@ class EnhancedModulesHealthChecker(HealthChecker):
 
         # Check data models
         try:
-            from ..ai.ai_enhanced_data_models import UniversalAnalysisResult
+            from ...core.ai_models import UniversalAnalysisResult
 
             metrics.append(
                 HealthMetric(
@@ -226,7 +226,7 @@ class EnhancedModulesHealthChecker(HealthChecker):
                     value="available",
                     status="healthy",
                     timestamp=datetime.now(),
-                    message="Enhanced data models are available",
+                    message=f"{UniversalAnalysisResult.__name__} is available",
                 )
             )
         except ImportError as e:
@@ -663,12 +663,8 @@ class EnhancedHealthMonitor:
 
         # Calculate uptime percentage
         total_checks = len(recent_health)
-        healthy_checks = len(
-            [h for h in recent_health if h.overall_status == "healthy"]
-        )
-        uptime_percentage = (
-            (healthy_checks / total_checks) * 100 if total_checks > 0 else 0
-        )
+        healthy_checks = len([h for h in recent_health if h.overall_status == "healthy"])
+        uptime_percentage = (healthy_checks / total_checks) * 100 if total_checks > 0 else 0
 
         # Component statistics
         component_stats = {}
@@ -680,9 +676,7 @@ class EnhancedHealthMonitor:
             ]
 
             if component_health_data:
-                healthy_count = len(
-                    [c for c in component_health_data if c.status == "healthy"]
-                )
+                healthy_count = len([c for c in component_health_data if c.status == "healthy"])
                 component_uptime = (healthy_count / len(component_health_data)) * 100
 
                 component_stats[component_name] = {
@@ -729,12 +723,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Enhanced Analysis Health Monitor")
-    parser.add_argument(
-        "--interval", type=int, default=60, help="Health check interval in seconds"
-    )
-    parser.add_argument(
-        "--check-once", action="store_true", help="Run health check once and exit"
-    )
+    parser.add_argument("--interval", type=int, default=60, help="Health check interval in seconds")
+    parser.add_argument("--check-once", action="store_true", help="Run health check once and exit")
     parser.add_argument("--export", help="Export health data to file")
     parser.add_argument(
         "--summary",

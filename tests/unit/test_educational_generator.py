@@ -40,9 +40,7 @@ def sample_results() -> dict:
 def test_generator_creates_output_directories(tmp_path: Path, sample_results: dict):
     generator = EducationalContentGenerator(output_dir=str(tmp_path))
 
-    campaign = generator.generate_comprehensive_campaign(
-        sample_results, "security_demo"
-    )
+    campaign = generator.generate_comprehensive_campaign(sample_results, "security_demo")
 
     assert "content_summary" in campaign
     summary = campaign["content_summary"]

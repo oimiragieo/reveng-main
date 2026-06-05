@@ -1,69 +1,45 @@
-# Tools - Translation
+# `claude.md` — `tools/translation`
 
-## Overview
+**Repository path:** `src/reveng/tools/translation/`
 
-Binary translation and code conversion tools for translating between different binary formats, architectures, and intermediate representations.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/tools/translation/`
+## Python modules
 
-**File Count:** 4 Python files
+### `__init__.py`
+- **Summary:** Code Translation Tools
 
-## Key Capabilities
+### `api_mappings.py`
+- **Summary:** Windows API to Python mappings database.
+- **Classes:**
+  - `APIMapping` — Represents a Windows API to Python translation mapping.
+- **Functions / coroutines:**
+  - `def get_api_mapping()` — Get the Python mapping for a Windows API.
+  - `def get_mappings_by_category()` — Get all API mappings in a specific category.
+  - `def get_all_categories()` — Get list of all API categories.
 
-### Architecture Translation
-- x86 to ARM translation
-- x64 to x86 translation
-- MIPS to x86 translation
-- Cross-architecture emulation
+### `hint_generator.py`
+- **Summary:** Translation hint generator for AI-assisted C-to-Python conversion.
+- **Classes:**
+  - `TranslationHint` — Represents a translation hint for converting C code to Python.
+- **Functions / coroutines:**
+  - `def generate_translation_hints()` — Generate comprehensive translation hints for C code.
+  - `def generate_summary()` — Generate high-level summary of translation task.
+  - `def calculate_coverage()` — Calculate what percentage of detected APIs have known mappings.
+  - `def estimate_effort()` — Estimate translation effort based on complexity and hints.
+  - `def generate_inline_hints()` — Generate C code with inline translation hints as comments.
+  - `def generate_translation_guide()` — Generate a comprehensive translation guide document.
 
-### Format Translation
-- PE to ELF conversion
-- ELF to PE conversion
-- Mach-O conversion
-- LLVM IR generation
-
-### Code Translation
-- Assembly to C
-- Binary to LLVM IR
-- Binary to WebAssembly
-- Bytecode translation
-
-## Usage Examples
-
-### Example 1: Translate Architecture
-
-```python
-from reveng.tools.translation import ArchitectureTranslator
-
-translator = ArchitectureTranslator()
-result = translator.translate(
-    binary="/path/to/x86.exe",
-    target_arch="arm64"
-)
-
-print(f"Translated binary: {result['output_path']}")
-print(f"Instructions translated: {result['instruction_count']}")
-```
-
-### Example 2: Generate LLVM IR
-
-```python
-from reveng.tools.translation import LLVMTranslator
-
-translator = LLVMTranslator()
-llvm_ir = translator.to_llvm_ir("/path/to/binary.exe")
-
-with open("output.ll", "w") as f:
-    f.write(llvm_ir)
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/lifting/` - Code lifting
-- `/home/user/reveng-main/src/reveng/compilation/` - Compilation utilities
+### `pattern_matcher.py`
+- **Summary:** Pattern matcher for detecting Windows API calls in C code.
+- **Classes:**
+  - `APICallMatch` — Represents a detected Windows API call in C code.
+- **Functions / coroutines:**
+  - `def detect_api_calls()` — Detect Windows API calls in C code.
+  - `def extract_variables_from_call()` — Extract variable names used in an API call.
+  - `def extract_primary_variable()` — Extract the primary variable name from an argument expression.
+  - `def detect_api_patterns()` — Detect common Windows API usage patterns.
+  - `def get_translation_complexity()` — Estimate translation complexity based on API calls detected.
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

@@ -11,20 +11,17 @@ Guarantees behavioral equivalence between original and recompiled binaries:
 Based on research from Trail of Bits DIFFER (2024) and Google's differential fuzzing
 """
 
-import os
-import sys
-import subprocess
-import tempfile
-import shutil
-import logging
 import asyncio
 import hashlib
-from pathlib import Path
-from typing import List, Dict, Optional, Set, Tuple, Any
+import json
+import logging
+import subprocess
+import tempfile
+import time
 from dataclasses import dataclass, field
 from enum import Enum
-import json
-import time
+from pathlib import Path
+from typing import Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -202,9 +199,7 @@ class DifferentialFuzzingEngine:
             # Execute both binaries
             orig_result = await self._execute_binary(self.original_binary, test_input)
 
-            recomp_result = await self._execute_binary(
-                self.recompiled_binary, test_input
-            )
+            recomp_result = await self._execute_binary(self.recompiled_binary, test_input)
 
             # Track coverage
             self.coverage_tracker.add_execution(self.original_binary, orig_result)
@@ -215,9 +210,7 @@ class DifferentialFuzzingEngine:
                 matching += 1
             else:
                 # Found divergence
-                divergence = await self._analyze_divergence(
-                    test_input, orig_result, recomp_result
-                )
+                divergence = await self._analyze_divergence(test_input, orig_result, recomp_result)
                 divergences.append(divergence)
 
                 logger.warning(
@@ -306,9 +299,7 @@ class DifferentialFuzzingEngine:
 
         return inputs
 
-    async def _run_afl_fuzzing(
-        self, seed_dir: Path, out_dir: Path, num_inputs: int
-    ) -> List[bytes]:
+    async def _run_afl_fuzzing(self, seed_dir: Path, out_dir: Path, num_inputs: int) -> List[bytes]:
         """Run AFL++ fuzzing to generate inputs"""
         logger.info("Running AFL++ fuzzing...")
 
@@ -358,9 +349,7 @@ class DifferentialFuzzingEngine:
             logger.error(f"AFL++ fuzzing failed: {e}")
             return []
 
-    async def _run_libfuzzer(
-        self, seed_dir: Path, out_dir: Path, num_inputs: int
-    ) -> List[bytes]:
+    async def _run_libfuzzer(self, seed_dir: Path, out_dir: Path, num_inputs: int) -> List[bytes]:
         """Run libFuzzer to generate inputs"""
         logger.info("libFuzzer not yet implemented, using random generation")
         # libFuzzer requires the binary to be compiled with -fsanitize=fuzzer
@@ -407,9 +396,7 @@ class DifferentialFuzzingEngine:
 
         return inputs
 
-    async def _execute_binary(
-        self, binary_path: str, input_data: bytes
-    ) -> ExecutionResult:
+    async def _execute_binary(self, binary_path: str, input_data: bytes) -> ExecutionResult:
         """
         Execute binary with given input and capture results
 
@@ -481,9 +468,7 @@ class DifferentialFuzzingEngine:
                 crashed=True,
             )
 
-    def _results_match(
-        self, result1: ExecutionResult, result2: ExecutionResult
-    ) -> bool:
+    def _results_match(self, result1: ExecutionResult, result2: ExecutionResult) -> bool:
         """
         Compare execution results for equivalence
 
@@ -698,9 +683,7 @@ class DifferentialFuzzingEngine:
 
         return min(1.0, confidence)
 
-    async def symbolic_equivalence_check(
-        self, function_name: Optional[str] = None
-    ) -> bool:
+    async def symbolic_equivalence_check(self, function_name: Optional[str] = None) -> bool:
         """
         Use symbolic execution to prove equivalence
 
@@ -736,9 +719,7 @@ class DifferentialFuzzingEngine:
 
             equivalent = orig_outputs == recomp_outputs
 
-            logger.info(
-                f"Symbolic equivalence check: {'PASS' if equivalent else 'FAIL'}"
-            )
+            logger.info(f"Symbolic equivalence check: {'PASS' if equivalent else 'FAIL'}")
 
             return equivalent
 
@@ -771,9 +752,7 @@ class DifferentialFuzzingEngine:
                     "severity": d.severity,
                     "input_hash": d.input_hash,
                     "input_size": len(d.input_data),
-                    "minimized_size": (
-                        len(d.minimized_input) if d.minimized_input else None
-                    ),
+                    "minimized_size": (len(d.minimized_input) if d.minimized_input else None),
                     "original_exit_code": d.original_result.exit_code,
                     "recompiled_exit_code": d.recompiled_result.exit_code,
                 }
@@ -838,9 +817,7 @@ class DivergenceAnalyzer:
         - Control flow analysis
         - Data flow analysis
         """
-        logger.info(
-            f"Analyzing root cause of {divergence.divergence_type.value} divergence..."
-        )
+        logger.info(f"Analyzing root cause of {divergence.divergence_type.value} divergence...")
 
         root_causes = []
 
@@ -856,7 +833,7 @@ class DivergenceAnalyzer:
             diff = await self._compare_disassembly(original_binary, recompiled_binary)
             if diff:
                 root_causes.append(f"Instruction differences: {diff}")
-        except:
+        except Exception:
             pass
 
         if not root_causes:

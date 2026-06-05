@@ -364,9 +364,7 @@ class CTypeParser:
                 # Handle hex addresses with 0x prefix or plain decimal
                 if isinstance(func_addr, str):
                     address = (
-                        int(func_addr, 16)
-                        if func_addr.startswith("0x")
-                        else int(func_addr, 0)
+                        int(func_addr, 16) if func_addr.startswith("0x") else int(func_addr, 0)
                     )
                 else:
                     address = int(func_addr)
@@ -403,22 +401,15 @@ class CTypeParser:
             return CType(base_type="void", qualifiers=[], pointer_depth=1)
 
         # Size/length types
-        if any(
-            word in var_name_lower for word in ["size", "len", "length", "count", "num"]
-        ):
+        if any(word in var_name_lower for word in ["size", "len", "length", "count", "num"]):
             return CType(base_type="size_t", qualifiers=[], pointer_depth=0)
 
         # Buffer/string types
-        if any(
-            word in var_name_lower
-            for word in ["buffer", "buf", "str", "string", "text"]
-        ):
+        if any(word in var_name_lower for word in ["buffer", "buf", "str", "string", "text"]):
             return CType(base_type="char", qualifiers=[], pointer_depth=1)
 
         # Handle/descriptor types
-        if any(
-            word in var_name_lower for word in ["handle", "hnd", "fd", "descriptor"]
-        ):
+        if any(word in var_name_lower for word in ["handle", "hnd", "fd", "descriptor"]):
             return CType(base_type="HANDLE", qualifiers=[], pointer_depth=0)
 
         # Default to int

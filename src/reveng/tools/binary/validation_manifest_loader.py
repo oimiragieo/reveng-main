@@ -34,11 +34,7 @@ except ImportError:
     logging.warning("PyYAML not installed - only JSON manifests supported")
     logging.warning("Install with: pip install pyyaml")
 
-from reveng.tools.binary.validation_config import (
-    SmokeTest,
-    ValidationConfig,
-    ValidationMode,
-)
+from reveng.tools.binary.validation_config import SmokeTest, ValidationConfig, ValidationMode
 
 logger = logging.getLogger(__name__)
 
@@ -118,25 +114,29 @@ class ValidationManifestLoader:
 
         if binary_config:
             # Use binary-specific settings
-            mode = self._parse_mode(binary_config.get("mode", default_mode_str))
-            smoke_tests = self._parse_smoke_tests(binary_config.get("smoke_tests", []))
-            checksum_algorithm = binary_config.get("checksum_algorithm", "sha256")
+            config = ValidationConfig.from_dict(
+                {
+                    "mode": binary_config.get("mode", default_mode_str),
+                    "smoke_tests": binary_config.get("smoke_tests", []),
+                    "checksum_algorithm": binary_config.get("checksum_algorithm", "sha256"),
+                    "sandbox_enabled": sandbox_enabled,
+                    "allow_network": allow_network,
+                    "max_runtime": max_runtime,
+                }
+            )
         else:
             # Use defaults
-            mode = default_mode
-            smoke_tests = (
-                None  # Will be populated by ValidationConfig if mode is SMOKE_TEST
+            config = ValidationConfig.from_dict(
+                {
+                    "mode": default_mode.value,
+                    "checksum_algorithm": "sha256",
+                    "sandbox_enabled": sandbox_enabled,
+                    "allow_network": allow_network,
+                    "max_runtime": max_runtime,
+                }
             )
-            checksum_algorithm = "sha256"
 
-        return ValidationConfig(
-            mode=mode,
-            smoke_tests=smoke_tests,
-            checksum_algorithm=checksum_algorithm,
-            sandbox_enabled=sandbox_enabled,
-            allow_network=allow_network,
-            max_runtime=max_runtime,
-        )
+        return config
 
     def _find_binary_config(self, binary_name: str, binaries: Dict) -> Optional[Dict]:
         """Find config for binary (supports glob patterns)"""

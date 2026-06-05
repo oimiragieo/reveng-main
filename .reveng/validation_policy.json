@@ -34,10 +34,30 @@
       "timeout": 60,
       "smoke_tests": [
         {
-          "args": [],
+          "args": ["--version"],
           "expected_exit_code": 0,
+          "timeout": 5,
+          "description": "Print version"
+        },
+        {
+          "args": ["--help"],
+          "expected_exit_code": 0,
+          "expected_output": "Run non-interactively (for scripts/automation)",
+          "timeout": 5,
+          "description": "Print help"
+        },
+        {
+          "args": ["-h"],
+          "expected_exit_code": 0,
+          "expected_output": "Run non-interactively (for scripts/automation)",
+          "timeout": 5,
+          "description": "Print short help"
+        },
+        {
+          "args": [],
+          "expected_exit_code": null,
           "timeout": 10,
-          "description": "Run without arguments"
+          "description": "Run without arguments (interactive characterization)"
         }
       ]
     },

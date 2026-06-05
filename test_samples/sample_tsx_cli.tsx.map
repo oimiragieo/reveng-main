@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "sources": [
+    "src/entrypoints/cli.tsx",
+    "src/lib/greet.ts"
+  ],
+  "sourcesContent": [
+    "#!/usr/bin/env node\n\nimport { writeGreeting } from \"../lib/greet\";\n\nexport function main(argv: string[] = process.argv): void {\n  const flag = argv.find((value) => value.startsWith(\"--name=\"));\n  const name = flag ? flag.split(\"=\")[1] : \"world\";\n  writeGreeting(name);\n}\n\nif (require.main === module) {\n  main();\n}\n",
+    "import fs from \"node:fs\";\n\nexport function writeGreeting(name: string): void {\n  fs.writeFileSync(\"sample_tsx_output.txt\", `hello ${name}\\n`, \"utf8\");\n}\n"
+  ]
+}

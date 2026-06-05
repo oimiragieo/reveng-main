@@ -1,0 +1,22 @@
+{
+  "featureId": "fix-dispatch-history-bounds",
+  "reviewedAt": "2026-03-13T19:30:00.000Z",
+  "commitId": "4908475ddb487235e0a00330b1689dde24be47c1",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Clean, well-scoped fix. The worker added a `max_history` parameter (default 1000) to `GPUAccelerator.__init__`, stored it as `self.max_history = max(0, max_history)`, and introduced a new `_record_memory_forensics_dispatch` helper that appends dispatch telemetry and trims the list under the existing `_memory_forensics_lock`. The single call-site in `_dispatch_memory_forensics_batch` was updated from a direct `.append()` to the new helper. A regression test (`test_memory_forensics_dispatch_history_is_capped`) verifies that with `max_history=2` and 3 dispatches (batch_size=1), only the last 2 dispatches are retained, confirming both the cap and the FIFO eviction order. All 5 tests in the file pass. No deadlock risk: `_record_memory_forensics_dispatch` acquires `_memory_forensics_lock`, and its only caller (`_dispatch_memory_forensics_batch`) is always invoked outside any lock. The `max_history=0` edge case is handled by clearing the list immediately. The implementation correctly uses `del list[:overflow]` for O(n) in-place trimming rather than creating a new list, which is appropriate for a bounded telemetry buffer.",
+    "issues": [
+      {
+        "file": "src/reveng/ml/gpu_accelerator.py",
+        "line": 594,
+        "severity": "non_blocking",
+        "description": "When `max_history=0`, the code appends then immediately clears, which is functionally correct but wastes a single append. A minor optimization would be to skip the append when `max_history == 0`, but the practical impact is negligible since `max_history=0` is an uncommon configuration."
+      }
+    ]
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "The implementation fully satisfies the feature requirements: `memory_forensics_dispatch_history` is now capped at `max_history` entries (default 1000) via a thread-safe helper method. The new test verifies FIFO eviction. All existing GPU batching tests continue to pass. The worker followed TDD procedure (red-green-refactor), ran lint and type checks, and documented pre-existing mypy issues. No shared-state gaps observed — the worker followed the skill procedure, used documented test commands, and did not introduce new services or conventions. Pass."
+}

@@ -1,0 +1,55 @@
+{
+  "milestone": "test-quality",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "python -m pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc",
+      "exitCode": 0,
+      "notes": "325 passed, 20 skipped, 0 failures. Baseline met (≥306 passed, 0 failures). Test count increased from 306 to 325 due to 16 rewritten tests + 3 new pipeline tests."
+    },
+    "typecheck": {
+      "passed": false,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "notes": "17 pre-existing errors: 15 from missing types-requests stubs, 1 from angr library using Python 3.10+ match syntax. None related to test-quality milestone changes."
+    },
+    "lint": {
+      "passed": false,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203",
+      "exitCode": 1,
+      "notes": "Hundreds of pre-existing lint warnings (F401 unused imports, F403 star imports, E722 bare excepts, E128 indentation) across the entire codebase. None introduced by test-quality work. Consistent with all prior milestone scrutiny runs."
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "nonBlockingIssues": [
+    {
+      "featureId": "fix-skipped-tests",
+      "severity": "non_blocking",
+      "description": "Dead try/except blocks: The 'skipped' dict return statements in pipeline_engine.py for malware, ML, and report stages are wrapped in try/except blocks that can never trigger. Pre-existing pattern from original code, missed cleanup opportunity."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Update test baseline from '≥ 306 passed, 0 failures' to '≥ 325 passed, 0 failures' to reflect the current actual baseline after test-quality milestone restored 16 previously-skipped tests and added 3 new pipeline tests.",
+      "evidence": "Test suite now reports 325 passed, 20 skipped, 0 failures. The baseline has grown from 306→325 through the test-quality milestone's work on fix-skipped-tests. Prior junk-removal scrutiny also flagged the stale baseline number.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Worker skill says to write tests first (TDD) but the worker read source APIs first and then wrote tests to match.",
+      "reason": "The skill's existing TDD exception clause covers this case ('if implementation already exists, add tests and verify they pass'). The deviation was justified for a test-rewrite task. No skill change needed."
+    }
+  ],
+  "previousRound": null
+}

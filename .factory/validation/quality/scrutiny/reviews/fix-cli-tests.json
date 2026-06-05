@@ -1,0 +1,39 @@
+{
+  "featureId": "fix-cli-tests",
+  "reviewedAt": "2026-03-14T18:30:00.000Z",
+  "commitId": "bf6a8e9187f19bbdc2fc4fc2d48b9ed5bb74c371",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The worker rewrote tests/unit/test_cli.py from scratch, replacing 4 fully-skipped test classes with 19 passing tests that exercise the current argparse-based CLI surface. All @pytest.mark.skip decorators are removed. TestCLIParser validates parser construction and flag parsing for analyze, serve, and decompile commands. TestCLIHandlers tests handle_analyze_command success/failure/missing-binary paths, create_enhanced_features flag mapping, JSON config loading, and the serve-command import-error path. TestCLIMain verifies main() routing to handlers and error handling for no-command/unknown-command cases. TestCLIIntegration uses subprocess.run against the real CLI script for --help, --version, analyze with missing binary, and analyze --help. Additionally, tests/integration/test_documentation.py had all 12 read_text() calls updated with encoding='utf-8', and a new tests/unit/test_documentation.py regression file was added with 2 UTF-8 read tests. The implementation is clean, well-structured, and correctly aligned with the current CLI module at src/reveng/cli.py.",
+    "issues": [
+      {
+        "file": "tests/unit/test_cli.py",
+        "line": 103,
+        "severity": "non_blocking",
+        "description": "test_handle_analyze_command_success uses a parenthesized context manager with `with (patch.object(...), patch.object(...)):` syntax which requires Python 3.10+. The project documents Python 3.9+ support in CLAUDE.md and pyproject.toml. However, the runtime is Python 3.14 so this works in practice. If the project ever needs to run tests on Python 3.9, this would break."
+      },
+      {
+        "file": "tests/unit/test_cli.py",
+        "line": 59,
+        "severity": "non_blocking",
+        "description": "TestCLIIntegration tests invoke CLI_SCRIPT via subprocess with a 30-second default timeout but no graceful handling if the timeout is exceeded (subprocess.TimeoutExpired would propagate as a test error rather than a clear failure message). This is acceptable for unit tests but could produce confusing failures in slow CI environments."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Worker deviated from step 6 of the skill procedure by running flake8 against the three changed test files instead of src/reveng/ paths. The deviation was justified since only test files were modified. The skill procedure says 'Run flake8 src/reveng/<changed_files>' which doesn't account for test-only features. The skill could clarify: 'Run flake8 on the changed files (whether in src/reveng/ or tests/)'.",
+      "evidence": "Handoff skillFeedback.deviations[0]: ran flake8 against test files instead of src/reveng paths."
+    },
+    {
+      "area": "conventions",
+      "observation": "The test file uses Python 3.10+ parenthesized context managers (PEP 617) in multiple places. AGENTS.md documents 'Language: Python 3.9+' but the actual runtime is 3.14. No convention is documented about minimum syntax version for test files vs production code.",
+      "evidence": "tests/unit/test_cli.py lines 103-115, 144-147, 160-163 use `with (patch.object(...), patch.object(...)):` syntax."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. All 3 expected behaviors are met: (1) pytest tests/unit/test_cli.py -v reports 19 passed, 0 skipped across all 4 test classes; (2) all 4 test classes (TestCLIParser, TestCLIHandlers, TestCLIMain, TestCLIIntegration) collect and pass; (3) pytest tests/unit/test_documentation.py -v passes 2/2 without UnicodeDecodeError. No @pytest.mark.skip decorators remain. The integration test_documentation.py also has all read_text() calls fixed with encoding='utf-8'. Two non-blocking style observations noted but nothing that blocks acceptance."
+}

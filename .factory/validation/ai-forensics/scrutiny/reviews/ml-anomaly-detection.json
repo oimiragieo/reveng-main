@@ -1,0 +1,56 @@
+{
+  "featureId": "ml-anomaly-detection",
+  "reviewedAt": "2026-03-13T18:30:00Z",
+  "commitId": "087af4fb",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The implementation correctly replaces static signature-based detection with ML anomaly scoring using Isolation Forest models across behavioral_monitor.py, memory_forensics.py, and a new forensics_anomaly_models.py module. The architecture is clean: a shared _IsolationForestFeatureModel base class normalises decision_function() output into 0-1 scores via sigmoid, and three concrete model subclasses (BehavioralAnomalyModel, MemoryArtifactAnomalyModel, MemoryProcessAnomalyModel) extract domain-specific feature vectors. Risk scoring now floors at the ML anomaly score * 100, ensuring ML signals cannot be suppressed by low event-based scores. Several pre-existing bugs were fixed as collateral: incorrect entropy calculation (bit_length → math.log2), wrong AnalysisFailureError kwargs, MemoryRegion.UNKNOWN → MemoryRegionType.UNKNOWN, and mutable default arguments on dataclasses. All 4 tests pass, flake8 is clean, mypy reports no errors.",
+    "issues": [
+      {
+        "file": "src/reveng/ml/forensics_anomaly_models.py",
+        "line": 46,
+        "severity": "non_blocking",
+        "description": "Models are trained eagerly in __init__ with only 6 hardcoded benign samples each. This is fine for the current scope but worth noting: each instantiation of BehavioralMonitor or MemoryForensics triggers IsolationForest.fit(). For production workloads with many instantiations, consider lazy initialization or a module-level singleton."
+      },
+      {
+        "file": "src/reveng/malware/behavioral_monitor.py",
+        "line": 253,
+        "severity": "non_blocking",
+        "description": "stop_monitoring() return type changed from BehavioralProfile to Optional[BehavioralProfile]. This is correct (the method could already return None via the except branch), but callers outside this file should be checked for None-handling. No immediate breakage was found in the codebase."
+      },
+      {
+        "file": "src/reveng/malware/memory_forensics.py",
+        "line": 686,
+        "severity": "non_blocking",
+        "description": "_identify_suspicious_processes() now relies solely on the ML process anomaly model to mark suspicious processes. The old name-matching heuristic (checking against self.suspicious_processes list) was completely replaced. This is intentional per the feature description but means the suspicious_processes string list is now unused for identification — only the ML model decides. If the model drifts, there is no static fallback."
+      },
+      {
+        "file": "src/reveng/ml/forensics_anomaly_models.py",
+        "line": 125,
+        "severity": "non_blocking",
+        "description": "_build_reasons uses a z_score > 1.5 threshold to select significant features. This is reasonable but not configurable. For tuning in production, consider exposing this as a parameter."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "Worker discovered and fixed several pre-existing bugs during implementation: incorrect entropy calculation using bit_length instead of math.log2, wrong kwargs for create_error_context() and AnalysisFailureError, MemoryRegion.UNKNOWN vs MemoryRegionType.UNKNOWN. These fixes are documented in .factory/library/ai-forensics.md but could also be noted in AGENTS.md as resolved pre-existing issues so future workers don't re-investigate them.",
+      "evidence": "Git diff shows fixes at memory_forensics.py lines 185-193 (create_error_context kwargs), 278-281 (original_exception), 373 (MemoryRegionType.UNKNOWN), 580-604 (entropy calculation)."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker followed the skill procedure correctly: read feature constraints, ran tests, implemented with TDD approach (wrote tests, made them pass), verified with flake8 and mypy. The transcript shows the worker ran the scoped baseline first and documented pre-existing failures as instructed by AGENTS.md.",
+      "evidence": "Transcript skeleton shows sequential tool calls: Read mission.md → Read AGENTS.md → Read services.yaml → baseline pytest → implementation → targeted pytest → flake8 → mypy."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The sklearn dependency (scikit-learn) is used by the new forensics_anomaly_models.py. It was already in requirements.txt, but this is the first time IsolationForest/StandardScaler/Pipeline are used in the malware forensics workflow. Future workers modifying this module should be aware of this dependency.",
+      "evidence": "src/reveng/ml/forensics_anomaly_models.py lines 4-6: imports from sklearn.ensemble, sklearn.pipeline, sklearn.preprocessing."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Feature passes review. The implementation cleanly replaces static signature-based detection with ML Isolation Forest-based anomaly scoring across both behavioral_monitor.py and memory_forensics.py. A new forensics_anomaly_models.py provides three reusable model classes with well-normalized 0-1 scoring and human-readable reason generation. All 4 unit tests pass, flake8 is clean, and mypy shows no errors. Several pre-existing bugs were fixed as collateral improvements. No blocking issues found; four non-blocking observations noted for future consideration (eager model training, Optional return type change, removal of static fallback in process identification, and hardcoded z-score threshold)."
+}

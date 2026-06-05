@@ -1,0 +1,15 @@
+{
+  "reconstruction_mode": "source_map_recovery",
+  "input_bundle": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_tsx_cli.tsx",
+  "source_map_detected": true,
+  "webcrack_promoted": false,
+  "entrypoint": "src/entrypoints/cli.tsx",
+  "entrypoint_suffix": ".tsx",
+  "runtime_contract": "tsx",
+  "file_count": 3,
+  "files": [
+    "package.json",
+    "src/entrypoints/cli.tsx",
+    "src/lib/greet.ts"
+  ]
+}

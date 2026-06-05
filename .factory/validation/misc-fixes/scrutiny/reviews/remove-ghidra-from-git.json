@@ -1,0 +1,26 @@
+{
+  "featureId": "remove-ghidra-from-git",
+  "reviewedAt": "2026-03-13T23:50:00.000Z",
+  "commitId": "6f8999abdf5d8e3b47c8ec9bda51aa481542a246",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The implementation correctly accomplishes all four requirements: (1) `external/ghidra-dist/` added to `.gitignore` in the appropriate section next to the existing `external/ghidra/` entry; (2) `git rm -r --cached external/ghidra-dist/` removed 5,155 files from the git index; (3) a clean commit captures both the .gitignore change and the index removal; (4) `.factory/init.sh` references `python scripts/install_ghidra.py` in both the bash script body (Ghidra install conditional block) and the Windows comment line. Post-commit verification confirmed 0 tracked files under `external/ghidra-dist/`, local `analyzeHeadless.bat` still exists on disk, and `git status` shows the directory as ignored (`!!`). No bugs, edge cases, or error states were missed.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Worker correctly deviated from the python-developer skill's step 1.2 by not running `.factory/init.sh` on Windows, consistent with AGENTS.md guidance. The skill's procedure does not explicitly mention the Windows exception — it relies on workers reading AGENTS.md separately. The skill could include a note like 'On Windows, see AGENTS.md for manual setup commands instead of running init.sh.'",
+      "evidence": "Skill SKILL.md step 2 says 'Windows environment setup (do NOT run init.sh on Windows)' which partially addresses this. However the base mission-worker skill's step 1.2 (Initialize Environment) likely instructs running init.sh without the Windows caveat, causing the deviation noted in skillFeedback."
+    },
+    {
+      "area": "conventions",
+      "observation": "Worker stashed a pre-existing local modification to `.factory/library/user-testing.md` as `stash@{0}` to get a clean working tree. This stash may be lost if another worker or process runs `git stash drop`. The stashed change should be reviewed and either committed or discarded.",
+      "evidence": "Handoff discoveredIssues[1]: 'Pre-existing: .factory/library/user-testing.md had an unrelated local modification; it was stashed as stash@{0}'"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. All four requirements fully met: .gitignore updated, 5,155 Ghidra distribution files removed from git tracking, local files preserved on disk, and .factory/init.sh includes the install_ghidra.py setup command for fresh clones. The commit is clean and well-scoped. No code issues found. Two minor shared-state observations noted regarding skill Windows guidance and a stashed local modification."
+}

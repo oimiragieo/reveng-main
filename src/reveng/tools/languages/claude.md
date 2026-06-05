@@ -1,67 +1,75 @@
-# Tools - Languages
+# `claude.md` — `tools/languages`
 
-## Overview
+**Repository path:** `src/reveng/tools/languages/`
 
-Multi-language support tools for analyzing binaries compiled from various programming languages and detecting language-specific patterns.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/tools/languages/`
+## Python modules
 
-**File Count:** 7 Python files
+### `__init__.py`
+- **Summary:** Language-Specific Analyzers
 
-## Key Capabilities
+### `csharp_il_analyzer.py`
+- **Summary:** REVENG C# IL Analyzer
+- **Classes:**
+  - `DotNetAssemblyInfo` — Information about a .NET assembly
+  - `ILDisassemblyResult` — Result from IL disassembly
+  - `DotNetDetector` — Detects if a file is a .NET assembly
+  - `ILDasmRunner` — Runs ildasm.exe to disassemble .NET assemblies to IL code
+  - `ILSpyRunner` — Runs ILSpy CLI to decompile .NET assemblies to C# source
+  - `DotNetObfuscationDetector` — Detects .NET obfuscation
+  - `CSharpILAnalyzer` — Main C# IL analyzer
+- **Functions / coroutines:**
+  - `def main()` — CLI interface for C# IL analysis
 
-### Language Detection
-- Detect source language (C, C++, Rust, Go, etc.)
-- Identify compiler and version
-- Detect build flags
+### `java_bytecode_analyzer.py`
+- **Summary:** REVENG Java Bytecode Analyzer
+- **Classes:**
+  - `JavaClassInfo` — Information about a Java class
+  - `DecompilationResult` — Results from decompilation
+  - `JavaBytecodeAnalyzer` — Analyze Java bytecode and produce decompiled source
+- **Functions / coroutines:**
+  - `def main()` — Test Java bytecode analyzer
 
-### Language-Specific Analysis
-- C/C++ analysis
-- Rust binary analysis
-- Go binary analysis
-- .NET/Java bytecode analysis
-- Python compiled bytecode
+### `java_deobfuscator_advanced.py`
+- **Summary:** REVENG Advanced Java Deobfuscator
+- **Classes:**
+  - `DeobfuscationResult` — Result from deobfuscation process
+  - `ControlFlowSimplifier` — Simplifies obfuscated control flow in Java code
+  - `StringDecryptor` — Decrypts encrypted strings in obfuscated Java code
+  - `DeadCodeEliminator` — Removes dead code (unreachable code, unused variables)
+  - `ConstantFolder` — Performs constant folding and propagation
+  - `JavaAdvancedDeobfuscator` — Main deobfuscator that combines all techniques
+- **Functions / coroutines:**
+  - `def main()` — CLI interface for advanced deobfuscation
 
-### Runtime Detection
-- Detect runtime libraries
-- Identify language frameworks
-- Detect standard library usage
+### `java_project_reconstructor.py`
+- **Summary:** REVENG Java Project Reconstructor
+- **Classes:**
+  - `JavaClass` — Represents a decompiled Java class
+  - `ProjectStructure` — Represents reconstructed project structure
+  - `JavaProjectReconstructor` — Reconstructs original Java project structure from decompiled code
+- **Functions / coroutines:**
+  - `def main()` — CLI interface for project reconstruction
 
-## Usage Examples
+### `language_detector.py`
+- **Summary:** REVENG Enhanced Language Detector
+- **Classes:**
+  - `FileTypeInfo` — Information about detected file type
+  - `LanguageDetector` — Detect file type and programming language from binary/bytecode files
+- **Functions / coroutines:**
+  - `def main()` — Test language detector
 
-### Example 1: Detect Programming Language
-
-```python
-from reveng.tools.languages import LanguageDetector
-
-detector = LanguageDetector()
-result = detector.detect("/path/to/binary.exe")
-
-print(f"Language: {result['language']}")
-print(f"Compiler: {result['compiler']}")
-print(f"Confidence: {result['confidence']}")
-```
-
-### Example 2: Language-Specific Analysis
-
-```python
-from reveng.tools.languages import CppAnalyzer
-
-analyzer = CppAnalyzer()
-result = analyzer.analyze("/path/to/cpp_binary.exe")
-
-print(f"C++ features: {result['cpp_features']}")
-print(f"STL usage: {result['stl_usage']}")
-print(f"Exception handling: {result['has_exceptions']}")
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/analyzers/` - General analyzers
-- `/home/user/reveng-main/src/reveng/lifting/` - Code lifting
+### `python_bytecode_analyzer.py`
+- **Summary:** REVENG Python Bytecode Analyzer
+- **Classes:**
+  - `PythonBytecodeInfo` — Information about Python bytecode file
+  - `DecompilationResult` — Result from Python decompilation
+  - `PythonBytecodeDetector` — Detects Python bytecode files and extracts metadata
+  - `PythonDecompiler` — Decompiles Python bytecode using multiple decompilers
+  - `PythonBytecodeAnalyzer` — Main Python bytecode analyzer
+- **Functions / coroutines:**
+  - `def main()` — CLI interface for Python bytecode analysis
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

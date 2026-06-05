@@ -1,0 +1,306 @@
+{
+  "language": "jvm",
+  "adapter_name": "jvm_app_workflow",
+  "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.java",
+  "input_root": "C:\\dev\\projects\\reveng-main\\test_samples",
+  "output_dir": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld",
+  "source_origin": "source",
+  "source_count": 1,
+  "packages": [],
+  "classes": [
+    "HelloWorld"
+  ],
+  "methods": [
+    "HelloWorld",
+    "getCount",
+    "getMessage",
+    "main",
+    "sayHello",
+    "setMessage"
+  ],
+  "imports": [],
+  "entrypoints": [
+    "HelloWorld.java"
+  ],
+  "archive_entries": [],
+  "manifest": {},
+  "bytecode_analysis": {},
+  "topic_match_counts": {
+    "project_structure": 0,
+    "classes_and_methods": 4,
+    "dependencies_and_imports": 0,
+    "state_and_io": 4,
+    "build_and_runtime": 1
+  },
+  "warnings": [],
+  "schema_version": "1.0",
+  "result_type": "app_reverse_engineering_result",
+  "validation": {
+    "grade": "evidence_backed",
+    "summary": "Recovered 1 source artifact(s), 9 topic evidence snippet(s), and 1 primary artifact(s); warnings=0.",
+    "evidence_count": 13,
+    "topic_evidence_count": 9,
+    "artifact_count": 1,
+    "warning_count": 0
+  },
+  "evidence": [
+    {
+      "kind": "input_sample",
+      "path": "C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.java",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "input_app"
+    },
+    {
+      "kind": "analysis_summary",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\analysis.json",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "analysis_summary",
+      "metadata": {
+        "source_count": 1
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\01-project-structure.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "project_structure",
+        "match_count": 0
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\02-classes-and-methods.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "classes_and_methods",
+        "match_count": 4
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\03-dependencies-and-imports.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "dependencies_and_imports",
+        "match_count": 0
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\04-state-and-io.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "state_and_io",
+        "match_count": 4
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\05-build-and-runtime.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "build_and_runtime",
+        "match_count": 1
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\domains\\project-structure.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "project_structure"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\domains\\classes-and-methods.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "classes_and_methods"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\domains\\dependencies-and-imports.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "dependencies_and_imports"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\domains\\state-and-io.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "state_and_io"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\domains\\build-and-runtime.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "build_and_runtime"
+      }
+    },
+    {
+      "kind": "primary_artifact",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\artifacts\\normalized_sources",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "primary_artifact",
+      "metadata": {
+        "artifact_name": "normalized_sources"
+      }
+    }
+  ],
+  "provenance": {
+    "inputs": [
+      {
+        "kind": "app_input",
+        "path": "C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.java",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "input_app",
+        "metadata": {
+          "input_root": "C:\\dev\\projects\\reveng-main\\test_samples"
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "kind": "analysis_summary",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\analysis.json",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "analysis_summary"
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\01-project-structure.md",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "project_structure"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\02-classes-and-methods.md",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "classes_and_methods"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\03-dependencies-and-imports.md",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "dependencies_and_imports"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\04-state-and-io.md",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "state_and_io"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\05-build-and-runtime.md",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "build_and_runtime"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\domains\\project-structure.md",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "project_structure"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\domains\\classes-and-methods.md",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "classes_and_methods"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\domains\\dependencies-and-imports.md",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "dependencies_and_imports"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\domains\\state-and-io.md",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "state_and_io"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\SPECS\\domains\\build-and-runtime.md",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "build_and_runtime"
+        }
+      },
+      {
+        "kind": "primary_artifact",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld\\artifacts\\normalized_sources",
+        "trace_id": "app-re::jvm::analysis",
+        "evidence_kind": "primary_artifact",
+        "metadata": {
+          "artifact_name": "normalized_sources"
+        }
+      }
+    ],
+    "stages": [
+      "input_inventory",
+      "spec_generation",
+      "domain_split",
+      "analysis_summary_serialization"
+    ],
+    "references": [
+      {
+        "relationship": "analyzed_under",
+        "target": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus\\java-helloworld",
+        "trace_id": "app-re::jvm::analysis",
+        "metadata": {
+          "adapter_name": "jvm_app_workflow"
+        }
+      }
+    ],
+    "tools": [
+      "jvm_app_workflow"
+    ]
+  }
+}

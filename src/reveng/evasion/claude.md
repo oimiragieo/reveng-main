@@ -1,66 +1,42 @@
-# REVENG Anti-Evasion
+# `claude.md` — `evasion`
 
-## Overview
+**Repository path:** `src/reveng/evasion/`
 
-Anti-evasion module for detecting and bypassing anti-analysis, anti-debugging, and anti-VM techniques used by malware and protected software.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/evasion/`
+## Python modules
 
-## Key Features
+### `__init__.py`
+- **Summary:** EDR Evasion Module
 
-### Evasion Detection
-- Anti-debugging detection
-- Anti-VM detection
-- Anti-emulation detection
-- Sandbox detection
+### `api_unhooking.py`
+- **Summary:** API Unhooking Module
+- **Classes:**
+  - `APIHook` — Information about a hooked API
+  - `APIUnhooker` — API unhooking engine for EDR bypass.
 
-### Evasion Bypass
-- Debugger hiding
-- VM artifact removal
-- Timing manipulation
-- API hooking
+### `edr_evasion_engine.py`
+- **Summary:** EDR Evasion Engine
+- **Classes:**
+  - `EvasionTechnique` — EDR evasion techniques
+  - `EDRHook` — Detected EDR hook information
+  - `RWXSection` — RWX memory section information
+  - `EvasionResult` — Result of evasion technique
+  - `EDREvasionEngine` — Advanced EDR evasion engine implementing cutting-edge bypass techniques.
 
-### Protection Analysis
-- Code protection detection
-- Integrity checks
-- Environmental checks
-- Trigger analysis
+### `environmental_keying.py`
+- **Summary:** Environmental Keying Module
+- **Classes:**
+  - `EnvironmentType` — Types of analysis environments
+  - `EnvironmentCheck` — Single environment check result
+  - `EnvironmentProfile` — Complete environment analysis
+  - `EnvironmentalKeying` — Environmental detection and keying engine.
 
-## Usage Examples
-
-### Example 1: Detect Evasion Techniques
-
-```python
-from reveng.evasion import EvasionDetector
-
-detector = EvasionDetector()
-evasions = detector.detect("/path/to/binary.exe")
-
-for evasion in evasions:
-    print(f"Type: {evasion['type']}")
-    print(f"Technique: {evasion['technique']}")
-    print(f"Location: {evasion['address']}")
-```
-
-### Example 2: Bypass Anti-Debugging
-
-```python
-from reveng.evasion import AntiDebugBypass
-
-bypass = AntiDebugBypass()
-bypass.enable()
-
-# Now debugging is hidden from target
-# Analyze with debugger
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/tools/anti_analysis/` - Anti-analysis tools
-- `/home/user/reveng-main/src/reveng/security/` - Security analysis
+### `process_mockingjay.py`
+- **Summary:** Process Mockingjay Implementation
+- **Classes:**
+  - `MockingjayTarget` — Target DLL for Process Mockingjay
+  - `ProcessMockingjayEngine` — Process Mockingjay exploitation engine.
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

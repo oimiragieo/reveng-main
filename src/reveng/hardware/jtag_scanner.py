@@ -5,13 +5,14 @@ Automated JTAG port discovery and exploitation for hardware debugging.
 """
 
 import logging
-from typing import List, Optional, Tuple
 from dataclasses import dataclass
+from typing import List, Optional, Tuple
 
 
 @dataclass
 class JTAGPin:
     """JTAG pin configuration"""
+
     tck: int  # Clock
     tms: int  # Test Mode Select
     tdi: int  # Test Data In

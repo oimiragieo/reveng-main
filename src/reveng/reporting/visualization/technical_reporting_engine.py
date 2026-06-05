@@ -25,12 +25,7 @@ from jinja2 import Environment, FileSystemLoader, Template
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.platypus import (
-    PageBreak,
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-)
+from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -142,9 +137,7 @@ class TechnicalReportingEngine:
         # Initialize Jinja2 environment
         # Initialize Jinja2 environment with autoescape enabled for security
         self.jinja_env = Environment(
-            loader=FileSystemLoader(
-                [str(self.template_dir), str(self.latex_template_dir)]
-            ),
+            loader=FileSystemLoader([str(self.template_dir), str(self.latex_template_dir)]),
             autoescape=True,
         )
 
@@ -183,9 +176,7 @@ class TechnicalReportingEngine:
             "findings": findings,
             "methodology": methodology,
             "total_findings": len(findings),
-            "critical_findings": len(
-                [f for f in findings if f.severity.lower() == "critical"]
-            ),
+            "critical_findings": len([f for f in findings if f.severity.lower() == "critical"]),
             "high_findings": len([f for f in findings if f.severity.lower() == "high"]),
             "evidence_count": sum(len(f.evidence_chain) for f in findings),
         }
@@ -257,8 +248,7 @@ class TechnicalReportingEngine:
 
         # Save LaTeX file
         paper_path = (
-            self.output_dir
-            / f"academic_paper_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tex"
+            self.output_dir / f"academic_paper_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tex"
         )
         with open(paper_path, "w", encoding="utf-8") as f:
             f.write(latex_content)
@@ -330,9 +320,7 @@ class TechnicalReportingEngine:
         if code_files:
             for code_file in code_files:
                 if os.path.exists(code_file):
-                    shutil.copy2(
-                        code_file, package_dir / "code" / os.path.basename(code_file)
-                    )
+                    shutil.copy2(code_file, package_dir / "code" / os.path.basename(code_file))
 
         # Generate methodology documentation
         methodology_doc = self._generate_methodology_documentation(methodology)
@@ -413,8 +401,7 @@ class TechnicalReportingEngine:
         html_content = template.render(**report_data)
 
         report_path = (
-            self.output_dir
-            / f"technical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+            self.output_dir / f"technical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         )
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(html_content)
@@ -425,8 +412,7 @@ class TechnicalReportingEngine:
     def _generate_pdf_technical_report(self, report_data: Dict[str, Any]) -> str:
         """Generate PDF technical report"""
         pdf_path = (
-            self.output_dir
-            / f"technical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+            self.output_dir / f"technical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
         )
         doc = SimpleDocTemplate(str(pdf_path), pagesize=A4)
 
@@ -446,9 +432,7 @@ class TechnicalReportingEngine:
         story.append(Paragraph(report_data["title"], title_style))
         story.append(Spacer(1, 20))
         story.append(Paragraph(f"Author: {report_data['author']}", styles["Normal"]))
-        story.append(
-            Paragraph(f"Generated: {report_data['generation_date']}", styles["Normal"])
-        )
+        story.append(Paragraph(f"Generated: {report_data['generation_date']}", styles["Normal"]))
         story.append(PageBreak())
 
         # Executive Summary
@@ -466,9 +450,7 @@ class TechnicalReportingEngine:
         story.append(Paragraph("Methodology", styles["Heading1"]))
         methodology = report_data["methodology"]
         story.append(Paragraph(f"Name: {methodology.name}", styles["Normal"]))
-        story.append(
-            Paragraph(f"Description: {methodology.description}", styles["Normal"])
-        )
+        story.append(Paragraph(f"Description: {methodology.description}", styles["Normal"]))
         story.append(Paragraph("Tools Used:", styles["Heading3"]))
         for tool in methodology.tools_used:
             story.append(Paragraph(f"• {tool}", styles["Normal"]))
@@ -481,14 +463,10 @@ class TechnicalReportingEngine:
             story.append(Paragraph(f"Finding: {finding.title}", styles["Heading2"]))
             story.append(Paragraph(f"Severity: {finding.severity}", styles["Normal"]))
             story.append(Paragraph(f"Category: {finding.category}", styles["Normal"]))
-            story.append(
-                Paragraph(f"Description: {finding.description}", styles["Normal"])
-            )
+            story.append(Paragraph(f"Description: {finding.description}", styles["Normal"]))
 
             if finding.cvss_score:
-                story.append(
-                    Paragraph(f"CVSS Score: {finding.cvss_score}", styles["Normal"])
-                )
+                story.append(Paragraph(f"CVSS Score: {finding.cvss_score}", styles["Normal"]))
 
             if finding.cwe_id:
                 story.append(Paragraph(f"CWE ID: {finding.cwe_id}", styles["Normal"]))
@@ -524,8 +502,7 @@ class TechnicalReportingEngine:
         markdown_content = template.render(**report_data)
 
         report_path = (
-            self.output_dir
-            / f"technical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            self.output_dir / f"technical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
         )
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(markdown_content)
@@ -539,8 +516,7 @@ class TechnicalReportingEngine:
         latex_content = template.render(**report_data)
 
         report_path = (
-            self.output_dir
-            / f"technical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tex"
+            self.output_dir / f"technical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.tex"
         )
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(latex_content)
@@ -561,8 +537,7 @@ class TechnicalReportingEngine:
                 json_data[key] = value
 
         report_path = (
-            self.output_dir
-            / f"technical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            self.output_dir / f"technical_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         )
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(json_data, f, indent=2, default=str)
@@ -570,33 +545,27 @@ class TechnicalReportingEngine:
         logger.info(f"JSON technical report generated: {report_path}")
         return str(report_path)
 
-    def _generate_bibliography(
-        self, findings: List[Finding], methodology: Methodology
-    ) -> str:
+    def _generate_bibliography(self, findings: List[Finding], methodology: Methodology) -> str:
         """Generate bibliography file for LaTeX"""
         bib_entries = []
 
         # Add methodology references
         for i, ref in enumerate(methodology.references, 1):
-            bib_entries.append(
-                f"""
+            bib_entries.append(f"""
 @misc{{methodology_ref_{i},
     title={{{ref}}},
     note={{Accessed: {datetime.now().strftime("%Y-%m-%d")}}}
-}}"""
-            )
+}}""")
 
         # Add finding references
         for finding in findings:
             if finding.references:
                 for i, ref in enumerate(finding.references, 1):
-                    bib_entries.append(
-                        f"""
+                    bib_entries.append(f"""
 @misc{{finding_{finding.id}_ref_{i},
     title={{{ref}}},
     note={{Accessed: {datetime.now().strftime("%Y-%m-%d")}}}
-}}"""
-                    )
+}}""")
 
         bib_content = "\n".join(bib_entries)
         bib_path = self.output_dir / "references.bib"
@@ -739,7 +708,9 @@ This package contains all materials necessary to reproduce the research findings
 
 """
         for finding in findings:
-            readme += f"- **{finding.title}** ({finding.severity}): {finding.description[:100]}...\n"
+            readme += (
+                f"- **{finding.title}** ({finding.severity}): {finding.description[:100]}...\n"
+            )
 
         readme += """
 ## Datasets
@@ -794,7 +765,7 @@ reportlab>=3.6.0
         # Try to load specific template
         try:
             return self.jinja_env.get_template(template_name)
-        except:
+        except Exception:
             # Fall back to generic template
             return self.jinja_env.get_template(f"poc_generic_{language}.j2")
 

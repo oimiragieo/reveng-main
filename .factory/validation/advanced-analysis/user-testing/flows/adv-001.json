@@ -1,0 +1,50 @@
+{
+  "groupId": "adv-001",
+  "testedAt": "2026-03-14T05:25:54Z",
+  "isolation": {
+    "repoRoot": "C:\\dev\\projects\\reveng-main",
+    "testingTool": "Python direct invocation",
+    "binaryPath": "test_samples/sample.exe",
+    "evidenceDir": "advanced-analysis/adv-001/"
+  },
+  "toolsUsed": ["python", "unittest.mock"],
+  "assertions": [
+    {
+      "id": "VAL-ADV-001",
+      "title": "Docker Sandbox Executes Target Binary in Isolated Container",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Static analysis of _monitor_behavior() source code",
+          "expected": "Method calls DockerSandbox.execute(), not legacy host-OS methods (powershell/wmic)",
+          "observed": "_monitor_behavior() calls self._sandbox.execute(binary_path, timeout_seconds=...) — confirmed. No legacy _monitor_file_operations/_monitor_memory_operations etc. are invoked in the main code path."
+        },
+        {
+          "action": "Mock subprocess.Popen and subprocess.run, call start_monitoring('test_samples/sample.exe')",
+          "expected": "Docker container created (docker run with --name reveng-sandbox-*), no powershell/wmic calls",
+          "observed": "subprocess.Popen called once with ['docker', 'run', '--rm', '--network=none', '--name', 'reveng-sandbox-f0bbe9328428', '-v', '...sample.exe:/target:ro', 'reveng-python:3.11-slim-strace', 'sh', '-lc', '...']. subprocess.run called once with ['docker', 'image', 'inspect', 'reveng-python:3.11-slim-strace']. Zero powershell/wmic calls."
+        },
+        {
+          "action": "Call stop_monitoring() and verify container cleanup",
+          "expected": "DockerSandbox.stop() issues docker stop + docker rm -f for the container",
+          "observed": "DockerSandbox.stop() called subprocess.run with ['docker', 'stop', 'reveng-sandbox-test123abc'] and ['docker', 'rm', '-f', 'reveng-sandbox-test123abc']. Container fully removed."
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "codePathAnalysis": "advanced-analysis/adv-001/code_path_analysis.txt",
+        "subprocessCallLog": "advanced-analysis/adv-001/subprocess_call_analysis.txt",
+        "assertionResults": "advanced-analysis/adv-001/assertion_results.json",
+        "containerCleanup": "advanced-analysis/adv-001/container_cleanup.txt",
+        "testSummary": "advanced-analysis/adv-001/test_summary.json",
+        "testScript": "advanced-analysis/adv-001/test_val_adv_001.py",
+        "consoleErrors": "none",
+        "network": "N/A — mocked subprocess calls"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 1 assertion (VAL-ADV-001): PASSED. BehavioralMonitor.start_monitoring() routes execution through DockerSandbox.execute() which creates a Docker container (docker run --rm --network=none --name reveng-sandbox-*). Zero subprocess calls with 'powershell' or 'wmic' arguments were made during the monitoring flow. DockerSandbox.stop() correctly issues docker stop + docker rm -f to clean up the container."
+}

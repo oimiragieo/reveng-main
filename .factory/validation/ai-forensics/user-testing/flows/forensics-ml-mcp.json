@@ -1,0 +1,114 @@
+{
+  "groupId": "forensics-ml-mcp",
+  "testedAt": "2026-03-13T14:36:00Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "envVars": { "PYTHONIOENCODING": "utf8" },
+    "externalServices": "none — all tests use monkeypatched internals and tmp_path fixtures"
+  },
+  "toolsUsed": ["pytest"],
+  "assertions": [
+    {
+      "id": "VAL-FORENSICS-001",
+      "title": "ML Anomaly Detection Trigger",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run pytest tests/unit/test_malware_forensics_anomaly_detection.py -v --tb=long",
+          "expected": "4 tests pass verifying ML anomaly scoring for behavioral profiles and memory artifacts",
+          "observed": "4 passed in 4.54s"
+        },
+        {
+          "action": "test_behavioral_profile_flags_high_anomaly_score",
+          "expected": "BehavioralMonitor with HIGH/CRITICAL events produces anomaly_score > threshold, non-empty anomaly_flags, threat_level HIGH or CRITICAL",
+          "observed": "PASSED — anomaly_score exceeded anomaly_threshold, anomaly_flags non-empty, suspicious_operations non-empty, threat_level in {HIGH, CRITICAL}"
+        },
+        {
+          "action": "test_behavioral_profile_leaves_benign_activity_below_threshold",
+          "expected": "BehavioralMonitor with only LOW-threat file ops produces anomaly_score < threshold, empty anomaly_flags",
+          "observed": "PASSED — anomaly_score below threshold, anomaly_flags == []"
+        },
+        {
+          "action": "test_memory_artifact_marks_ml_anomaly_when_threshold_exceeded",
+          "expected": "MemoryForensics._extract_artifact_from_region on suspicious payload produces is_anomalous=True, anomaly_score > threshold, threat_level HIGH or CRITICAL",
+          "observed": "PASSED — artifact.anomaly_score > artifact.anomaly_threshold, is_anomalous=True, threat_level in {HIGH, CRITICAL}"
+        },
+        {
+          "action": "test_memory_analysis_uses_ml_scores_for_flags_and_risk",
+          "expected": "End-to-end MemoryForensics.analyze_memory produces analysis with anomaly_score > threshold, anomaly_flags, suspicious_processes, injected_code, risk_score >= anomaly_score * 100",
+          "observed": "PASSED — all assertions confirmed: anomaly_score > threshold, flags present, suspicious_processes=[404], injected_code found, risk_score >= anomaly_score * 100"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "ai-forensics/forensics-ml-mcp/VAL-FORENSICS-001-pytest-output.txt",
+        "testResult": "4 passed in 4.54s",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-FORENSICS-002",
+      "title": "MCP Server Tool Discovery",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run pytest tests/integration/test_mcp_integration.py::test_tools_list_includes_forensic_tools -v --tb=long",
+          "expected": "tools/list response includes scan_yara, analyze_memory_dump, diff_binaries with correct schemas",
+          "observed": "PASSED"
+        },
+        {
+          "action": "Verify scan_yara tool schema",
+          "expected": "required=[\"path\", \"rules_path\"]",
+          "observed": "scan_yara present with required=[\"path\", \"rules_path\"]"
+        },
+        {
+          "action": "Verify analyze_memory_dump tool schema",
+          "expected": "required=[\"path\"]",
+          "observed": "analyze_memory_dump present with required=[\"path\"]"
+        },
+        {
+          "action": "Verify diff_binaries tool schema",
+          "expected": "required=[\"binary1\", \"binary2\"]",
+          "observed": "diff_binaries present with required=[\"binary1\", \"binary2\"]"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "ai-forensics/forensics-ml-mcp/VAL-FORENSICS-002-pytest-output.txt",
+        "testResult": "1 relevant test passed (within 4-test session, 1.42s total)",
+        "exitCode": 0
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-FORENSICS-003",
+      "title": "MCP Tool Invocation Execution",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run pytest test_scan_yara_tool_returns_structured_matches -v --tb=long",
+          "expected": "scan_yara MCP tool executes backend, returns structured JSON with match_count, matches array including rule name, meta, strings",
+          "observed": "PASSED — response includes match_count=1, matches[0].rule='test_rule', meta.family='demo', strings[0].identifier='$a'"
+        },
+        {
+          "action": "Run pytest test_analyze_memory_dump_tool_returns_structured_analysis -v --tb=long",
+          "expected": "analyze_memory_dump MCP tool executes backend, returns structured JSON with threat_level, risk_score, processes, artifacts",
+          "observed": "PASSED — response includes analysis.threat_level='HIGH', risk_score=87.5, processes[0].process_name='malware.exe', artifacts[0].artifact_type='shellcode'"
+        },
+        {
+          "action": "Run pytest test_diff_binaries_tool_returns_structured_diff -v --tb=long",
+          "expected": "diff_binaries MCP tool executes backend, returns structured JSON with similarity_score, modified_functions, new_functions",
+          "observed": "PASSED — response includes diff.similarity_score=0.75, modified_functions[0].func_v1_name='parse_config', new_functions=['handle_forensics']"
+        }
+      ],
+      "evidence": {
+        "pytestOutput": "ai-forensics/forensics-ml-mcp/VAL-FORENSICS-003-pytest-output.txt",
+        "testResult": "3 relevant tests passed (within 4-test session, 1.42s total)",
+        "exitCode": 0
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 3 assertions (8 pytest tests total): all 3 passed. VAL-FORENSICS-001 (4 tests) confirmed ML anomaly detection correctly flags high-threat behavioral profiles and memory artifacts above threshold while leaving benign activity below. VAL-FORENSICS-002 (1 test) confirmed MCP tools/list includes scan_yara, analyze_memory_dump, and diff_binaries with correct schemas. VAL-FORENSICS-003 (3 tests) confirmed all three MCP tools execute backend logic and return well-formed structured JSON results."
+}

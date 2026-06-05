@@ -1,69 +1,43 @@
-# Tools - Quality
+# `claude.md` — `tools/quality`
 
-## Overview
+**Repository path:** `src/reveng/tools/quality/`
 
-Code quality assessment and metrics tools for evaluating binary code quality, complexity, and maintainability.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/tools/quality/`
+## Python modules
 
-**File Count:** 5 Python files
+### `__init__.py`
+- **Summary:** Code Quality Tools
 
-## Key Capabilities
+### `c_type_parser.py`
+- **Summary:** C Type Parser
+- **Classes:**
+  - `CType` — Parsed C type
+  - `CParameter` — Function parameter with type and name
+  - `CFunctionSignature` — Complete function signature
+  - `CTypeParser` — Robust C type parser
 
-### Quality Metrics
-- Cyclomatic complexity
-- Code coverage estimation
-- Maintainability index
-- Code smells detection
+### `code_formatter.py`
+- **Summary:** Code Formatter Tool
+- **Classes:**
+  - `CodeFormatter` — Code Formatter Tool
+- **Functions / coroutines:**
+  - `def main()` — Main function
 
-### Code Analysis
-- Dead code detection
-- Unreachable code detection
-- Code duplication
-- API usage analysis
+### `compilation_tester.py`
+- **Summary:** REVENG Compilation Tester
+- **Classes:**
+  - `CompilationTester` — Test compilation of generated C code
 
-### Quality Reports
-- Quality scores
-- Trend analysis
-- Improvement suggestions
-- Comparison reports
-
-## Usage Examples
-
-### Example 1: Calculate Quality Metrics
-
-```python
-from reveng.tools.quality import QualityAnalyzer
-
-analyzer = QualityAnalyzer()
-metrics = analyzer.analyze("/path/to/binary.exe")
-
-print(f"Complexity: {metrics['complexity']}")
-print(f"Maintainability: {metrics['maintainability_index']}")
-print(f"Code smells: {len(metrics['code_smells'])}")
-```
-
-### Example 2: Detect Code Issues
-
-```python
-from reveng.tools.quality import IssueDetector
-
-detector = IssueDetector()
-issues = detector.detect("/path/to/binary.exe")
-
-for issue in issues:
-    print(f"{issue['type']}: {issue['description']}")
-    print(f"  Severity: {issue['severity']}")
-    print(f"  Location: {issue['location']}")
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/analyzers/` - Analysis tools
-- `/home/user/reveng-main/src/reveng/validation/` - Validation utilities
+### `type_inference_engine.py`
+- **Summary:** Type Inference Engine
+- **Classes:**
+  - `TypeCategory` — Type categories
+  - `Parameter` — Function parameter with inferred type
+  - `FunctionSignature` — Complete function signature with types
+  - `TypeInferenceEngine` — Type Inference Engine
+- **Functions / coroutines:**
+  - `def main()` — Main function
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

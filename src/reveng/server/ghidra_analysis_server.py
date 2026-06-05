@@ -22,6 +22,8 @@ from typing import Any, Dict
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+from reveng.integrations.ghidra.ghidra_http_client import GhidraHTTPClient
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -41,9 +43,6 @@ try:
 except ImportError:
     GHIDRA_BRIDGE_AVAILABLE = False
     logger.warning("ghidra_bridge not available, will use HTTP fallback")
-
-# Import our HTTP client for Ghidra MCP
-from reveng.tools.config.ghidra_http_client import GhidraHTTPClient
 
 
 class GhidraAnalysisEngine:
@@ -367,7 +366,9 @@ def start_server(
     if health_status["status"] == "healthy":
         logger.info(f"✅ Connected to Ghidra via {health_status['method']}")
     else:
-        logger.warning(f"⚠️  Ghidra connection not healthy: {health_status.get('error', 'Unknown')}")
+        logger.warning(
+            f"⚠️  Ghidra connection not healthy: {health_status.get('error', 'Unknown')}"
+        )
         logger.warning("   Server will start but analysis may fail")
 
     logger.info("=" * 60)

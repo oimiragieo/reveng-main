@@ -539,17 +539,17 @@ kubectl expose deployment reveng-mcp --port=8080
 
 ## 🧪 Testing
 
-### Run POC Tests
+### Run MCP Integration Tests
 
 ```bash
 # Test MCP integration
-pytest tests/poc/test_mcp_integration.py -v
+pytest tests/integration/test_mcp_integration.py -v
 
 # Test enterprise features
-pytest tests/poc/test_mcp_enterprise.py -v
+pytest tests/integration/test_mcp_integration.py -v -k rate_limiter
 
 # Test all MCP functionality
-pytest tests/poc/test_mcp_*.py -v
+pytest tests/integration/test_mcp_integration.py -v
 ```
 
 ---

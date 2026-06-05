@@ -1,0 +1,86 @@
+{
+  "groupId": "group-ghidra",
+  "testedAt": "2026-03-13T19:25:00Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "ghidraServerPort": 13370,
+    "testBinary": "test_samples/sample.exe"
+  },
+  "toolsUsed": ["subprocess", "requests", "python"],
+  "assertions": [
+    {
+      "id": "VAL-FOUND-002",
+      "title": "GhidraEngine.decompile() Method Exists and Is Callable",
+      "status": "pass",
+      "steps": [
+        { "action": "Import GhidraEngine from reveng.integrations.ghidra.ghidra_engine", "expected": "Import succeeds", "observed": "Import succeeded" },
+        { "action": "hasattr(GhidraEngine(fail_fast=False), 'decompile')", "expected": "True", "observed": "True" },
+        { "action": "callable(engine.decompile)", "expected": "True", "observed": "True" },
+        { "action": "GhidraEngine(server_url='http://127.0.0.1:13370', timeout=180, fail_fast=True)", "expected": "Connection established", "observed": "Connection established" },
+        { "action": "engine.decompile('test_samples/sample.exe')", "expected": "Returns dict or raises service-unavailable exception", "observed": "Returned dict with keys ['compiler', 'exports', 'functions', 'imports', 'language', 'program_name', 'status', 'strings', 'xrefs', 'decompiled_code'], 99 functions" }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "POST http://127.0.0.1:13370/decompile -> 200",
+        "files": ["foundation/group-ghidra/VAL-FOUND-002-evidence.json"],
+        "returnType": "dict",
+        "returnKeys": ["compiler", "exports", "functions", "imports", "language", "program_name", "status", "strings", "xrefs", "decompiled_code"],
+        "numFunctions": 99
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-FOUND-005",
+      "title": "Ghidra Mock Mode Raises Exception Instead of Returning Fake Data",
+      "status": "pass",
+      "steps": [
+        { "action": "GhidraEngine(server_url='http://127.0.0.1:19999', fail_fast=True)", "expected": "Raises GhidraConnectionError on init (server unreachable)", "observed": "GhidraConnectionError raised: Could not connect to Ghidra Analysis Server at http://127.0.0.1:19999" },
+        { "action": "GhidraEngine(server_url='http://127.0.0.1:19999', fail_fast=False) then engine.decompile('test.exe')", "expected": "Raises exception on decompile call (not returning fake data)", "observed": "GhidraConnectionError raised: Lost connection to Ghidra Analysis Server at http://127.0.0.1:19999" }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "No successful network calls (expected — server intentionally unreachable at port 19999)",
+        "files": ["foundation/group-ghidra/VAL-FOUND-005-evidence.json"],
+        "exceptionType": "GhidraConnectionError",
+        "exceptionOnInit": "GhidraConnectionError: Could not connect to Ghidra Analysis Server",
+        "exceptionOnCall": "GhidraConnectionError: Lost connection to Ghidra Analysis Server",
+        "fakeDataReturned": false
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-FOUND-006",
+      "title": "Ghidra HTTP Server Performs Real Headless Analysis on a PE File",
+      "status": "pass",
+      "steps": [
+        { "action": "GET http://localhost:13370/health", "expected": "HTTP 200, status=healthy", "observed": "HTTP 200, status=healthy, ghidra_available=true, mock_requested=false" },
+        { "action": "POST http://localhost:13370/decompile with binary_path=test_samples/sample.exe", "expected": "HTTP 200, functions >= 1, source >= 50 chars, mock absent/false, within 180s", "observed": "HTTP 200, 99 functions, first function source=4217 chars, mock=false, elapsed=24.4s" }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "none",
+        "network": "POST http://localhost:13370/decompile -> 200 (24.4s)",
+        "files": ["foundation/group-ghidra/VAL-FOUND-006-evidence.json", "foundation/group-ghidra/VAL-FOUND-006-full-response.json"],
+        "numFunctions": 99,
+        "firstFunctionName": "do_pseudo_reloc",
+        "firstFunctionSourceLength": 4217,
+        "firstFunctionSourcePreview": "void do_pseudo_reloc(uint *param_1,uint *param_2,ulonglong *param_3,longlong param_4) { uint *puVar1; uint uVar2;",
+        "mockFlag": false,
+        "elapsedSeconds": 24.4,
+        "passConditions": {
+          "http_200": true,
+          "functions_gte_1": true,
+          "mock_absent_or_false": true,
+          "within_180_seconds": true,
+          "source_gte_50_chars": true
+        }
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Tested 3 assertions: 3 passed, 0 failed. VAL-FOUND-002: GhidraEngine.decompile() exists, is callable, returns dict with 99 functions. VAL-FOUND-005: Engine raises GhidraConnectionError when server unreachable (both fail_fast=True and False paths). VAL-FOUND-006: Real Ghidra headless analysis completed in 24.4s, returning 99 decompiled functions with substantive C pseudocode."
+}

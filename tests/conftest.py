@@ -4,32 +4,48 @@ REVENG Test Configuration
 Comprehensive test configuration for REVENG with fixtures for all test categories.
 """
 
-import os
 import shutil
 import sys
 import tempfile
+import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from reveng.analyzers.business_logic_extractor import BusinessLogicExtractor
-from reveng.analyzers.dotnet_analyzer import DotNetAnalyzer
-from reveng.core.dependency_manager import DependencyManager
-from reveng.core.logger import setup_logging
-from reveng.ghidra.scripting_engine import GhidraScriptingEngine
-from reveng.malware.behavioral_monitor import BehavioralMonitor
-from reveng.malware.memory_forensics import MemoryForensics
-from reveng.ml import MLIntegration, MLIntegrationConfig
-from reveng.pe.import_analyzer import ImportAnalyzer
-from reveng.pe.resource_extractor import PEResourceExtractor
-from reveng.pipelines.automated_analysis import AutomatedAnalysisPipeline
-from reveng.plugins.manager import PluginManager
-from reveng.tools.hex_editor import HexEditor
+from reveng.analysis.analyzers.business_logic_extractor import BusinessLogicExtractor  # noqa: E402
+from reveng.analysis.analyzers.dotnet_analyzer import DotNetAnalyzer  # noqa: E402
+from reveng.analysis.pe.import_analyzer import ImportAnalyzer  # noqa: E402
+from reveng.analysis.pe.resource_extractor import PEResourceExtractor  # noqa: E402
+from reveng.core.dependency_manager import DependencyManager  # noqa: E402
+from reveng.core.logger import setup_logging  # noqa: E402
+from reveng.ghidra.scripting_engine import GhidraScriptingEngine  # noqa: E402
+from reveng.malware.behavioral_monitor import BehavioralMonitor  # noqa: E402
+from reveng.malware.memory_forensics import MemoryForensics  # noqa: E402
+from reveng.ml import MLIntegration  # noqa: E402
+from reveng.pipelines.automated_analysis import AutomatedAnalysisPipeline  # noqa: E402
+from reveng.plugins.manager import PluginManager  # noqa: E402
+from reveng.tools.hex_editor import HexEditor  # noqa: E402
+
+
+class PerformanceBenchmark:
+    """Minimal benchmark helper for performance-oriented tests."""
+
+    def __init__(self):
+        self._start_time = None
+
+    def start(self):
+        self._start_time = time.perf_counter()
+
+    def stop(self):
+        if self._start_time is None:
+            raise RuntimeError("Benchmark was not started")
+        duration = time.perf_counter() - self._start_time
+        self._start_time = None
+        return duration
 
 
 @pytest.fixture(scope="session")
@@ -55,18 +71,49 @@ def temp_analysis_dir(temp_dir):
 
 
 @pytest.fixture
+def performance_benchmark():
+    """Provide a lightweight benchmark timer for perf tests."""
+    return PerformanceBenchmark()
+
+
+@pytest.fixture
 def mock_binary_file(temp_dir):
     """Create a mock binary file for testing"""
     binary_path = Path(temp_dir) / "test_binary.exe"
     with open(binary_path, "wb") as f:
-        f.write(b"\x4D\x5A\x90\x00" + b"\x00" * 1000)  # Mock PE header
+        f.write(b"\x4d\x5a\x90\x00" + b"\x00" * 1000)  # Mock PE header
     return binary_path
+
+
+@pytest.fixture
+def mock_java_jar(temp_dir):
+    """Create a mock Java archive for testing."""
+    jar_path = Path(temp_dir) / "test_app.jar"
+    jar_path.write_bytes(b"PK\x03\x04" + b"\x00" * 1000)
+    return jar_path
+
+
+@pytest.fixture
+def mock_csharp_dll(temp_dir):
+    """Create a mock .NET DLL for testing."""
+    dll_path = Path(temp_dir) / "test_library.dll"
+    dll_path.write_bytes(b"\x4d\x5a\x90\x00" + b"\x00" * 1000)
+    return dll_path
+
+
+@pytest.fixture
+def mock_python_pyc(temp_dir):
+    """Create a mock Python bytecode file for testing."""
+    pyc_path = Path(temp_dir) / "test_module.pyc"
+    pyc_path.write_bytes(b"\x42\x0d\x0d\x0a" + b"\x00" * 1000)
+    return pyc_path
 
 
 @pytest.fixture
 def mock_enhanced_features():
     """Mock enhanced analysis features"""
-    from reveng.analyzer import EnhancedAnalysisFeatures
+    from reveng.analysis.analyzer import EnhancedAnalysisFeatures
+
     features = EnhancedAnalysisFeatures()
     features.enable_enhanced_analysis = True
     features.enable_corporate_exposure = True
@@ -95,7 +142,7 @@ def sample_binaries_dir(temp_dir):
     for filename in sample_files:
         file_path = binaries_dir / filename
         with open(file_path, "wb") as f:
-            f.write(b"\x4D\x5A\x90\x00" + b"\x00" * 100)  # Mock PE header
+            f.write(b"\x4d\x5a\x90\x00" + b"\x00" * 100)  # Mock PE header
 
     return binaries_dir
 
@@ -238,7 +285,7 @@ def mock_ghidra_scripting_engine():
 def mock_hex_editor():
     """Mock hex editor for testing"""
     editor = Mock(spec=HexEditor)
-    editor.read_bytes.return_value = b"\x4D\x5A\x90\x00"
+    editor.read_bytes.return_value = b"\x4d\x5a\x90\x00"
     editor.search_pattern.return_value = [0, 100, 200]
     editor.calculate_entropy.return_value = 7.2
     editor.detect_embedded_files_heuristic.return_value = [
@@ -358,12 +405,6 @@ def mock_memory_forensics():
 @pytest.fixture
 def mock_ml_integration():
     """Mock ML integration for testing"""
-    config = MLIntegrationConfig(
-        enable_code_reconstruction=True,
-        enable_anomaly_detection=True,
-        enable_threat_intelligence=True,
-        output_directory="ml_analysis",
-    )
     integration = Mock(spec=MLIntegration)
     integration.analyze_binary.return_value = {
         "binary_path": "test.exe",
@@ -439,13 +480,12 @@ def test_sample_files(temp_dir):
     # Create mock test binary
     test_exe = sample_dir / "test_binary.exe"
     with open(test_exe, "wb") as f:
-        f.write(b"\x4D\x5A\x90\x00" + b"\x00" * 1000)  # Mock PE header
+        f.write(b"\x4d\x5a\x90\x00" + b"\x00" * 1000)  # Mock PE header
 
     # Create mock .nessus file
     nessus_file = sample_dir / "test_scan.nessus"
     with open(nessus_file, "w") as f:
-        f.write(
-            """<?xml version="1.0"?>
+        f.write("""<?xml version="1.0"?>
 <report>
     <host>
         <name>test-host</name>
@@ -457,8 +497,7 @@ def test_sample_files(temp_dir):
             </item>
         </vulnerabilities>
     </host>
-</report>"""
-        )
+</report>""")
 
     return {"test_exe": test_exe, "nessus_file": nessus_file, "sample_dir": sample_dir}
 
@@ -476,13 +515,11 @@ def test_scripts_dir(temp_dir):
     # Create test Ghidra script
     test_script = ghidra_dir / "test_script.py"
     with open(test_script, "w") as f:
-        f.write(
-            """# Test Ghidra script
+        f.write("""# Test Ghidra script
 def main():
     print("Test Ghidra script executed")
     return "SUCCESS"
-"""
-        )
+""")
 
     return {"scripts_dir": scripts_dir, "ghidra_dir": ghidra_dir, "test_script": test_script}
 
@@ -520,7 +557,7 @@ def mock_malware_sample(temp_dir):
     # Create mock malware sample
     malware_file = malware_dir / "malware_sample.exe"
     with open(malware_file, "wb") as f:
-        f.write(b"\x4D\x5A\x90\x00" + b"\x00" * 2000)  # Mock PE header
+        f.write(b"\x4d\x5a\x90\x00" + b"\x00" * 2000)  # Mock PE header
 
     return {"malware_file": malware_file, "malware_dir": malware_dir}
 
@@ -528,6 +565,9 @@ def mock_malware_sample(temp_dir):
 # Test configuration
 def pytest_configure(config):
     """Configure pytest with custom markers"""
+    config.addinivalue_line(
+        "markers", "poc: mark test as proof-of-concept or optional environment-heavy coverage"
+    )
     config.addinivalue_line("markers", "unit: mark test as unit test")
     config.addinivalue_line("markers", "integration: mark test as integration test")
     config.addinivalue_line("markers", "e2e: mark test as end-to-end test")
@@ -538,8 +578,13 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "ml: mark test as ML integration test")
     config.addinivalue_line("markers", "slow: mark test as slow running test (>5s)")
     config.addinivalue_line("markers", "fast: mark test as fast running test (<1s)")
-    config.addinivalue_line("markers", "requires_external_tools: mark test as requiring external tools (Ghidra, ILSpy, etc)")
-    config.addinivalue_line("markers", "requires_network: mark test as requiring network connectivity")
+    config.addinivalue_line(
+        "markers",
+        "requires_external_tools: mark test as requiring external tools (Ghidra, ILSpy, etc)",
+    )
+    config.addinivalue_line(
+        "markers", "requires_network: mark test as requiring network connectivity"
+    )
 
 
 def pytest_collection_modifyitems(config, items):
@@ -561,6 +606,8 @@ def pytest_collection_modifyitems(config, items):
         elif "performance" in str(item.fspath):
             item.add_marker(pytest.mark.performance)
             item.add_marker(pytest.mark.slow)
+        elif "poc" in str(item.fspath):
+            item.add_marker(pytest.mark.poc)
 
         # Add markers based on test name
         if "malware" in item.name:

@@ -112,9 +112,7 @@ class PluginManager:
 
                     # Check if plugin already exists
                     if metadata.name in self.plugins:
-                        self.logger.warning(
-                            f"Plugin {metadata.name} already loaded, skipping"
-                        )
+                        self.logger.warning(f"Plugin {metadata.name} already loaded, skipping")
                         continue
 
                     # Create plugin info
@@ -127,9 +125,7 @@ class PluginManager:
                     )
 
                     self.plugins[metadata.name] = plugin_info
-                    self.logger.info(
-                        f"Loaded plugin: {metadata.name} v{metadata.version}"
-                    )
+                    self.logger.info(f"Loaded plugin: {metadata.name} v{metadata.version}")
 
         except Exception as e:
             self.logger.error(f"Failed to load plugin from {py_file}: {e}")
@@ -153,9 +149,7 @@ class PluginManager:
                         f"Plugin {plugin_name} depends on unknown plugin: {dependency}"
                     )
                     self.plugins[plugin_name].status = PluginStatus.ERROR
-                    self.plugins[plugin_name].error_message = (
-                        f"Missing dependency: {dependency}"
-                    )
+                    self.plugins[plugin_name].error_message = f"Missing dependency: {dependency}"
 
     def _check_circular_dependencies(self):
         """Check for circular dependencies"""
@@ -175,13 +169,9 @@ class PluginManager:
             return False
 
         for plugin in self.plugins:
-            if plugin not in [
-                p for p in self.plugins.values() if p.status == PluginStatus.ERROR
-            ]:
+            if plugin not in [p for p in self.plugins.values() if p.status == PluginStatus.ERROR]:
                 if has_cycle(plugin, set(), set()):
-                    self.logger.error(
-                        f"Circular dependency detected involving plugin: {plugin}"
-                    )
+                    self.logger.error(f"Circular dependency detected involving plugin: {plugin}")
                     self.plugins[plugin].status = PluginStatus.ERROR
                     self.plugins[plugin].error_message = "Circular dependency detected"
 
@@ -266,24 +256,18 @@ class PluginManager:
         plugin_info = self.plugins[name]
 
         if plugin_info.status == PluginStatus.ERROR:
-            self.logger.error(
-                f"Cannot enable plugin {name}: {plugin_info.error_message}"
-            )
+            self.logger.error(f"Cannot enable plugin {name}: {plugin_info.error_message}")
             return False
 
         # Check dependencies
         for dependency in plugin_info.metadata.dependencies:
             if dependency not in self.plugins:
-                self.logger.error(
-                    f"Plugin {name} depends on missing plugin: {dependency}"
-                )
+                self.logger.error(f"Plugin {name} depends on missing plugin: {dependency}")
                 return False
 
             dep_plugin = self.plugins[dependency]
             if dep_plugin.status != PluginStatus.ENABLED:
-                self.logger.error(
-                    f"Plugin {name} depends on disabled plugin: {dependency}"
-                )
+                self.logger.error(f"Plugin {name} depends on disabled plugin: {dependency}")
                 return False
 
         plugin_info.status = PluginStatus.ENABLED
@@ -334,9 +318,7 @@ class PluginManager:
             return plugin_info.instance.execute(context)
         except Exception as e:
             self.logger.error(f"Plugin {name} execution failed: {e}")
-            raise PluginError(
-                f"Plugin {name} execution failed", plugin_name=name
-            ) from e
+            raise PluginError(f"Plugin {name} execution failed", plugin_name=name) from e
 
     def execute_plugin_chain(
         self, context: PluginContext, plugin_names: Optional[List[str]] = None
@@ -366,9 +348,7 @@ class PluginManager:
                 context.config[f"{plugin_name}_result"] = plugin_result
 
             except Exception as e:
-                self.logger.error(
-                    f"Plugin chain execution failed at {plugin_name}: {e}"
-                )
+                self.logger.error(f"Plugin chain execution failed at {plugin_name}: {e}")
                 results[plugin_name] = {"error": str(e)}
 
         return results
@@ -410,9 +390,7 @@ class PluginManager:
         if not plugin_info.instance:
             return [f"Plugin instance not available: {name}"]
 
-        context = PluginContext(
-            plugin_name=name, binary_path="", output_dir="", config={}
-        )
+        context = PluginContext(plugin_name=name, binary_path="", output_dir="", config={})
 
         return plugin_info.instance.validate_requirements(context)
 

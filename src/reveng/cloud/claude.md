@@ -1,64 +1,35 @@
-# REVENG Cloud
+# `claude.md` — `cloud`
 
-## Overview
+**Repository path:** `src/reveng/cloud/`
 
-Cloud integration module for distributed analysis, cloud storage, and scalable processing using AWS, Azure, and GCP.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/cloud/`
+## Python modules
 
-## Key Features
+### `__init__.py`
+- **Summary:** REVENG v5.0 - Cloud-Distributed Analysis Platform & Cloud Exploitation
 
-### Cloud Platforms
-- AWS integration (S3, Lambda, EC2)
-- Azure integration (Blob, Functions, VMs)
-- GCP integration (Storage, Functions, Compute)
+### `aws_ebs_triage.py`
+- **Summary:** AWS EBS Snapshot Triage
+- **Classes:**
+  - `EBSSnapshot` — EBS snapshot information
+  - `SecretMatch` — Detected secret in snapshot
+  - `AWSEBSTriage` — AWS EBS Snapshot Triage Engine.
 
-### Distributed Analysis
-- Job distribution
-- Result aggregation
-- Scalable processing
-- Load balancing
+### `cloud_api_analyzer.py`
+- **Summary:** Cloud API Analyzer
+- **Classes:**
+  - `CloudAPIAnalyzer` — Cloud API discovery and analysis.
 
-### Cloud Storage
-- Binary storage
-- Result storage
-- Artifact management
-- Version control
+### `container_scanner.py`
+- **Summary:** Container Scanner
+- **Classes:**
+  - `ContainerScanner` — Container image security scanner.
 
-## Usage Examples
-
-### Example 1: Cloud Analysis
-
-```python
-from reveng.cloud import CloudAnalyzer
-
-analyzer = CloudAnalyzer(platform="aws")
-result = analyzer.analyze_cloud(
-    binary="/path/to/binary.exe",
-    workers=10
-)
-
-print(f"Analysis complete: {result['job_id']}")
-```
-
-### Example 2: Upload to Cloud
-
-```python
-from reveng.cloud import CloudStorage
-
-storage = CloudStorage(platform="aws")
-storage.upload(
-    local_path="/path/to/results/",
-    remote_path="s3://bucket/results/"
-)
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/tools/enterprise/` - Enterprise tools
+### `s3_encryption_bypass.py`
+- **Summary:** S3 Client-Side Encryption Bypass
+- **Classes:**
+  - `S3EncryptionBypass` — S3 client-side encryption bypass engine.
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

@@ -2,7 +2,7 @@
 # ====================================================================
 
 [build-system]
-requires = ["setuptools>=65.0", "wheel", "setuptools-scm"]
+requires = ["setuptools>=82.0.1", "wheel", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -31,7 +31,7 @@ keywords = [
     "security"
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Information Technology",
@@ -61,30 +61,34 @@ Repository = "https://github.com/oimiragieo/reveng-main"
 
 [project.scripts]
 reveng = "reveng.cli:main"
+reveng-js = "reveng.javascript.cli:console_main"
+reveng-app = "reveng.app_reverse_engineering.cli:console_main"
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.8,<0.24.0",
     "pytest-cov>=4.1.0",
-    "black>=23.12.0",
+    "black>=25.11.0",
     "isort>=5.13.0",
-    "pylint>=3.0.0",
+    "pylint>=3.3.9",
     "mypy>=1.7.0",
     "pre-commit>=3.6.0",
     "safety>=2.3.0",
     "bandit>=1.7.0",
+    "import-linter>=2.0",
 ]
 ai = [
-    "anthropic>=0.7.0",
-    "openai>=1.3.0",
+    "anthropic>=0.40.0",
+    "openai>=1.50.0",
     "ollama>=0.1.0",
 ]
 web = [
-    "fastapi>=0.104.0",
+    "fastapi>=0.128.8",
     "uvicorn>=0.24.0",
-    "websockets>=12.0",
+    "websockets>=15.0.1",
     "jinja2>=3.1.0",
-    "python-multipart>=0.0.6",
+    "python-multipart>=0.0.20",
 ]
 java = [
     "jython>=2.7.3",

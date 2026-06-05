@@ -5,8 +5,7 @@ Scans container images for secrets, misconfigurations, and vulnerabilities.
 """
 
 import logging
-from typing import List, Dict
-import re
+from typing import Dict
 
 
 class ContainerScanner:
@@ -36,12 +35,7 @@ class ContainerScanner:
         """
         self.logger.info(f"Scanning image: {image_name}")
 
-        results = {
-            'image': image_name,
-            'secrets': [],
-            'misconfigs': [],
-            'cves': []
-        }
+        results = {"image": image_name, "secrets": [], "misconfigs": [], "cves": []}
 
         # Real implementation would:
         # 1. Extract image layers

@@ -2,7 +2,6 @@
 JavaScript deobfuscation tool - integrates REVENG JS deobfuscation capabilities.
 """
 
-import asyncio
 from typing import Any, Dict
 
 from ..base import BaseTool, ToolResult

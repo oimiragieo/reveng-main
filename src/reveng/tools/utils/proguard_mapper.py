@@ -33,12 +33,8 @@ class ClassMapping:
 
     original_name: str
     obfuscated_name: str
-    field_mappings: Dict[str, str] = field(
-        default_factory=dict
-    )  # obfuscated -> original
-    method_mappings: Dict[str, str] = field(
-        default_factory=dict
-    )  # obfuscated -> original
+    field_mappings: Dict[str, str] = field(default_factory=dict)  # obfuscated -> original
+    method_mappings: Dict[str, str] = field(default_factory=dict)  # obfuscated -> original
 
 
 class ProGuardMapper:
@@ -93,9 +89,7 @@ class ProGuardMapper:
                     original = class_match.group(1)
                     obfuscated = class_match.group(2)
 
-                    current_class = ClassMapping(
-                        original_name=original, obfuscated_name=obfuscated
-                    )
+                    current_class = ClassMapping(original_name=original, obfuscated_name=obfuscated)
 
                     self.class_mappings[original] = current_class
                     self.reverse_class_mappings[obfuscated] = original
@@ -135,9 +129,7 @@ class ProGuardMapper:
                     if obfuscated_name not in current_class.method_mappings:
                         current_class.method_mappings[obfuscated_name] = original_name
 
-                    logger.debug(
-                        f"  Method: {original_name}({params}) -> {obfuscated_name}"
-                    )
+                    logger.debug(f"  Method: {original_name}({params}) -> {obfuscated_name}")
                     continue
 
                 # Unknown line format
@@ -192,15 +184,11 @@ class ProGuardMapper:
                     return class_mapping.method_mappings[method_key]
 
             # Fallback to simple name
-            return class_mapping.method_mappings.get(
-                obfuscated_method, obfuscated_method
-            )
+            return class_mapping.method_mappings.get(obfuscated_method, obfuscated_method)
 
         return obfuscated_method
 
-    def deobfuscate_java_source(
-        self, java_source: str, obfuscated_class_name: str
-    ) -> str:
+    def deobfuscate_java_source(self, java_source: str, obfuscated_class_name: str) -> str:
         """
         Deobfuscate Java source code using mapping
 
@@ -254,12 +242,8 @@ class ProGuardMapper:
 
     def generate_report(self) -> Dict:
         """Generate mapping statistics report"""
-        total_fields = sum(
-            len(cm.field_mappings) for cm in self.class_mappings.values()
-        )
-        total_methods = sum(
-            len(cm.method_mappings) for cm in self.class_mappings.values()
-        )
+        total_fields = sum(len(cm.field_mappings) for cm in self.class_mappings.values())
+        total_methods = sum(len(cm.method_mappings) for cm in self.class_mappings.values())
 
         return {
             "total_classes": len(self.class_mappings),

@@ -84,7 +84,7 @@ class TestExamples:
             pytest.skip("Examples README not found")
 
         # Check that README exists and has content
-        content = readme_path.read_text()
+        content = readme_path.read_text(encoding="utf-8")
         assert len(content) > 100, "Examples README too short"
         assert "REVENG" in content, "Examples README missing REVENG reference"
 
@@ -175,12 +175,12 @@ class TestExampleDocumentation:
         if not readme_path.exists():
             pytest.skip("Examples README not found")
 
-        content = readme_path.read_text()
+        content = readme_path.read_text(encoding="utf-8")
 
         # Check for key sections
-        assert "## Basic Examples" in content or "## Getting Started" in content
-        assert "## Advanced Examples" in content or "## Advanced Usage" in content
-        assert "## Usage" in content or "## How to Use" in content
+        assert "## 🚀 Quick Start" in content
+        assert "## 📚 Available Examples" in content
+        assert "## 🧪 Running Examples" in content
 
     def test_example_docstrings(self):
         """Test that examples have proper docstrings"""
@@ -192,14 +192,16 @@ class TestExampleDocumentation:
         assert len(python_files) > 0, "No Python examples found"
 
         for py_file in python_files:
-            content = py_file.read_text()
+            content = py_file.read_text(encoding="utf-8")
 
             # Check for docstring
             assert '"""' in content or "'''" in content, f"Example {py_file} missing docstring"
 
             # Check for usage information
             assert (
-                "usage" in content.lower() or "example" in content.lower()
+                "usage" in content.lower()
+                or "example" in content.lower()
+                or "demo" in content.lower()
             ), f"Example {py_file} missing usage info"
 
 

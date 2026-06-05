@@ -60,9 +60,7 @@ class GhidraHTTPClient:
         )
 
         # Mount adapter with retry strategy
-        adapter = HTTPAdapter(
-            max_retries=retry_strategy, pool_connections=10, pool_maxsize=20
-        )
+        adapter = HTTPAdapter(max_retries=retry_strategy, pool_connections=10, pool_maxsize=20)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
 
@@ -135,9 +133,7 @@ class GhidraHTTPClient:
         timeout = timeout or self.timeout
 
         try:
-            self.logger.debug(
-                f"POST {url} with data: {data is not None}, json: {json is not None}"
-            )
+            self.logger.debug(f"POST {url} with data: {data is not None}, json: {json is not None}")
             response = self.session.post(url, data=data, json=json, timeout=timeout)
             response.raise_for_status()
             return response

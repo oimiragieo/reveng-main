@@ -11,11 +11,11 @@ Version: 2.2.0
 License: MIT
 """
 
+import json
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
-import json
-import time
 
 
 class AnalysisType(Enum):
@@ -175,15 +175,9 @@ class AIAnalysisResult:
         return {
             "binary_info": self._dict_from_dataclass(self.binary_info),
             "functions": [self._dict_from_dataclass(f) for f in self.functions],
-            "vulnerabilities": [
-                self._dict_from_dataclass(v) for v in self.vulnerabilities
-            ],
-            "threat_indicators": [
-                self._dict_from_dataclass(t) for t in self.threat_indicators
-            ],
-            "recommendations": [
-                self._dict_from_dataclass(r) for r in self.recommendations
-            ],
+            "vulnerabilities": [self._dict_from_dataclass(v) for v in self.vulnerabilities],
+            "threat_indicators": [self._dict_from_dataclass(t) for t in self.threat_indicators],
+            "recommendations": [self._dict_from_dataclass(r) for r in self.recommendations],
             "metadata": self._dict_from_dataclass(self.metadata),
             "natural_language_summary": self.natural_language_summary,
             "structured_prompt": self.structured_prompt,
@@ -367,9 +361,7 @@ class WorkflowSuggestion:
 
 
 # Factory functions for easy creation
-def create_binary_info(
-    name: str, path: str, size: int, file_type: str, **kwargs
-) -> BinaryInfo:
+def create_binary_info(name: str, path: str, size: int, file_type: str, **kwargs) -> BinaryInfo:
     """Create BinaryInfo with default values"""
     return BinaryInfo(name=name, path=path, size=size, file_type=file_type, **kwargs)
 
@@ -378,18 +370,14 @@ def create_function_analysis(
     name: str, address: str, size: int, purpose: str, **kwargs
 ) -> FunctionAnalysis:
     """Create FunctionAnalysis with default values"""
-    return FunctionAnalysis(
-        name=name, address=address, size=size, purpose=purpose, **kwargs
-    )
+    return FunctionAnalysis(name=name, address=address, size=size, purpose=purpose, **kwargs)
 
 
 def create_vulnerability(
     id: str, type: str, severity: str, description: str, **kwargs
 ) -> Vulnerability:
     """Create Vulnerability with default values"""
-    return Vulnerability(
-        id=id, type=type, severity=severity, description=description, **kwargs
-    )
+    return Vulnerability(id=id, type=type, severity=severity, description=description, **kwargs)
 
 
 def create_threat_indicator(

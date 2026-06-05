@@ -1,69 +1,17 @@
-# REVENG Reporting
+# `claude.md` — `reporting`
 
-## Overview
+**Repository path:** `src/reveng/reporting/`
 
-Reporting module for generating comprehensive analysis reports in various formats including PDF, HTML, Markdown, and JSON.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/reporting/`
+## Subpackages / subfolders (see each `claude.md`)
 
-## Key Features
+- `visualization/` — [`claude.md`](visualization/claude.md)
 
-### Report Formats
-- PDF reports
-- HTML reports
-- Markdown reports
-- JSON export
-- XML export
+## Python modules
 
-### Report Content
-- Executive summary
-- Technical details
-- Visualizations
-- Code snippets
-- IOCs
-
-### Customization
-- Templates
-- Branding
-- Custom sections
-- Styling
-
-## Usage Examples
-
-### Example 1: Generate PDF Report
-
-```python
-from reveng.reporting import ReportGenerator
-
-generator = ReportGenerator()
-report = generator.generate(
-    analysis_results=results,
-    format="pdf",
-    output="/path/to/report.pdf"
-)
-
-print(f"Report generated: {report['path']}")
-```
-
-### Example 2: Custom Template
-
-```python
-from reveng.reporting import ReportGenerator
-
-generator = ReportGenerator(template="/path/to/template.html")
-report = generator.generate(
-    analysis_results=results,
-    format="html",
-    custom_sections=["executive_summary", "iocs"]
-)
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/reporting/visualization/` - Report visualizations
+### `__init__.py`
+- **Summary:** Reporting and visualization components.
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

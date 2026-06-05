@@ -1,0 +1,25 @@
+{
+  "group": "group-skipped-tests",
+  "testedAt": "2026-03-14T00:00:00Z",
+  "assertions": {
+    "VAL-TEST-001": {
+      "status": "pass",
+      "evidence": "test-quality/group-skipped-tests/VAL-TEST-001-pytest-output.txt",
+      "reason": "rg '@pytest.mark.skip' returned no matches. pytest collected 5 tests, all 5 passed, 0 skipped, 0 failed."
+    },
+    "VAL-TEST-002": {
+      "status": "pass",
+      "evidence": "test-quality/group-skipped-tests/VAL-TEST-002-pytest-output.txt",
+      "reason": "rg '@pytest.mark.skip' returned no matches. pytest collected 5 tests, all 5 passed, 0 skipped, 0 failed."
+    },
+    "VAL-TEST-003": {
+      "status": "pass",
+      "evidence": "test-quality/group-skipped-tests/VAL-TEST-003-pytest-output.txt",
+      "reason": "rg '@pytest.mark.skip' returned no matches. pytest collected 6 tests, all 6 passed, 0 skipped, 0 failed."
+    }
+  },
+  "frictions": [],
+  "blockers": [],
+  "toolsUsed": ["pytest", "rg"],
+  "summary": "Tested 3 assertions: all 3 passed. No @pytest.mark.skip decorators found in any test file. Total: 16 tests collected across 3 files, all passing with 0 skipped."
+}

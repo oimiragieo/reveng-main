@@ -1,17 +1,19 @@
-"""
-REVENG v4.0 - High-Performance Computing Module
+"""Compatibility exports for the canonical ML GPU accelerator module."""
 
-Provides massive speedup through:
-- GPU acceleration for ML models (10-100x speedup)
-- Parallel batch processing
-- Distributed analysis across machines
-- Optimized memory management
-"""
-
-from .gpu_accelerator import GPUAcceleratedAnalyzer, ParallelDecompiler, BatchProcessor
+from reveng.ml import gpu_accelerator
+from reveng.ml.gpu_accelerator import (
+    BatchDecompiler,
+    BatchProcessingResult,
+    DeviceType,
+    GPUAccelerator,
+    GPUInfo,
+)
 
 __all__ = [
-    "GPUAcceleratedAnalyzer",
-    "ParallelDecompiler",
-    "BatchProcessor",
+    "gpu_accelerator",
+    "BatchDecompiler",
+    "BatchProcessingResult",
+    "DeviceType",
+    "GPUAccelerator",
+    "GPUInfo",
 ]

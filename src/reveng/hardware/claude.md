@@ -1,64 +1,61 @@
-# REVENG Hardware
+# `claude.md` — `hardware`
 
-## Overview
+**Repository path:** `src/reveng/hardware/`
 
-Hardware and firmware analysis module for analyzing embedded systems, firmware, and hardware-level code including IoT devices, routers, and embedded controllers.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/hardware/`
+## Python modules
 
-## Key Features
+### `__init__.py`
+- **Summary:** REVENG v5.0 - Hardware-Assisted Analysis
 
-### Firmware Analysis
-- Firmware extraction
-- Boot loader analysis
-- File system extraction
-- Encryption detection
+### `can_bus_analyzer.py`
+- **Summary:** CAN Bus Analyzer
+- **Classes:**
+  - `CANFrameType` — CAN frame types
+  - `CANFrame` — CAN bus frame
+  - `CANSignal` — Identified CAN signal
+  - `CANBusAnalyzer` — CAN bus reverse engineering and exploitation engine.
 
-### Embedded Code Analysis
-- ARM analysis
-- MIPS analysis
-- Microcontroller code
-- Real-time OS detection
+### `chipwhisperer_integration.py`
+- **Summary:** ChipWhisperer Integration
+- **Classes:**
+  - `PowerTrace` — Power consumption trace
+  - `ChipWhispererIntegration` — ChipWhisperer-based hardware attack platform.
 
-### Hardware Interface
-- Memory dump analysis
-- JTAG integration
-- Serial communication
-- Debugging interfaces
+### `firmware_analyzer.py`
+- **Summary:** Firmware Analyzer
+- **Classes:**
+  - `FirmwareType` — Types of firmware
+  - `Architecture` — Supported architectures
+  - `FirmwareMetadata` — Firmware metadata
+  - `ExtractedFilesystem` — Extracted filesystem information
+  - `FirmwareAnalyzer` — Advanced firmware analysis engine.
 
-## Usage Examples
+### `hardware_breakpoint_engine.py`
+- **Summary:** Hardware Breakpoint Engine
+- **Classes:**
+  - `WatchType` — Types of hardware watchpoints
+  - `BreakpointCondition` — Breakpoint conditions
+  - `Breakpoint` — Hardware breakpoint
+  - `HardwareBreakpointEngine` — Hardware breakpoint management using CPU debug registers
 
-### Example 1: Analyze Firmware
+### `intel_pt_analyzer.py`
+- **Summary:** Intel Processor Trace (PT) Analyzer
+- **Classes:**
+  - `BasicBlock` — A basic block in the execution trace
+  - `Branch` — A branch in the execution
+  - `ControlFlowTrace` — Complete control flow trace
+  - `CoverageMap` — Code coverage information
+  - `PerformanceProfile` — Performance profiling data
+  - `TraceResult` — Result from Intel PT tracing
+  - `IntelPTAnalyzer` — Intel Processor Trace analyzer for hardware-level tracing
 
-```python
-from reveng.hardware import FirmwareAnalyzer
-
-analyzer = FirmwareAnalyzer()
-result = analyzer.analyze("/path/to/firmware.bin")
-
-print(f"Architecture: {result['architecture']}")
-print(f"File systems: {result['filesystems']}")
-print(f"Encrypted: {result['is_encrypted']}")
-```
-
-### Example 2: Extract File System
-
-```python
-from reveng.hardware import FirmwareExtractor
-
-extractor = FirmwareExtractor()
-extractor.extract(
-    firmware="/path/to/firmware.bin",
-    output_dir="/path/to/extracted/"
-)
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/analyzers/` - Binary analyzers
+### `jtag_scanner.py`
+- **Summary:** JTAG Scanner
+- **Classes:**
+  - `JTAGPin` — JTAG pin configuration
+  - `JTAGScanner` — JTAG pinout scanner (JTAGulator implementation).
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

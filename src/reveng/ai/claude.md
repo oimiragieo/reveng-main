@@ -1,314 +1,77 @@
-# Directory: src/reveng/ai
+# `claude.md` — `ai`
 
-## Overview
-This directory contains AI-powered analysis components that enable natural language interaction, intelligent analysis orchestration, and advanced code analysis using large language models. It provides a unified AI assistant interface that combines all REVENG capabilities for AI-driven reverse engineering.
+**Repository path:** `src/reveng/ai/`
 
-## Files in This Directory
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-### ai_assistant.py
-- **Purpose**: Unified AI assistant that orchestrates all REVENG AI capabilities
-- **Key Classes**:
-  - `REVENGAIAssistant`: Main AI assistant class combining all analysis capabilities
-- **Key Functions**:
-  - `analyze_binary_ai()`: AI-powered binary analysis with natural language interaction (async)
-  - `ask_question()`: Ask questions about analysis results (async)
-  - `explain_code()`: Natural language code explanation
-  - `suggest_improvements()`: Code improvement suggestions
-  - `find_similar_samples()`: Find similar binaries in database
-- **Dependencies**:
-  - `..analyzer.REVENGAnalyzer`
-  - `..ghidra.scripting_engine.GhidraScriptingEngine`
-  - `..tools.ai.ollama_analyzer.OllamaAnalyzer`
-  - `..tools.ai.ai_enhanced_analyzer.AIEnhancedAnalyzer`
-  - `..tools.security.*` (Vulnerability and threat engines)
-  - `.analysis_models` (Structured data models)
-- **Used By**: CLI (ai command), API, web interface
+## Python modules
 
-### analysis_models.py
-- **Purpose**: Structured data models for AI-optimized analysis results
-- **Key Classes**:
-  - `AIAnalysisRequest`: Request for AI analysis
-  - `AIAnalysisResult`: Complete analysis results
-  - `BinaryInfo`: Binary metadata
-  - `FunctionAnalysis`: Per-function analysis results
-  - `Vulnerability`: Vulnerability information
-  - `ThreatIndicator`: Threat intelligence indicators
-  - `Recommendation`: Analysis recommendations
-  - `AnalysisMetadata`: Analysis execution metadata
-  - `AnalysisType`: Enum (COMPREHENSIVE, SECURITY, TRIAGE, PERFORMANCE, CUSTOM)
-  - `ThreatLevel`: Enum (LOW, MEDIUM, HIGH, CRITICAL, UNKNOWN)
-  - `ConfidenceLevel`: Enum (VERY_LOW to VERY_HIGH)
-- **Key Functions**: Factory functions for creating model instances
-- **Dependencies**: Standard library (dataclasses, enum)
-- **Used By**: `ai_assistant.py`, API layer, all AI components
+### `ai_assistant.py`
+- **Summary:** REVENG AI Assistant
+- **Classes:**
+  - `REVENGAIAssistant` — Unified AI Assistant for REVENG
+- **Functions / coroutines:**
+  - `async def analyze_binary()` — Convenience function for AI binary analysis
+  - `async def ask_about_binary()` — Convenience function for asking questions about a binary
+  - `async def suggest_analysis_workflow()` — Convenience function for workflow suggestions
 
-### gemini_engine.py
-- **Purpose**: Integration with Google Gemini AI for advanced code analysis
-- **Key Classes**: `GeminiEngine`
-- **Key Functions**:
-  - Code analysis using Gemini models
-  - Multi-modal analysis (code + diagrams)
-  - Advanced reasoning for complex code
-- **Dependencies**: Google Gemini API
-- **Used By**: AI assistant, advanced analysis workflows
+### `analysis_models.py`
+- **Summary:** REVENG Analysis Models
+- **Classes:**
+  - `AnalysisType` — Types of analysis that can be performed
+  - `ThreatLevel` — Threat level classifications
+  - `ConfidenceLevel` — Confidence levels for analysis results
+  - `BinaryInfo` — Information about the binary being analyzed
+  - `FunctionAnalysis` — Analysis result for a single function
+  - `Vulnerability` — Vulnerability information
+  - `ThreatIndicator` — Threat intelligence indicator
+  - `Recommendation` — Analysis recommendation
+  - `AnalysisMetadata` — Metadata about the analysis process
+  - `AIAnalysisResult` — Comprehensive AI analysis result optimized for AI consumption
+  - `AIAnalysisRequest` — Request for AI analysis
+  - `WorkflowSuggestion` — Suggested analysis workflow
+- **Functions / coroutines:**
+  - `def create_binary_info()` — Create BinaryInfo with default values
+  - `def create_function_analysis()` — Create FunctionAnalysis with default values
+  - `def create_vulnerability()` — Create Vulnerability with default values
+  - `def create_threat_indicator()` — Create ThreatIndicator with default values
+  - `def create_recommendation()` — Create Recommendation with default values
+  - `def create_analysis_metadata()` — Create AnalysisMetadata with calculated values
 
-### gemini_feedback_loop.py
-- **Purpose**: Implements feedback loop for improving Gemini-based analysis
-- **Key Classes**: `GeminiFeedbackLoop`
-- **Key Functions**:
-  - Collect analysis feedback
-  - Improve prompts based on results
-  - Adaptive analysis strategies
-- **Dependencies**: `gemini_engine.py`
-- **Used By**: AI assistant for continuous improvement
+### `angr_cfg_preprocessor.py`
+- **Summary:** angr-based CFG preprocessing for binary recompilation context.
+- **Classes:**
+  - `CFGExtractionError` — Raised when CFG extraction cannot produce a usable payload.
+  - `AngrCFGPreprocessor` — Extract and serialize a structured control-flow graph with angr.
 
-### llm4decompile_engine.py
-- **Purpose**: Specialized LLM engine for decompilation using LLM4Decompile models **(v4.0 ENHANCED)**
-- **Key Classes**: `LLM4DecompileEngine`
-- **Key Functions**:
-  - Assembly-to-C decompilation (90% recompilability)
-  - Code optimization and cleanup
-  - Variable name recovery
-  - Two approaches: Direct (binary→source) and Ref (refine Ghidra output, 16.2% better)
-  - Optimization-level awareness (O0-O3)
-  - Re-executability evaluation (21% success rate with 6B model)
-- **v4.0 Improvements**:
-  - POC test suite (`tests/poc/test_llm4decompile_poc.py`)
-  - 90% recompilability (up from 70%)
-  - 21% re-executability (vs ~10% for general LLMs)
-  - 100%+ improvement over GPT-4o and standard Ghidra
-- **Dependencies**: LLM4Decompile models (HuggingFace), transformers, torch
-- **Used By**: Decompilation pipeline, code reconstruction, v4.0 optimization testing
+### `gemini_engine.py`
+- **Summary:** Gemini AI Engine - Advanced Reasoning and Code Analysis
+- **Classes:**
+  - `GeminiEngine` — Google Gemini integration for advanced AI-powered analysis.
+- **Functions / coroutines:**
+  - `async def reconstruct_code()` — Quick function to reconstruct code using Gemini.
+  - `async def find_vulnerabilities()` — Quick function to find vulnerabilities using Gemini.
 
-### recompilation_engine.py
-- **Purpose**: AI-powered code recompilation and optimization
-- **Key Classes**: `RecompilationEngine`
-- **Key Functions**:
-  - Decompiled code improvement
-  - Code reconstruction
-  - Build system generation
-- **Dependencies**: AI models, compiler toolchains
-- **Used By**: Binary reconstruction pipeline
+### `gemini_feedback_loop.py`
+- **Summary:** Gemini Continuous Feedback Loop
+- **Classes:**
+  - `GeminiFeedbackLoop` — Continuous improvement system using Gemini.
+- **Functions / coroutines:**
+  - `async def run_feedback_loop()` — Run the Gemini feedback loop from CLI.
+  - `def run_feedback_loop_sync()` — Synchronous wrapper for the feedback loop.
 
-## Architecture
+### `llm4decompile_engine.py`
+- **Summary:** LLM4Decompile Integration - Specialized Decompilation Models
+- **Classes:**
+  - `DecompilationResult` — Result from LLM4Decompile
+  - `LLM4DecompileEngine` — Specialized decompilation models trained on Decompile-Bench dataset
+  - `MultiModelEnsemble` — Ensemble of specialized and general models for optimal results
 
-```
-┌─────────────────────────────────────┐
-│   REVENGAIAssistant                 │
-│   (Unified AI Interface)            │
-├─────────────────────────────────────┤
-│ • Natural language interaction      │
-│ • Analysis orchestration            │
-│ • Context management                │
-│ • Multi-model ensemble              │
-└──────────────┬──────────────────────┘
-               │
-       ┌───────┴────────────────────┐
-       │   AI Engines               │
-       ├────────────────────────────┤
-       │ • GeminiEngine             │
-       │ • LLM4DecompileEngine      │
-       │ • OllamaAnalyzer           │
-       │ • RecompilationEngine      │
-       └───────┬────────────────────┘
-               │
-       ┌───────┴────────────────────┐
-       │   Analysis Models          │
-       ├────────────────────────────┤
-       │ • Structured data models   │
-       │ • Type-safe interfaces     │
-       │ • JSON serialization       │
-       └────────────────────────────┘
-```
+### `recompilation_engine.py`
+- **Summary:** Binary Recompilation Engine - Prove Vulnerabilities Through Working Code
+- **Classes:**
+  - `CompilationError` — Raised when code compilation fails.
+  - `BinaryRecompilationEngine` — Advanced engine for binary → source → binary reconstruction.
 
-## Key Concepts
-
-### AI-Powered Analysis Workflow
-1. **Request Analysis**: User submits binary with analysis goals
-2. **Intelligent Routing**: AI determines optimal analysis strategy
-3. **Multi-Stage Analysis**: Orchestrates various tools and techniques
-4. **Result Synthesis**: Combines results into coherent narrative
-5. **Natural Language Output**: Presents findings in human-readable format
-
-### Supported Analysis Types
-- **COMPREHENSIVE**: Full analysis with all modules
-- **SECURITY**: Focus on vulnerabilities and threats
-- **TRIAGE**: Quick assessment for incident response
-- **PERFORMANCE**: Performance bottleneck analysis
-- **CUSTOM**: User-defined analysis goals
-
-### AI Model Integration
-- **Ollama**: Local LLM for code analysis
-- **Gemini**: Google's advanced AI for complex reasoning
-- **LLM4Decompile**: Specialized decompilation models
-- **Ensemble**: Combines multiple models for best results
-
-## Usage Examples
-
-### Basic AI Assistant Usage
-```python
-from reveng.ai.ai_assistant import REVENGAIAssistant
-from reveng.ai.analysis_models import AIAnalysisRequest, AnalysisType
-import asyncio
-
-# Create AI assistant
-assistant = REVENGAIAssistant()
-
-# Create analysis request
-request = AIAnalysisRequest(
-    binary_path="malware.exe",
-    analysis_type=AnalysisType.SECURITY,
-    goals=["find_vulnerabilities", "assess_threats", "extract_iocs"]
-)
-
-# Run analysis (async)
-result = asyncio.run(assistant.analyze_binary_ai(request))
-
-# Access results
-print(f"Binary: {result.binary_info.name}")
-print(f"Vulnerabilities: {len(result.vulnerabilities)}")
-print(f"Threat Level: {result.threat_level}")
-print(f"\nSummary:\n{result.natural_language_summary}")
-```
-
-### Using Structured Models
-```python
-from reveng.ai.analysis_models import (
-    create_binary_info,
-    create_vulnerability,
-    ThreatLevel
-)
-
-# Create binary info
-binary = create_binary_info(
-    name="suspicious.exe",
-    path="/path/to/suspicious.exe",
-    size=1024000,
-    file_type="PE32",
-    architecture="x86-64"
-)
-
-# Create vulnerability
-vuln = create_vulnerability(
-    vuln_type="buffer_overflow",
-    severity="HIGH",
-    description="Unbounded strcpy in process_input",
-    location="0x401000",
-    cwe_id="CWE-120"
-)
-
-# Convert to JSON
-print(vuln.to_json())
-```
-
-### Natural Language Queries
-```python
-import asyncio
-
-async def analyze():
-    assistant = REVENGAIAssistant()
-
-    # Ask questions about binary
-    answer = await assistant.ask_question(
-        "What does this binary do?",
-        binary_path="unknown.exe"
-    )
-
-    print(f"Answer: {answer}")
-
-    # Get code explanation
-    explanation = await assistant.explain_code(
-        code="<decompiled code>",
-        context="main function"
-    )
-
-    print(f"Explanation: {explanation}")
-
-asyncio.run(analyze())
-```
-
-## Configuration
-
-### AI Model Selection
-```python
-config = {
-    "ai_provider": "ollama",  # or "gemini", "ensemble"
-    "ollama_model": "codellama",
-    "gemini_model": "gemini-pro",
-    "max_tokens": 4096,
-    "temperature": 0.7
-}
-
-assistant = REVENGAIAssistant(config=config)
-```
-
-### Analysis Goals
-Common analysis goals for AI assistant:
-- `understand_functionality`
-- `find_vulnerabilities`
-- `assess_threats`
-- `extract_iocs`
-- `identify_malware_family`
-- `reverse_algorithm`
-- `find_crypto`
-- `analyze_network_behavior`
-
-## Testing
-
-### Unit Tests
-```bash
-pytest tests/ai/test_ai_assistant.py
-pytest tests/ai/test_analysis_models.py
-```
-
-### Integration Tests
-```bash
-pytest tests/ai/test_ai_integration.py
-```
-
-## Related Modules
-
-### Dependencies
-- `src/reveng/analyzer.py`: Core analyzer
-- `src/reveng/tools/ai/*`: AI-enhanced tools
-- `src/reveng/security/*`: Security analysis engines
-- `src/reveng/ghidra/*`: Ghidra integration
-
-### Used By
-- `src/reveng/cli.py`: CLI ai command
-- `src/reveng/api.py`: API endpoints
-- Web interface
-
-## Notes
-
-### Async Design
-Most AI operations are async to support:
-- Long-running analysis
-- Real-time streaming results
-- Concurrent operations
-- Web interface integration
-
-### Model Requirements
-- Ollama: Requires local Ollama server
-- Gemini: Requires Google API key
-- LLM4Decompile: Requires transformers library (v4.0+ supports 1.3B, 6B, 33B models)
-
-### v4.0 Updates
-- **LLM4Decompile Integration**: Comprehensive POC tests demonstrating 90% recompilability
-- **Performance Metrics**: 21% re-executability (6B model), 100%+ improvement over GPT-4o
-- **Test Coverage**: `tests/poc/test_llm4decompile_poc.py` with accuracy, recompilation, and re-execution tests
-- **Documentation**: See [IMPLEMENTATION_SUMMARY.md](/home/user/reveng-main/IMPLEMENTATION_SUMMARY.md) for complete details
-
-### Best Practices
-1. Use structured models for type safety
-2. Implement proper error handling for AI operations
-3. Set appropriate timeouts for LLM calls
-4. Cache results when possible
-5. Use ensemble for critical analysis
-6. Validate AI outputs before trusting them
-
-### Performance
-- Ollama: Fastest, local inference
-- Gemini: Best quality, cloud-based
-- Ensemble: Highest accuracy, slowest
-- Average analysis time: 2-10 minutes depending on mode
+---
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

@@ -1,0 +1,16 @@
+{
+  "milestone": "module-consolidation",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 4,
+    "passed": 4,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": ["VAL-MOD-001", "VAL-MOD-002", "VAL-MOD-003", "VAL-MOD-004"],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": null
+}

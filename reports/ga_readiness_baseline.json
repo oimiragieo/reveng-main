@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "result_type": "ga_readiness_report",
+  "generated_at": "2026-03-29T23:05:37.800309Z",
+  "profile": "baseline",
+  "inputs": {
+    "source_report": "C:\\dev\\projects\\reveng-main\\reports\\source_binary_benchmarks_report.json",
+    "bun_report": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix.json",
+    "app_report": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_report.json",
+    "support_matrix": "C:\\dev\\projects\\reveng-main\\docs\\support_matrix.json"
+  },
+  "summary": {
+    "overall_status": "pass",
+    "gate_count": 4,
+    "failed_gate_count": 0,
+    "passed_gate_count": 4
+  },
+  "gates": [
+    {
+      "id": "documented-support-surface",
+      "status": "pass",
+      "summary": "A machine-readable support matrix with at least one supported workflow must exist.",
+      "details": {
+        "support_matrix_path": "C:\\dev\\projects\\reveng-main\\docs\\support_matrix.json",
+        "supported_workflow_count": 2
+      }
+    },
+    {
+      "id": "app-corpus-baseline",
+      "status": "pass",
+      "summary": "App reverse-engineering corpus must pass with at least 7 tracked rows.",
+      "details": {
+        "matrix_status": "pass",
+        "total_entries": 7
+      }
+    },
+    {
+      "id": "native-benchmark-baseline",
+      "status": "pass",
+      "summary": "At least one tracked source-backed source-vs-binary benchmark report must exist.",
+      "details": {
+        "benchmark_count": 5,
+        "failed_statuses": {
+          "java-helloworld-class": "recompile_failed",
+          "java-helloworld-jar": "recompile_failed",
+          "python-sample-bytecode": "recompile_failed",
+          "python-sample-zipapp": "recompile_failed"
+        }
+      }
+    },
+    {
+      "id": "bun-matrix-baseline",
+      "status": "pass",
+      "summary": "Tracked Bun matrix must exist with at least one live sample and no hard failures.",
+      "details": {
+        "matrix_status": "pass",
+        "live_bun_sample_count": 2,
+        "hard_failure_count": 0
+      }
+    }
+  ]
+}

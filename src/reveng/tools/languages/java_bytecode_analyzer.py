@@ -292,7 +292,7 @@ class JavaBytecodeAnalyzer:
                 method_part = parts[0].split()
                 if len(method_part) >= 2:
                     return method_part[-1]
-        except:
+        except Exception:
             pass
         return None
 
@@ -303,7 +303,7 @@ class JavaBytecodeAnalyzer:
             parts = line.strip().split(";")[0].split()
             if len(parts) >= 3:
                 return parts[-1]
-        except:
+        except Exception:
             pass
         return None
 
@@ -356,7 +356,7 @@ class JavaBytecodeAnalyzer:
 
         try:
             # Build command with substitutions
-            command_parts = [config["command"]]
+            command_parts = list(config["command"])
             for arg in config["args"]:
                 arg_sub = arg.replace("{input}", str(class_file))
                 arg_sub = arg_sub.replace("{output}", str(output_dir))
@@ -386,9 +386,7 @@ class JavaBytecodeAnalyzer:
                 with open(java_files[0], "r", encoding="utf-8", errors="ignore") as f:
                     source_code = f.read()
 
-                logger.info(
-                    f"{decompiler} succeeded - generated {len(java_files)} file(s)"
-                )
+                logger.info(f"{decompiler} succeeded - generated {len(java_files)} file(s)")
 
                 return DecompilationResult(
                     decompiler=decompiler,
@@ -399,9 +397,7 @@ class JavaBytecodeAnalyzer:
                 )
             else:
                 # No output files, check stderr
-                error_msg = (
-                    result.stderr if result.stderr else "No output files generated"
-                )
+                error_msg = result.stderr if result.stderr else "No output files generated"
                 logger.warning(f"{decompiler} failed: {error_msg}")
 
                 return DecompilationResult(
@@ -464,16 +460,12 @@ class JavaBytecodeAnalyzer:
             obfuscation_indicators += 1
 
         # Check method names
-        obfuscated_methods = sum(
-            1 for m in class_info.methods if self._is_obfuscated_name(m)
-        )
+        obfuscated_methods = sum(1 for m in class_info.methods if self._is_obfuscated_name(m))
         if obfuscated_methods > len(class_info.methods) * 0.5:
             obfuscation_indicators += 1
 
         # Check field names
-        obfuscated_fields = sum(
-            1 for f in class_info.fields if self._is_obfuscated_name(f)
-        )
+        obfuscated_fields = sum(1 for f in class_info.fields if self._is_obfuscated_name(f))
         if obfuscated_fields > len(class_info.fields) * 0.5:
             obfuscation_indicators += 1
 
@@ -503,7 +495,7 @@ class JavaBytecodeAnalyzer:
         return {
             "available": cfr_path.exists(),
             "jar_path": str(cfr_path),
-            "command": f'java -jar "{cfr_path}"',
+            "command": ["java", "-jar", str(cfr_path)],
             "args": ["--silent", "--outputdir", "{output}"],
         }
 
@@ -513,19 +505,17 @@ class JavaBytecodeAnalyzer:
         return {
             "available": fernflower_path.exists(),
             "jar_path": str(fernflower_path),
-            "command": f'java -jar "{fernflower_path}"',
+            "command": ["java", "-jar", str(fernflower_path)],
             "args": ["{input}", "{output}"],
         }
 
     def _get_procyon_config(self) -> Dict[str, Any]:
         """Get Procyon decompiler configuration"""
-        procyon_path = (
-            Path(__file__).parent / "decompilers" / "procyon-decompiler-0.6.0.jar"
-        )
+        procyon_path = Path(__file__).parent / "decompilers" / "procyon-decompiler-0.6.0.jar"
         return {
             "available": procyon_path.exists(),
             "jar_path": str(procyon_path),
-            "command": f'java -jar "{procyon_path}"',
+            "command": ["java", "-jar", str(procyon_path)],
             "args": ["{input}", "-o", "{output}"],
         }
 
@@ -545,9 +535,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="REVENG Java Bytecode Analyzer")
     parser.add_argument("file", help="Path to .class, .jar, .war, or .ear file")
-    parser.add_argument(
-        "-o", "--output", default="java_analysis", help="Output directory"
-    )
+    parser.add_argument("-o", "--output", default="java_analysis", help="Output directory")
     args = parser.parse_args()
 
     # Configure logging

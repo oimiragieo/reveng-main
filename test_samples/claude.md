@@ -1,113 +1,53 @@
-# Test Samples Directory
+# `claude.md` — `test_samples/`
 
-## Overview
+**Repository path:** `test_samples/`
 
-The `test_samples/` directory contains sample files used for testing REVENG functionality. These include benign test binaries, code samples, and files used in examples and automated tests.
+Small fixtures used by tests and docs (not production code). See [`README.md`](README.md) for intent.
 
-**Purpose**: Provide sample files for testing, examples, and tutorials.
+## Layout (recursive overview)
 
-**Location**: `/home/user/reveng-main/test_samples/`
-
-## Directory Contents
-
-```
-test_samples/
-├── claude.md                  # This file
-├── README.md                  # Test samples documentation (4,433 bytes)
-├── HelloWorld.java            # Simple Java test file (953 bytes)
-└── ObfuscatedExample.java     # Obfuscated Java sample (859 bytes)
-```
-
-## Sample Files
-
-### Java Samples
-
-**HelloWorld.java** (953 bytes)
-- Simple "Hello World" Java program
-- Used for basic Java analysis testing
-- Clean, unobfuscated code
-- Good for learning examples
-
-**ObfuscatedExample.java** (859 bytes)
-- Intentionally obfuscated Java code
-- Tests deobfuscation capabilities
-- Example of code obfuscation techniques
-- Used in obfuscation/deobfuscation examples
-
-## Usage
-
-### Using in Tests
-
-```python
-# Use test samples in unit tests
-test_binary = "test_samples/HelloWorld.java"
-result = analyzer.analyze(test_binary)
-```
-
-### Using in Examples
-
-```bash
-# Run examples with test samples
-python examples/basic/02_java_analysis.py test_samples/HelloWorld.java
-
-# Deobfuscation example
-python examples/javascript_deobfuscation_demo.py test_samples/ObfuscatedExample.java
-```
-
-### Adding New Samples
-
-```bash
-# Add new test sample
-cp /path/to/sample.exe test_samples/
-
-# Document in README.md
-echo "## sample.exe - Description" >> test_samples/README.md
-
-# Ensure it's safe (no real malware!)
-```
-
-## Related Directories
-
-- **tests/** - Automated tests using these samples
-- **examples/** - Example scripts using samples
-- **docs/** - Documentation referencing samples
-
-## Notes
-
-### Safety
-
-**Important:**
-- Only safe, benign samples
-- No real malware
-- EICAR test file OK for AV testing
-- Synthetic samples only
-
-### Sample Types
-
-**Included:**
-- Simple programs (Hello World, etc.)
-- Obfuscated code examples
-- Test binaries for specific features
-- Educational samples
-
-**Not Included:**
-- Real malware
-- Proprietary software
-- Copyrighted binaries
-- Large binaries (>10MB)
-
-### Contributing Samples
-
-When adding samples:
-1. Ensure they're safe and legal
-2. Document purpose in README.md
-3. Keep file sizes reasonable
-4. Include source code when possible
-5. Add appropriate license info
+- `HelloWorld.class`
+- `HelloWorld.jar`
+- `HelloWorld.java`
+- `js_tracked_bundle_artifact/build_manifest.json`
+- `js_tracked_bundle_artifact/bundle.js`
+- `js_tracked_bundle_artifact/bundle.js.map`
+- `js_tracked_bundle_source/node_modules/.bin/esbuild`
+- `js_tracked_bundle_source/node_modules/.bin/esbuild.cmd`
+- `js_tracked_bundle_source/node_modules/.bin/esbuild.ps1`
+- `js_tracked_bundle_source/node_modules/.package-lock.json`
+- `js_tracked_bundle_source/node_modules/@esbuild/win32-x64/esbuild.exe`
+- `js_tracked_bundle_source/node_modules/@esbuild/win32-x64/package.json`
+- `js_tracked_bundle_source/node_modules/@esbuild/win32-x64/README.md`
+- `js_tracked_bundle_source/node_modules/esbuild/bin/esbuild`
+- `js_tracked_bundle_source/node_modules/esbuild/install.js`
+- `js_tracked_bundle_source/node_modules/esbuild/lib/main.d.ts`
+- `js_tracked_bundle_source/node_modules/esbuild/lib/main.js`
+- `js_tracked_bundle_source/node_modules/esbuild/LICENSE.md`
+- `js_tracked_bundle_source/node_modules/esbuild/package.json`
+- `js_tracked_bundle_source/node_modules/esbuild/README.md`
+- `js_tracked_bundle_source/package-lock.json`
+- `js_tracked_bundle_source/package.json`
+- `js_tracked_bundle_source/README.md`
+- `js_tracked_bundle_source/src/index.ts`
+- `js_tracked_bundle_source/src/lib/greet.ts`
+- `ObfuscatedExample.java`
+- `README.md`
+- `sample.exe`
+- `sample_app.py`
+- `sample_app.pyc`
+- `sample_app.pyz`
+- `sample_bundle.js`
+- `sample_bundle_oracle/package.json`
+- `sample_bundle_oracle/src/index.js`
+- `sample_bundle_oracle/src/lib/flags.js`
+- `sample_bundle_oracle/src/lib/output.js`
+- `sample_dotnet.dll`
+- `sample_tsx_cli.tsx`
+- `sample_tsx_cli.tsx.map`
+- `sample_tsx_cli_oracle/package.json`
+- `sample_tsx_cli_oracle/src/entrypoints/cli.tsx`
+- `sample_tsx_cli_oracle/src/lib/greet.ts`
 
 ---
-
-**Purpose**: Test and example samples
-**Size**: Small files only (<1MB preferred)
-**Safety**: Benign samples only
-**License**: Public domain or permissive
+*Regenerate related indexes: `python scripts/generate_claude_md_index.py`.*

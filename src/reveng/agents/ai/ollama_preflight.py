@@ -41,9 +41,7 @@ class OllamaPreflightChecker:
         self.ollama_host = ollama_host.rstrip("/")
         self.api_base = f"{self.ollama_host}/api"
 
-    def check_all(
-        self, required_model: Optional[str] = None
-    ) -> Tuple[bool, Dict[str, any]]:
+    def check_all(self, required_model: Optional[str] = None) -> Tuple[bool, Dict[str, any]]:
         """
         Run all preflight checks
 
@@ -75,9 +73,7 @@ class OllamaPreflightChecker:
 
         if not models:
             results["warnings"].append("No Ollama models found - AI analysis will fail")
-            results["errors"].append(
-                "Please install at least one model: ollama pull phi3.5"
-            )
+            results["errors"].append("Please install at least one model: ollama pull phi3.5")
             return False, results
 
         # Check 3: Required model (if specified)
@@ -244,9 +240,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     parser = argparse.ArgumentParser(description="Check Ollama preflight status")
-    parser.add_argument(
-        "--host", default="http://localhost:11434", help="Ollama host URL"
-    )
+    parser.add_argument("--host", default="http://localhost:11434", help="Ollama host URL")
     parser.add_argument("--model", help="Check for specific model")
     parser.add_argument("--setup", action="store_true", help="Show setup instructions")
     args = parser.parse_args()

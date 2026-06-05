@@ -164,9 +164,7 @@ class DemonstrationGenerator:
 
         return package
 
-    def _extract_evidence(
-        self, analysis_results: Dict[str, Any]
-    ) -> List[AnalysisEvidence]:
+    def _extract_evidence(self, analysis_results: Dict[str, Any]) -> List[AnalysisEvidence]:
         """Extract evidence from analysis results"""
         evidence = []
 
@@ -181,9 +179,7 @@ class DemonstrationGenerator:
                             evidence_type="credential_exposure",
                             description=f"Found {len(corp_data['credentials_found'])} hardcoded credentials",
                             risk_level=RiskLevel.CRITICAL,
-                            technical_details={
-                                "credentials": corp_data["credentials_found"]
-                            },
+                            technical_details={"credentials": corp_data["credentials_found"]},
                             remediation="Remove hardcoded credentials and use secure credential management",
                         )
                     )
@@ -194,9 +190,7 @@ class DemonstrationGenerator:
                             evidence_type="api_exposure",
                             description=f"Discovered {len(corp_data['api_endpoints_discovered'])} API endpoints",
                             risk_level=RiskLevel.HIGH,
-                            technical_details={
-                                "endpoints": corp_data["api_endpoints_discovered"]
-                            },
+                            technical_details={"endpoints": corp_data["api_endpoints_discovered"]},
                             remediation="Review API security and implement proper authentication",
                         )
                     )
@@ -225,9 +219,7 @@ class DemonstrationGenerator:
                             description=f"Found {len(vuln_data['injection_vulnerabilities'])} injection vulnerabilities",
                             risk_level=RiskLevel.HIGH,
                             technical_details={
-                                "vulnerabilities": vuln_data[
-                                    "injection_vulnerabilities"
-                                ]
+                                "vulnerabilities": vuln_data["injection_vulnerabilities"]
                             },
                             remediation="Implement input validation and parameterized queries",
                         )
@@ -243,9 +235,7 @@ class DemonstrationGenerator:
                             evidence_type="apt_attribution",
                             description=f"Potential APT group attribution: {threat_data['apt_attribution']}",
                             risk_level=RiskLevel.CRITICAL,
-                            technical_details={
-                                "attribution": threat_data["apt_attribution"]
-                            },
+                            technical_details={"attribution": threat_data["apt_attribution"]},
                             remediation="Implement advanced threat detection and response measures",
                         )
                     )
@@ -269,9 +259,7 @@ class DemonstrationGenerator:
 
         return evidence
 
-    def _generate_risk_assessment(
-        self, evidence: List[AnalysisEvidence]
-    ) -> Dict[str, Any]:
+    def _generate_risk_assessment(self, evidence: List[AnalysisEvidence]) -> Dict[str, Any]:
         """Generate comprehensive risk assessment"""
         risk_counts = {level: 0 for level in RiskLevel}
 
@@ -299,9 +287,7 @@ class DemonstrationGenerator:
         return {
             "overall_risk": overall_risk.value[0],
             "risk_score": risk_score,
-            "risk_distribution": {
-                level.value[0]: count for level, count in risk_counts.items()
-            },
+            "risk_distribution": {level.value[0]: count for level, count in risk_counts.items()},
             "total_findings": len(evidence),
             "critical_findings": risk_counts[RiskLevel.CRITICAL],
             "high_findings": risk_counts[RiskLevel.HIGH],
@@ -361,18 +347,14 @@ class DemonstrationGenerator:
         logger.info("Creating executive dashboard")
 
         # Generate executive summary
-        summary_path = (
-            self.output_dir / "reports" / f"{package.demo_id}_executive_summary.md"
-        )
+        summary_path = self.output_dir / "reports" / f"{package.demo_id}_executive_summary.md"
         self._generate_executive_summary(package, evidence, summary_path)
         package.executive_summary = summary_path
         package.generated_files.append(summary_path)
 
         # Generate PowerPoint-style presentation
         presentation_path = (
-            self.output_dir
-            / "presentations"
-            / f"{package.demo_id}_executive_presentation.html"
+            self.output_dir / "presentations" / f"{package.demo_id}_executive_presentation.html"
         )
         self._generate_executive_presentation(package, evidence, presentation_path)
         package.presentation_slides = presentation_path
@@ -380,9 +362,7 @@ class DemonstrationGenerator:
 
         # Generate risk matrix visualization
         if config.include_risk_matrix:
-            risk_matrix_path = (
-                self.output_dir / "assets" / f"{package.demo_id}_risk_matrix.html"
-            )
+            risk_matrix_path = self.output_dir / "assets" / f"{package.demo_id}_risk_matrix.html"
             self._generate_risk_matrix(package, evidence, risk_matrix_path)
             package.generated_files.append(risk_matrix_path)
 
@@ -396,9 +376,7 @@ class DemonstrationGenerator:
         logger.info("Creating technical analysis demonstration")
 
         # Generate detailed technical report
-        report_path = (
-            self.output_dir / "reports" / f"{package.demo_id}_technical_report.md"
-        )
+        report_path = self.output_dir / "reports" / f"{package.demo_id}_technical_report.md"
         self._generate_technical_report(package, evidence, report_path)
         package.technical_report = report_path
         package.generated_files.append(report_path)
@@ -421,9 +399,7 @@ class DemonstrationGenerator:
 
         # Generate awareness presentation
         awareness_path = (
-            self.output_dir
-            / "presentations"
-            / f"{package.demo_id}_security_awareness.html"
+            self.output_dir / "presentations" / f"{package.demo_id}_security_awareness.html"
         )
         self._generate_awareness_presentation(package, evidence, awareness_path)
         package.generated_files.append(awareness_path)
@@ -438,16 +414,12 @@ class DemonstrationGenerator:
         logger.info("Creating live presentation materials")
 
         # Generate speaker notes
-        notes_path = (
-            self.output_dir / "presentations" / f"{package.demo_id}_speaker_notes.md"
-        )
+        notes_path = self.output_dir / "presentations" / f"{package.demo_id}_speaker_notes.md"
         self._generate_speaker_notes(package, evidence, notes_path)
         package.generated_files.append(notes_path)
 
         # Generate live demo script
-        script_path = (
-            self.output_dir / "presentations" / f"{package.demo_id}_demo_script.md"
-        )
+        script_path = self.output_dir / "presentations" / f"{package.demo_id}_demo_script.md"
         self._generate_demo_script(package, evidence, script_path)
         package.generated_files.append(script_path)
 
@@ -462,9 +434,7 @@ class DemonstrationGenerator:
 
         # Generate training modules
         training_path = (
-            self.output_dir
-            / "presentations"
-            / f"{package.demo_id}_training_modules.html"
+            self.output_dir / "presentations" / f"{package.demo_id}_training_modules.html"
         )
         self._generate_training_modules(package, evidence, training_path)
         package.generated_files.append(training_path)
@@ -478,9 +448,7 @@ class DemonstrationGenerator:
         """Create interactive web demonstration"""
         logger.info("Creating interactive web demonstration")
 
-        web_demo_path = (
-            self.output_dir / "web" / f"{package.demo_id}_interactive_demo.html"
-        )
+        web_demo_path = self.output_dir / "web" / f"{package.demo_id}_interactive_demo.html"
 
         # Generate interactive web demo
         self._generate_interactive_web_demo(package, evidence, web_demo_path)
@@ -695,15 +663,13 @@ The identified vulnerabilities and exposures could result in:
         cards = []
         for item in evidence:
             risk_class = f"risk-{item.risk_level.value[0]}"
-            cards.append(
-                f"""
+            cards.append(f"""
             <div class="finding-card">
                 <h3 class="{risk_class}">{item.risk_level.value[2]} {item.evidence_type.replace("_", " ").title()}</h3>
                 <p>{item.description}</p>
                 {f"<p><strong>Remediation:</strong> {item.remediation}</p>" if item.remediation else ""}
             </div>
-            """
-            )
+            """)
         return "".join(cards)
 
     def _generate_technical_report(
@@ -987,15 +953,13 @@ The analysis reveals significant security risks that require immediate attention
 
         for item in evidence:
             risk_class = f"risk-{item.risk_level.value[0]}"
-            findings_html.append(
-                f"""
+            findings_html.append(f"""
             <div class="finding-item {risk_class}">
                 <h4>{item.risk_level.value[2]} {item.evidence_type.replace("_", " ").title()}</h4>
                 <p><strong>Description:</strong> {item.description}</p>
                 {f"<p><strong>Remediation:</strong> {item.remediation}</p>" if item.remediation else ""}
             </div>
-            """
-            )
+            """)
 
         return "".join(findings_html)
 
@@ -1014,8 +978,7 @@ The analysis reveals significant security risks that require immediate attention
         formatted = []
         for i, item in enumerate(evidence, 1):
             risk_level = item.risk_level.value[0].upper()
-            formatted.append(
-                f"""
+            formatted.append(f"""
 ### Finding {i}: {item.evidence_type.replace("_", " ").title()}
 
 **Risk Level**: {risk_level}
@@ -1031,8 +994,7 @@ The analysis reveals significant security risks that require immediate attention
 {f"**Remediation**: {item.remediation}" if item.remediation else ""}
 
 ---
-"""
-            )
+""")
         return "\n".join(formatted)
 
     def _generate_poc_examples(self, evidence: List[AnalysisEvidence]) -> str:
@@ -1040,21 +1002,15 @@ The analysis reveals significant security risks that require immediate attention
         examples = []
         for item in evidence:
             if item.proof_of_concept:
-                examples.append(
-                    f"""
+                examples.append(f"""
 ### {item.evidence_type.replace("_", " ").title()}
 
 ```
 {item.proof_of_concept}
 ```
-"""
-                )
+""")
 
-        return (
-            "\n".join(examples)
-            if examples
-            else "No proof of concept examples available."
-        )
+        return "\n".join(examples) if examples else "No proof of concept examples available."
 
     def _generate_risk_matrix(
         self,
@@ -1389,9 +1345,7 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Security Demonstration Generator")
-    parser.add_argument(
-        "--analysis-results", required=True, help="JSON file with analysis results"
-    )
+    parser.add_argument("--analysis-results", required=True, help="JSON file with analysis results")
     parser.add_argument(
         "--demo-type",
         choices=[t.value for t in DemoType],
@@ -1420,9 +1374,7 @@ def main():
     generator = DemonstrationGenerator(output_dir)
 
     # Configure demonstration
-    config = DemoConfig(
-        demo_type=DemoType(args.demo_type), target_audience=args.audience
-    )
+    config = DemoConfig(demo_type=DemoType(args.demo_type), target_audience=args.audience)
 
     # Generate demonstration
     package = generator.create_demonstration(analysis_data, config)

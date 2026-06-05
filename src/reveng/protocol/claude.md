@@ -1,38 +1,25 @@
-# REVENG Protocol
+# `claude.md` — `protocol`
 
-## Overview
+**Repository path:** `src/reveng/protocol/`
 
-Protocol definitions and message formats for REVENG communication including API protocols, message serialization, and data interchange formats.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/protocol/`
+## Python modules
 
-## Key Features
+### `__init__.py`
+- **Summary:** Protocol Reverse Engineering Module
 
-### Protocol Definitions
-- REST API protocol
-- WebSocket protocol
-- RPC protocol
-- Message queue protocol
+### `ai_protocol_reverser.py`
+- **Summary:** AI-Driven Protocol Reverse Engineering
+- **Classes:**
+  - `ProtocolField` — Identified protocol field
+  - `ProtocolMessage` — Parsed protocol message
+  - `AIProtocolReverser` — AI-driven binary protocol reverse engineering engine.
 
-### Serialization
-- JSON serialization
-- Protocol buffers
-- MessagePack
-- Custom formats
-
-### Message Types
-- Analysis requests
-- Status updates
-- Results
-- Errors
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/server/` - Server implementation
-- `/home/user/reveng-main/src/reveng/agent_sdk/mcp/` - MCP protocol
+### `protocol_analyzer.py`
+- **Summary:** Protocol Analyzer
+- **Classes:**
+  - `ProtocolAnalyzer` — Traditional protocol analysis engine.
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

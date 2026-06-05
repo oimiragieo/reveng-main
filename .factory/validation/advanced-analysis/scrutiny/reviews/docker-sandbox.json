@@ -1,0 +1,50 @@
+{
+  "featureId": "docker-sandbox",
+  "reviewedAt": "2026-03-14T05:15:00.000Z",
+  "commitId": "382cdc1d2fc97fd1b1201a6affd3dbf68917985b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The implementation correctly replaces host-OS behavioral monitoring (PowerShell/wmic subprocess calls) with Docker-based isolated execution. A new DockerSandbox class in docker_sandbox.py builds a prepared image (reveng-python:3.11-slim-strace) from python:3.11-slim with strace installed, then runs binaries inside containers with --rm --network=none and captures strace -f -e trace=network,file,process output. BehavioralMonitor.start_monitoring() now delegates to DockerSandbox in its worker thread, parses strace syscalls into BehaviorEvent objects, preserves ML anomaly scoring, and the SKIP_SANDBOX env var returns a static-only profile with sandbox_available=false. The pipeline_engine.py correctly surfaces sandbox_available and analysis_mode. Four well-structured unit tests cover the core scenarios with proper mocking.",
+    "issues": [
+      {
+        "file": "src/reveng/malware/behavioral_monitor.py",
+        "line": 468,
+        "severity": "non_blocking",
+        "description": "Legacy _monitor_file_operations, _monitor_registry_operations, _monitor_network_operations, _monitor_process_operations, _monitor_memory_operations, _monitor_system_operations, _monitor_crypto_operations, and _monitor_anti_analysis methods (lines 468-773) remain in the file. They contain subprocess.run calls to 'powershell', 'reg query', 'netstat', 'wmic', etc. These methods are now dead code — unreachable from the new _monitor_behavior() implementation — but they add ~300 lines of unused code with host-OS commands. Should be removed or clearly marked as deprecated in a cleanup pass."
+      },
+      {
+        "file": "src/reveng/malware/behavioral_monitor.py",
+        "line": 900,
+        "severity": "non_blocking",
+        "description": "The sandbox metadata field assignments on the BehavioralProfile constructor (lines 900-908) use long ternary expressions. While functionally correct, extracting these into a helper method would improve readability."
+      },
+      {
+        "file": "src/reveng/malware/docker_sandbox.py",
+        "line": 88,
+        "severity": "non_blocking",
+        "description": "The timeout is capped at 30 seconds (max(1, min(int(timeout_seconds or self.timeout_seconds), 30))). While this matches the spec, it means callers passing duration > 30 will silently have it capped. Consider logging when the timeout is reduced."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The worker left ~300 lines of dead code in behavioral_monitor.py (_monitor_file_operations through _monitor_anti_analysis) containing host-OS subprocess.run calls to powershell, wmic, netstat, and reg. While unreachable from the new code path, AGENTS.md doesn't mention a convention for handling superseded code — whether to remove it immediately or defer cleanup.",
+      "evidence": "src/reveng/malware/behavioral_monitor.py lines 468-773 — 8 methods with subprocess.run(['powershell'...]), subprocess.run(['wmic'...]), etc. None are called from _monitor_behavior() after the rewrite. Grep across the entire codebase confirms zero callers."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker skill file (.factory/skills/python-developer/SKILL.md) could not be found. The feature's skillName is 'python-developer' but no SKILL.md exists at the expected path. The worker's skillFeedback indicates they deviated from step 1.2 (init.sh) per AGENTS.md Windows guidance, which is correct behavior.",
+      "evidence": "Glob for .factory/skills/python-developer/SKILL.md returned no results. Handoff skillFeedback.followedProcedure is false with justified deviation about Windows init.sh."
+    },
+    {
+      "area": "conventions",
+      "observation": "Worker updated .factory/library/re-platform.md with Docker sandbox documentation including the auto-built image name, env var bypass, and BehavioralProfile metadata. This is good practice and follows the library documentation convention in AGENTS.md.",
+      "evidence": ".factory/library/re-platform.md now has a 'Docker Sandbox' section documenting the reveng-python:3.11-slim-strace image, SKIP_SANDBOX behavior, and BehavioralMonitor integration."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The docker-sandbox feature is well-implemented. DockerSandbox correctly isolates binary execution in python:3.11-slim containers with strace tracing, BehavioralMonitor.start_monitoring() properly delegates to the sandbox instead of host-process enumeration, containers are cleaned up after stop_monitoring(), and SKIP_SANDBOX returns graceful static-only results. All 4 expected behaviors are satisfied. The only notable issue is ~300 lines of dead legacy _monitor_* methods (with powershell/wmic calls) that remain in the file but are unreachable from the new code path — this is non-blocking dead code that should be cleaned up in a future pass."
+}

@@ -1,74 +1,49 @@
-# REVENG Instrumentation
+# `claude.md` — `instrumentation`
 
-## Overview
+**Repository path:** `src/reveng/instrumentation/`
 
-Dynamic binary instrumentation (DBI) module for runtime code analysis, monitoring, and modification using frameworks like Intel Pin, DynamoRIO, and Frida.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/instrumentation/`
+## Python modules
 
-## Key Features
+### `__init__.py`
+- **Summary:** Dynamic Instrumentation Module
 
-### Runtime Instrumentation
-- Function hooking
-- API monitoring
-- Code tracing
-- Memory access tracking
+### `dynamic_instrumentation_engine.py`
+- **Summary:** Dynamic Instrumentation Engine
+- **Classes:**
+  - `InstrumentationMode` — Instrumentation attachment modes
+  - `TargetPlatform` — Supported target platforms
+  - `InstrumentationTarget` — Target process information
+  - `HookResult` — Result from a hook execution
+  - `InstrumentationSession` — Active instrumentation session
+  - `DynamicInstrumentationEngine` — Advanced dynamic instrumentation engine for runtime code manipulation.
+- **Functions / coroutines:**
+  - `def quick_bypass()` — Quick bypass of common security controls.
 
-### DBI Frameworks
-- Intel Pin integration
-- DynamoRIO integration
-- Frida integration
-- Custom instrumentation
+### `function_hooker.py`
+- **Summary:** Function Hooker
+- **Classes:**
+  - `HookStrategy` — Hook implementation strategies
+  - `FunctionSignature` — Function signature information
+  - `HookInfo` — Hook installation information
+  - `FunctionHooker` — Advanced function hooking engine.
 
-### Analysis Capabilities
-- Code coverage measurement
-- Taint analysis
-- Fuzzing support
-- Performance profiling
+### `hook_manager.py`
+- **Summary:** Hook Manager
+- **Classes:**
+  - `HookType` — Types of hooks
+  - `Hook` — Hook configuration
+  - `HookEvent` — Event data from hook execution
+  - `HookManager` — Manages function hooks and interception callbacks.
 
-## Usage Examples
-
-### Example 1: Trace Function Calls
-
-```python
-from reveng.instrumentation import FunctionTracer
-
-tracer = FunctionTracer()
-tracer.start(
-    binary="/path/to/binary.exe",
-    output="/path/to/trace.log"
-)
-
-# Run binary...
-tracer.stop()
-
-# Analyze trace
-calls = tracer.get_call_trace()
-for call in calls:
-    print(f"{call['timestamp']}: {call['function']}({call['args']})")
-```
-
-### Example 2: API Monitoring
-
-```python
-from reveng.instrumentation import APIMonitor
-
-monitor = APIMonitor()
-monitor.hook_api("CreateFile", callback=on_create_file)
-monitor.hook_api("WriteFile", callback=on_write_file)
-
-monitor.start("/path/to/binary.exe")
-
-# APIs are monitored during execution
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/malware/` - Malware analysis
-- `/home/user/reveng-main/src/reveng/symbolic/` - Symbolic execution
+### `memory_scanner.py`
+- **Summary:** Memory Scanner
+- **Classes:**
+  - `ScanType` — Memory scan types
+  - `MemoryRegion` — Memory region information
+  - `ScanResult` — Memory scan result
+  - `MemoryScanner` — Memory scanning and pattern matching engine.
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

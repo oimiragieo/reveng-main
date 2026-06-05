@@ -16,7 +16,6 @@ Version: 4.0.0
 """
 
 import logging
-import struct
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -25,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 # Try to import capstone
 try:
-    import capstone
-    from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
+    from capstone import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
@@ -35,6 +34,7 @@ except ImportError:
 # Try to import pefile for PE analysis
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
@@ -43,6 +43,7 @@ except ImportError:
 # Try to import pyelftools for ELF analysis
 try:
     from elftools.elf.elffile import ELFFile
+
     ELFTOOLS_AVAILABLE = True
 except ImportError:
     ELFTOOLS_AVAILABLE = False
@@ -52,6 +53,7 @@ except ImportError:
 @dataclass
 class DisassemblyResult:
     """Result of local disassembly analysis."""
+
     success: bool = False
     binary_path: str = ""
     binary_format: str = "unknown"
@@ -120,22 +122,28 @@ class LocalDisassembler:
             return result
 
         # Detect binary format
-        if data[:2] == b'MZ':
+        if data[:2] == b"MZ":
             result.binary_format = "PE"
             return self._analyze_pe(binary_path, data, result)
-        elif data[:4] == b'\x7fELF':
+        elif data[:4] == b"\x7fELF":
             result.binary_format = "ELF"
             return self._analyze_elf(binary_path, data, result)
-        elif data[:4] in [b'\xfe\xed\xfa\xce', b'\xfe\xed\xfa\xcf',
-                          b'\xce\xfa\xed\xfe', b'\xcf\xfa\xed\xfe']:
+        elif data[:4] in [
+            b"\xfe\xed\xfa\xce",
+            b"\xfe\xed\xfa\xcf",
+            b"\xce\xfa\xed\xfe",
+            b"\xcf\xfa\xed\xfe",
+        ]:
             result.binary_format = "Mach-O"
             return self._analyze_macho(binary_path, data, result)
         else:
-            result.error = f"Unknown binary format"
+            result.error = "Unknown binary format"
             result.warning = "Only PE, ELF, and Mach-O formats are supported"
             return result
 
-    def _analyze_pe(self, binary_path: str, data: bytes, result: DisassemblyResult) -> DisassemblyResult:
+    def _analyze_pe(
+        self, binary_path: str, data: bytes, result: DisassemblyResult
+    ) -> DisassemblyResult:
         """Analyze a PE (Windows) binary."""
         if not PEFILE_AVAILABLE:
             result.error = "pefile not available. Install with: pip install pefile"
@@ -159,33 +167,37 @@ class LocalDisassembler:
                 self.cs = Cs(CS_ARCH_X86, CS_MODE_32)
 
             # Get entry point
-            result.entry_point = pe.OPTIONAL_HEADER.AddressOfEntryPoint + pe.OPTIONAL_HEADER.ImageBase
+            result.entry_point = (
+                pe.OPTIONAL_HEADER.AddressOfEntryPoint + pe.OPTIONAL_HEADER.ImageBase
+            )
 
             # Extract sections
             for section in pe.sections:
-                section_name = section.Name.decode('utf-8', errors='ignore').strip('\x00')
-                result.sections.append({
-                    "name": section_name,
-                    "virtual_address": hex(section.VirtualAddress),
-                    "virtual_size": section.Misc_VirtualSize,
-                    "raw_size": section.SizeOfRawData,
-                    "characteristics": hex(section.Characteristics),
-                })
+                section_name = section.Name.decode("utf-8", errors="ignore").strip("\x00")
+                result.sections.append(
+                    {
+                        "name": section_name,
+                        "virtual_address": hex(section.VirtualAddress),
+                        "virtual_size": section.Misc_VirtualSize,
+                        "raw_size": section.SizeOfRawData,
+                        "characteristics": hex(section.Characteristics),
+                    }
+                )
 
             # Extract imports
-            if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                    dll_name = entry.dll.decode('utf-8', errors='ignore')
+                    dll_name = entry.dll.decode("utf-8", errors="ignore")
                     for imp in entry.imports:
                         if imp.name:
-                            func_name = imp.name.decode('utf-8', errors='ignore')
+                            func_name = imp.name.decode("utf-8", errors="ignore")
                             result.imports.append(f"{dll_name}!{func_name}")
 
             # Extract exports
-            if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
+            if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                 for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                     if exp.name:
-                        result.exports.append(exp.name.decode('utf-8', errors='ignore'))
+                        result.exports.append(exp.name.decode("utf-8", errors="ignore"))
 
             # Extract strings (basic)
             result.strings = self._extract_strings(data)
@@ -193,39 +205,49 @@ class LocalDisassembler:
             # Disassemble code section
             for section in pe.sections:
                 if section.Characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
-                    section_name = section.Name.decode('utf-8', errors='ignore').strip('\x00')
+                    section_name = section.Name.decode("utf-8", errors="ignore").strip("\x00")
                     section_data = section.get_data()
                     base_addr = pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress
 
                     instructions = []
-                    for insn in self.cs.disasm(section_data[:min(len(section_data), 10000)], base_addr):
-                        instructions.append({
-                            "address": hex(insn.address),
-                            "mnemonic": insn.mnemonic,
-                            "op_str": insn.op_str,
-                            "bytes": insn.bytes.hex(),
-                        })
+                    for insn in self.cs.disasm(
+                        section_data[: min(len(section_data), 10000)], base_addr
+                    ):
+                        instructions.append(
+                            {
+                                "address": hex(insn.address),
+                                "mnemonic": insn.mnemonic,
+                                "op_str": insn.op_str,
+                                "bytes": insn.bytes.hex(),
+                            }
+                        )
 
                     result.disassembly[section_name] = instructions
 
                     # Basic function detection (call targets)
                     for insn in instructions:
                         if insn["mnemonic"] == "call":
-                            result.functions.append({
-                                "name": f"sub_{insn['op_str']}",
-                                "address": insn["op_str"],
-                                "detected_by": "call_target",
-                            })
+                            result.functions.append(
+                                {
+                                    "name": f"sub_{insn['op_str']}",
+                                    "address": insn["op_str"],
+                                    "detected_by": "call_target",
+                                }
+                            )
 
             result.success = True
-            result.warning = "Local analysis only - no decompilation. For full analysis, start Ghidra server."
+            result.warning = (
+                "Local analysis only - no decompilation. For full analysis, start Ghidra server."
+            )
 
         except Exception as e:
             result.error = f"PE analysis failed: {e}"
 
         return result
 
-    def _analyze_elf(self, binary_path: str, data: bytes, result: DisassemblyResult) -> DisassemblyResult:
+    def _analyze_elf(
+        self, binary_path: str, data: bytes, result: DisassemblyResult
+    ) -> DisassemblyResult:
         """Analyze an ELF (Linux) binary."""
         if not ELFTOOLS_AVAILABLE:
             result.error = "pyelftools not available. Install with: pip install pyelftools"
@@ -254,30 +276,36 @@ class LocalDisassembler:
 
                 # Extract sections
                 for section in elf.iter_sections():
-                    result.sections.append({
-                        "name": section.name,
-                        "address": hex(section['sh_addr']),
-                        "size": section['sh_size'],
-                        "type": section['sh_type'],
-                    })
+                    result.sections.append(
+                        {
+                            "name": section.name,
+                            "address": hex(section["sh_addr"]),
+                            "size": section["sh_size"],
+                            "type": section["sh_type"],
+                        }
+                    )
 
                 # Extract strings
                 result.strings = self._extract_strings(data)
 
                 # Disassemble .text section
-                text_section = elf.get_section_by_name('.text')
+                text_section = elf.get_section_by_name(".text")
                 if text_section:
                     section_data = text_section.data()
-                    base_addr = text_section['sh_addr']
+                    base_addr = text_section["sh_addr"]
 
                     instructions = []
-                    for insn in self.cs.disasm(section_data[:min(len(section_data), 10000)], base_addr):
-                        instructions.append({
-                            "address": hex(insn.address),
-                            "mnemonic": insn.mnemonic,
-                            "op_str": insn.op_str,
-                            "bytes": insn.bytes.hex(),
-                        })
+                    for insn in self.cs.disasm(
+                        section_data[: min(len(section_data), 10000)], base_addr
+                    ):
+                        instructions.append(
+                            {
+                                "address": hex(insn.address),
+                                "mnemonic": insn.mnemonic,
+                                "op_str": insn.op_str,
+                                "bytes": insn.bytes.hex(),
+                            }
+                        )
 
                     result.disassembly[".text"] = instructions
 
@@ -289,7 +317,9 @@ class LocalDisassembler:
 
         return result
 
-    def _analyze_macho(self, binary_path: str, data: bytes, result: DisassemblyResult) -> DisassemblyResult:
+    def _analyze_macho(
+        self, binary_path: str, data: bytes, result: DisassemblyResult
+    ) -> DisassemblyResult:
         """Analyze a Mach-O (macOS) binary."""
         # Basic Mach-O support - extract strings and basic info
         result.warning = "Mach-O support is limited. For full analysis, start Ghidra server."
@@ -351,8 +381,7 @@ def get_local_disassembler() -> Optional[LocalDisassembler]:
 
     if not CAPSTONE_AVAILABLE:
         logger.warning(
-            "Local disassembly fallback not available. "
-            "Install capstone: pip install capstone"
+            "Local disassembly fallback not available. " "Install capstone: pip install capstone"
         )
         return None
 

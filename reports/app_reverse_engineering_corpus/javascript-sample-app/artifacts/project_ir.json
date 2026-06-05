@@ -1,0 +1,230 @@
+{
+  "schema_version": "1.0",
+  "project_name": "sample_bundle",
+  "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_bundle.js",
+  "language": "javascript",
+  "nodes": [
+    {
+      "node_id": "project",
+      "kind": "project",
+      "label": "sample_bundle.js",
+      "attributes": {
+        "language": "javascript"
+      }
+    },
+    {
+      "node_id": "api",
+      "kind": "domain",
+      "label": "Api",
+      "attributes": {}
+    },
+    {
+      "node_id": "auth",
+      "kind": "domain",
+      "label": "Auth",
+      "attributes": {}
+    },
+    {
+      "node_id": "cli",
+      "kind": "domain",
+      "label": "Cli",
+      "attributes": {}
+    },
+    {
+      "node_id": "config",
+      "kind": "domain",
+      "label": "Config",
+      "attributes": {}
+    },
+    {
+      "node_id": "core",
+      "kind": "domain",
+      "label": "Core",
+      "attributes": {}
+    },
+    {
+      "node_id": "mcp",
+      "kind": "domain",
+      "label": "Mcp",
+      "attributes": {}
+    },
+    {
+      "node_id": "monitoring",
+      "kind": "domain",
+      "label": "Monitoring",
+      "attributes": {}
+    },
+    {
+      "node_id": "permissions",
+      "kind": "domain",
+      "label": "Permissions",
+      "attributes": {}
+    },
+    {
+      "node_id": "sdk",
+      "kind": "domain",
+      "label": "Sdk",
+      "attributes": {}
+    },
+    {
+      "node_id": "session",
+      "kind": "domain",
+      "label": "Session",
+      "attributes": {}
+    },
+    {
+      "node_id": "tools",
+      "kind": "domain",
+      "label": "Tools",
+      "attributes": {}
+    },
+    {
+      "node_id": "types",
+      "kind": "domain",
+      "label": "Types",
+      "attributes": {}
+    },
+    {
+      "node_id": "utils",
+      "kind": "domain",
+      "label": "Utils",
+      "attributes": {}
+    }
+  ],
+  "edges": [
+    {
+      "source": "project",
+      "target": "api",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "auth",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "cli",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "config",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "core",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "mcp",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "monitoring",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "permissions",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "sdk",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "session",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "tools",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "types",
+      "kind": "contains",
+      "attributes": {}
+    },
+    {
+      "source": "project",
+      "target": "utils",
+      "kind": "contains",
+      "attributes": {}
+    }
+  ],
+  "metadata": {
+    "bundler_signals": {},
+    "benchmark_scorecard": {
+      "oracle_domain_count": 1,
+      "reconstructed_domain_count": 13,
+      "matched_oracle_domains": [],
+      "missing_oracle_domains": [
+        "src"
+      ],
+      "extra_reconstructed_domains": [
+        "api",
+        "auth",
+        "cli",
+        "config",
+        "core",
+        "mcp",
+        "monitoring",
+        "permissions",
+        "sdk",
+        "session",
+        "tools",
+        "types",
+        "utils"
+      ],
+      "domain_recall": 0.0,
+      "domain_precision": 0.0,
+      "oracle_project_file_count": 3,
+      "reconstructed_project_file_count": 14,
+      "matched_oracle_project_files": [
+        "index"
+      ],
+      "missing_oracle_project_files": [
+        "lib/flags",
+        "lib/output"
+      ],
+      "extra_reconstructed_project_files": [
+        "api/index",
+        "auth/index",
+        "cli/index",
+        "config/index",
+        "core/index",
+        "mcp/index",
+        "monitoring/index",
+        "permissions/index",
+        "sdk/index",
+        "session/index",
+        "tools/index",
+        "types/index",
+        "utils/index"
+      ],
+      "project_file_recall": 0.3333,
+      "project_file_precision": 0.0714,
+      "token_signal_score": 0.0,
+      "overall_score": 0.0
+    }
+  }
+}

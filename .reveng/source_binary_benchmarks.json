@@ -1,0 +1,70 @@
+{
+  "version": "1.0",
+  "benchmarks": [
+    {
+      "id": "hexyl",
+      "source_repo": "..\\external\\hexyl-benchmark\\hexyl",
+      "binary_path": "..\\external\\hexyl-benchmark\\hexyl\\target\\release\\hexyl.exe",
+      "output_dir": "..\\reports\\source_binary_benchmarks\\hexyl",
+      "analyze_timeout": 1200,
+      "recompile_timeout": 1200,
+      "analyze_ghidra_timeout": 900,
+      "recompile_ghidra_timeout": 900,
+      "rebuilt_binary_glob": "**/*.exe",
+      "commands": [
+        {
+          "id": "version",
+          "description": "Print version",
+          "args": [
+            "--version"
+          ],
+          "timeout": 5,
+          "expected_exit_code": 0,
+          "expected_output_contains": "hexyl "
+        },
+        {
+          "id": "help",
+          "description": "Print help",
+          "args": [
+            "--help"
+          ],
+          "timeout": 5,
+          "expected_exit_code": 0,
+          "expected_output_contains": "A command-line hex viewer"
+        },
+        {
+          "id": "sample-len64",
+          "description": "Render first 64 bytes of sample.exe",
+          "args": [
+            "--color",
+            "never",
+            "--border",
+            "none",
+            "--length",
+            "64",
+            "{repo_root}\\test_samples\\sample.exe"
+          ],
+          "timeout": 5,
+          "expected_exit_code": 0
+        },
+        {
+          "id": "sample-skip32-len32",
+          "description": "Render 32 bytes after skipping 32 bytes of sample.exe",
+          "args": [
+            "--color",
+            "never",
+            "--border",
+            "none",
+            "--length",
+            "32",
+            "--skip",
+            "32",
+            "{repo_root}\\test_samples\\sample.exe"
+          ],
+          "timeout": 5,
+          "expected_exit_code": 0
+        }
+      ]
+    }
+  ]
+}

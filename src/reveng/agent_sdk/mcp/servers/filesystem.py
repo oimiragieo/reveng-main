@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List
 
-from ..server import MCPResource, MCPServer, MCPTool
+from ..server import MCPServer, MCPTool
 
 
 class FilesystemMCPServer(MCPServer):
@@ -103,8 +103,12 @@ class FilesystemMCPServer(MCPServer):
         """Resolve and validate path within root"""
         full_path = (self.root_path / path).resolve()
 
-        # Security: ensure path is within root
-        if not str(full_path).startswith(str(self.root_path)):
+        # Security: ensure path is within root. Use relative_to() for proper
+        # path-component containment; a plain string prefix check would let a
+        # sibling like "<root>_secret/..." bypass validation.
+        try:
+            full_path.relative_to(self.root_path)
+        except ValueError:
             raise ValueError(f"Path '{path}' is outside root directory")
 
         return full_path
@@ -217,8 +221,6 @@ class FilesystemMCPServer(MCPServer):
 
 # Main entry point
 if __name__ == "__main__":
-    import sys
-
     from ..transports import StdioTransport
 
     async def main():

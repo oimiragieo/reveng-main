@@ -1,0 +1,28 @@
+{
+  "reconstruction_mode": "heuristic_domain_tree",
+  "input_bundle": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_bundle.js",
+  "source_map_detected": false,
+  "webcrack_promoted": false,
+  "entrypoint": "src/index.ts",
+  "entrypoint_suffix": ".ts",
+  "runtime_contract": "tsx",
+  "file_count": 16,
+  "files": [
+    "package.json",
+    "src/index.ts",
+    "src/README.md",
+    "src/api/index.ts",
+    "src/auth/index.ts",
+    "src/cli/index.ts",
+    "src/config/index.ts",
+    "src/core/index.ts",
+    "src/mcp/index.ts",
+    "src/monitoring/index.ts",
+    "src/permissions/index.ts",
+    "src/sdk/index.ts",
+    "src/session/index.ts",
+    "src/tools/index.ts",
+    "src/types/index.ts",
+    "src/utils/index.ts"
+  ]
+}

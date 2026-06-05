@@ -1,0 +1,49 @@
+{
+  "featureId": "fix-skipped-tests",
+  "milestone": "test-quality",
+  "reviewedAt": "2026-03-15T00:31:00.000Z",
+  "commitId": "08adf96c3b2d9fe12a7272ecb14fc6bbc66fedd5",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "verdict": "pass",
+  "status": "pass",
+  "codeQuality": {
+    "score": 5,
+    "notes": "All three test files were cleanly rewritten from heavily-mocked, stale class-based suites to modern pytest function-style tests that exercise real API surfaces. Imports target the actual production classes (BusinessLogicExtractor, BehavioralMonitor, ForensicsAnomalyModel, MLCodeReconstruction, BinaryRecompilationEngine). The pipeline_engine.py changes are minimal, focused, and correct — replacing misleading 'Not implemented yet' placeholder strings with explicit 'skipped' payloads that include useful context (binary_path, mode/format). The new test_pipeline_engine_async.py parametrized test covers all three updated stage types. Code style is consistent with the rest of the codebase."
+  },
+  "testCoverage": {
+    "score": 5,
+    "notes": "test_business_logic_extractor.py: 5 tests covering the full analyze_application_domain flow with real binary data, missing-binary edge case, string extraction, supporting extractors/loaders, and confidence scoring — all exercising real BusinessLogicExtractor methods with real I/O. test_ml_anomaly_detection.py: 5 tests covering BehavioralAnomalyModel high-risk and benign streams, BehavioralMonitor trace parsing with timeout event, static-only profile creation, and ForensicsAnomalyModel binary feature assessment — all exercising real ML/forensics code with realistic inputs. test_ml_code_reconstruction.py: 6 tests covering MLCodeReconstruction model loading, reconstruct_code structured results, model selection fallbacks, threat intelligence generation, save results serialization, and BinaryRecompilationEngine feedback prompt composition — all testing real methods with minimal mocking (only monkeypatch for env vars). test_pipeline_engine_async.py: 3 new parametrized tests for malware/ML/report stage skipped payloads. Total: 16 rewritten tests + 3 new pipeline tests, all passing with 0 skips."
+  },
+  "codeReview": {
+    "summary": "The implementation fully satisfies the feature requirements. All three @pytest.mark.skip decorators have been removed (verified via grep). Tests exercise real API surfaces with substantive assertions rather than trivial mocks. The pipeline_engine.py placeholder fix is appropriate — returning structured 'skipped' payloads instead of misleading 'Not implemented yet' strings, while preserving the existing try/except error handling structure. The test files went from 598+688+607 lines of stale mocked code to 190+130+155 lines of focused, real-API tests. No bugs or edge cases were missed.",
+    "issues": [
+      {
+        "file": "src/reveng/pipeline/pipeline_engine.py",
+        "line": 1128,
+        "severity": "non_blocking",
+        "description": "The try/except blocks around the new 'skipped' return statements are dead code — a dict literal return cannot raise an exception. The except clauses for malware_analysis (line ~1135), ml_analysis (line ~1185), and report_generation (line ~1290) are unreachable. This is a pre-existing pattern from the original code, not introduced by this PR, but the worker could have cleaned it up while editing these blocks."
+      }
+    ]
+  },
+  "issues": [
+    {
+      "severity": "non_blocking",
+      "description": "Dead try/except blocks: The 'skipped' dict return statements in pipeline_engine.py for malware, ML, and report stages are wrapped in try/except that can never trigger. This is inherited from the original code structure but was a missed opportunity to clean up during this edit."
+    }
+  ],
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Worker skill says to write tests first (TDD, step 4) but the worker read source APIs first and then wrote tests to match — a justified deviation since the task was to rewrite tests to match existing APIs, not implement new features. The skill's TDD exception clause ('if implementation already exists, add tests and verify they pass') covers this, but the worker didn't explicitly cite it.",
+      "evidence": "Transcript skeleton shows API investigation before test writing. Handoff skillFeedback.followedProcedure=false only mentions skipping init.sh, but the TDD deviation is also present."
+    },
+    {
+      "area": "conventions",
+      "observation": "AGENTS.md test baseline target says '≥ 306 passed' but the handoff reports 325 passed. The baseline number has drifted upward through prior milestones. AGENTS.md should be updated to reflect the current expected baseline.",
+      "evidence": "AGENTS.md says '≥ 306 passed, 0 failures'. Handoff verification shows '325 passed, 20 skipped, 0 failures'."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. All three @pytest.mark.skip decorators were successfully removed. The rewritten test suites (16 tests total) exercise real production APIs with substantive assertions — BusinessLogicExtractor with actual binary string extraction, BehavioralMonitor/ForensicsAnomalyModel with realistic event/feature data, and MLCodeReconstruction/BinaryRecompilationEngine with real method calls. Pipeline placeholder 'Not implemented yet' returns were replaced with structured 'skipped' payloads, covered by 3 new parametrized tests. One non-blocking issue: dead try/except blocks around the new return statements (pre-existing pattern). All verification commands passed: 16 rewritten tests green, 0 skips, full baseline at 325 passed."
+}

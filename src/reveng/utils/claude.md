@@ -1,71 +1,19 @@
-# REVENG Utils
+# `claude.md` — `utils`
 
-## Overview
+**Repository path:** `src/reveng/utils/`
 
-Common utility functions and helper classes used across the REVENG framework.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/utils/`
+## Python modules
 
-## Key Utilities
-
-### File Utilities
-- File I/O operations
-- Path manipulation
-- Temporary file management
-- Archive handling
-
-### String Utilities
-- String extraction
-- Pattern matching
-- Encoding conversion
-- String normalization
-
-### Data Utilities
-- Data serialization
-- Format conversion
-- Compression
-- Hashing
-
-### System Utilities
-- Process execution
-- Environment detection
-- Platform detection
-- Resource management
-
-## Usage Examples
-
-### Example 1: File Operations
-
-```python
-from reveng.utils import file_utils
-
-# Read binary file
-data = file_utils.read_binary("/path/to/file")
-
-# Calculate hash
-hash_value = file_utils.calculate_sha256("/path/to/file")
-```
-
-### Example 2: String Extraction
-
-```python
-from reveng.utils import string_utils
-
-# Extract strings from binary
-strings = string_utils.extract_strings("/path/to/binary.exe")
-
-for s in strings:
-    print(f"{s.offset:08x}: {s.value}")
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/core/` - Core functionality
-- `/home/user/reveng-main/src/reveng/types/` - Type definitions
-- `/home/user/reveng-main/src/reveng/tools/utils/` - Tool utilities
+### `security.py`
+- **Summary:** Security utilities for REVENG
+- **Classes:**
+  - `PathTraversalError` — Raised when a path traversal attack is detected in an archive
+- **Functions / coroutines:**
+  - `def safe_extract_zip()` — Safely extract a ZIP file, preventing path traversal attacks.
+  - `def safe_extract_tar()` — Safely extract a TAR file, preventing path traversal attacks.
+  - `def safe_extract_archive()` — Safely extract an archive (ZIP or TAR), auto-detecting the format.
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

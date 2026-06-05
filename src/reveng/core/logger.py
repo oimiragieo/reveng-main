@@ -111,9 +111,7 @@ class ProgressTracker:
         # Calculate estimated completion time
         if self.current_step > 0:
             avg_time_per_step = (current_time - self.start_time) / self.current_step
-            estimated_completion = self.start_time + (
-                avg_time_per_step * self.total_steps
-            )
+            estimated_completion = self.start_time + (avg_time_per_step * self.total_steps)
         else:
             estimated_completion = None
 
@@ -135,9 +133,7 @@ class ProgressTracker:
     def complete(self):
         """Mark operation as complete"""
         total_time = time.time() - self.start_time
-        self.logger.info(
-            f"Operation '{self.operation_name}' completed in {total_time:.2f} seconds"
-        )
+        self.logger.info(f"Operation '{self.operation_name}' completed in {total_time:.2f} seconds")
 
 
 class LogAggregator:
@@ -174,9 +170,7 @@ class LogAggregator:
             elif format == "txt":
                 with open(file_path, "w") as f:
                     for log in self.logs:
-                        f.write(
-                            f"[{log['timestamp']}] {log['level']}: {log['message']}\n"
-                        )
+                        f.write(f"[{log['timestamp']}] {log['level']}: {log['message']}\n")
 
     def clear_logs(self):
         """Clear all logs"""
@@ -250,9 +244,7 @@ class REVENGLogger:
         # Add to aggregator
         self.aggregator.add_log(logging.getLevelName(level), message, self.context)
 
-    def get_aggregated_logs(
-        self, level_filter: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+    def get_aggregated_logs(self, level_filter: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get aggregated logs"""
         return self.aggregator.get_logs(level_filter)
 
@@ -298,9 +290,7 @@ def setup_logging(
         file_handler.setLevel(logging.DEBUG)
 
         if structured:
-            file_formatter = StructuredFormatter(
-                include_context=True, include_stack_trace=True
-            )
+            file_formatter = StructuredFormatter(include_context=True, include_stack_trace=True)
         else:
             file_formatter = logging.Formatter(
                 "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -345,9 +335,7 @@ def log_analysis_start(logger: REVENGLogger, binary_path: str, analysis_type: st
     """Log analysis start"""
     logger.info(f"Starting {analysis_type} analysis of {binary_path}")
     logger.set_context(
-        LogContext(
-            component="analyzer", operation=analysis_type, binary_path=binary_path
-        )
+        LogContext(component="analyzer", operation=analysis_type, binary_path=binary_path)
     )
 
 
@@ -355,14 +343,10 @@ def log_analysis_complete(
     logger: REVENGLogger, binary_path: str, analysis_type: str, duration: float
 ):
     """Log analysis completion"""
-    logger.info(
-        f"Completed {analysis_type} analysis of {binary_path} in {duration:.2f} seconds"
-    )
+    logger.info(f"Completed {analysis_type} analysis of {binary_path} in {duration:.2f} seconds")
 
 
-def log_tool_execution(
-    logger: REVENGLogger, tool_name: str, command: str, success: bool
-):
+def log_tool_execution(logger: REVENGLogger, tool_name: str, command: str, success: bool):
     """Log tool execution"""
     if success:
         logger.info(f"Tool {tool_name} executed successfully: {command}")

@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "result_type": "app_reverse_engineering_corpus_report",
+  "generated_at": "2026-06-04T15:36:09.676316Z",
+  "output_dir": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus",
+  "summary": {
+    "total_entries": 0,
+    "completed_entries": 0,
+    "failed_entries": 0,
+    "required_failed_entries": 0,
+    "matrix_status": "pass"
+  },
+  "rows": []
+}

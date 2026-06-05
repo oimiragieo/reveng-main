@@ -11,15 +11,15 @@ Caches deobfuscation results to avoid re-processing:
 Dramatically improves performance for repeated analysis.
 """
 
-import os
-import json
 import hashlib
-import time
+import json
 import logging
-from pathlib import Path
-from typing import Optional, Dict, Any
-from dataclasses import dataclass, asdict
+import os
+import time
 from collections import OrderedDict
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -181,8 +181,7 @@ class DeobfuscationCache:
                 # Convert to dict, handle non-serializable types
                 data = asdict(entry)
                 data["obfuscation_types"] = [
-                    t.value if hasattr(t, "value") else str(t)
-                    for t in entry.obfuscation_types
+                    t.value if hasattr(t, "value") else str(t) for t in entry.obfuscation_types
                 ]
                 json.dump(data, f)
 
@@ -214,7 +213,7 @@ class DeobfuscationCache:
         for cache_file in self.cache_dir.glob("*.json"):
             try:
                 cache_file.unlink()
-            except:
+            except OSError:
                 pass
 
         logger.info("Cache cleared")
@@ -259,7 +258,7 @@ class DeobfuscationCache:
                     cache_file.unlink()
                     removed += 1
 
-            except:
+            except (OSError, json.JSONDecodeError):
                 pass
 
         logger.info(f"Cleaned up {removed} old cache entries")

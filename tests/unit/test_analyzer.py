@@ -9,12 +9,13 @@ Version: 2.1.0
 """
 
 import os
+import subprocess
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from reveng.analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
+from reveng.analysis.analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
 
 
 class TestREVENGAnalyzer:
@@ -31,9 +32,7 @@ class TestREVENGAnalyzer:
         assert analyzer.enhanced_results == {}
         assert analyzer.ollama_available is False
 
-    def test_analyzer_with_enhanced_features(
-        self, mock_binary_file, mock_enhanced_features
-    ):
+    def test_analyzer_with_enhanced_features(self, mock_binary_file, mock_enhanced_features):
         """Test analyzer with enhanced features."""
         analyzer = REVENGAnalyzer(
             binary_path=str(mock_binary_file),
@@ -55,7 +54,7 @@ class TestREVENGAnalyzer:
         try:
             os.chdir(temp_analysis_dir)
             analyzer = REVENGAnalyzer(check_ollama=False)
-            assert analyzer.binary_path == "test.exe"
+            assert Path(analyzer.binary_path) == test_binary.resolve()
         finally:
             os.chdir(original_cwd)
 
@@ -75,9 +74,7 @@ class TestREVENGAnalyzer:
         """Test file type detection."""
         # Mock the detector
         mock_detector = Mock()
-        mock_detector.detect.return_value = Mock(
-            language="java", format="jar", confidence=0.95
-        )
+        mock_detector.detect.return_value = Mock(language="java", format="jar", confidence=0.95)
         mock_detector.get_language_category.return_value = "bytecode"
         mock_detector_class.return_value = mock_detector
 
@@ -96,11 +93,9 @@ class TestREVENGAnalyzer:
 
         assert analyzer.file_type is None
 
-    @pytest.mark.skip(
-        reason="Ollama checking functionality not implemented in current analyzer"
-    )
-    @patch("reveng.analyzer.OllamaPreflightChecker")
-    @patch("reveng.analyzer.get_config")
+    @pytest.mark.skip(reason="Ollama checking functionality not implemented in current analyzer")
+    @patch("reveng.analysis.analyzer.OllamaPreflightChecker")
+    @patch("reveng.analysis.analyzer.get_config")
     def test_check_ollama_availability_success(
         self, mock_get_config, mock_checker_class, mock_binary_file
     ):
@@ -127,11 +122,9 @@ class TestREVENGAnalyzer:
 
         assert analyzer.ollama_available is True
 
-    @pytest.mark.skip(
-        reason="Ollama checking functionality not implemented in current analyzer"
-    )
-    @patch("reveng.analyzer.OllamaPreflightChecker")
-    @patch("reveng.analyzer.get_config")
+    @pytest.mark.skip(reason="Ollama checking functionality not implemented in current analyzer")
+    @patch("reveng.analysis.analyzer.OllamaPreflightChecker")
+    @patch("reveng.analysis.analyzer.get_config")
     def test_check_ollama_availability_failure(
         self, mock_get_config, mock_checker_class, mock_binary_file
     ):
@@ -186,25 +179,19 @@ class TestREVENGAnalyzer:
         count = analyzer._count_enabled_modules()
         assert count == 0
 
-    @pytest.mark.skip(
-        reason="Internal step methods testing - requires mock_analyzer fixture"
-    )
-    @patch("reveng.analyzer.subprocess.run")
+    @pytest.mark.skip(reason="Internal step methods testing - requires mock_analyzer fixture")
+    @patch("reveng.analysis.analyzer.subprocess.run")
     def test_step1_ai_analysis_success(self, mock_subprocess, mock_analyzer):
         """Test successful AI analysis step."""
-        mock_subprocess.return_value = Mock(
-            returncode=0, stdout="AI analysis completed", stderr=""
-        )
+        mock_subprocess.return_value = Mock(returncode=0, stdout="AI analysis completed", stderr="")
 
         mock_analyzer._step1_ai_analysis()
 
         assert mock_analyzer.results["step1"]["status"] == "success"
         assert mock_analyzer.results["step1"]["output"] == "AI analysis completed"
 
-    @pytest.mark.skip(
-        reason="Internal step methods testing - requires mock_analyzer fixture"
-    )
-    @patch("reveng.analyzer.subprocess.run")
+    @pytest.mark.skip(reason="Internal step methods testing - requires mock_analyzer fixture")
+    @patch("reveng.analysis.analyzer.subprocess.run")
     def test_step1_ai_analysis_failure(self, mock_subprocess, mock_analyzer):
         """Test failed AI analysis step."""
         mock_subprocess.return_value = Mock(
@@ -216,10 +203,8 @@ class TestREVENGAnalyzer:
         assert mock_analyzer.results["step1"]["status"] == "warning"
         assert mock_analyzer.results["step1"]["error"] == "Error occurred"
 
-    @pytest.mark.skip(
-        reason="Internal step methods testing - requires mock_analyzer fixture"
-    )
-    @patch("reveng.analyzer.subprocess.run")
+    @pytest.mark.skip(reason="Internal step methods testing - requires mock_analyzer fixture")
+    @patch("reveng.analysis.analyzer.subprocess.run")
     def test_step1_ai_analysis_timeout(self, mock_subprocess, mock_analyzer):
         """Test AI analysis step timeout."""
         mock_subprocess.side_effect = subprocess.TimeoutExpired("python", 300)
@@ -228,30 +213,24 @@ class TestREVENGAnalyzer:
 
         assert mock_analyzer.results["step1"]["status"] == "timeout"
 
-    @pytest.mark.skip(
-        reason="Internal step methods testing - requires mock_analyzer fixture"
-    )
+    @pytest.mark.skip(reason="Internal step methods testing - requires mock_analyzer fixture")
     def test_step4_specifications_exists(self, mock_analyzer, temp_analysis_dir):
         """Test specifications step when SPECS folder exists."""
         # Create SPECS folder
         specs_folder = temp_analysis_dir / "SPECS"
         specs_folder.mkdir()
 
-        with patch("reveng.analyzer.Path") as mock_path:
+        with patch("reveng.analysis.analyzer.Path") as mock_path:
             mock_path.return_value = specs_folder
             mock_analyzer._step4_specifications()
 
         assert mock_analyzer.results["step4"]["status"] == "success"
-        assert (
-            "SPECS folder already exists" in mock_analyzer.results["step4"]["message"]
-        )
+        assert "SPECS folder already exists" in mock_analyzer.results["step4"]["message"]
 
-    @pytest.mark.skip(
-        reason="Internal step methods testing - requires mock_analyzer fixture"
-    )
+    @pytest.mark.skip(reason="Internal step methods testing - requires mock_analyzer fixture")
     def test_step4_specifications_not_exists(self, mock_analyzer):
         """Test specifications step when SPECS folder doesn't exist."""
-        with patch("reveng.analyzer.Path") as mock_path:
+        with patch("reveng.analysis.analyzer.Path") as mock_path:
             mock_specs = Mock()
             mock_specs.exists.return_value = False
             mock_path.return_value = mock_specs
@@ -260,9 +239,7 @@ class TestREVENGAnalyzer:
         assert mock_analyzer.results["step4"]["status"] == "warning"
         assert "SPECS folder not found" in mock_analyzer.results["step4"]["message"]
 
-    @pytest.mark.skip(
-        reason="Internal step methods testing - requires mock_analyzer fixture"
-    )
+    @pytest.mark.skip(reason="Internal step methods testing - requires mock_analyzer fixture")
     def test_generate_final_report(self, mock_analyzer):
         """Test final report generation."""
         # Set up some results
@@ -334,8 +311,3 @@ class TestEnhancedAnalysisFeatures:
         features.enable_vulnerability_discovery = True
 
         assert features.is_any_enhanced_enabled() is True
-
-
-# Import required modules for tests
-import subprocess
-from unittest.mock import mock_open

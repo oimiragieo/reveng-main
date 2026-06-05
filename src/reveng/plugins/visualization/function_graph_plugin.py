@@ -111,9 +111,7 @@ class FunctionGraphPlugin(VisualizationPlugin):
             stats = self._calculate_graph_statistics(graph)
             results["statistics"] = stats
 
-            logger.info(
-                f"Function graph visualization completed: {len(functions)} functions"
-            )
+            logger.info(f"Function graph visualization completed: {len(functions)} functions")
 
             return {
                 "visualization_type": "function_graph",
@@ -152,9 +150,7 @@ class FunctionGraphPlugin(VisualizationPlugin):
 
         return functions
 
-    def _create_function_graph(
-        self, functions: List[Dict[str, Any]]
-    ) -> "networkx.DiGraph":
+    def _create_function_graph(self, functions: List[Dict[str, Any]]) -> "networkx.DiGraph":
         """Create function call graph"""
 
         graph = self.networkx.DiGraph()
@@ -215,7 +211,9 @@ class FunctionGraphPlugin(VisualizationPlugin):
             # Add nodes
             for node in graph.nodes():
                 node_data = graph.nodes[node]
-                label = f"{node}\\n{node_data.get('address', '')}\\nSize: {node_data.get('size', 0)}"
+                label = (
+                    f"{node}\\n{node_data.get('address', '')}\\nSize: {node_data.get('size', 0)}"
+                )
                 dot.node(node, label)
 
             # Add edges
@@ -241,7 +239,9 @@ class FunctionGraphPlugin(VisualizationPlugin):
             # Add nodes
             for node in graph.nodes():
                 node_data = graph.nodes[node]
-                label = f"{node}\\n{node_data.get('address', '')}\\nSize: {node_data.get('size', 0)}"
+                label = (
+                    f"{node}\\n{node_data.get('address', '')}\\nSize: {node_data.get('size', 0)}"
+                )
                 dot.node(node, label)
 
             # Add edges
@@ -270,9 +270,7 @@ class FunctionGraphPlugin(VisualizationPlugin):
                     }
                     for node in graph.nodes()
                 ],
-                "edges": [
-                    {"source": edge[0], "target": edge[1]} for edge in graph.edges()
-                ],
+                "edges": [{"source": edge[0], "target": edge[1]} for edge in graph.edges()],
             }
 
             with open(output_file, "w") as f:
@@ -290,38 +288,26 @@ class FunctionGraphPlugin(VisualizationPlugin):
                 "total_edges": graph.number_of_edges(),
                 "density": self.networkx.density(graph),
                 "is_connected": self.networkx.is_weakly_connected(graph),
-                "number_of_components": self.networkx.number_weakly_connected_components(
-                    graph
-                ),
+                "number_of_components": self.networkx.number_weakly_connected_components(graph),
                 "average_degree": (
                     sum(dict(graph.degree()).values()) / graph.number_of_nodes()
                     if graph.number_of_nodes() > 0
                     else 0
                 ),
                 "max_degree": (
-                    max(dict(graph.degree()).values())
-                    if graph.number_of_nodes() > 0
-                    else 0
+                    max(dict(graph.degree()).values()) if graph.number_of_nodes() > 0 else 0
                 ),
                 "min_degree": (
-                    min(dict(graph.degree()).values())
-                    if graph.number_of_nodes() > 0
-                    else 0
+                    min(dict(graph.degree()).values()) if graph.number_of_nodes() > 0 else 0
                 ),
             }
 
             # Calculate centrality measures
             if graph.number_of_nodes() > 0:
                 try:
-                    stats["betweenness_centrality"] = (
-                        self.networkx.betweenness_centrality(graph)
-                    )
-                    stats["closeness_centrality"] = self.networkx.closeness_centrality(
-                        graph
-                    )
-                    stats["eigenvector_centrality"] = (
-                        self.networkx.eigenvector_centrality(graph)
-                    )
+                    stats["betweenness_centrality"] = self.networkx.betweenness_centrality(graph)
+                    stats["closeness_centrality"] = self.networkx.closeness_centrality(graph)
+                    stats["eigenvector_centrality"] = self.networkx.eigenvector_centrality(graph)
                 except Exception as e:
                     logger.warning(f"Failed to calculate centrality measures: {e}")
 

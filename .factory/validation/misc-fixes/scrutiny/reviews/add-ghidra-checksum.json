@@ -1,0 +1,34 @@
+{
+  "featureId": "add-ghidra-checksum",
+  "reviewedAt": "2026-03-13T23:50:00.000Z",
+  "commitId": "ef8c1e704560fca16586f4c207882afb249e53f2",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Clean, well-structured implementation of SHA-256 checksum verification for the Ghidra installer. The worker added a hardcoded EXPECTED_SHA256 constant sourced from the official NationalSecurityAgency/ghidra GitHub release, implemented chunked hash computation via calculate_sha256(), and a verify_archive_checksum() function that deletes corrupt archives and raises a descriptive ValueError on mismatch. The checksum is verified after download but before extraction in install_ghidra(). Tests cover both the pass path (mocked matching hash) and fail path (mocked mismatched hash with archive deletion), plus the existing download/extract test was updated to set a matching checksum for its synthetic archive. All 6 tests pass. The from __future__ import annotations import ensures the str | None union type hint is compatible with the documented Python 3.9+ requirement.",
+    "issues": [
+      {
+        "file": "scripts/install_ghidra.py",
+        "line": 86,
+        "severity": "non_blocking",
+        "description": "verify_archive_checksum() has an archive_path.exists() guard before unlink(), but the file was just read by calculate_sha256() moments earlier so it should always exist at this point. The guard is harmless defensive code, not a bug."
+      },
+      {
+        "file": "tests/unit/test_ghidra_install.py",
+        "line": 65,
+        "severity": "non_blocking",
+        "description": "In test_install_ghidra_extracts_downloaded_distribution, the test patches installer.EXPECTED_SHA256 with the real hash of the synthetic archive. This couples the test to the module-level constant mutation pattern rather than using the expected_sha256 parameter of verify_archive_checksum(). Functional and correct, but slightly fragile if the module is later changed to be immutable."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "Skill step 9 says 'exercise the feature end-to-end with test_samples/sample.exe'. Worker deviated because this feature only changes installer archive integrity checks, not binary analysis. The deviation is justified — the skill procedure should allow targeted verification for installer-only features.",
+      "evidence": "handoff.skillFeedback.followedProcedure=false, deviation at step 9: 'Verified the checksum feature with targeted unit tests and source assertions instead of running an end-to-end sample.exe analysis.' suggestedChanges: 'For installer-only features, explicitly allow targeted archive/install verification in place of end-to-end binary analysis to better match the scope of the change.'"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The add-ghidra-checksum feature is correctly implemented. The hardcoded SHA-256 was sourced from the official GitHub release via `gh release view`. The calculate_sha256() function reads in 1MB chunks, verify_archive_checksum() properly deletes corrupt files and raises ValueError, and the checksum is verified between download and extraction in install_ghidra(). Two dedicated tests mock hashlib.sha256 to cover both pass and fail paths, and the existing download test was updated for compatibility. All 6 tests pass. No blocking issues found."
+}

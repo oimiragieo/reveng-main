@@ -1,0 +1,36 @@
+{
+  "groupId": "group-quick",
+  "testedAt": "2026-03-13T00:00:00Z",
+  "isolation": {
+    "workingDirectory": "C:\\dev\\projects\\reveng-main",
+    "services": "none (filesystem and import checks only)"
+  },
+  "toolsUsed": ["subprocess", "os.path"],
+  "assertions": {
+    "VAL-FOUND-001": {
+      "status": "pass",
+      "evidence": "foundation/group-quick/VAL-FOUND-001-evidence.txt",
+      "details": "analyzeHeadless.bat exists at external/ghidra-dist/ghidra_12.0.4_PUBLIC/support/analyzeHeadless.bat (os.path.exists=True, os.path.isfile=True). Invocation via cmd /c exits with code 1 (acceptable per contract). Output contains 'Ghidra' (ghidra:// in usage text). First 100 bytes: 'Headless Analyzer Usage: analyzeHeadless\\n           <project_location> <project_name>[/<folder_path>'. No FileNotFoundError or OS error."
+    },
+    "VAL-FOUND-003": {
+      "status": "pass",
+      "evidence": "foundation/group-quick/VAL-FOUND-003-evidence.txt",
+      "details": "python -c \"import yara; print(yara.__version__)\" exited with code 0. Output: 'VERSION: 4.5.4'. yara-python is importable and reports version 4.5.4."
+    },
+    "VAL-FOUND-004": {
+      "status": "pass",
+      "evidence": "foundation/group-quick/VAL-FOUND-004-evidence.txt",
+      "details": "python -c \"import ollama; print(hasattr(ollama, 'Client') or hasattr(ollama, 'chat'))\" exited with code 0. Output: 'True'. ollama package is importable, has both Client class and chat function."
+    }
+  },
+  "frictions": [
+    {
+      "description": "PowerShell parses '--help' as an expression token when passed to .bat files, causing ParserError. Had to use 'cmd /c' wrapper and invoke analyzeHeadless.bat with no args (which produces the same usage/help output) instead of --help flag.",
+      "resolved": true,
+      "resolution": "Used 'cmd /c analyzeHeadless.bat' without --help flag; the bat file prints usage info and exits with code 1 when no args are provided, which satisfies the same validation criteria.",
+      "affectedAssertions": ["VAL-FOUND-001"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 3 assertions: 3 passed, 0 failed. VAL-FOUND-001 (Ghidra headless present and executable), VAL-FOUND-003 (yara-python importable v4.5.4), VAL-FOUND-004 (ollama package importable with Client and chat)."
+}

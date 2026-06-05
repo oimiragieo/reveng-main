@@ -13,11 +13,7 @@ from typing import Any, Dict, List, Optional
 
 from ..core.logger import get_logger
 from .anomaly_detection import MLAnomalyDetection
-from .code_reconstruction import (
-    CodeFragment,
-    MLCodeReconstruction,
-    ReconstructionTask,
-)
+from .code_reconstruction import CodeFragment, MLCodeReconstruction, ReconstructionTask
 
 logger = get_logger(__name__)
 
@@ -75,9 +71,7 @@ class MLIntegration:
             self.logger.error(f"Failed to initialize ML components: {e}")
             raise
 
-    def analyze_binary(
-        self, binary_path: str, analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def analyze_binary(self, binary_path: str, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform comprehensive ML analysis on binary"""
 
         try:
@@ -157,9 +151,7 @@ class MLIntegration:
             self.logger.error(f"Code reconstruction failed: {e}")
             return {"error": str(e)}
 
-    def _perform_anomaly_detection(
-        self, analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _perform_anomaly_detection(self, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform anomaly detection analysis"""
 
         try:
@@ -175,9 +167,7 @@ class MLIntegration:
             self.logger.error(f"Anomaly detection failed: {e}")
             return {"error": str(e)}
 
-    def _generate_threat_intelligence(
-        self, analysis_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _generate_threat_intelligence(self, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate threat intelligence"""
 
         try:
@@ -198,9 +188,7 @@ class MLIntegration:
             self.logger.error(f"Threat intelligence generation failed: {e}")
             return {"error": str(e)}
 
-    def _extract_code_fragments(
-        self, analysis_data: Dict[str, Any]
-    ) -> List[CodeFragment]:
+    def _extract_code_fragments(self, analysis_data: Dict[str, Any]) -> List[CodeFragment]:
         """Extract code fragments from analysis data"""
 
         try:
@@ -258,9 +246,7 @@ class MLIntegration:
             self.logger.error(f"Failed to select reconstruction task: {e}")
             return ReconstructionTask.DECOMPILATION
 
-    def _generate_reconstruction_summary(
-        self, reconstructions: List[Any]
-    ) -> Dict[str, Any]:
+    def _generate_reconstruction_summary(self, reconstructions: List[Any]) -> Dict[str, Any]:
         """Generate reconstruction summary"""
 
         try:
@@ -269,9 +255,7 @@ class MLIntegration:
 
             # Calculate statistics
             total_reconstructions = len(reconstructions)
-            average_confidence = (
-                sum(r.confidence for r in reconstructions) / total_reconstructions
-            )
+            average_confidence = sum(r.confidence for r in reconstructions) / total_reconstructions
             total_processing_time = sum(r.processing_time for r in reconstructions)
 
             # Task distribution
@@ -314,17 +298,13 @@ class MLIntegration:
             severity_distribution = {}
             for anomaly in anomalies:
                 severity = anomaly.severity.value
-                severity_distribution[severity] = (
-                    severity_distribution.get(severity, 0) + 1
-                )
+                severity_distribution[severity] = severity_distribution.get(severity, 0) + 1
 
             # Type distribution
             type_distribution = {}
             for anomaly in anomalies:
                 anomaly_type = anomaly.anomaly_type.value
-                type_distribution[anomaly_type] = (
-                    type_distribution.get(anomaly_type, 0) + 1
-                )
+                type_distribution[anomaly_type] = type_distribution.get(anomaly_type, 0) + 1
 
             return {
                 "total_anomalies": total_anomalies,
@@ -338,9 +318,7 @@ class MLIntegration:
             self.logger.error(f"Failed to generate anomaly summary: {e}")
             return {"error": str(e)}
 
-    def _generate_threat_summary(
-        self, threat_intelligence: List[Any]
-    ) -> Dict[str, Any]:
+    def _generate_threat_summary(self, threat_intelligence: List[Any]) -> Dict[str, Any]:
         """Generate threat intelligence summary"""
 
         try:
@@ -349,25 +327,19 @@ class MLIntegration:
 
             # Calculate statistics
             total_threats = len(threat_intelligence)
-            average_confidence = (
-                sum(ti.confidence for ti in threat_intelligence) / total_threats
-            )
+            average_confidence = sum(ti.confidence for ti in threat_intelligence) / total_threats
 
             # Severity distribution
             severity_distribution = {}
             for threat in threat_intelligence:
                 severity = threat.severity
-                severity_distribution[severity] = (
-                    severity_distribution.get(severity, 0) + 1
-                )
+                severity_distribution[severity] = severity_distribution.get(severity, 0) + 1
 
             # Threat type distribution
             type_distribution = {}
             for threat in threat_intelligence:
                 threat_type = threat.threat_type
-                type_distribution[threat_type] = (
-                    type_distribution.get(threat_type, 0) + 1
-                )
+                type_distribution[threat_type] = type_distribution.get(threat_type, 0) + 1
 
             return {
                 "total_threats": total_threats,

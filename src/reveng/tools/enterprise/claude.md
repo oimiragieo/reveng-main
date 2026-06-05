@@ -1,73 +1,54 @@
-# Tools - Enterprise
+# `claude.md` — `tools/enterprise`
 
-## Overview
+**Repository path:** `src/reveng/tools/enterprise/`
 
-Enterprise-grade tools for large-scale analysis, team collaboration, reporting, and compliance features designed for corporate environments.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/tools/enterprise/`
+## Python modules
 
-**File Count:** 5 Python files
+### `__init__.py`
+- **Summary:** Enterprise feature modules and canonical GPU accelerator exports.
 
-## Key Capabilities
+### `audit_trail.py`
+- **Summary:** REVENG Audit Trail System
+- **Classes:**
+  - `EventType` — Types of audit events
+  - `Severity` — Event severity levels
+  - `AuditEvent` — Single audit event
+  - `AnalysisSession` — Represents a complete analysis session
+  - `AuditLogger` — Main audit logging system
+- **Functions / coroutines:**
+  - `def main()` — CLI interface for audit trail system
 
-### Enterprise Analysis
-- Batch processing at scale
-- Distributed analysis
-- Cloud integration
-- Resource management
+### `enhanced_health_monitor.py`
+- **Summary:** Enhanced Analysis Health Monitor
+- **Classes:**
+  - `HealthMetric` — Individual health metric
+  - `ComponentHealth` — Health status for a component
+  - `SystemHealth` — Overall system health status
+  - `HealthChecker` — Base class for health checkers
+  - `CoreREVENGHealthChecker` — Health checker for core REVENG components
+  - `EnhancedModulesHealthChecker` — Health checker for enhanced analysis modules
+  - `AIServiceHealthChecker` — Health checker for AI services
+  - `SystemResourcesHealthChecker` — Health checker for system resources
+  - `EnhancedHealthMonitor` — Comprehensive health monitor for AI-Enhanced Universal Analysis Engine
+- **Functions / coroutines:**
+  - `def main()` — Main function for health monitoring
 
-### Collaboration
-- Team workspaces
-- Shared analysis results
-- Role-based access control
-- Audit logging
-
-### Reporting & Compliance
-- Executive reports
-- Compliance reports (SOC2, ISO)
-- Automated documentation
-- Metrics dashboards
-
-## Usage Examples
-
-### Example 1: Batch Analysis
-
-```python
-from reveng.tools.enterprise import BatchAnalyzer
-
-analyzer = BatchAnalyzer(workers=10)
-results = analyzer.analyze_directory(
-    "/path/to/binaries/",
-    output_dir="/path/to/results/"
-)
-
-print(f"Analyzed: {results['total_files']}")
-print(f"Success: {results['successful']}")
-print(f"Failed: {results['failed']}")
-```
-
-### Example 2: Generate Compliance Report
-
-```python
-from reveng.tools.enterprise import ComplianceReporter
-
-reporter = ComplianceReporter()
-report = reporter.generate_report(
-    analysis_results=results,
-    standard="SOC2",
-    output="/path/to/compliance_report.pdf"
-)
-
-print(f"Report generated: {report['path']}")
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/cloud/` - Cloud integration
-- `/home/user/reveng-main/src/reveng/reporting/` - Reporting utilities
+### `plugin_system.py`
+- **Summary:** REVENG Plugin System
+- **Classes:**
+  - `PluginType` — Types of plugins
+  - `PluginHook` — Plugin execution hooks
+  - `PluginMetadata` — Metadata for a plugin
+  - `PluginInfo` — Runtime plugin information
+  - `PluginBase` — Base class for all plugins
+  - `AnalyzerPlugin` — Base class for analyzer plugins
+  - `DecompilerPlugin` — Base class for decompiler plugins
+  - `ExporterPlugin` — Base class for exporter plugins
+  - `PluginManager` — Manages plugin discovery, loading, and execution
+- **Functions / coroutines:**
+  - `def main()` — CLI interface for plugin system
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

@@ -165,9 +165,7 @@ def test_jar(jar_path: Path, jar_name: str) -> bool:
 
     try:
         # Try to run jar with --help or -h
-        subprocess.run(
-            ["java", "-jar", str(jar_path), "--help"], capture_output=True, timeout=5
-        )
+        subprocess.run(["java", "-jar", str(jar_path), "--help"], capture_output=True, timeout=5)
 
         # Some jars don't support --help but return 0 for valid jar
         # Others might return non-zero but still work

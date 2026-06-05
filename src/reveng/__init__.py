@@ -10,22 +10,14 @@ Version: 4.0.0
 License: MIT
 """
 
+import importlib
+from typing import Any
+
 __version__ = "4.0.0"
 __author__ = "REVENG Development Team"
 __email__ = "contact@reveng-project.org"
 __license__ = "MIT"
 __url__ = "https://github.com/oimiragieo/reveng-main"
-
-# Core imports
-from .analyzer import REVENGAnalyzer
-
-# Unified API
-from .api import REVENGAPI, analyze_binary, detect_malware, reconstruct_binary
-from .cli import main
-
-# ML integration
-from .ml import MLIntegration, MLIntegrationConfig
-from .version import get_version, get_version_info
 
 # Public API
 __all__ = [
@@ -45,6 +37,33 @@ __all__ = [
     "__license__",
     "__url__",
 ]
+
+_LAZY_IMPORTS = {
+    "REVENGAnalyzer": ("reveng.analysis.analyzer", "REVENGAnalyzer"),
+    "main": ("reveng.cli", "main"),
+    "get_version": ("reveng.version", "get_version"),
+    "get_version_info": ("reveng.version", "get_version_info"),
+    "MLIntegration": ("reveng.ml", "MLIntegration"),
+    "MLIntegrationConfig": ("reveng.ml", "MLIntegrationConfig"),
+    "REVENGAPI": ("reveng.api", "REVENGAPI"),
+    "analyze_binary": ("reveng.api", "analyze_binary"),
+    "detect_malware": ("reveng.api", "detect_malware"),
+    "reconstruct_binary": ("reveng.api", "reconstruct_binary"),
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Lazily import top-level exports to avoid eager optional-dependency loading."""
+    try:
+        module_name, attribute_name = _LAZY_IMPORTS[name]
+    except KeyError as exc:
+        raise AttributeError(f"module '{__name__}' has no attribute '{name}'") from exc
+
+    module = importlib.import_module(module_name)
+    value = getattr(module, attribute_name)
+    globals()[name] = value
+    return value
+
 
 # Package metadata
 __title__ = "reveng-toolkit"

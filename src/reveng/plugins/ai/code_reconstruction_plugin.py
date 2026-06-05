@@ -9,13 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ...core.logger import get_logger
-from ..base import (
-    AIPlugin,
-    PluginCategory,
-    PluginContext,
-    PluginMetadata,
-    PluginPriority,
-)
+from ..base import AIPlugin, PluginCategory, PluginContext, PluginMetadata, PluginPriority
 
 logger = get_logger()
 
@@ -89,9 +83,7 @@ class CodeReconstructionPlugin(AIPlugin):
             logger.error(f"Failed to initialize AI models: {e}")
             raise
 
-    def ai_enhance(
-        self, context: PluginContext, data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def ai_enhance(self, context: PluginContext, data: Dict[str, Any]) -> Dict[str, Any]:
         """Apply AI enhancement to analysis data"""
 
         try:
@@ -166,9 +158,7 @@ class CodeReconstructionPlugin(AIPlugin):
                     json.dump(threat_intel, f, indent=2)
                 results["threat_file"] = str(threat_file)
 
-            logger.info(
-                f"AI enhancement completed: {len(results)} enhancements applied"
-            )
+            logger.info(f"AI enhancement completed: {len(results)} enhancements applied")
 
             return {
                 "ai_enhancement_type": "code_reconstruction",
@@ -246,9 +236,7 @@ class CodeReconstructionPlugin(AIPlugin):
                 )
                 reconstructed.append(f"int {func_name}() {{")
                 reconstructed.append("    // AI-reconstructed function body")
-                reconstructed.append(
-                    "    // This would contain actual reconstructed code"
-                )
+                reconstructed.append("    // This would contain actual reconstructed code")
                 reconstructed.append("    return 0;")
                 reconstructed.append("}")
                 reconstructed.append("")
@@ -266,9 +254,7 @@ class CodeReconstructionPlugin(AIPlugin):
             logger.error(f"Failed to reconstruct code: {e}")
             return None
 
-    def _enhance_function_analysis(
-        self, code_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    def _enhance_function_analysis(self, code_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Enhance function analysis with AI"""
 
         try:
@@ -297,9 +283,7 @@ class CodeReconstructionPlugin(AIPlugin):
             logger.error(f"Failed to enhance function analysis: {e}")
             return None
 
-    def _detect_vulnerabilities(
-        self, code_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    def _detect_vulnerabilities(self, code_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Detect vulnerabilities using AI"""
 
         try:
@@ -335,8 +319,7 @@ class CodeReconstructionPlugin(AIPlugin):
             # Analyze strings for suspicious patterns
             for string in code_data["strings"]:
                 if any(
-                    pattern in string.lower()
-                    for pattern in ["password", "secret", "key", "token"]
+                    pattern in string.lower() for pattern in ["password", "secret", "key", "token"]
                 ):
                     vulnerabilities.append(
                         {
@@ -358,9 +341,7 @@ class CodeReconstructionPlugin(AIPlugin):
             logger.error(f"Failed to detect vulnerabilities: {e}")
             return None
 
-    def _analyze_code_quality(
-        self, code_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    def _analyze_code_quality(self, code_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Analyze code quality using AI"""
 
         try:
@@ -398,9 +379,7 @@ class CodeReconstructionPlugin(AIPlugin):
             logger.error(f"Failed to analyze code quality: {e}")
             return None
 
-    def _generate_threat_intelligence(
-        self, code_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    def _generate_threat_intelligence(self, code_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Generate threat intelligence using AI"""
 
         try:
@@ -449,8 +428,7 @@ class CodeReconstructionPlugin(AIPlugin):
             # Analyze strings for IOCs
             for string in code_data["strings"]:
                 if any(
-                    ioc in string.lower()
-                    for ioc in ["malware", "trojan", "backdoor", "keylog"]
+                    ioc in string.lower() for ioc in ["malware", "trojan", "backdoor", "keylog"]
                 ):
                     threat_intel["indicators_of_compromise"].append(
                         {"type": "Malicious String", "value": string, "confidence": 0.8}

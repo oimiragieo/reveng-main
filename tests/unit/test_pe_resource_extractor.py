@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
-from reveng.pe.resource_extractor import (
+from reveng.analysis.pe.resource_extractor import (
     CustomResource,
     IconResource,
     ManifestResource,
@@ -37,13 +37,13 @@ class TestPEResourceExtractor:
         assert hasattr(self.extractor, "logger")
         assert hasattr(self.extractor, "temp_dir")
 
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_icons")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_bitmaps")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_string_table")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_manifests")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_version_info")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.extract_custom_resources")
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor.detect_embedded_files")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_icons")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_bitmaps")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_string_table")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_manifests")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_version_info")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.extract_custom_resources")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor.detect_embedded_files")
     def test_extract_all_resources_success(
         self,
         mock_embedded,
@@ -144,7 +144,7 @@ class TestPEResourceExtractor:
         assert result.icons == []
         assert result.bitmaps == []
 
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
     def test_extract_icons_with_rh(self, mock_rh_path):
         """Test icon extraction with Resource Hacker"""
         # Create a temporary test file
@@ -167,9 +167,7 @@ class TestPEResourceExtractor:
 
     def test_extract_icons_manual(self):
         """Test manual icon extraction"""
-        with patch.object(
-            self.extractor, "_get_resource_hacker_path", return_value=None
-        ):
+        with patch.object(self.extractor, "_get_resource_hacker_path", return_value=None):
             with patch.object(self.extractor, "_extract_icons_manual") as mock_manual:
                 mock_manual.return_value = [
                     IconResource(id="1", size=(16, 16), format="ICO", data=b"icon_data")
@@ -179,7 +177,7 @@ class TestPEResourceExtractor:
                 assert len(result) == 1
                 assert result[0].id == "1"
 
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
     def test_extract_strings_with_rh(self, mock_rh_path):
         """Test string extraction with Resource Hacker"""
         # Create a temporary test file
@@ -202,9 +200,7 @@ class TestPEResourceExtractor:
 
     def test_extract_strings_manual(self):
         """Test manual string extraction"""
-        with patch.object(
-            self.extractor, "_get_resource_hacker_path", return_value=None
-        ):
+        with patch.object(self.extractor, "_get_resource_hacker_path", return_value=None):
             with patch.object(self.extractor, "_extract_strings_manual") as mock_manual:
                 mock_manual.return_value = [
                     StringResource(id="1", language="en", value="Test String")
@@ -214,7 +210,7 @@ class TestPEResourceExtractor:
                 assert len(result) == 1
                 assert result[0].value == "Test String"
 
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
     def test_extract_manifests_with_rh(self, mock_rh_path):
         """Test manifest extraction with Resource Hacker"""
         # Create a temporary test file
@@ -226,9 +222,7 @@ class TestPEResourceExtractor:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value = Mock(returncode=0, stdout="Success")
 
-            with patch.object(
-                self.extractor, "_parse_extracted_manifests"
-            ) as mock_parse:
+            with patch.object(self.extractor, "_parse_extracted_manifests") as mock_parse:
                 mock_parse.return_value = [
                     ManifestResource(
                         id="1",
@@ -249,12 +243,8 @@ class TestPEResourceExtractor:
         test_binary = self.temp_dir / "test.exe"
         test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
 
-        with patch.object(
-            self.extractor, "_get_resource_hacker_path", return_value=None
-        ):
-            with patch.object(
-                self.extractor, "_extract_manifests_manual"
-            ) as mock_manual:
+        with patch.object(self.extractor, "_get_resource_hacker_path", return_value=None):
+            with patch.object(self.extractor, "_extract_manifests_manual") as mock_manual:
                 mock_manual.return_value = [
                     ManifestResource(
                         id="1",
@@ -269,7 +259,7 @@ class TestPEResourceExtractor:
                 assert len(result) == 1
                 assert result[0].content == "<manifest>"
 
-    @patch("reveng.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
+    @patch("reveng.analysis.pe.resource_extractor.PEResourceExtractor._get_resource_hacker_path")
     def test_extract_version_info_with_rh(self, mock_rh_path):
         """Test version info extraction with Resource Hacker"""
         # Create a temporary test file
@@ -303,9 +293,7 @@ class TestPEResourceExtractor:
         test_binary = self.temp_dir / "test.exe"
         test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
 
-        with patch.object(
-            self.extractor, "_get_resource_hacker_path", return_value=None
-        ):
+        with patch.object(self.extractor, "_get_resource_hacker_path", return_value=None):
             with patch.object(self.extractor, "_extract_version_manual") as mock_manual:
                 mock_manual.return_value = VersionResource(
                     file_version="1.0.0.0",
@@ -328,9 +316,7 @@ class TestPEResourceExtractor:
         test_binary = self.temp_dir / "test.exe"
         test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 1000)
 
-        with patch.object(
-            self.extractor, "_analyze_resources_for_embedded_files"
-        ) as mock_analyze:
+        with patch.object(self.extractor, "_analyze_resources_for_embedded_files") as mock_analyze:
             mock_analyze.return_value = [
                 CustomResource(
                     id="1",
@@ -385,9 +371,7 @@ class TestPEResourceExtractor:
         resource_section = (100, 500)
 
         with patch.object(self.extractor, "_parse_string_resources") as mock_parse:
-            mock_parse.return_value = [
-                StringResource(id="1", language="en", value="Test String")
-            ]
+            mock_parse.return_value = [StringResource(id="1", language="en", value="Test String")]
 
             result = self.extractor._parse_string_resources(pe_data, resource_section)
             assert len(result) == 1

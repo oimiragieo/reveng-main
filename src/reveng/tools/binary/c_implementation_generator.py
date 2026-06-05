@@ -140,9 +140,7 @@ class CImplementationGenerator:
         params_str = self._format_parameters(parameters or [])
 
         # Generate function body
-        body = self._generate_body(
-            category, function_name, return_type, parameters or [], purpose
-        )
+        body = self._generate_body(category, function_name, return_type, parameters or [], purpose)
 
         # Build full function
         function = f"{return_type} {function_name}({params_str}) {{\n"
@@ -151,9 +149,7 @@ class CImplementationGenerator:
 
         return function
 
-    def _categorize_function(
-        self, function_name: str, purpose: Optional[str] = None
-    ) -> str:
+    def _categorize_function(self, function_name: str, purpose: Optional[str] = None) -> str:
         """Categorize function based on name and purpose"""
         name_lower = function_name.lower()
         purpose_lower = (purpose or "").lower()
@@ -167,41 +163,23 @@ class CImplementationGenerator:
         # File operations
         if any(kw in name_lower for kw in ["open", "fopen"]):
             return "file_open"
-        if (
-            any(kw in name_lower for kw in ["read", "fread"])
-            and "file" in purpose_lower
-        ):
+        if any(kw in name_lower for kw in ["read", "fread"]) and "file" in purpose_lower:
             return "file_read"
-        if (
-            any(kw in name_lower for kw in ["write", "fwrite"])
-            and "file" in purpose_lower
-        ):
+        if any(kw in name_lower for kw in ["write", "fwrite"]) and "file" in purpose_lower:
             return "file_write"
 
         # String operations
-        if (
-            any(kw in name_lower for kw in ["strcpy", "copy"])
-            and "string" in purpose_lower
-        ):
+        if any(kw in name_lower for kw in ["strcpy", "copy"]) and "string" in purpose_lower:
             return "string_copy"
-        if (
-            any(kw in name_lower for kw in ["strcmp", "compare"])
-            and "string" in purpose_lower
-        ):
+        if any(kw in name_lower for kw in ["strcmp", "compare"]) and "string" in purpose_lower:
             return "string_compare"
-        if (
-            any(kw in name_lower for kw in ["strlen", "length"])
-            and "string" in purpose_lower
-        ):
+        if any(kw in name_lower for kw in ["strlen", "length"]) and "string" in purpose_lower:
             return "string_length"
 
         # Network operations
         if any(kw in name_lower for kw in ["socket", "sock"]):
             return "network_socket"
-        if (
-            any(kw in name_lower for kw in ["connect", "conn"])
-            and "network" in purpose_lower
-        ):
+        if any(kw in name_lower for kw in ["connect", "conn"]) and "network" in purpose_lower:
             return "network_connect"
 
         # Math operations
@@ -291,9 +269,7 @@ class CImplementationGenerator:
             dest = param_names[0] if param_names else "dest"
             src = param_names[1] if len(param_names) > 1 else "src"
             max_len = param_names[2] if len(param_names) > 2 else "256"
-            body = template.format(
-                dest=dest, src=src, max_len=max_len, return_value=return_value
-            )
+            body = template.format(dest=dest, src=src, max_len=max_len, return_value=return_value)
 
         elif category == "string_compare":
             str1 = param_names[0] if param_names else "str1"
@@ -331,9 +307,7 @@ class CImplementationGenerator:
 
         else:
             # Default template
-            body = template.format(
-                function_name=function_name, return_value=return_value
-            )
+            body = template.format(function_name=function_name, return_value=return_value)
 
         return body
 

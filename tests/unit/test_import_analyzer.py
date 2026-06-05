@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from reveng.pe.import_analyzer import (
+from reveng.analysis.pe.import_analyzer import (
     APICategory,
     APIInfo,
     ImportAnalysis,
@@ -39,12 +39,12 @@ class TestImportAnalyzer:
         assert hasattr(self.analyzer, "suspicious_patterns")
         assert hasattr(self.analyzer, "behavioral_indicators")
 
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._parse_import_table")
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._extract_dlls")
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._extract_api_calls")
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._categorize_apis")
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._detect_suspicious_apis")
-    @patch("reveng.pe.import_analyzer.ImportAnalyzer._analyze_behavioral_indicators")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._parse_import_table")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._extract_dlls")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._extract_api_calls")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._categorize_apis")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._detect_suspicious_apis")
+    @patch("reveng.analysis.pe.import_analyzer.ImportAnalyzer._analyze_behavioral_indicators")
     def test_analyze_imports_success(
         self,
         mock_behavioral,
@@ -370,9 +370,7 @@ class TestImportAnalyzer:
 
         behavioral_indicators = {"malware": ["inject", "bypass"], "network": ["socket"]}
 
-        risk_score = self.analyzer._calculate_risk_score(
-            suspicious_apis, behavioral_indicators
-        )
+        risk_score = self.analyzer._calculate_risk_score(suspicious_apis, behavioral_indicators)
         assert 0.0 <= risk_score <= 1.0
         assert risk_score > 0.5  # Should be high with critical and high suspicious APIs
 
@@ -390,9 +388,7 @@ class TestImportAnalyzer:
 
         behavioral_indicators = {"file_operations": ["CreateFile"]}
 
-        risk_score = self.analyzer._calculate_risk_score(
-            suspicious_apis, behavioral_indicators
-        )
+        risk_score = self.analyzer._calculate_risk_score(suspicious_apis, behavioral_indicators)
         assert 0.0 <= risk_score <= 1.0
         assert risk_score < 0.5  # Should be low with safe APIs
 
@@ -420,9 +416,7 @@ class TestImportAnalyzer:
             APICategory.GUI: [api_calls[1]],
         }
 
-        confidence = self.analyzer._calculate_analysis_confidence(
-            api_calls, categorized_apis
-        )
+        confidence = self.analyzer._calculate_analysis_confidence(api_calls, categorized_apis)
         assert 0.0 <= confidence <= 1.0
         assert confidence > 0.5  # Should be high with good data
 
@@ -431,9 +425,7 @@ class TestImportAnalyzer:
         api_calls = []
         categorized_apis = {}
 
-        confidence = self.analyzer._calculate_analysis_confidence(
-            api_calls, categorized_apis
-        )
+        confidence = self.analyzer._calculate_analysis_confidence(api_calls, categorized_apis)
         assert 0.0 <= confidence <= 1.0
         assert confidence < 0.5  # Should be low with empty data
 

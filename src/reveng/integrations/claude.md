@@ -1,64 +1,25 @@
-# Directory: src/reveng/integrations
+# `claude.md` — `integrations`
 
-## Overview
-This directory contains integration modules for external reverse engineering tools and services. The primary integration is with Ghidra, providing a comprehensive interface to Ghidra's analysis capabilities.
+**Repository path:** `src/reveng/integrations/`
 
-## Files in This Directory
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-### __init__.py
-- **Purpose**: Package initialization
-- **Dependencies**: None
+## Subpackages / subfolders (see each `claude.md`)
 
-## Architecture
+- `ghidra/` — [`claude.md`](ghidra/claude.md)
 
-```
-┌─────────────────────────────────────┐
-│   Integrations Layer                │
-├─────────────────────────────────────┤
-│ • External tool connectors          │
-│ • Protocol adapters                 │
-│ • Data format converters            │
-└──────────────┬──────────────────────┘
-               │
-       ┌───────┴────────┐
-       │  ghidra/       │
-       │  Ghidra        │
-       │  Integration   │
-       └────────────────┘
-```
+## Python modules
 
-## Key Concepts
+### `__init__.py`
+- **Summary:** Connectors and client wrappers for third-party tooling.
 
-### Integration Philosophy
-- Provide unified interfaces to external tools
-- Abstract tool-specific details
-- Handle connection management
-- Convert data formats
-- Provide error recovery
+### `local_disassembler.py`
+- **Summary:** Local Disassembler - Capstone-based fallback when Ghidra is unavailable
+- **Classes:**
+  - `DisassemblyResult` — Result of local disassembly analysis.
+  - `LocalDisassembler` — Capstone-based local disassembler for basic binary analysis.
+- **Functions / coroutines:**
+  - `def get_local_disassembler()` — Get a local disassembler instance if dependencies are available.
 
-### Supported Integrations
-- **Ghidra**: Primary RE tool integration (see ghidra/ subdirectory)
-- Future: IDA Pro, Binary Ninja, Radare2, angr
-
-## Related Modules
-
-### Subdirectories
-- `src/reveng/integrations/ghidra/`: Ghidra integration (see separate claude.md)
-
-### Used By
-- `src/reveng/analyzer.py`: Uses integrations for analysis
-- `src/reveng/tools/*`: Tools use integrations
-
-## Notes
-
-### Design Patterns
-- Factory pattern for tool selection
-- Adapter pattern for API normalization
-- Strategy pattern for tool-specific behavior
-
-### Best Practices
-1. Check tool availability before using
-2. Handle connection failures gracefully
-3. Validate tool versions
-4. Cache tool results when possible
-5. Provide fallbacks when tools unavailable
+---
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

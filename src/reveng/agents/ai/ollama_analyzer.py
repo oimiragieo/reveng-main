@@ -51,6 +51,14 @@ class AnalysisResult:
     reasoning: str
 
 
+@dataclass
+class _OllamaTextResult:
+    """Minimal LLM result exposing ``.content`` for the refiner contract."""
+
+    content: str
+    tokens_used: int = 0
+
+
 class OllamaAnalyzer:
     """Ollama-powered code analysis"""
 
@@ -120,9 +128,7 @@ class OllamaAnalyzer:
 
         # Fallback: Try CLI
         try:
-            result = subprocess.run(
-                ["ollama", "list"], capture_output=True, text=True, timeout=10
-            )
+            result = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=10)
 
             if result.returncode == 0:
                 models = []
@@ -229,13 +235,9 @@ class OllamaAnalyzer:
         context_info = ""
         if context:
             if context.get("strings"):
-                context_info += (
-                    f"\nString references: {', '.join(context['strings'][:5])}"
-                )
+                context_info += f"\nString references: {', '.join(context['strings'][:5])}"
             if context.get("imports"):
-                context_info += (
-                    f"\nImported functions: {', '.join(context['imports'][:5])}"
-                )
+                context_info += f"\nImported functions: {', '.join(context['imports'][:5])}"
             if context.get("callers"):
                 context_info += f"\nCalled by: {', '.join(context['callers'][:3])}"
 
@@ -308,6 +310,16 @@ Respond with ONLY valid JSON, no other text."""
 
         raise Exception("Failed to call Ollama after retries")
 
+    def analyze(self, prompt: str) -> "_OllamaTextResult":
+        """Generic prompt -> text completion conforming to the refiner contract.
+
+        The Verified Recompilation Loop's ``IterativeRefiner`` (and other callers)
+        expect ``analyzer.analyze(prompt)`` to return an object exposing a
+        ``.content`` string (mirroring AnthropicAnalyzer / ClaudeCodeCLIAnalyzer).
+        """
+        text = self._call_ollama(prompt)
+        return _OllamaTextResult(content=text)
+
     def _parse_analysis_response(self, response: str) -> AnalysisResult:
         """Parse LLM response into AnalysisResult"""
         try:
@@ -376,9 +388,7 @@ Respond with ONLY valid JSON, no other text."""
             reasoning="Extracted from free-form text",
         )
 
-    def _fallback_analysis(
-        self, function_name: str, function_code: str
-    ) -> AnalysisResult:
+    def _fallback_analysis(self, function_name: str, function_code: str) -> AnalysisResult:
         """Fallback analysis when Ollama unavailable"""
         # Simple heuristic analysis
         code_lower = function_code.lower()
@@ -401,9 +411,7 @@ Respond with ONLY valid JSON, no other text."""
             reasoning="Fallback heuristic analysis (Ollama unavailable)",
         )
 
-    def generate_implementation(
-        self, function_spec: Dict[str, Any], language: str = "c"
-    ) -> str:
+    def generate_implementation(self, function_spec: Dict[str, Any], language: str = "c") -> str:
         """
         Generate function implementation from specification
 
@@ -532,9 +540,7 @@ Example: ["Buffer overflow in strcpy at line 5", "Integer overflow in size calcu
             if progress_callback:
                 progress_callback(i + 1, total)
 
-            result = self.analyze_function(
-                func["code"], func["name"], func.get("context")
-            )
+            result = self.analyze_function(func["code"], func["name"], func.get("context"))
             results.append(result)
 
         return results

@@ -1,0 +1,34 @@
+{
+  "archive_path": "C:\\dev\\projects\\reveng-main\\test_samples\\HelloWorld.jar",
+  "archive_type": "jar",
+  "total_classes": 1,
+  "analyzed_classes": 1,
+  "results": [
+    {
+      "file_path": "C:\\Users\\oimir\\AppData\\Local\\Temp\\claude\\reveng_java_bw0x13e7\\HelloWorld.class",
+      "class_info": {
+        "class_name": "HelloWorld",
+        "package": "",
+        "file_path": "C:\\Users\\oimir\\AppData\\Local\\Temp\\claude\\reveng_java_bw0x13e7\\HelloWorld.class",
+        "methods": [],
+        "fields": [],
+        "imports": [],
+        "obfuscated": false,
+        "confidence": 0.5
+      },
+      "decompilation_results": [
+        {
+          "decompiler": "fallback",
+          "success": true,
+          "source_code": "// Fallback decompilation\npublic class HelloWorld {\n    // Class structure unavailable\n}",
+          "error": null,
+          "confidence": 0.3
+        }
+      ],
+      "obfuscated": false,
+      "analysis_complete": true
+    }
+  ],
+  "obfuscation_detected": false,
+  "analysis_complete": true
+}

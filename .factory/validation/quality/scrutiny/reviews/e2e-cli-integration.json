@@ -1,0 +1,39 @@
+{
+  "featureId": "e2e-cli-integration",
+  "reviewedAt": "2026-03-14T18:15:00.000Z",
+  "commitId": "c862fbab64cc888226bae27207dff1280853bb12",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Clean, well-structured implementation that adds four required top-level keys (`decompiled_functions`, `recompilation_result`, `yara_matches`, `vulnerabilities`) to the unified E2E report and materializes generated C sources into `<analysis_folder>/source/`. Two new private methods (`_extract_decompiled_functions`, `_materialize_source_outputs`) are well-typed, handle edge cases (missing source, empty data, self-copy avoidance), and follow a clear fallback strategy (recompilation sources → combined decompiled code). The integration test properly gates on live Ghidra and Ollama services via `pytest.skip()`, uses `tmp_path` for isolation, and validates the full report contract including key presence, types, and source directory contents. The unit test was updated to create real files on disk for the recompilation stage, enabling the source materialization path to be exercised. All 4 feature requirements are met: (1) CLI `analyze` triggers the full pipeline with YARA enrichment, (2) report JSON has all required keys, (3) `.c` files appear in `source/`, (4) integration test exists and asserts the contract.",
+    "issues": [
+      {
+        "file": "tests/integration/test_e2e_cli.py",
+        "line": 76,
+        "severity": "non_blocking",
+        "description": "The test passes `--output-dir` before the `analyze` subcommand. This works because `--output-dir` is defined on the root parser (cli.py:385), but it is unconventional for a CLI pattern where most users expect subcommand-scoped flags. If the parser is ever refactored to move `--output-dir` onto the `analyze` subparser, this test will break. Consider adding a brief inline comment noting why the flag precedes the subcommand."
+      },
+      {
+        "file": "src/reveng/pipeline/pipeline_engine.py",
+        "line": 1205,
+        "severity": "non_blocking",
+        "description": "The `recompilation_result` dict embedded in the report includes `output_dir` which contains an absolute filesystem path. This is consistent with the existing codebase pattern (e.g., `analysis_folder` key), but is worth noting for future sanitization if reports are ever shared externally."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Worker correctly documented the new pipeline behavior in `.factory/library/pipeline-upgrade.md`, following the library documentation convention in AGENTS.md.",
+      "evidence": "Last line of pipeline-upgrade.md describes the new `decompiled_functions`, `recompilation_result`, `yara_matches`, `vulnerabilities` keys and the source materialization behavior."
+    },
+    {
+      "area": "conventions",
+      "observation": "The `--output-dir` CLI flag is defined on the root argparse parser (cli.py:385), not on the `analyze` subparser. This means it applies to ALL subcommands but is only used by `analyze` and `recompile`. This global-flag-for-one-command pattern is not documented in AGENTS.md and could confuse future workers who try to add `--output-dir` support to other subcommands.",
+      "evidence": "cli.py:385 adds `--output-dir` to `config_group` which is on the main `parser`; only `handle_analyze_command` (line 461) and `handle_recompile_command` (line 1040) reference `args.output_dir`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "PASS. The implementation cleanly satisfies all four feature requirements: the CLI E2E pipeline now generates a unified report with the contract-required keys, materializes C source files into the output directory, and is covered by both a live integration test and an updated unit test. No blocking issues found. Two minor non-blocking observations noted: the unconventional flag ordering in the integration test and absolute paths in report output."
+}

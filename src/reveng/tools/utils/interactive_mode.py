@@ -154,9 +154,7 @@ class REVENGShell(cmd.Cmd):
 
         # Apply filter
         if arg:
-            functions = [
-                f for f in functions if arg.lower() in f.get("name", "").lower()
-            ]
+            functions = [f for f in functions if arg.lower() in f.get("name", "").lower()]
 
         print(f"Functions ({len(functions)}):")
         print("-" * 70)
@@ -467,8 +465,7 @@ class REVENGShell(cmd.Cmd):
 
     def do_tutorial(self, arg):
         """Show interactive mode tutorial."""
-        print(
-            """
+        print("""
 ╔═══════════════════════════════════════════════════════════════════════╗
 ║                        REVENG TUTORIAL                                ║
 ╚═══════════════════════════════════════════════════════════════════════╝
@@ -499,8 +496,7 @@ class REVENGShell(cmd.Cmd):
 
 7. Exit:
    reveng> exit
-        """
-        )
+        """)
 
     def do_clear(self, arg):
         """Clear the screen."""

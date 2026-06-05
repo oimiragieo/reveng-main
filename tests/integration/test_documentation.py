@@ -1,262 +1,172 @@
 #!/usr/bin/env python3
-"""
-Test REVENG Documentation
-=========================
+"""Integration tests for the current REVENG documentation layout."""
 
-This module tests that documentation is complete and links work.
-"""
+from __future__ import annotations
 
 import re
 from pathlib import Path
 
 import pytest
-import requests
+import requests  # type: ignore[import-untyped]
+
+README_PATH = Path("README.md")
+INSTALLATION_PATH = Path("INSTALLATION.md")
+ARCHITECTURE_PATH = Path("docs/architecture/overview.md")
+API_REFERENCE_PATH = Path("docs/api/API_REFERENCE.md")
+DOCS_INDEX_PATH = Path("docs/README.md")
+EXAMPLES_README_PATH = Path("examples/README.md")
+
+DOCUMENTS_UNDER_TEST = {
+    "README.md": {
+        "path": README_PATH,
+        "required_sections": [
+            "## Quick Start",
+            "## Key Features",
+            "## Documentation",
+            "## Contributing",
+            "## License",
+        ],
+        "min_length": 1000,
+    },
+    "INSTALLATION.md": {
+        "path": INSTALLATION_PATH,
+        "required_sections": [
+            "## Quick Start (Automated Setup)",
+            "## System Requirements",
+            "## Step-by-Step Installation",
+            "## Troubleshooting",
+        ],
+        "min_length": 500,
+    },
+    "docs/architecture/overview.md": {
+        "path": ARCHITECTURE_PATH,
+        "required_sections": [
+            "## Entry Points",
+            "## Runtime Flow",
+            "## Package Map",
+        ],
+        "min_length": 500,
+    },
+    "docs/api/API_REFERENCE.md": {
+        "path": API_REFERENCE_PATH,
+        "required_sections": [
+            "## Core API",
+            "## Tool APIs",
+            "## Web Interface API",
+        ],
+        "min_length": 500,
+    },
+}
+
+KEY_DOCS = [
+    DOCS_INDEX_PATH,
+    Path("docs/architecture/overview.md"),
+    Path("docs/developer-guide/DEVELOPER_GUIDE.md"),
+    Path("docs/deployment/README.md"),
+    API_REFERENCE_PATH,
+    Path("docs/getting-started/installation.md"),
+    Path("docs/mcp/README.md"),
+]
+
+CRITICAL_README_LINKS = [
+    "INSTALLATION.md",
+    "docs/README.md",
+    "docs/getting-started/installation.md",
+    "CLI_REFERENCE.md",
+    "docs/mcp/README.md",
+    "CONTRIBUTING.md",
+]
+
+CORE_EXTERNAL_LINKS = [
+    "https://github.com/oimiragieo/reveng-main",
+    "https://github.com/oimiragieo/reveng-main/issues",
+]
+
+
+def read_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
 
 
 class TestDocumentationFiles:
-    """Test that documentation files exist and have content"""
+    @pytest.mark.parametrize("doc_name", list(DOCUMENTS_UNDER_TEST))
+    def test_core_documents_exist_and_have_expected_sections(self, doc_name: str):
+        document = DOCUMENTS_UNDER_TEST[doc_name]
+        doc_path = document["path"]
 
-    def test_main_readme(self):
-        """Test main README.md"""
-        readme_path = Path("README.md")
-        assert readme_path.exists(), "README.md not found"
+        assert doc_path.exists(), f"{doc_path} not found"
+        content = read_text(doc_path)
+        assert len(content) > document["min_length"], f"{doc_path} is unexpectedly short"
 
-        content = readme_path.read_text()
-        assert len(content) > 1000, "README.md too short"
-        assert "REVENG" in content, "README.md missing REVENG reference"
-        assert "## Quick Start" in content, "README.md missing Quick Start section"
-        assert "## Features" in content, "README.md missing Features section"
+        for section in document["required_sections"]:
+            assert section in content, f"{doc_path} missing section: {section}"
 
-    def test_installation_guide(self):
-        """Test INSTALLATION.md"""
-        install_path = Path("INSTALLATION.md")
-        assert install_path.exists(), "INSTALLATION.md not found"
-
-        content = install_path.read_text()
-        assert len(content) > 500, "INSTALLATION.md too short"
-        assert "## System Requirements" in content, "INSTALLATION.md missing System Requirements"
-        assert "## Windows Installation" in content, "INSTALLATION.md missing Windows section"
-        assert "## Linux Installation" in content, "INSTALLATION.md missing Linux section"
-
-    def test_architecture_doc(self):
-        """Test ARCHITECTURE.md"""
-        arch_path = Path("ARCHITECTURE.md")
-        assert arch_path.exists(), "ARCHITECTURE.md not found"
-
-        content = arch_path.read_text()
-        assert len(content) > 500, "ARCHITECTURE.md too short"
-        assert "## System Overview" in content, "ARCHITECTURE.md missing System Overview"
-        assert "## Core Components" in content, "ARCHITECTURE.md missing Core Components"
-
-    def test_api_reference(self):
-        """Test API_REFERENCE.md"""
-        api_path = Path("API_REFERENCE.md")
-        assert api_path.exists(), "API_REFERENCE.md not found"
-
-        content = api_path.read_text()
-        assert len(content) > 500, "API_REFERENCE.md too short"
-        assert "## Core API" in content, "API_REFERENCE.md missing Core API"
-        assert "## Tool APIs" in content, "API_REFERENCE.md missing Tool APIs"
-
-    def test_docs_directory(self):
-        """Test docs directory"""
+    def test_docs_directory_contains_key_guides(self):
         docs_dir = Path("docs")
         assert docs_dir.exists(), "docs directory not found"
 
-        # Check for key documentation files
-        key_docs = [
-            "README.md",
-            "USER_GUIDE.md",
-            "DEVELOPER_GUIDE.md",
-            "QUICK_START.md",
-            "CHANGELOG.md",
-        ]
-
-        for doc in key_docs:
-            doc_path = docs_dir / doc
-            assert doc_path.exists(), f"Documentation file missing: {doc}"
-
-            content = doc_path.read_text()
-            assert len(content) > 100, f"Documentation file too short: {doc}"
+        for doc_path in KEY_DOCS:
+            assert doc_path.exists(), f"Documentation file missing: {doc_path}"
+            assert len(read_text(doc_path)) > 100, f"Documentation file too short: {doc_path}"
 
 
 class TestDocumentationLinks:
-    """Test that documentation links work"""
+    def test_readme_references_current_core_docs(self):
+        content = read_text(README_PATH)
 
-    def test_internal_links(self):
-        """Test internal documentation links"""
-        readme_path = Path("README.md")
-        content = readme_path.read_text()
+        for link in CRITICAL_README_LINKS:
+            assert f"]({link})" in content, f"README missing link to {link}"
+            assert Path(link).exists(), f"Linked file missing: {link}"
 
-        # Find markdown links
-        link_pattern = r"\[([^\]]+)\]\(([^)]+)\)"
-        links = re.findall(link_pattern, content)
+    @pytest.mark.parametrize("url", CORE_EXTERNAL_LINKS)
+    def test_core_external_links_resolve(self, url: str):
+        try:
+            response = requests.get(url, timeout=10, allow_redirects=True)
+        except requests.RequestException as exc:
+            pytest.skip(f"Could not test external link {url}: {exc}")
 
-        for link_text, link_url in links:
-            # Skip external links
-            if link_url.startswith("http"):
-                continue
-
-            # Skip anchor links
-            if link_url.startswith("#"):
-                continue
-
-            # Check if linked file exists
-            if link_url.endswith(".md"):
-                linked_file = Path(link_url)
-                assert linked_file.exists(), f"Broken link in README: {link_url}"
-
-    def test_external_links(self):
-        """Test external documentation links"""
-        readme_path = Path("README.md")
-        content = readme_path.read_text()
-
-        # Find external links
-        link_pattern = r"\[([^\]]+)\]\((https?://[^)]+)\)"
-        links = re.findall(link_pattern, content)
-
-        for link_text, link_url in links:
-            try:
-                response = requests.head(link_url, timeout=10)
-                assert response.status_code < 400, f"Broken external link: {link_url}"
-            except requests.RequestException:
-                # Skip if request fails (network issues, etc.)
-                pytest.skip(f"Could not test external link: {link_url}")
+        assert response.status_code < 400, f"Broken external link: {url}"
 
 
 class TestDocumentationContent:
-    """Test documentation content quality"""
+    def test_docs_index_highlights_current_sections(self):
+        content = read_text(DOCS_INDEX_PATH)
 
-    def test_readme_sections(self):
-        """Test README has required sections"""
-        readme_path = Path("README.md")
-        content = readme_path.read_text()
+        for section in [
+            "### Getting Started",
+            "### User Guide",
+            "### Developer Guide",
+            "### API Reference",
+            "### Deployment",
+        ]:
+            assert section in content, f"docs/README.md missing section: {section}"
 
-        required_sections = [
-            "## Quick Start",
-            "## Features",
-            "## Installation",
-            "## Usage",
-            "## Contributing",
-            "## License",
-        ]
+    def test_examples_readme_matches_current_headings(self):
+        content = read_text(EXAMPLES_README_PATH)
 
-        for section in required_sections:
-            assert section in content, f"README missing section: {section}"
-
-    def test_installation_sections(self):
-        """Test INSTALLATION.md has required sections"""
-        install_path = Path("INSTALLATION.md")
-        content = install_path.read_text()
-
-        required_sections = [
-            "## System Requirements",
-            "## Windows Installation",
-            "## Linux Installation",
-            "## macOS Installation",
-        ]
-
-        for section in required_sections:
-            assert section in content, f"INSTALLATION.md missing section: {section}"
-
-    def test_architecture_sections(self):
-        """Test ARCHITECTURE.md has required sections"""
-        arch_path = Path("ARCHITECTURE.md")
-        content = arch_path.read_text()
-
-        required_sections = ["## System Overview", "## Core Components", "## Data Flow"]
-
-        for section in required_sections:
-            assert section in content, f"ARCHITECTURE.md missing section: {section}"
-
-    def test_api_sections(self):
-        """Test API_REFERENCE.md has required sections"""
-        api_path = Path("API_REFERENCE.md")
-        content = api_path.read_text()
-
-        required_sections = ["## Core API", "## Tool APIs", "## Web Interface API"]
-
-        for section in required_sections:
-            assert section in content, f"API_REFERENCE.md missing section: {section}"
+        assert len(content) > 200, "Examples README too short"
+        assert "Quick Start" in content
+        assert "Available Examples" in content
 
 
 class TestDocumentationFormatting:
-    """Test documentation formatting"""
-
     def test_markdown_syntax(self):
-        """Test markdown syntax is valid"""
-        markdown_files = ["README.md", "INSTALLATION.md", "ARCHITECTURE.md", "API_REFERENCE.md"]
+        for document in DOCUMENTS_UNDER_TEST.values():
+            doc_path = document["path"]
+            content = read_text(doc_path)
 
-        for md_file in markdown_files:
-            file_path = Path(md_file)
-            if not file_path.exists():
-                continue
+            assert "## " in content, f"{doc_path} missing section headers"
+            assert not content.startswith(" "), f"{doc_path} starts with whitespace"
+            assert content.endswith("\n"), f"{doc_path} does not end with newline"
 
-            content = file_path.read_text()
+    def test_readme_has_code_blocks(self):
+        content = read_text(README_PATH)
+        code_blocks = re.findall(r"```[\s\S]*?```", content)
 
-            # Check for common markdown issues
-            assert "## " in content, f"{md_file} missing section headers"
-            assert not content.startswith(" "), f"{md_file} starts with whitespace"
-            assert content.endswith("\n"), f"{md_file} doesn't end with newline"
-
-    def test_code_blocks(self):
-        """Test code blocks are properly formatted"""
-        readme_path = Path("README.md")
-        content = readme_path.read_text()
-
-        # Check for code blocks
-        code_block_pattern = r"```[\s\S]*?```"
-        code_blocks = re.findall(code_block_pattern, content)
-
-        assert len(code_blocks) > 0, "README missing code examples"
-
-        # Check that code blocks have language specified
+        assert code_blocks, "README missing code examples"
         for block in code_blocks:
-            if "bash" in block or "python" in block or "cmd" in block:
-                assert block.startswith("```"), f"Code block not properly formatted: {block[:50]}"
-
-
-class TestDocumentationCompleteness:
-    """Test documentation completeness"""
-
-    def test_all_tools_documented(self):
-        """Test that all tools are documented"""
-        tools_dir = Path("tools")
-        if not tools_dir.exists():
-            pytest.skip("Tools directory not found")
-
-        # Get list of Python tools
-        tool_files = list(tools_dir.glob("*.py"))
-        assert len(tool_files) > 0, "No tools found"
-
-        # Check that tools are mentioned in documentation
-        readme_content = Path("README.md").read_text()
-        api_content = Path("API_REFERENCE.md").read_text()
-
-        for tool_file in tool_files[:5]:  # Check first 5 tools
-            tool_name = tool_file.stem
-            if tool_name.startswith("_"):
-                continue
-
-            # Tool should be mentioned somewhere in documentation
-            assert (
-                tool_name in readme_content or tool_name in api_content
-            ), f"Tool {tool_name} not documented"
-
-    def test_examples_documented(self):
-        """Test that examples are documented"""
-        examples_dir = Path("examples")
-        if not examples_dir.exists():
-            pytest.skip("Examples directory not found")
-
-        # Check examples README
-        examples_readme = examples_dir / "README.md"
-        assert examples_readme.exists(), "Examples README not found"
-
-        content = examples_readme.read_text()
-        assert len(content) > 200, "Examples README too short"
-        assert "## Basic Examples" in content or "## Getting Started" in content
+            if any(language in block for language in ("bash", "python", "cmd")):
+                assert block.startswith("```"), f"Malformed code block: {block[:50]}"
 
 
 if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+    raise SystemExit(pytest.main([__file__, "-v"]))

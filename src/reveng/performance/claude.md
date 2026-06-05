@@ -1,52 +1,13 @@
-# REVENG Performance
+# `claude.md` — `performance`
 
-## Overview
+**Repository path:** `src/reveng/performance/`
 
-Performance optimization and profiling module for monitoring and optimizing REVENG analysis performance.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/performance/`
+## Python modules
 
-## Key Features
-
-### Performance Monitoring
-- CPU profiling
-- Memory profiling
-- I/O monitoring
-- Bottleneck detection
-
-### Optimization
-- Caching strategies
-- Parallel processing
-- Resource management
-- Algorithm optimization
-
-### Metrics
-- Analysis time
-- Resource usage
-- Throughput
-- Scalability
-
-## Usage Examples
-
-### Example 1: Profile Analysis
-
-```python
-from reveng.performance import Profiler
-
-profiler = Profiler()
-with profiler.profile():
-    result = analyze_binary("/path/to/binary.exe")
-
-print(f"CPU time: {profiler.cpu_time}s")
-print(f"Memory peak: {profiler.memory_peak}MB")
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/tools/quality/` - Code quality
+### `__init__.py`
+- **Summary:** Compatibility exports for the canonical ML GPU accelerator module.
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

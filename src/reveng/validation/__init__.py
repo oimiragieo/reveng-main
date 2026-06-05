@@ -9,13 +9,13 @@ Differential fuzzing and validation for behavioral equivalence testing:
 """
 
 from .differential_fuzzer import (
-    DifferentialFuzzingEngine,
-    ValidationResult,
-    ExecutionResult,
-    Divergence,
-    DivergenceType,
-    DivergenceAnalyzer,
     CoverageTracker,
+    DifferentialFuzzingEngine,
+    Divergence,
+    DivergenceAnalyzer,
+    DivergenceType,
+    ExecutionResult,
+    ValidationResult,
 )
 
 __all__ = [

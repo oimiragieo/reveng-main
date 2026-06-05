@@ -1,73 +1,30 @@
-# Tools - Diffing
+# `claude.md` — `tools/diffing`
 
-## Overview
+**Repository path:** `src/reveng/tools/diffing/`
 
-Binary diffing and comparison tools for identifying changes between binary versions, patch analysis, and variant detection.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/tools/diffing/`
+## Python modules
 
-**File Count:** 3 Python files
+### `__init__.py`
+- **Summary:** Binary Diffing Tools
 
-## Key Capabilities
+### `binary_differ.py`
+- **Summary:** Binary Diffing Engine for REVENG
+- **Classes:**
+  - `FunctionMatch` — Represents a match between functions in two binaries
+  - `DiffResult` — Result of binary diff operation
+  - `BinaryDiffer` — Binary diffing engine for comparing two binaries.
+- **Functions / coroutines:**
+  - `def quick_diff()` — Quick binary diff
 
-### Binary Diffing
-- Byte-level comparison
-- Function-level diffing
-- Structural comparison
-- Patch identification
-
-### Diff Analysis
-- Change detection
-- Security patch analysis
-- Malware variant detection
-- Code evolution tracking
-
-### Diff Visualization
-- Side-by-side comparison
-- Highlighted changes
-- Diff reports
-
-## Usage Examples
-
-### Example 1: Compare Binaries
-
-```python
-from reveng.tools.diffing import BinaryDiffer
-
-differ = BinaryDiffer()
-diff_result = differ.compare(
-    original="/path/to/v1.exe",
-    modified="/path/to/v2.exe"
-)
-
-print(f"Changes: {diff_result['change_count']}")
-print(f"Modified functions: {len(diff_result['modified_functions'])}")
-```
-
-### Example 2: Patch Analysis
-
-```python
-from reveng.tools.diffing import PatchAnalyzer
-
-analyzer = PatchAnalyzer()
-patches = analyzer.analyze_patch(
-    original="/path/to/vulnerable.exe",
-    patched="/path/to/patched.exe"
-)
-
-for patch in patches:
-    print(f"Location: {patch['address']}")
-    print(f"Type: {patch['patch_type']}")
-    print(f"Security relevant: {patch['is_security_fix']}")
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/diffing/` - Core diffing functionality
-- `/home/user/reveng-main/src/reveng/malware/` - Variant detection
+### `patch_analyzer.py`
+- **Summary:** Patch Analyzer for REVENG
+- **Classes:**
+  - `Vulnerability` — Identified vulnerability from patch analysis
+  - `PatchAnalyzer` — Security patch analyzer.
+- **Functions / coroutines:**
+  - `def analyze_patch()` — Quick patch analysis
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

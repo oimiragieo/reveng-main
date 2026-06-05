@@ -100,21 +100,21 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
         if "vulnerabilities" in analysis_results:
             viz_content += "\n### Vulnerabilities Found:\n"
             for vuln in analysis_results["vulnerabilities"]:
-                viz_content += f"- {vuln.get('type', 'Unknown')}: {vuln.get('severity', 'Unknown')} severity\n"
+                viz_content += (
+                    f"- {vuln.get('type', 'Unknown')}: {vuln.get('severity', 'Unknown')} severity\n"
+                )
 
         if "corporate_exposure" in analysis_results:
             exposure = analysis_results["corporate_exposure"]
             viz_content += "\n### Corporate Data Exposure:\n"
-            viz_content += (
-                f"- Credentials found: {exposure.get('credentials_found', 0)}\n"
-            )
+            viz_content += f"- Credentials found: {exposure.get('credentials_found', 0)}\n"
             viz_content += f"- API endpoints: {exposure.get('api_endpoints', 0)}\n"
-            viz_content += f"- Business logic exposed: {exposure.get('business_logic_exposed', False)}\n"
+            viz_content += (
+                f"- Business logic exposed: {exposure.get('business_logic_exposed', False)}\n"
+            )
 
         # Save text visualization
-        filename = (
-            f"visualization_{viz_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        )
+        filename = f"visualization_{viz_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         filepath = self.output_dir / "visualizations" / filename
 
         with open(filepath, "w") as f:
@@ -437,9 +437,7 @@ Traditional security models relied heavily on the assumption that compiled code 
 """
 
             for i, slide in enumerate(presentation.slides):
-                pres_content += (
-                    f"## Slide {i + 1}: {slide['title']}\n\n{slide['content']}\n\n"
-                )
+                pres_content += f"## Slide {i + 1}: {slide['title']}\n\n{slide['content']}\n\n"
                 if "bullet_points" in slide:
                     for point in slide["bullet_points"]:
                         pres_content += f"- {point}\n"
@@ -486,12 +484,8 @@ Traditional security models relied heavily on the assumption that compiled code 
             except Exception as e:
                 logger.warning(f"Failed to create {viz_type} visualization: {e}")
 
-        social_media_posts = self.create_social_media_content(
-            analysis_results, campaign_name
-        )
-        blog_posts = self.create_blog_content(
-            analysis_results, "ai_security_revolution"
-        )
+        social_media_posts = self.create_social_media_content(analysis_results, campaign_name)
+        blog_posts = self.create_blog_content(analysis_results, "ai_security_revolution")
         presentations = self.create_conference_presentations(
             analysis_results, "security_conference"
         )

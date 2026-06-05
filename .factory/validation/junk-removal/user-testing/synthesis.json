@@ -1,0 +1,24 @@
+{
+  "milestone": "junk-removal",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-JUNK-001",
+    "VAL-JUNK-002",
+    "VAL-JUNK-003",
+    "VAL-JUNK-004",
+    "VAL-JUNK-005",
+    "VAL-DOCS-001",
+    "VAL-DOCS-002"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": null
+}

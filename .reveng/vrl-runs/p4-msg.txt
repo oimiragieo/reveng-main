@@ -1,0 +1,8 @@
+docs: prune REVOLUTION_PLAN.md to VRL-only with Phase 2 gate
+
+- Add current honest status: oracle works, LLM round pending API credentials
+- Add explicit Phase 2 gate: 1 real LLM round + 3 binaries at behavior_matched
+- Label Phase 2+ scope as aspirational / deferred
+- Rationale: earn each phase with a receipt before adding scope
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>

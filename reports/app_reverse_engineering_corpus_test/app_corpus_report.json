@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "result_type": "app_reverse_engineering_corpus_report",
+  "generated_at": "2026-06-04T15:36:11.608919Z",
+  "output_dir": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test",
+  "summary": {
+    "total_entries": 1,
+    "completed_entries": 1,
+    "failed_entries": 0,
+    "required_failed_entries": 0,
+    "matrix_status": "pass"
+  },
+  "rows": [
+    {
+      "name": "dotnet-sample-app",
+      "input_path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_dotnet.dll",
+      "language": "dotnet",
+      "requested_language": "dotnet",
+      "required": true,
+      "tags": [
+        "smoke",
+        "dotnet",
+        "synthetic"
+      ],
+      "status": "completed",
+      "validation_grade": "partial_recovery",
+      "result_type": "app_reverse_engineering_result",
+      "analysis_file": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_test\\dotnet-sample-app\\analysis.json",
+      "source_count": 1,
+      "warning_count": 0
+    }
+  ]
+}

@@ -1,0 +1,951 @@
+{
+  "obfuscation_types": [
+    "minified",
+    "packed",
+    "browserify_bundled",
+    "cfg_flattened",
+    "string_encrypted"
+  ],
+  "bundler_signals": {
+    "esbuild_runtime": 32,
+    "dynamic_imports": 13,
+    "child_process_usage": 264,
+    "node_builtin_imports": 236
+  },
+  "dependency_candidates": [
+    "react.memo_cache_sentinel",
+    "@anthropic-ai/claude-code",
+    "https://github.com/anthropics/claude-code/issues",
+    "https://code.claude.com/docs/en/overview",
+    "2.1.87",
+    "fs/promises",
+    "3.936.0",
+    "application/json",
+    "type.googleapis.com",
+    "application/x-www-form-urlencoded",
+    "http/0.9",
+    "http/1.0",
+    "tds/8.0",
+    "/,end:/",
+    "node:assert",
+    "react.early_return_sentinel",
+    "image/png",
+    "127.0.0.1",
+    "node:util",
+    "node:stream",
+    "text/plain",
+    "0.34.5",
+    "1.2.4",
+    "node:process",
+    ".jsonl",
+    "node:buffer",
+    "github.com",
+    ".json",
+    "node:crypto",
+    "1.1",
+    "1.0",
+    "5.2.0",
+    "2.0",
+    "text/html",
+    "@anthropic-ai/claude-agent-sdk",
+    "@anthropic-ai/sdk",
+    "node:os",
+    "application/octet-stream",
+    "multipart/form-data",
+    "./dist-es/runtimeConfig"
+  ],
+  "cli_flags": [
+    "--abbrev",
+    "--abbrev-commit",
+    "--abbrev-ref",
+    "--absolute-git-dir",
+    "--absolute-path",
+    "--active",
+    "--add-dir",
+    "--advisor",
+    "--after",
+    "--after-context",
+    "--agent",
+    "--agent-color",
+    "--agent-id",
+    "--agent-name",
+    "--agent-teams",
+    "--agent-type",
+    "--agents",
+    "--ahead-behind",
+    "--alias",
+    "--all",
+    "--all-fqdns",
+    "--all-ip-addresses",
+    "--allow-dangerously-skip-permissions",
+    "--allow-undetermined-type",
+    "--allowed",
+    "--allowed-tools",
+    "--always",
+    "--ancestry-path",
+    "--and",
+    "--app",
+    "--append-system-prompt",
+    "--append-system-prompt-file",
+    "--apple",
+    "--apropos",
+    "--archived",
+    "--arg",
+    "--argjson",
+    "--args",
+    "--assignee",
+    "--attempt"
+  ],
+  "slash_commands": [
+    "/accounts",
+    "/active-directory",
+    "/add-dir",
+    "/admin-settings",
+    "/advisor",
+    "/after",
+    "/agent",
+    "/agent-memory",
+    "/agent-memory-local",
+    "/agent-sdk",
+    "/agents",
+    "/aiplatform",
+    "/ajv",
+    "/ajv-validator",
+    "/aka",
+    "/all",
+    "/allcompartments",
+    "/always",
+    "/amazon-bedrock",
+    "/anthropic",
+    "/anthropic-sdk-go",
+    "/anthropic-sdk-typescript",
+    "/anthropics",
+    "/api",
+    "/api-latency",
+    "/api-staging",
+    "/app",
+    "/apps",
+    "/argo-rollouts",
+    "/articles",
+    "/assignment",
+    "/async-invoke",
+    "/audit",
+    "/auth",
+    "/authentication",
+    "/authorize",
+    "/autofs",
+    "/automated-reasoning-policies",
+    "/aws",
+    "/aws-sdk-js-v3"
+  ],
+  "topic_match_counts": {
+    "runtime_architecture": 12,
+    "cli_surface": 12,
+    "agent_runtime_and_prompts": 12,
+    "tools_and_permissions": 12,
+    "integrations_and_networking": 12,
+    "storage_state_and_artifacts": 12,
+    "observability_and_telemetry": 12,
+    "dependencies_and_binaries": 12
+  },
+  "reconstruction_mode": "webcrack_project",
+  "benchmark_scorecard": {
+    "oracle_domain_count": 35,
+    "reconstructed_domain_count": 13,
+    "matched_oracle_domains": [
+      "cli",
+      "tools",
+      "types",
+      "utils"
+    ],
+    "missing_oracle_domains": [
+      "assistant",
+      "bootstrap",
+      "bridge",
+      "buddy",
+      "commands",
+      "components",
+      "constants",
+      "context",
+      "coordinator",
+      "entrypoints",
+      "hooks",
+      "ink",
+      "keybindings",
+      "memdir",
+      "migrations",
+      "moreright",
+      "native-ts",
+      "outputStyles",
+      "plugins",
+      "query",
+      "remote",
+      "schemas",
+      "screens",
+      "server",
+      "services",
+      "skills",
+      "state",
+      "tasks",
+      "upstreamproxy",
+      "vim",
+      "voice"
+    ],
+    "extra_reconstructed_domains": [
+      "api",
+      "auth",
+      "config",
+      "core",
+      "mcp",
+      "monitoring",
+      "permissions",
+      "sdk",
+      "session"
+    ],
+    "domain_recall": 0.1143,
+    "domain_precision": 0.3077,
+    "oracle_project_file_count": 1901,
+    "reconstructed_project_file_count": 96,
+    "matched_oracle_project_files": [
+      "bridge/bridgeConfig",
+      "bridge/bridgeMain",
+      "cli/handlers/agents",
+      "cli/handlers/auth",
+      "cli/handlers/autoMode",
+      "cli/handlers/mcp",
+      "cli/handlers/plugins",
+      "cli/handlers/util",
+      "commands",
+      "commands/agents",
+      "commands/agents/agents",
+      "commands/clear",
+      "commands/clear/clear",
+      "commands/config",
+      "commands/config/config",
+      "commands/doctor",
+      "commands/doctor/doctor",
+      "commands/install",
+      "commands/login",
+      "commands/login/login",
+      "commands/logout",
+      "commands/logout/logout",
+      "commands/mcp",
+      "commands/mcp/addCommand",
+      "commands/mcp/mcp",
+      "commands/plugin",
+      "commands/plugin/AddMarketplace",
+      "commands/plugin/ManageMarketplaces",
+      "commands/plugin/ManagePlugins",
+      "commands/plugin/ValidatePlugin",
+      "commands/plugin/plugin",
+      "commands/status",
+      "commands/status/status",
+      "entrypoints/cli"
+    ],
+    "missing_oracle_project_files": [
+      "QueryEngine",
+      "Task",
+      "Tool",
+      "assistant/sessionHistory",
+      "bootstrap/state",
+      "bridge/bridgeApi",
+      "bridge/bridgeDebug",
+      "bridge/bridgeEnabled",
+      "bridge/bridgeMessaging",
+      "bridge/bridgePermissionCallbacks",
+      "bridge/bridgePointer",
+      "bridge/bridgeStatusUtil",
+      "bridge/bridgeUI",
+      "bridge/capacityWake",
+      "bridge/codeSessionApi",
+      "bridge/createSession",
+      "bridge/debugUtils",
+      "bridge/envLessBridgeConfig",
+      "bridge/flushGate",
+      "bridge/inboundAttachments",
+      "bridge/inboundMessages",
+      "bridge/initReplBridge",
+      "bridge/jwtUtils",
+      "bridge/pollConfig",
+      "bridge/pollConfigDefaults",
+      "bridge/remoteBridgeCore",
+      "bridge/replBridge",
+      "bridge/replBridgeHandle",
+      "bridge/replBridgeTransport",
+      "bridge/sessionIdCompat",
+      "bridge/sessionRunner",
+      "bridge/trustedDevice",
+      "bridge/types",
+      "bridge/workSecret",
+      "buddy/CompanionSprite",
+      "buddy/companion",
+      "buddy/prompt",
+      "buddy/sprites",
+      "buddy/types",
+      "buddy/useBuddyNotification",
+      "cli/exit",
+      "cli/ndjsonSafeStringify",
+      "cli/print",
+      "cli/remoteIO",
+      "cli/structuredIO",
+      "cli/transports/HybridTransport",
+      "cli/transports/SSETransport",
+      "cli/transports/SerialBatchEventUploader",
+      "cli/transports/WebSocketTransport",
+      "cli/transports/WorkerStateUploader",
+      "cli/transports/ccrClient",
+      "cli/transports/transportUtils",
+      "cli/update",
+      "commands/add-dir",
+      "commands/add-dir/add-dir",
+      "commands/add-dir/validation",
+      "commands/advisor",
+      "commands/ant-trace",
+      "commands/autofix-pr",
+      "commands/backfill-sessions",
+      "commands/branch",
+      "commands/branch/branch",
+      "commands/break-cache",
+      "commands/bridge",
+      "commands/bridge-kick",
+      "commands/bridge/bridge",
+      "commands/brief",
+      "commands/btw",
+      "commands/btw/btw",
+      "commands/bughunter",
+      "commands/chrome",
+      "commands/chrome/chrome",
+      "commands/clear/caches",
+      "commands/clear/conversation",
+      "commands/color",
+      "commands/color/color",
+      "commands/commit",
+      "commands/commit-push-pr",
+      "commands/compact",
+      "commands/compact/compact",
+      "commands/context",
+      "commands/context/context",
+      "commands/context/context-noninteractive",
+      "commands/copy",
+      "commands/copy/copy",
+      "commands/cost",
+      "commands/cost/cost",
+      "commands/createMovedToPluginCommand",
+      "commands/ctx_viz",
+      "commands/debug-tool-call",
+      "commands/desktop",
+      "commands/desktop/desktop",
+      "commands/diff",
+      "commands/diff/diff",
+      "commands/effort",
+      "commands/effort/effort",
+      "commands/env",
+      "commands/exit",
+      "commands/exit/exit",
+      "commands/export",
+      "commands/export/export",
+      "commands/extra-usage",
+      "commands/extra-usage/extra-usage",
+      "commands/extra-usage/extra-usage-core",
+      "commands/extra-usage/extra-usage-noninteractive",
+      "commands/fast",
+      "commands/fast/fast",
+      "commands/feedback",
+      "commands/feedback/feedback",
+      "commands/files",
+      "commands/files/files",
+      "commands/good-claude",
+      "commands/heapdump",
+      "commands/heapdump/heapdump",
+      "commands/help",
+      "commands/help/help",
+      "commands/hooks",
+      "commands/hooks/hooks",
+      "commands/ide",
+      "commands/ide/ide",
+      "commands/init",
+      "commands/init-verifiers",
+      "commands/insights",
+      "commands/install-github-app",
+      "commands/install-github-app/ApiKeyStep",
+      "commands/install-github-app/CheckExistingSecretStep",
+      "commands/install-github-app/CheckGitHubStep",
+      "commands/install-github-app/ChooseRepoStep",
+      "commands/install-github-app/CreatingStep",
+      "commands/install-github-app/ErrorStep",
+      "commands/install-github-app/ExistingWorkflowStep",
+      "commands/install-github-app/InstallAppStep",
+      "commands/install-github-app/OAuthFlowStep",
+      "commands/install-github-app/SuccessStep",
+      "commands/install-github-app/WarningsStep",
+      "commands/install-github-app/install-github-app",
+      "commands/install-github-app/setupGitHubActions",
+      "commands/install-slack-app",
+      "commands/install-slack-app/install-slack-app",
+      "commands/issue",
+      "commands/keybindings",
+      "commands/keybindings/keybindings",
+      "commands/mcp/xaaIdpCommand",
+      "commands/memory",
+      "commands/memory/memory",
+      "commands/mobile",
+      "commands/mobile/mobile",
+      "commands/mock-limits",
+      "commands/model",
+      "commands/model/model",
+      "commands/oauth-refresh",
+      "commands/onboarding",
+      "commands/output-style",
+      "commands/output-style/output-style",
+      "commands/passes",
+      "commands/passes/passes",
+      "commands/perf-issue",
+      "commands/permissions",
+      "commands/permissions/permissions",
+      "commands/plan",
+      "commands/plan/plan",
+      "commands/plugin/BrowseMarketplace",
+      "commands/plugin/DiscoverPlugins",
+      "commands/plugin/PluginErrors",
+      "commands/plugin/PluginOptionsDialog",
+      "commands/plugin/PluginOptionsFlow",
+      "commands/plugin/PluginSettings",
+      "commands/plugin/PluginTrustWarning",
+      "commands/plugin/UnifiedInstalledCell",
+      "commands/plugin/parseArgs",
+      "commands/plugin/pluginDetailsHelpers",
+      "commands/plugin/usePagination",
+      "commands/pr_comments",
+      "commands/privacy-settings",
+      "commands/privacy-settings/privacy-settings",
+      "commands/rate-limit-options",
+      "commands/rate-limit-options/rate-limit-options",
+      "commands/release-notes",
+      "commands/release-notes/release-notes",
+      "commands/reload-plugins",
+      "commands/reload-plugins/reload-plugins",
+      "commands/remote-env",
+      "commands/remote-env/remote-env",
+      "commands/remote-setup",
+      "commands/remote-setup/api",
+      "commands/remote-setup/remote-setup",
+      "commands/rename",
+      "commands/rename/generateSessionName",
+      "commands/rename/rename",
+      "commands/reset-limits",
+      "commands/resume",
+      "commands/resume/resume",
+      "commands/review",
+      "commands/review/UltrareviewOverageDialog",
+      "commands/review/reviewRemote",
+      "commands/review/ultrareviewCommand",
+      "commands/review/ultrareviewEnabled",
+      "commands/rewind",
+      "commands/rewind/rewind",
+      "commands/sandbox-toggle"
+    ],
+    "extra_reconstructed_project_files": [
+      "bridge/bridgeCallbacks",
+      "bridge/bridgeId",
+      "bridge/bridgeOauthDeadExpiresAt",
+      "bridge/bridgeOauthDeadFailCount",
+      "bridge/bridgeOrigin",
+      "bridge/bridgeSelected",
+      "bridge/bridgeSessionId",
+      "commands/add",
+      "commands/add-from-claude-desktop",
+      "commands/add-from-claude-desktop/add-from-claude-desktop",
+      "commands/add-json",
+      "commands/add-json/add-json",
+      "commands/add/add",
+      "commands/auth",
+      "commands/auth/auth",
+      "commands/auto-mode",
+      "commands/auto-mode/auto-mode",
+      "commands/critique",
+      "commands/critique/critique",
+      "commands/defaults",
+      "commands/defaults/defaults",
+      "commands/disable",
+      "commands/disable/disable",
+      "commands/enable",
+      "commands/enable/enable",
+      "commands/get",
+      "commands/get/get",
+      "commands/install/install",
+      "commands/list",
+      "commands/list/list",
+      "commands/marketplace",
+      "commands/marketplace/marketplace",
+      "commands/remote-control",
+      "commands/remote-control/remote-control",
+      "commands/remove",
+      "commands/remove/remove",
+      "commands/reset-project-choices",
+      "commands/reset-project-choices/reset-project-choices",
+      "commands/serve",
+      "commands/serve/serve",
+      "commands/setup",
+      "commands/setup-token",
+      "commands/setup-token/setup-token",
+      "commands/setup/setup",
+      "commands/show",
+      "commands/show/show",
+      "commands/uninstall",
+      "commands/uninstall/uninstall",
+      "commands/update",
+      "commands/update/update",
+      "commands/validate",
+      "commands/validate/validate",
+      "commands/xaa",
+      "commands/xaa/xaa",
+      "plugins/my-plugin",
+      "server",
+      "server/main",
+      "server/my-server",
+      "tasks/cancel",
+      "tasks/get",
+      "tasks/list",
+      "tasks/result"
+    ],
+    "project_file_recall": 0.0179,
+    "project_file_precision": 0.3542,
+    "token_signal_score": 1.0,
+    "overall_score": 0.4187
+  },
+  "schema_version": "1.0",
+  "result_type": "app_reverse_engineering_result",
+  "validation": {
+    "grade": "evidence_backed",
+    "summary": "Recovered 99 source artifact(s), 96 topic evidence snippet(s), and 4 primary artifact(s); warnings=0.",
+    "evidence_count": 22,
+    "topic_evidence_count": 96,
+    "artifact_count": 4,
+    "warning_count": 0
+  },
+  "evidence": [
+    {
+      "kind": "input_sample",
+      "path": "C:\\Users\\oimir\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\cli.js",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "input_app"
+    },
+    {
+      "kind": "analysis_summary",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\analysis.json",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "analysis_summary",
+      "metadata": {
+        "source_count": 99
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\01-runtime-architecture.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "runtime_architecture",
+        "match_count": 12
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\02-cli-surface.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "cli_surface",
+        "match_count": 12
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\03-agent-runtime-and-prompts.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "agent_runtime_and_prompts",
+        "match_count": 12
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\04-tools-and-permissions.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "tools_and_permissions",
+        "match_count": 12
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\05-integrations-and-networking.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "integrations_and_networking",
+        "match_count": 12
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\06-storage-state-and-artifacts.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "storage_state_and_artifacts",
+        "match_count": 12
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\07-observability-and-telemetry.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "observability_and_telemetry",
+        "match_count": 12
+      }
+    },
+    {
+      "kind": "spec_topic",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\08-dependencies-and-binaries.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "spec_topic",
+      "metadata": {
+        "topic_key": "dependencies_and_binaries",
+        "match_count": 12
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\runtime-architecture.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "runtime_architecture"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\cli-surface.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "cli_surface"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\agent-runtime-and-prompts.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "agent_runtime_and_prompts"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\tools-and-permissions.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "tools_and_permissions"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\integrations-and-networking.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "integrations_and_networking"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\storage-state-and-artifacts.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "storage_state_and_artifacts"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\observability-and-telemetry.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "observability_and_telemetry"
+      }
+    },
+    {
+      "kind": "domain_evidence",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\dependencies-and-binaries.md",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "domain_evidence",
+      "metadata": {
+        "topic_key": "dependencies_and_binaries"
+      }
+    },
+    {
+      "kind": "primary_artifact",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\artifacts\\normalized.js",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "primary_artifact",
+      "metadata": {
+        "artifact_name": "normalized_bundle"
+      }
+    },
+    {
+      "kind": "primary_artifact",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\artifacts\\reconstructed_project",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "primary_artifact",
+      "metadata": {
+        "artifact_name": "reconstructed_project"
+      }
+    },
+    {
+      "kind": "primary_artifact",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\artifacts\\reconstructed_project\\project_metadata.json",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "primary_artifact",
+      "metadata": {
+        "artifact_name": "reconstructed_project_manifest"
+      }
+    },
+    {
+      "kind": "primary_artifact",
+      "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\artifacts\\webcrack",
+      "trace_id": "app-re::analysis",
+      "evidence_kind": "primary_artifact",
+      "metadata": {
+        "artifact_name": "webcrack_output"
+      }
+    }
+  ],
+  "provenance": {
+    "inputs": [
+      {
+        "kind": "app_input",
+        "path": "C:\\Users\\oimir\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code\\cli.js",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "input_app",
+        "metadata": {
+          "input_root": "C:\\Users\\oimir\\AppData\\Roaming\\npm\\node_modules\\@anthropic-ai\\claude-code"
+        }
+      }
+    ],
+    "artifacts": [
+      {
+        "kind": "analysis_summary",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\analysis.json",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "analysis_summary"
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\01-runtime-architecture.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "runtime_architecture"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\02-cli-surface.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "cli_surface"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\03-agent-runtime-and-prompts.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "agent_runtime_and_prompts"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\04-tools-and-permissions.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "tools_and_permissions"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\05-integrations-and-networking.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "integrations_and_networking"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\06-storage-state-and-artifacts.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "storage_state_and_artifacts"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\07-observability-and-telemetry.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "observability_and_telemetry"
+        }
+      },
+      {
+        "kind": "spec_topic",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\08-dependencies-and-binaries.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "spec_topic",
+        "metadata": {
+          "topic_key": "dependencies_and_binaries"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\runtime-architecture.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "runtime_architecture"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\cli-surface.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "cli_surface"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\agent-runtime-and-prompts.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "agent_runtime_and_prompts"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\tools-and-permissions.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "tools_and_permissions"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\integrations-and-networking.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "integrations_and_networking"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\storage-state-and-artifacts.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "storage_state_and_artifacts"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\observability-and-telemetry.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "observability_and_telemetry"
+        }
+      },
+      {
+        "kind": "domain_evidence",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\SPECS\\domains\\dependencies-and-binaries.md",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "domain_evidence",
+        "metadata": {
+          "topic_key": "dependencies_and_binaries"
+        }
+      },
+      {
+        "kind": "primary_artifact",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\artifacts\\normalized.js",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "primary_artifact",
+        "metadata": {
+          "artifact_name": "normalized_bundle"
+        }
+      },
+      {
+        "kind": "primary_artifact",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\artifacts\\reconstructed_project",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "primary_artifact",
+        "metadata": {
+          "artifact_name": "reconstructed_project"
+        }
+      },
+      {
+        "kind": "primary_artifact",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\artifacts\\reconstructed_project\\project_metadata.json",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "primary_artifact",
+        "metadata": {
+          "artifact_name": "reconstructed_project_manifest"
+        }
+      },
+      {
+        "kind": "primary_artifact",
+        "path": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real\\artifacts\\webcrack",
+        "trace_id": "app-re::javascript::analysis",
+        "evidence_kind": "primary_artifact",
+        "metadata": {
+          "artifact_name": "webcrack_output"
+        }
+      }
+    ],
+    "stages": [
+      "input_inventory",
+      "spec_generation",
+      "domain_split",
+      "analysis_summary_serialization"
+    ],
+    "references": [
+      {
+        "relationship": "analyzed_under",
+        "target": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_claude_loop_smoke\\claude-code-cli-real_attempt_1\\claude-code-cli-real",
+        "trace_id": "app-re::javascript::analysis",
+        "metadata": {
+          "adapter_name": "javascript_bundle_workflow"
+        }
+      }
+    ],
+    "tools": [
+      "javascript_bundle_workflow"
+    ]
+  }
+}

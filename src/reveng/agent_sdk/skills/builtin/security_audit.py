@@ -66,9 +66,10 @@ class SecurityAuditSkill(BaseSkill):
             # Build comprehensive report
             audit_report = {
                 "binary_path": binary_path,
-                "binary_analysis": analysis_result.data,
+                "binary_analysis": analysis_result.content,
                 "vulnerabilities": [],
                 "malware_detected": False,
+                "malware_scan_requested": check_malware,
                 "risk_score": 0,
                 "recommendations": [],
             }

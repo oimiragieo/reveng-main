@@ -22,6 +22,7 @@ build/
 
 # Logs
 *.log
+test_results.log
 logs/
 *.log.*
 reveng_analyzer.log
@@ -32,6 +33,7 @@ semgrep-final-results.json
 
 # Analysis outputs (runtime generated)
 analysis_*/
+ml_analysis/
 ai_recompiler_analysis_*/
 ai_enhanced_analysis_*/
 src_optimal_analysis_*/
@@ -135,6 +137,7 @@ docs/build/
 # Node modules (web_interface)
 web_interface/client/node_modules/
 web_interface/server/node_modules/
+test_samples/js_tracked_bundle_source/node_modules/
 web_interface/client/build/
 web_interface/server/dist/
 
@@ -227,9 +230,11 @@ test_samples/*.elf
 config.json
 secrets.json
 .secrets
+.reveng/app_reverse_engineering_corpus.local.json
 
 # External dependencies (download separately - see docs/getting-started/installation.md)
 external/ghidra/
+external/ghidra-dist/
 
 # Windows reserved filename artifact
 nul
@@ -248,3 +253,72 @@ build/analysis_artifacts/
 
 # Temporary download directories
 temp_ghidra_download/
+
+# --- 2026-04-10 cleanup additions ---
+# Archive folder for cleanup — safety net, recoverable by `mv _archive/... ./`
+_archive/
+
+# ccache internals (stats files should never have been tracked)
+.reveng_cache/
+
+# Prior RE analysis runs (historical output, regenerable)
+reports/app_reverse_engineering_corpus_claude_real_*/
+reports/app_reverse_engineering_corpus_packaged_test/
+
+# Root-level log noise (more specific than *.log)
+/*.log
+/ai_*.log
+/reveng_*.log
+/type_inference.log
+/code_formatter.log
+/deobfuscation_tool.log
+/implementation_tool.log
+/human_readable_converter.log
+/binary_reassembler_v2.log
+/optimal_binary_analysis.log
+
+# Root-level tmp scratch
+/tmp_*
+/tmp_*.json
+/tmp_*/
+
+# Root __pycache__ (already covered by __pycache__/ pattern above, explicit for clarity)
+/__pycache__/
+
+# VRL run artifacts
+.reveng/vrl-runs/*.txt
+.reveng/vrl-runs/workspaces/
+
+# Ad-hoc scripts
+_find_hexyl.py
+
+# Local config overrides
+.reveng/*.local.*.json
+.reveng/*.pr.json
+
+# --- professionalization cleanup (2026-06-03): regenerable run artifacts ---
+# Existing reports/ rules are dir-only (trailing slash) and miss the .json FILES.
+reports/app_reverse_engineering_corpus_claude_*.json
+reports/_tmp_*.json
+reports/source_binary_benchmarks*
+reports/ralph_tracked_bundle_*/
+reports/app_reverse_engineering_tool_eval_*/
+reports/app_reverse_engineering_corpus_js_oracle*.json
+reports/cli_js_user_proof_run/
+reports/tracked_js_bundle_benchmark/
+reports/app_reverse_engineering_corpus_javascript_test/
+external/ga_binaries/
+external/ghidramcp/
+.reveng/vrl-runs/*.json
+
+# Claude Code workflow worktrees + transcripts (scratch)
+.claude/worktrees/
+.claude/thinktank_*.md
+
+# Reconstructed/normalized node artifacts under reports/ (regenerable RE outputs;
+# were triggering Dependabot false positives on recovered third-party deps)
+reports/**/reconstructed_project/
+reports/**/normalized_project/
+reports/**/package.json
+reports/**/package-lock.json
+reports/**/node_modules/

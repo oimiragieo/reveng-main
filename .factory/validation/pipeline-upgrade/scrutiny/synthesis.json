@@ -1,0 +1,111 @@
+{
+  "milestone": "pipeline-upgrade",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc --tb=short",
+      "exitCode": 1,
+      "note": "58 failures + 1 error are all pre-existing (documented in AGENTS.md). All 5 mission-specific tests pass (2 async pipeline + 3 GPU batching). 4 security tests gracefully skip. 150 passed, 132 skipped total."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "N/A",
+      "exitCode": null,
+      "note": "No typecheck command defined in services.yaml. Project does not use mypy in CI."
+    },
+    "lint": {
+      "passed": true,
+      "command": "flake8 src/reveng/ --max-line-length=120 --count --statistics",
+      "exitCode": 1,
+      "note": "624 pre-existing lint issues. No new lint issues introduced by mission features (cab7cdcf specifically cleaned up flake8 issues in pipeline_engine.py)."
+    }
+  },
+  "reviewsSummary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "nonBlockingIssues": [
+    {
+      "featureId": "async-pipeline-executor",
+      "severity": "non_blocking",
+      "description": "_run_coroutine_sync return type annotation is imprecise; mypy would flag it. Uses Callable[[], Awaitable[PipelineResult]] -> PipelineResult but also handles StageResult."
+    },
+    {
+      "featureId": "async-pipeline-executor",
+      "severity": "non_blocking",
+      "description": "StageType.DYNAMIC_ANALYSIS exists in the enum but is not handled in _dispatch_stage_execution (pre-existing gap, not a regression)."
+    },
+    {
+      "featureId": "async-pipeline-executor",
+      "severity": "non_blocking",
+      "description": "thread.join() in _run_coroutine_sync threading fallback has no timeout. If coroutine hangs, calling thread blocks forever."
+    },
+    {
+      "featureId": "async-pipeline-executor",
+      "severity": "non_blocking",
+      "description": "Concurrency timing test assertion (elapsed < expected - 0.1) may be flaky on heavily loaded CI machines."
+    },
+    {
+      "featureId": "gpu-batching-integration",
+      "severity": "non_blocking",
+      "description": "memory_forensics_dispatch_history in GPUAccelerator grows unboundedly. Could accumulate significant memory in long-running sessions."
+    },
+    {
+      "featureId": "gpu-batching-integration",
+      "severity": "non_blocking",
+      "description": "Pre-existing: hashlib.sha512() in _extract_artifact_from_region computes a hash that is never stored."
+    },
+    {
+      "featureId": "gpu-batching-integration",
+      "severity": "non_blocking",
+      "description": "_get_accelerator() silently creates a default GPUAccelerator when none is injected, swallowing PyTorch import errors at debug level."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Update the python-developer skill to handle non-TDD scenarios: (1) when the task is fixing an existing test file (no separate 'red' phase needed), (2) cleanup-only reruns where code is already green, (3) pre-existing red baselines that are out of scope. All three features had justified deviations from the TDD steps for these reasons.",
+      "evidence": "All 3 feature handoffs reported followedProcedure=false with deviations at TDD steps. fix-broken-test-collection: task IS the test fix. async-pipeline-executor (ee651ee4): cleanup-only rerun. gpu-batching-integration: pre-existing red baseline acknowledged by AGENTS.md.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add coding convention: 'Workers MUST run `flake8 src/reveng/ --max-line-length=120` before committing and fix any new warnings introduced by their changes.' This would prevent lint-only cleanup sessions.",
+      "evidence": "Feature async-pipeline-executor required a second worker session (ee651ee4) solely for flake8 line-length cleanup. Commit cab7cdcf is 123 insertions / 35 deletions of pure formatting fixes that could have been caught pre-commit.",
+      "isSystemic": false
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add testing convention: 'When adding test files for optional dependencies, use `pytestmark = pytest.mark.skip(reason=...)` inside the `except ImportError` block. Never use `sys.exit()` in test files.'",
+      "evidence": "fix-broken-test-collection established this pattern. It is the only instance in the codebase. Documenting it as the standard prevents future recurrence.",
+      "isSystemic": false
+    },
+    {
+      "target": "skills",
+      "suggestion": "The python-developer skill's step 1.2 (Initialize Environment) should reference AGENTS.md for OS-specific overrides, particularly the note that .factory/init.sh does not work on Windows.",
+      "evidence": "Both async-pipeline-executor workers (653d9a8a and ee651ee4) documented deviations from step 1.2 due to init.sh failing on Windows. AGENTS.md has the workaround but the skill doesn't reference it.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "services.yaml test command was scoped from 'pytest tests/ -n 4' to 'pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc'",
+      "reason": "Already applied by fix-broken-test-collection worker. AGENTS.md documents the scoped baseline and is internally consistent. No further action needed."
+    },
+    {
+      "observation": "Library update to pipeline-upgrade.md was correct and complete",
+      "reason": "Acknowledgment, not actionable. The worker correctly documented the new batching API surface."
+    },
+    {
+      "observation": "python-developer skill file not found at .factory/skills/python-developer/SKILL.md in the project",
+      "reason": "Informational. The skill is defined at user/global level, which is the expected location for personal droids."
+    }
+  ],
+  "previousRound": null
+}

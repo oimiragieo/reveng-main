@@ -1,54 +1,36 @@
-# REVENG Installers
+# `claude.md` — `installers`
 
-## Overview
+**Repository path:** `src/reveng/installers/`
 
-Installer analysis module for analyzing setup programs, MSI packages, and installation scripts.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/installers/`
+## Python modules
 
-## Key Features
+### `base_installer.py`
+- **Summary:** Base installer class for REVENG tools
+- **Classes:**
+  - `InstallMethod` — Installation method for tools
+  - `BaseInstaller` — Abstract base class for tool installers
 
-### Installer Types
-- MSI packages
-- NSIS installers
-- InstallShield
-- InnoSetup
-- Custom installers
+### `cfr_installer.py`
+- **Summary:** CFR Java decompiler installer for REVENG
+- **Classes:**
+  - `CFRInstaller` — Installer for CFR Java decompiler
 
-### Installation Analysis
-- File extraction
-- Registry changes
-- Service installation
-- Startup items
-- Persistence mechanisms
+### `ghidra_installer.py`
+- **Summary:** Ghidra installer for REVENG
+- **Classes:**
+  - `GhidraInstaller` — Installer for Ghidra reverse engineering framework
 
-### Security Analysis
-- Bundled software detection
-- Privilege escalation
-- Unwanted software
-- Backdoor detection
+### `ilspy_installer.py`
+- **Summary:** ILSpy installer for REVENG
+- **Classes:**
+  - `ILSpyInstaller` — Installer for ILSpy .NET decompiler
 
-## Usage Examples
-
-### Example 1: Analyze Installer
-
-```python
-from reveng.installers import InstallerAnalyzer
-
-analyzer = InstallerAnalyzer()
-result = analyzer.analyze("/path/to/setup.exe")
-
-print(f"Installer type: {result['type']}")
-print(f"Files to install: {len(result['files'])}")
-print(f"Registry changes: {len(result['registry_changes'])}")
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/pe/` - PE analysis
+### `python_installer.py`
+- **Summary:** Python package installer for REVENG
+- **Classes:**
+  - `PythonInstaller` — Installer for Python packages
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

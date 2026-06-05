@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../js_tracked_bundle_source/src/index.ts", "../js_tracked_bundle_source/src/lib/greet.ts"],
+  "sourcesContent": ["import { greet } from \"./lib/greet\";\r\n\r\n/** CLI-style entry used when the bundle is executed with node. */\r\nexport function run(argv: readonly string[]): string {\r\n  const flag = argv.find((value) => value.startsWith(\"--name=\"));\r\n  const name = flag ? flag.split(\"=\", 2)[1]! : \"tracked\";\r\n  return greet(name);\r\n}\r\n", "export function greet(name: string): string {\r\n  return `hello:${name}`;\r\n}\r\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;;AAAA;AAAA;AAAA;AAAA;AAAA;;;ACAO,SAAS,MAAM,MAAsB;AAC1C,SAAO,SAAS,IAAI;AACtB;;;ADCO,SAAS,IAAI,MAAiC;AACnD,QAAM,OAAO,KAAK,KAAK,CAAC,UAAU,MAAM,WAAW,SAAS,CAAC;AAC7D,QAAM,OAAO,OAAO,KAAK,MAAM,KAAK,CAAC,EAAE,CAAC,IAAK;AAC7C,SAAO,MAAM,IAAI;AACnB;",
+  "names": []
+}

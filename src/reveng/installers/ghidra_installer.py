@@ -84,9 +84,7 @@ class GhidraInstaller(BaseInstaller):
 
             # Check Java requirement
             if not self._check_java():
-                logger.error(
-                    "Java 21+ is required for Ghidra. Please install Java first."
-                )
+                logger.error("Java 21+ is required for Ghidra. Please install Java first.")
                 return False
 
             # Download Ghidra

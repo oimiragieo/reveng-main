@@ -1,63 +1,38 @@
-# Tools - Config
+# `claude.md` — `tools/config`
 
-## Overview
+**Repository path:** `src/reveng/tools/config/`
 
-Configuration management tools for REVENG, including loading, validation, and management of analysis configurations.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/tools/config/`
+## Python modules
 
-**File Count:** 6 Python files
+### `__init__.py`
+- **Summary:** Configuration package exports.
 
-## Key Capabilities
+### `config_manager.py`
+- **Summary:** REVENG Configuration Manager
+- **Classes:**
+  - `AIConfig` — AI/LLM configuration
+  - `GhidraConfig` — Ghidra MCP configuration
+  - `ValidationConfig` — Validation configuration
+  - `CompilationConfig` — Compilation configuration
+  - `SecurityConfig` — Security configuration
+  - `ConfigManager` — Manage REVENG configuration
+- **Functions / coroutines:**
+  - `def get_config()` — Get global configuration instance
 
-### Configuration Loading
-- Load from YAML, JSON, TOML
-- Environment variable substitution
-- Default configuration management
-
-### Configuration Validation
-- Schema validation
-- Type checking
-- Required field validation
-
-### Configuration Management
-- Merge configurations
-- Override settings
-- Profile management
-
-## Usage Examples
-
-### Example 1: Load Configuration
-
-```python
-from reveng.tools.config import ConfigLoader
-
-loader = ConfigLoader()
-config = loader.load("reveng.yaml")
-
-print(f"Analysis mode: {config['analysis']['mode']}")
-print(f"Output dir: {config['output_dir']}")
-```
-
-### Example 2: Validate Configuration
-
-```python
-from reveng.tools.config import ConfigValidator
-
-validator = ConfigValidator()
-is_valid = validator.validate(config)
-
-if not is_valid:
-    print(f"Errors: {validator.errors}")
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/core/` - Core configuration
-- `/home/user/reveng-main/src/reveng/utils/` - Utility functions
+### `enhanced_config_manager.py`
+- **Summary:** Enhanced Configuration Manager
+- **Classes:**
+  - `AIServiceConfig` — Configuration for AI services
+  - `AnalysisModuleConfig` — Configuration for individual analysis modules
+  - `DeploymentConfig` — Configuration for deployment and infrastructure
+  - `SecurityConfig` — Security configuration for enhanced analysis
+  - `EnhancedAnalysisConfiguration` — Complete configuration for enhanced analysis system
+  - `EnhancedConfigManager` — Configuration manager for AI-Enhanced Universal Analysis Engine
+- **Functions / coroutines:**
+  - `def get_enhanced_config()` — Get enhanced analysis configuration
+  - `def main()` — Main function for configuration management
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

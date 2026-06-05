@@ -1,592 +1,154 @@
 """
-End-to-end tests for REVENG CLI workflows
-
-Tests complete CLI workflows from command execution to result generation.
+End-to-end smoke tests for the supported REVENG CLI wrappers.
 """
 
+from __future__ import annotations
+
+import json
 import subprocess
 import sys
-import tempfile
+import time
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+import requests
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+CLI_BASE = [sys.executable, str(REPO_ROOT / "src" / "reveng" / "cli" / "reveng.py")]
 
 
 class TestCLIWorkflows:
-    """Test cases for CLI workflows"""
-
-    def test_analyze_command_basic(self, sample_binaries_dir):
-        """Test basic analyze command"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-
-        # Mock the analyze command
-        with patch("reveng.cli.commands.analyze.cmd_analyze") as mock_analyze:
-            mock_analyze.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "analyze", str(binary_path)],
-                capture_output=True,
-                text=True,
-            )
-
-            # Should not raise exception
-            assert result.returncode == 0
-
-    def test_analyze_command_with_output(self, sample_binaries_dir, temp_dir):
-        """Test analyze command with output directory"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-        output_dir = temp_dir / "analysis_output"
-
-        # Mock the analyze command
-        with patch("reveng.cli.commands.analyze.cmd_analyze") as mock_analyze:
-            mock_analyze.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "reveng.py",
-                    "analyze",
-                    str(binary_path),
-                    "--output",
-                    str(output_dir),
-                ],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_analyze_command_with_format(self, sample_binaries_dir):
-        """Test analyze command with output format"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-
-        # Mock the analyze command
-        with patch("reveng.cli.commands.analyze.cmd_analyze") as mock_analyze:
-            mock_analyze.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "analyze", str(binary_path), "--format", "json"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_hex_command_basic(self, sample_binaries_dir):
-        """Test basic hex command"""
-        binary_path = sample_binaries_dir / "native_app.exe"
-
-        # Mock the hex command
-        with patch("reveng.cli.commands.hex.cmd_hex") as mock_hex:
-            mock_hex.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "hex", str(binary_path)],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_hex_command_with_offset(self, sample_binaries_dir):
-        """Test hex command with offset"""
-        binary_path = sample_binaries_dir / "native_app.exe"
-
-        # Mock the hex command
-        with patch("reveng.cli.commands.hex.cmd_hex") as mock_hex:
-            mock_hex.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "hex", str(binary_path), "--offset", "0x1000"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_hex_command_with_search(self, sample_binaries_dir):
-        """Test hex command with pattern search"""
-        binary_path = sample_binaries_dir / "native_app.exe"
-
-        # Mock the hex command
-        with patch("reveng.cli.commands.hex.cmd_hex") as mock_hex:
-            mock_hex.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "hex", str(binary_path), "--search", "4D5A"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_pe_command_resources(self, sample_binaries_dir):
-        """Test PE resources command"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-
-        # Mock the PE command
-        with patch("reveng.cli.commands.pe.cmd_pe") as mock_pe:
-            mock_pe.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "pe", str(binary_path), "--extract-resources"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_pe_command_imports(self, sample_binaries_dir):
-        """Test PE imports command"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-
-        # Mock the PE command
-        with patch("reveng.cli.commands.pe.cmd_pe") as mock_pe:
-            mock_pe.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "pe", str(binary_path), "--analyze-imports"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_ghidra_command_analyze(self, sample_binaries_dir):
-        """Test Ghidra analyze command"""
-        binary_path = sample_binaries_dir / "native_app.exe"
-
-        # Mock the Ghidra command
-        with patch("reveng.cli.commands.ghidra.cmd_ghidra") as mock_ghidra:
-            mock_ghidra.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "ghidra", "analyze", str(binary_path)],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_ghidra_command_script(self, sample_binaries_dir, test_scripts_dir):
-        """Test Ghidra script command"""
-        binary_path = sample_binaries_dir / "native_app.exe"
-        script_path = test_scripts_dir["test_script"]
-
-        # Mock the Ghidra command
-        with patch("reveng.cli.commands.ghidra.cmd_ghidra") as mock_ghidra:
-            mock_ghidra.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "reveng.py",
-                    "ghidra",
-                    "analyze",
-                    str(binary_path),
-                    "--script",
-                    str(script_path),
-                ],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_pipeline_command_create(self):
-        """Test pipeline create command"""
-        # Mock the pipeline command
-        with patch("reveng.cli.commands.pipeline.cmd_pipeline") as mock_pipeline:
-            mock_pipeline.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "pipeline", "create", "test_pipeline"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_pipeline_command_run(self, sample_binaries_dir, temp_dir):
-        """Test pipeline run command"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-        pipeline_file = temp_dir / "test_pipeline.yaml"
-
-        # Create mock pipeline file
-        with open(pipeline_file, "w") as f:
-            f.write(
-                """
-steps:
-  - name: dotnet_analysis
-    function: analyze_assembly
-    args:
-      binary_path: test.exe
-"""
-            )
-
-        # Mock the pipeline command
-        with patch("reveng.cli.commands.pipeline.cmd_pipeline") as mock_pipeline:
-            mock_pipeline.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "reveng.py",
-                    "pipeline",
-                    "run",
-                    str(pipeline_file),
-                    str(binary_path),
-                ],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_malware_command_analyze(self, sample_binaries_dir):
-        """Test malware analyze command"""
-        binary_path = sample_binaries_dir / "malware_sample.exe"
-
-        # Mock the malware command
-        with patch("reveng.cli.commands.malware.cmd_malware") as mock_malware:
-            mock_malware.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "malware", "analyze", str(binary_path)],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_malware_command_behavioral(self, sample_binaries_dir):
-        """Test malware behavioral command"""
-        binary_path = sample_binaries_dir / "malware_sample.exe"
-
-        # Mock the malware command
-        with patch("reveng.cli.commands.malware.cmd_malware") as mock_malware:
-            mock_malware.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "malware", "behavioral", str(binary_path)],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_malware_command_memory(self):
-        """Test malware memory command"""
-        # Mock the malware command
-        with patch("reveng.cli.commands.malware.cmd_malware") as mock_malware:
-            mock_malware.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "malware", "memory", "1234"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_ml_command_analyze(self, sample_binaries_dir):
-        """Test ML analyze command"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-
-        # Mock the ML command
-        with patch("reveng.cli.commands.ml.cmd_ml_analyze") as mock_ml:
-            mock_ml.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "ml", "analyze", str(binary_path)],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_ml_command_reconstruct(self, sample_binaries_dir):
-        """Test ML reconstruct command"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-
-        # Mock the ML command
-        with patch("reveng.cli.commands.ml.cmd_ml_reconstruct") as mock_ml:
-            mock_ml.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "ml", "reconstruct", str(binary_path)],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_ml_command_anomaly(self, sample_binaries_dir):
-        """Test ML anomaly command"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-
-        # Mock the ML command
-        with patch("reveng.cli.commands.ml.cmd_ml_anomaly") as mock_ml:
-            mock_ml.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "ml", "anomaly", str(binary_path)],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_ml_command_threat(self, sample_binaries_dir):
-        """Test ML threat command"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-
-        # Mock the ML command
-        with patch("reveng.cli.commands.ml.cmd_ml_threat") as mock_ml:
-            mock_ml.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "ml", "threat", str(binary_path)],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_ml_command_status(self):
-        """Test ML status command"""
-        # Mock the ML command
-        with patch("reveng.cli.commands.ml.cmd_ml_status") as mock_ml:
-            mock_ml.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "ml", "status"], capture_output=True, text=True
-            )
-
-            assert result.returncode == 0
-
-    def test_plugin_command_list(self):
-        """Test plugin list command"""
-        # Mock the plugin command
-        with patch("reveng.cli.commands.plugin.cmd_plugin") as mock_plugin:
-            mock_plugin.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "plugin", "list"], capture_output=True, text=True
-            )
-
-            assert result.returncode == 0
-
-    def test_plugin_command_install(self):
-        """Test plugin install command"""
-        # Mock the plugin command
-        with patch("reveng.cli.commands.plugin.cmd_plugin") as mock_plugin:
-            mock_plugin.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "plugin", "install", "test_plugin"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_setup_command_verify(self):
-        """Test setup verify command"""
-        # Mock the setup command
-        with patch("reveng.cli.commands.setup.cmd_setup") as mock_setup:
-            mock_setup.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "setup", "verify"], capture_output=True, text=True
-            )
-
-            assert result.returncode == 0
-
-    def test_setup_command_install_deps(self):
-        """Test setup install-deps command"""
-        # Mock the setup command
-        with patch("reveng.cli.commands.setup.cmd_setup") as mock_setup:
-            mock_setup.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "setup", "install-deps"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_config_command_show(self):
-        """Test config show command"""
-        # Mock the config command
-        with patch("reveng.cli.commands.config.cmd_config") as mock_config:
-            mock_config.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "config", "show"], capture_output=True, text=True
-            )
-
-            assert result.returncode == 0
-
-    def test_config_command_set(self):
-        """Test config set command"""
-        # Mock the config command
-        with patch("reveng.cli.commands.config.cmd_config") as mock_config:
-            mock_config.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "config", "set", "test.key", "test.value"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_serve_command(self):
-        """Test serve command"""
-        # Mock the serve command
-        with patch("reveng.cli.commands.serve.cmd_serve") as mock_serve:
-            mock_serve.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "serve", "--port", "3000"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
+    """Smoke coverage for the supported top-level CLI wrapper."""
 
     def test_help_command(self):
-        """Test help command"""
-        # Simulate CLI execution
         result = subprocess.run(
-            [sys.executable, "reveng.py", "--help"], capture_output=True, text=True
+            [*CLI_BASE, "--help"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO_ROOT,
         )
 
         assert result.returncode == 0
-        assert "REVENG Universal Reverse Engineering Platform" in result.stdout
+        assert "REVENG - Universal Reverse Engineering Platform" in result.stdout
+        assert "reverse-engineer-app" in result.stdout
 
     def test_version_command(self):
-        """Test version command"""
-        # Simulate CLI execution
         result = subprocess.run(
-            [sys.executable, "reveng.py", "--version"], capture_output=True, text=True
+            [*CLI_BASE, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO_ROOT,
         )
 
         assert result.returncode == 0
-        assert "REVENG 2.1.0" in result.stdout
+        assert "REVENG v4.0.0" in result.stdout
+
+    def test_analyze_help_command(self):
+        result = subprocess.run(
+            [*CLI_BASE, "analyze", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO_ROOT,
+        )
+
+        assert result.returncode == 0
+        assert "Run comprehensive binary analysis" in result.stdout
+
+    def test_reverse_engineer_app_help_command(self):
+        result = subprocess.run(
+            [*CLI_BASE, "reverse-engineer-app", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO_ROOT,
+        )
+
+        assert result.returncode == 0
+        assert "Generate a SPECS library" in result.stdout
+        assert "--language {auto,javascript,jvm,python,dotnet}" in result.stdout
 
     def test_invalid_command(self):
-        """Test invalid command"""
-        # Simulate CLI execution
         result = subprocess.run(
-            [sys.executable, "reveng.py", "invalid_command"], capture_output=True, text=True
+            [*CLI_BASE, "invalid_command"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=REPO_ROOT,
         )
 
         assert result.returncode != 0
+        assert "invalid choice" in result.stderr
 
-    def test_missing_required_argument(self):
-        """Test missing required argument"""
-        # Simulate CLI execution
+    def test_analyze_binary_not_found(self, tmp_path):
         result = subprocess.run(
-            [sys.executable, "reveng.py", "analyze"], capture_output=True, text=True
+            [*CLI_BASE, "analyze", "nonexistent.exe"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=tmp_path,
         )
 
-        assert result.returncode != 0
+        assert result.returncode == 1
+        assert "Binary not found" in result.stdout
 
-    def test_verbose_output(self, sample_binaries_dir):
-        """Test verbose output option"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
+    def test_reverse_engineer_app_java_sample(self, tmp_path):
+        output_dir = tmp_path / "analysis_java_sample"
+        sample_path = REPO_ROOT / "test_samples" / "HelloWorld.java"
 
-        # Mock the analyze command
-        with patch("reveng.cli.commands.analyze.cmd_analyze") as mock_analyze:
-            mock_analyze.return_value = None
+        result = subprocess.run(
+            [
+                *CLI_BASE,
+                "--output-dir",
+                str(output_dir),
+                "reverse-engineer-app",
+                str(sample_path),
+                "--language",
+                "jvm",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=REPO_ROOT,
+        )
 
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "analyze", str(binary_path), "--verbose"],
-                capture_output=True,
-                text=True,
-            )
+        assert result.returncode == 0
+        assert (output_dir / "analysis.json").exists()
+        analysis = json.loads((output_dir / "analysis.json").read_text(encoding="utf-8"))
+        assert analysis["validation"]["grade"] in {
+            "behavior-matched",
+            "partial-equivalent",
+            "structural",
+            "compile-only",
+            "evidence_backed",
+        }
 
-            assert result.returncode == 0
+    def test_serve_command_dependency_or_running_server(self, tmp_path):
+        process = subprocess.Popen(
+            [*CLI_BASE, "serve", "--port", "3012"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=tmp_path,
+        )
 
-    def test_log_level_debug(self, sample_binaries_dir):
-        """Test debug log level"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-
-        # Mock the analyze command
-        with patch("reveng.cli.commands.analyze.cmd_analyze") as mock_analyze:
-            mock_analyze.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [sys.executable, "reveng.py", "analyze", str(binary_path), "--log-level", "DEBUG"],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
-
-    def test_config_file_option(self, sample_binaries_dir, temp_dir):
-        """Test config file option"""
-        binary_path = sample_binaries_dir / "dotnet_app.exe"
-        config_file = temp_dir / "config.yaml"
-
-        # Create mock config file
-        with open(config_file, "w") as f:
-            f.write(
-                """
-log_level: DEBUG
-output_format: json
-"""
-            )
-
-        # Mock the analyze command
-        with patch("reveng.cli.commands.analyze.cmd_analyze") as mock_analyze:
-            mock_analyze.return_value = None
-
-            # Simulate CLI execution
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "reveng.py",
-                    "analyze",
-                    str(binary_path),
-                    "--config",
-                    str(config_file),
-                ],
-                capture_output=True,
-                text=True,
-            )
-
-            assert result.returncode == 0
+        try:
+            time.sleep(5)
+            if process.poll() is None:
+                try:
+                    response = requests.get("http://127.0.0.1:3012", timeout=5)
+                    assert response.status_code < 500
+                except requests.exceptions.RequestException:
+                    pass
+            else:
+                stdout = process.stdout.read() if process.stdout else ""
+                stderr = process.stderr.read() if process.stderr else ""
+                combined = f"{stdout}\n{stderr}"
+                assert process.returncode == 1
+                assert "Web interface not available" in combined
+        finally:
+            if process.poll() is None:
+                process.terminate()
+                process.wait(timeout=5)

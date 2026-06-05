@@ -1,0 +1,74 @@
+{
+  "milestone": "foundation",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc",
+      "exitCode": 1,
+      "note": "193 passed, 58 failed, 132 skipped, 1 error. All 58 failures are pre-existing and documented in AGENTS.md (test_automated_pipeline, test_cli, test_documentation UnicodeDecodeError, test_ml_workflow API drift, test_analyzer/test_installation path assertions, test_pipeline import error). Baseline was 179 pass/58 fail — foundation milestone IMPROVED by +14 passing tests."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "note": "14 errors in 13 files. All are pre-existing: 13 missing type stubs for 'requests' (import-untyped), 1 angr syntax error (Pattern matching requires Python 3.10+). None introduced by foundation features."
+    },
+    "lint": {
+      "passed": true,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203",
+      "exitCode": 1,
+      "note": "All lint warnings are pre-existing across files not modified by foundation milestone (agent_sdk, compilation, deobfuscation, devirtualization, etc.). No new lint issues introduced by foundation features."
+    }
+  },
+  "reviewsSummary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Updated .factory/library/re-platform.md MCP Server section: removed stale '1 broken tool: decompile_binary' line and replaced with note that decompile_binary now works via GhidraEngine.decompile()",
+      "sourceFeature": "fix-critical-bugs"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Update Key Architecture Facts: change 'GhidraEngine HTTP client (has analyze_binary() but MISSING decompile())' to 'GhidraEngine HTTP client (has analyze_binary() and decompile())'. The decompile() method was added by fix-critical-bugs feature.",
+      "evidence": "fix-critical-bugs review found AGENTS.md line 63 still says decompile() is MISSING. Commit 07661f16 added the method. Stale docs may confuse future workers.",
+      "isSystemic": false
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add guidance: 'Large binary downloads (Ghidra dist, etc.) MUST be .gitignored. Workers should add gitignore entries for any external tool distribution directories before committing.' The ghidra-binary-install worker committed the entire ~500MB Ghidra distribution (5155 files) to git without adding external/ghidra-dist/ to .gitignore.",
+      "evidence": "ghidra-binary-install review: 'The entire Ghidra 12.0.4 binary distribution (5155 files, ~2.8M lines of insertions) was committed to git. .gitignore has external/ghidra/ but NOT external/ghidra-dist/'. This permanently bloats the repository.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add note about dual export script convention: 'Ghidra 12 headless cannot execute Python post-scripts without PyGhidra. Both ExportAnalysisJSON.java and ExportAnalysisJSON.py exist in external/ghidra-server/scripts/ — keep them in sync when modifying export logic.'",
+      "evidence": "fix-ghidra-server review: worker discovered Ghidra 12 headless rejected .py post-scripts and created a .java version. Pattern documented in re-platform.md but not AGENTS.md.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "GHIDRA_MOCK env var undocumented in AGENTS.md (fix-ghidra-server review)",
+      "reason": "Already documented in .factory/library/environment.md under Environment Variables section. AGENTS.md doesn't need to duplicate all env vars — library is the correct location for this."
+    },
+    {
+      "observation": "No python-developer SKILL.md found (fix-critical-bugs review)",
+      "reason": "The python-developer skill is a project-level droid (.factory/droids/python-developer), not a skill file. This is the expected configuration — droids don't necessarily have SKILL.md files."
+    },
+    {
+      "observation": "Skill procedure mentions src/reveng/ but some features target external/ (fix-ghidra-server review)",
+      "reason": "The skill is general-purpose and the worker correctly deviated when the feature description explicitly named external/ paths. No skill change needed — feature descriptions override generic skill guidance."
+    }
+  ],
+  "previousRound": null
+}

@@ -18,9 +18,7 @@ class CFRInstaller(BaseInstaller):
 
     def __init__(self, tools_dir: Path):
         super().__init__(tools_dir, "cfr")
-        self.cfr_url = (
-            "https://github.com/leibnitz27/cfr/releases/download/0.152/cfr-0.152.jar"
-        )
+        self.cfr_url = "https://github.com/leibnitz27/cfr/releases/download/0.152/cfr-0.152.jar"
         self.cfr_version = "0.152"
 
     def get_download_url(self) -> str:

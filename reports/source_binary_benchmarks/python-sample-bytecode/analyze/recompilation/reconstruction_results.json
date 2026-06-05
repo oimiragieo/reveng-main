@@ -1,0 +1,14 @@
+{
+  "binary_path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyc",
+  "status": "failed",
+  "cfg_artifacts": {},
+  "cfg_summary": {},
+  "source_files": {},
+  "compiled_binaries": {},
+  "compilation_reports": {},
+  "differential_validation": {},
+  "equivalence_validation": {},
+  "validation_results": {},
+  "vulnerabilities": [],
+  "exploits": []
+}

@@ -1,0 +1,100 @@
+{
+  "generated_at": "2026-03-29 19:12:22",
+  "binary_path": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyc",
+  "analysis_folder": ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode\\analyze",
+  "summary": {
+    "overall_status": "partial_success",
+    "stage_statuses": {
+      "ghidra_analysis": "failed",
+      "recompilation": "failed",
+      "behavioral_forensics": "success",
+      "memory_forensics": "success"
+    },
+    "ghidra_backend": "unavailable",
+    "functions_detected": 0,
+    "compiled_binaries": [],
+    "behavioral_anomaly_score": 0.5739076106271356,
+    "behavioral_threat_level": "medium",
+    "memory_anomaly_score": 0.35,
+    "memory_threat_level": "CRITICAL",
+    "yara_match_count": 0,
+    "malware_family": "Suspicious Binary",
+    "malware_confidence": 0.429
+  },
+  "decompiled_functions": [],
+  "recompilation_result": {
+    "status": "failed",
+    "output_dir": ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode\\analyze\\recompilation",
+    "source_files": {},
+    "compiled_binaries": {},
+    "compilation_reports": {},
+    "validation_results": {},
+    "cfg_summary": {},
+    "error": "GhidraEngine not configured"
+  },
+  "yara_matches": [],
+  "vulnerabilities": [],
+  "malware_classification": {
+    "family": "Suspicious Binary",
+    "confidence": 0.429,
+    "matched_rules": [],
+    "indicators": [
+      "ML anomaly score 0.76 exceeded threshold 0.64",
+      "feature distribution diverged from benign baseline"
+    ]
+  },
+  "stages": {
+    "ghidra_analysis": {
+      "status": "failed",
+      "backend": "unavailable",
+      "analysis_data": {},
+      "summary": {
+        "functions": 0,
+        "imports": 0,
+        "strings": 0
+      },
+      "report_path": ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode\\analyze\\ghidra_analysis\\ghidra_analysis.json",
+      "errors": [
+        "http://127.0.0.1:5000: \u274c Error: Could not connect to Ghidra Analysis Server at http://127.0.0.1:5000\n\n   The server is not running. Please start it with:\n\n   Option 1 - Start the REVENG Ghidra server:\n     python -m reveng.server.ghidra_analysis_server --port 13370\n\n   Option 2 - Use the external Ghidra HTTP server:\n     cd external/ghidra-server && python ghidra_http_server.py\n\n   Option 3 - Use Docker (recommended):\n     docker-compose up ghidra-server\n\n   For native binary analysis (PE/ELF/Mach-O), Ghidra is REQUIRED.\n   For Java/Python/C# files, Ghidra is NOT needed.\n",
+        "http://127.0.0.1:13370: Analysis failed: Ghidra error: Ghidra analysis did not produce JSON output"
+      ]
+    },
+    "recompilation": {
+      "status": "failed",
+      "output_dir": ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode\\analyze\\recompilation",
+      "source_files": {},
+      "compiled_binaries": {},
+      "compilation_reports": {},
+      "cfg_summary": {},
+      "validation_results": {},
+      "vulnerabilities": [],
+      "exploits": [],
+      "error": "GhidraEngine not configured"
+    },
+    "behavioral_forensics": {
+      "status": "success",
+      "analyzed_binary": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyc",
+      "risk_score": 57.39076106271356,
+      "threat_level": "medium",
+      "anomaly_score": 0.5739076106271356,
+      "anomaly_threshold": 0.6,
+      "anomaly_flags": [],
+      "sandbox_available": true,
+      "analysis_mode": "sandbox",
+      "report_path": ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode\\analyze\\behavioral_forensics\\behavioral_profile.json"
+    },
+    "memory_forensics": {
+      "status": "success",
+      "analyzed_binary": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_app.pyc",
+      "total_processes": 0,
+      "total_memory_regions": 0,
+      "total_artifacts": 0,
+      "risk_score": 100.0,
+      "threat_level": "CRITICAL",
+      "anomaly_score": 0.35,
+      "anomaly_threshold": 0.68,
+      "anomaly_flags": [],
+      "report_path": ".reveng\\..\\reports\\source_binary_benchmarks\\python-sample-bytecode\\analyze\\memory_forensics\\memory_analysis.json"
+    }
+  }
+}

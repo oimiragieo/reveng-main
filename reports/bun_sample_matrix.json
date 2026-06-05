@@ -1,0 +1,1034 @@
+{
+  "config_path": ".reveng\\bun_sample_matrix.ga.json",
+  "matrix_status": "pass",
+  "live_bun_sample_count": 2,
+  "successful_rebuild_count": 2,
+  "hard_failure_count": 0,
+  "rows": [
+    {
+      "id": "droid",
+      "sample": "C:\\dev\\droid.exe",
+      "kind": "bun_live_sample",
+      "required": false,
+      "detection": {
+        "exists": true,
+        "is_bun_executable": true,
+        "section_name": ".bun",
+        "bundle_size": 50341335,
+        "javascript_start_offset": 23,
+        "indicators": [
+          "Bun PE section detected: .bun",
+          "Bun bundle size prefix detected: 8 bytes",
+          "Bun JavaScript marker detected"
+        ]
+      },
+      "workspace": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid",
+      "analyze_command": {
+        "command": "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe C:\\dev\\projects\\reveng-main\\reveng.py --no-ollama-check --output-dir C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze analyze C:\\dev\\droid.exe",
+        "returncode": 0,
+        "stdout_tail": "Detected Bun executable; routing analyze to Bun bundle extraction.\nBundled JavaScript: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bundle.js\nBun virtual filesystem: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\nBun recovery mode: module_graph\nPreferred recompilation input: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\droid.exe\nReason: Recovered Bun virtual file excludes appended bundle metadata\nNormalized project workspace: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\normalized_project\nNormalized entrypoint: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\normalized_project\\droid.mjs\nNormalized SEA entrypoint: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\normalized_project\\sea-entry.cjs\nBun analysis report: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\bun_analysis.json\n",
+        "stderr_tail": "2026-03-29 19:09:00,344 - reveng.analyzer - INFO - Audit trail initialized\n2026-03-29 19:09:00,344 - reveng.analyzer - INFO - REVENG Analyzer initialized\n2026-03-29 19:09:00,344 - reveng.analyzer - INFO - Target binary: C:\\dev\\droid.exe\n2026-03-29 19:09:00,344 - reveng.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\n2026-03-29 19:09:00,344 - reveng.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\n2026-03-29 19:09:00,344 - reveng.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\n2026-03-29 19:09:00,376 - reveng.analyzer - INFO - Detected file type: native/pe (confidence: 100.00%)\n2026-03-29 19:09:00,376 - reveng.analyzer - INFO - Analysis category: native_binary\n2026-03-29 19:09:00,676 - reveng.analyzer - INFO - Java 21 detected - fully compatible\nConfig file not found: C:\\Users\\oimir\\.reveng\\config.yaml, using defaults\n2026-03-29 19:09:00,679 - reveng.analyzer - INFO - All critical tools validated successfully\n"
+      },
+      "recompile_command": {
+        "command": "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe C:\\dev\\projects\\reveng-main\\reveng.py --no-ollama-check recompile C:\\dev\\droid.exe --output-dir C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile",
+        "returncode": 0,
+        "stdout_tail": "Detected Bun executable; routing recompile to Node SEA build.\nPreferred recompilation input: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\droid_bunfs\\root\\droid.exe\nNormalized project workspace: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\normalized_project\nSEA executable: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\normalized_project\\bun-sea.exe\nBuild report: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\bun_sea_build.json\n",
+        "stderr_tail": ""
+      },
+      "analyze_report": {
+        "route": "bun",
+        "canonical_recompilation_input": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\analyze\\droid_bunfs\\root\\droid.exe",
+        "report_severity": {
+          "dimension": "reconstruction_risk",
+          "level": "high",
+          "score": 100,
+          "summary": "High reconstruction risk; 7 attention factors detected.",
+          "factors": [
+            {
+              "level": "high",
+              "source": "native_stub",
+              "message": "Native startup looks runtime-driven and may require dynamic observation or staged dumping."
+            },
+            {
+              "level": "medium",
+              "source": "native_stub",
+              "message": "Loader-style imports are present in the startup profile: CreateProcessW, GetProcAddress, LoadLibraryA, LoadLibraryW"
+            },
+            {
+              "level": "high",
+              "source": "dump_guidance",
+              "message": "Static recovery alone may be incomplete; dump/import reconstruction guidance was triggered."
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Dependency versions were not inferred; install and pin recovered packages manually"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Dependency inference ignored embedded package-name strings that were not used by direct import/require sites"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Node built-in modules were detected and excluded from package installation guidance"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Recovered source uses await semantics that may require ESM-aware packaging"
+            }
+          ]
+        },
+        "runtime_escalation": {
+          "dimension": "runtime_escalation",
+          "recommended": true,
+          "status": "targeted_runtime_observation",
+          "confidence": "medium",
+          "summary": "Targeted runtime observation is recommended before making stronger fidelity claims.",
+          "reasons": [
+            "Native startup looks runtime-driven, so static recovery may miss late materialization.",
+            "Dump/import-reconstruction guidance was triggered by Bun handoff or loader-style startup evidence.",
+            "Overall reconstruction risk is high, which justifies runtime validation before overclaiming fidelity."
+          ],
+          "next_steps": [
+            {
+              "priority": 1,
+              "kind": "set_breakpoints",
+              "title": "Set targeted startup breakpoints",
+              "summary": "Use the recommended entrypoint/TLS/callsite breakpoints before later startup stages hide useful evidence.",
+              "evidence": [
+                "breakpoints:entrypoint, tls_callback[0], tls_callback[1]"
+              ]
+            },
+            {
+              "priority": 3,
+              "kind": "reconstruct_imports",
+              "title": "Trace and reconstruct dynamic imports",
+              "summary": "Instrument import-resolution callsites when loader-style APIs dominate the startup path.",
+              "evidence": [
+                "dump_guidance:import_reconstruction"
+              ]
+            }
+          ],
+          "evidence": {
+            "report_severity_level": "high",
+            "report_severity_score": 100,
+            "dump_guidance_recommended": true,
+            "breakpoint_count": 9,
+            "dump_point_count": 0,
+            "differential_status": null,
+            "verification_status": null
+          }
+        },
+        "recovery_mode": "module_graph",
+        "module_layout": "full"
+      },
+      "rebuild_report": {
+        "route": "bun_node_sea",
+        "report_severity": {
+          "dimension": "reconstruction_risk",
+          "level": "high",
+          "score": 100,
+          "summary": "High reconstruction risk; 8 attention factors detected.",
+          "factors": [
+            {
+              "level": "high",
+              "source": "native_stub",
+              "message": "Native startup looks runtime-driven and may require dynamic observation or staged dumping."
+            },
+            {
+              "level": "medium",
+              "source": "native_stub",
+              "message": "Loader-style imports are present in the startup profile: CreateProcessW, GetProcAddress, LoadLibraryA, LoadLibraryW"
+            },
+            {
+              "level": "high",
+              "source": "dump_guidance",
+              "message": "Static recovery alone may be incomplete; dump/import reconstruction guidance was triggered."
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Dependency versions were not inferred; install and pin recovered packages manually"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Dependency inference ignored embedded package-name strings that were not used by direct import/require sites"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Node built-in modules were detected and excluded from package installation guidance"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Recovered source uses await semantics that may require ESM-aware packaging"
+            },
+            {
+              "level": "medium",
+              "source": "sea_build_verification",
+              "message": "Standalone copied SEA executable still depends on the normalized workspace bundle: 5:11)\n    at moduleResolve (node:internal/modules/esm/resolve:860:10)\n    at defaultResolve (node:internal/modules/esm/resolve:984:11)\n    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:780:12)\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:704:25)\n    at ModuleLoader.resolve (node:internal/modules/esm/loader:687:38)\n    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:305:38)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:643:36)\n    at TracingChannel.tracePromise (node:diagnostics_channel:344:14)\n    at ModuleLoader.import (node:internal/modules/esm/loader:642:21) {\n  code: 'ERR_MODULE_NOT_FOUND',\n  url: 'file:///C:/Users/oimir/AppData/Local/Temp/reveng_bun_sea_probe_yoh9lq2j/droid.mjs'\n}\n\nNode.js v22.17.1"
+            }
+          ]
+        },
+        "runtime_escalation": {
+          "dimension": "runtime_escalation",
+          "recommended": true,
+          "status": "targeted_runtime_observation",
+          "confidence": "medium",
+          "summary": "Targeted runtime observation is recommended before making stronger fidelity claims.",
+          "reasons": [
+            "Native startup looks runtime-driven, so static recovery may miss late materialization.",
+            "Dump/import-reconstruction guidance was triggered by Bun handoff or loader-style startup evidence.",
+            "Overall reconstruction risk is high, which justifies runtime validation before overclaiming fidelity.",
+            "SEA build verification returned pass_with_warnings, so rebuild-side assumptions should be reviewed alongside static recovery."
+          ],
+          "next_steps": [
+            {
+              "priority": 1,
+              "kind": "set_breakpoints",
+              "title": "Set targeted startup breakpoints",
+              "summary": "Use the recommended entrypoint/TLS/callsite breakpoints before later startup stages hide useful evidence.",
+              "evidence": [
+                "breakpoints:entrypoint, tls_callback[0], tls_callback[1]"
+              ]
+            },
+            {
+              "priority": 3,
+              "kind": "reconstruct_imports",
+              "title": "Trace and reconstruct dynamic imports",
+              "summary": "Instrument import-resolution callsites when loader-style APIs dominate the startup path.",
+              "evidence": [
+                "dump_guidance:import_reconstruction"
+              ]
+            },
+            {
+              "priority": 4,
+              "kind": "review_diff_and_verification",
+              "title": "Review diff and rebuild evidence",
+              "summary": "Compare differential validation with SEA verification before treating the normalized workspace as behaviorally complete.",
+              "evidence": [
+                "differential_validation:pass",
+                "sea_build_verification:pass_with_warnings"
+              ]
+            }
+          ],
+          "evidence": {
+            "report_severity_level": "high",
+            "report_severity_score": 100,
+            "dump_guidance_recommended": true,
+            "breakpoint_count": 9,
+            "dump_point_count": 0,
+            "differential_status": "pass",
+            "verification_status": "pass_with_warnings"
+          }
+        },
+        "equivalence_validation": {
+          "dimension": "equivalence_validation",
+          "status": "candidate_with_warnings",
+          "equivalence_level": "structural_candidate",
+          "confidence": "medium",
+          "summary": "Structural Candidate with medium confidence based on differential validation=pass and rebuild verification=pass_with_warnings.",
+          "reasons": [
+            "No hard failures were found, but warnings still limit confidence in behavioral equivalence.",
+            "Known Bun-to-Node rewrites were applied: import.meta.require -> createRequire(import.meta.url), Bun global bootstrap -> ./reveng-bun-global-shim.mjs, bun:ffi -> ./reveng-bun-ffi-shim.mjs"
+          ],
+          "recommended_validations": [
+            {
+              "priority": 1,
+              "kind": "characterization_smoke_test",
+              "title": "Run black-box characterization checks",
+              "summary": "Exercise representative CLI or runtime behaviors against the original and rebuilt artifacts to confirm externally visible behavior is preserved.",
+              "evidence": [
+                "differential_validation:pass",
+                "sea_build_verification:pass_with_warnings"
+              ]
+            },
+            {
+              "priority": 2,
+              "kind": "structural_diff_review",
+              "title": "Review structural differences",
+              "summary": "Inspect transformed source and rebuild evidence to confirm changes are limited to expected rewrites and packaging differences.",
+              "evidence": [
+                "content_changed:True",
+                "expected_rewrite_count:3"
+              ]
+            }
+          ],
+          "evidence": {
+            "differential_status": "pass",
+            "verification_status": "pass_with_warnings",
+            "content_changed": true,
+            "expected_rewrite_count": 3,
+            "missing_runtime_feature_count": 0,
+            "added_runtime_feature_count": 0,
+            "differential_fail_count": 0,
+            "differential_warn_count": 0,
+            "verification_fail_count": 0,
+            "verification_warn_count": 1
+          }
+        },
+        "differential_validation": {
+          "status": "pass",
+          "artifacts": {
+            "canonical_input": {
+              "path": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\droid_bunfs\\root\\droid.exe",
+              "byte_size": 13913844,
+              "sha256": "8fb37f3124c096975bddf21cd45b5daba43bf8a1a1da27ea372cb98d58f26433"
+            },
+            "normalized_entrypoint": {
+              "path": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\normalized_project\\droid.mjs",
+              "byte_size": 13923842,
+              "sha256": "490ac053c955e23d6bb3c369b339b10d414a1c3a077d69a91196a94d9b02f886"
+            }
+          },
+          "checks": [
+            {
+              "check": "canonical_input_present",
+              "severity": "info",
+              "status": "pass",
+              "message": "Canonical Bun input exists at C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\droid_bunfs\\root\\droid.exe"
+            },
+            {
+              "check": "normalized_entrypoint_present",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint exists at C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\normalized_project\\droid.mjs"
+            },
+            {
+              "check": "dependency_runtime_parity",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint preserves the original external runtime dependency set"
+            },
+            {
+              "check": "runtime_feature_continuity",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint preserves the runtime features that should survive normalization"
+            },
+            {
+              "check": "bun_marker_continuity",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint preserves the Bun source marker header"
+            },
+            {
+              "check": "bun_require_rewrite_coverage",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint rewrites Bun require usage through createRequire(import.meta.url)"
+            },
+            {
+              "check": "bun_global_bootstrap_coverage",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint bootstraps a Node-compatible Bun global shim"
+            },
+            {
+              "check": "bun_ffi_rewrite_coverage",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint rewrites bun:ffi imports through a Node-compatible shim"
+            },
+            {
+              "check": "content_delta_recorded",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalization produced a transformed entrypoint relative to the canonical Bun input"
+            }
+          ],
+          "content_changed": true,
+          "preserved_runtime_features": [
+            "await_usage",
+            "bun_global_usage",
+            "import_meta_url"
+          ],
+          "missing_runtime_features": [],
+          "added_runtime_features": [],
+          "expected_rewrites": [
+            "import.meta.require -> createRequire(import.meta.url)",
+            "Bun global bootstrap -> ./reveng-bun-global-shim.mjs",
+            "bun:ffi -> ./reveng-bun-ffi-shim.mjs"
+          ]
+        },
+        "verification": {
+          "status": "pass_with_warnings",
+          "checks": [
+            {
+              "check": "normalized_entrypoint_present",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint exists at C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\normalized_project\\droid.mjs"
+            },
+            {
+              "check": "sea_blob_generated",
+              "severity": "info",
+              "status": "pass",
+              "message": "SEA preparation blob exists at C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\normalized_project\\sea-prep.blob"
+            },
+            {
+              "check": "output_binary_generated",
+              "severity": "info",
+              "status": "pass",
+              "message": "SEA executable exists at C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\droid\\recompile\\normalized_project\\bun-sea.exe"
+            },
+            {
+              "check": "standalone_copy_probe",
+              "severity": "warning",
+              "status": "warn",
+              "message": "Standalone copied SEA executable still depends on the normalized workspace bundle: 5:11)\n    at moduleResolve (node:internal/modules/esm/resolve:860:10)\n    at defaultResolve (node:internal/modules/esm/resolve:984:11)\n    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:780:12)\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:704:25)\n    at ModuleLoader.resolve (node:internal/modules/esm/loader:687:38)\n    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:305:38)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:643:36)\n    at TracingChannel.tracePromise (node:diagnostics_channel:344:14)\n    at ModuleLoader.import (node:internal/modules/esm/loader:642:21) {\n  code: 'ERR_MODULE_NOT_FOUND',\n  url: 'file:///C:/Users/oimir/AppData/Local/Temp/reveng_bun_sea_probe_yoh9lq2j/droid.mjs'\n}\n\nNode.js v22.17.1"
+            },
+            {
+              "check": "sea_asset_bundle_coverage",
+              "severity": "info",
+              "status": "pass",
+              "message": "SEA asset bundle records 640 runtime file(s) for workspace-companion reconstruction"
+            },
+            {
+              "check": "dependency_manifest_alignment",
+              "severity": "info",
+              "status": "pass",
+              "message": "package.json dependencies align with the inferred runtime dependency set"
+            },
+            {
+              "check": "bun_marker_continuity",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint preserves the Bun marker header"
+            },
+            {
+              "check": "shim_continuity",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint retains the createRequire shim for Bun require usage"
+            }
+          ]
+        }
+      },
+      "row_status": "completed",
+      "smoke_validation": {
+        "policy_binary_name": "droid.exe",
+        "original": {
+          "valid": false,
+          "mode": "smoke_test",
+          "tests_run": 4,
+          "tests_passed": 3,
+          "tests_failed": 1,
+          "warnings": [],
+          "errors": [],
+          "test_results": [
+            {
+              "description": "Print version",
+              "args": [
+                "--version"
+              ],
+              "passed": true,
+              "output": "0.89.0\n",
+              "normalized_output": "0.89.0",
+              "exit_code": 0,
+              "error": null,
+              "timed_out": false
+            },
+            {
+              "description": "Print help",
+              "args": [
+                "--help"
+              ],
+              "passed": true,
+              "output": "Usage: droid [options] [command] [prompt...]\n\nDroid - Factory's AI coding agent in your terminal\n\nOptions:\n  -v, --version                  output the version number\n  --settings <path>              Path to runtime settings file merged for this\n                                 process only\n  -r, --resume [sessionId]       Resume a session (defaults to last modified)\n  -w, --worktree [name]          Run in a git worktree\n  --worktree-dir <path>          Directory for worktree creation\n  -h, --help                     display help for command\n\nCommands:\n  exec [options] [prompt]        Execute a single command (non-interactive\n                                 mode)\n  mcp                            Manage MCP servers\n  plugin                         Manage plugins\n  daemon [options]               Run the Factory daemon server\n  search|find [options] <query>  Search across local sessions (messages,\n                                 documents, tool results)\n  computer                       Manage relay computer registrations\n  update [options]               Check for and install Droid updates\n\nRunning 'droid' without any options starts interactive mode.\nProvide an inline prompt to start the session with initial context.\n\nExamples:\n  droid \"review app.tsx\"              Start interactive mode with an initial prompt\n  droid                               Start interactive mode (default)\n  droid exec \"analyze this file\"      Run non-interactively (for scripts/automation)\n  droid exec - < prompt.txt           Execute from stdin (non-interactive)\n  droid exec --help                   Show exec command options\n  droid update                        Check for and install updates manually\n\nFor more details, see: https://docs.factory.ai/cli/getting-started/overview\n",
+              "normalized_output": "Usage: droid [options] [command] [prompt...]\n\nDroid - Factory's AI coding agent in your terminal\n\nOptions:\n  -v, --version                  output the version number\n  --settings <path>              Path to runtime settings file merged for this\n                                 process only\n  -r, --resume [sessionId]       Resume a session (defaults to last modified)\n  -w, --worktree [name]          Run in a git worktree\n  --worktree-dir <path>          Directory for worktree creation\n  -h, --help                     display help for command\n\nCommands:\n  exec [options] [prompt]        Execute a single command (non-interactive\n                                 mode)\n  mcp                            Manage MCP servers\n  plugin                         Manage plugins\n  daemon [options]               Run the Factory daemon server\n  search|find [options] <query>  Search across local sessions (messages,\n                                 documents, tool results)\n  computer                       Manage relay computer registrations\n  update [options]               Check for and install Droid updates\n\nRunning 'droid' without any options starts interactive mode.\nProvide an inline prompt to start the session with initial context.\n\nExamples:\n  droid \"review app.tsx\"              Start interactive mode with an initial prompt\n  droid                               Start interactive mode (default)\n  droid exec \"analyze this file\"      Run non-interactively (for scripts/automation)\n  droid exec - < prompt.txt           Execute from stdin (non-interactive)\n  droid exec --help                   Show exec command options\n  droid update                        Check for and install updates manually\n\nFor more details, see: https://docs.factory.ai/cli/getting-started/overview",
+              "exit_code": 0,
+              "error": null,
+              "timed_out": false
+            },
+            {
+              "description": "Print short help",
+              "args": [
+                "-h"
+              ],
+              "passed": true,
+              "output": "Usage: droid [options] [command] [prompt...]\n\nDroid - Factory's AI coding agent in your terminal\n\nOptions:\n  -v, --version                  output the version number\n  --settings <path>              Path to runtime settings file merged for this\n                                 process only\n  -r, --resume [sessionId]       Resume a session (defaults to last modified)\n  -w, --worktree [name]          Run in a git worktree\n  --worktree-dir <path>          Directory for worktree creation\n  -h, --help                     display help for command\n\nCommands:\n  exec [options] [prompt]        Execute a single command (non-interactive\n                                 mode)\n  mcp                            Manage MCP servers\n  plugin                         Manage plugins\n  daemon [options]               Run the Factory daemon server\n  search|find [options] <query>  Search across local sessions (messages,\n                                 documents, tool results)\n  computer                       Manage relay computer registrations\n  update [options]               Check for and install Droid updates\n\nRunning 'droid' without any options starts interactive mode.\nProvide an inline prompt to start the session with initial context.\n\nExamples:\n  droid \"review app.tsx\"              Start interactive mode with an initial prompt\n  droid                               Start interactive mode (default)\n  droid exec \"analyze this file\"      Run non-interactively (for scripts/automation)\n  droid exec - < prompt.txt           Execute from stdin (non-interactive)\n  droid exec --help                   Show exec command options\n  droid update                        Check for and install updates manually\n\nFor more details, see: https://docs.factory.ai/cli/getting-started/overview\n",
+              "normalized_output": "Usage: droid [options] [command] [prompt...]\n\nDroid - Factory's AI coding agent in your terminal\n\nOptions:\n  -v, --version                  output the version number\n  --settings <path>              Path to runtime settings file merged for this\n                                 process only\n  -r, --resume [sessionId]       Resume a session (defaults to last modified)\n  -w, --worktree [name]          Run in a git worktree\n  --worktree-dir <path>          Directory for worktree creation\n  -h, --help                     display help for command\n\nCommands:\n  exec [options] [prompt]        Execute a single command (non-interactive\n                                 mode)\n  mcp                            Manage MCP servers\n  plugin                         Manage plugins\n  daemon [options]               Run the Factory daemon server\n  search|find [options] <query>  Search across local sessions (messages,\n                                 documents, tool results)\n  computer                       Manage relay computer registrations\n  update [options]               Check for and install Droid updates\n\nRunning 'droid' without any options starts interactive mode.\nProvide an inline prompt to start the session with initial context.\n\nExamples:\n  droid \"review app.tsx\"              Start interactive mode with an initial prompt\n  droid                               Start interactive mode (default)\n  droid exec \"analyze this file\"      Run non-interactively (for scripts/automation)\n  droid exec - < prompt.txt           Execute from stdin (non-interactive)\n  droid exec --help                   Show exec command options\n  droid update                        Check for and install updates manually\n\nFor more details, see: https://docs.factory.ai/cli/getting-started/overview",
+              "exit_code": 0,
+              "error": null,
+              "timed_out": false
+            },
+            {
+              "description": "Run without arguments (interactive characterization)",
+              "args": [],
+              "passed": false,
+              "output": "\n  ERROR Raw mode is not supported on the current process.stdin, which Ink uses\n       as input stream by default.\n       Read about how to prevent this error on\n       https://github.com/vadimdemedes/ink/#israwmodesupported\n\n - Read about how to prevent this error on\n   https://github.com/vadimdemedes/ink/#israwmodesupported\\t\n - <anonymous> (../../node_modules/ink/build/components/App.js:78:27)\n - <anonymous> (src/contexts/KeypressProvider.tsx:149:5)\n -react_stack_bottom (../../node_modules/react-reconciler/cjs/react-reconciler.\n  _frame            development.js:17681:20)\n -pf (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:2\n    508:13)\n -i7 (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    0861:29)\n -Nc (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    0948:11)\n -yh (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    2979:13)\n -U6 (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    2934:11)\n -yh (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    2999:11)\n -U6 (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    2934:11)\n - async <anonymous> (src/index.ts:790:15)\n - async parseAsync (node_modules/commander/lib/command.js:936:16)\n - async <anonymous> (src/index.ts:802:21)\n\n",
+              "normalized_output": "ERROR Raw mode is not supported on the current process.stdin, which Ink uses\n       as input stream by default.\n       Read about how to prevent this error on\n       https://github.com/vadimdemedes/ink/#israwmodesupported\n\n - Read about how to prevent this error on\n   https://github.com/vadimdemedes/ink/#israwmodesupported\\t\n - <anonymous> (../../node_modules/ink/build/components/App.js:78:27)\n - <anonymous> (src/contexts/KeypressProvider.tsx:149:5)\n -react_stack_bottom (../../node_modules/react-reconciler/cjs/react-reconciler.\n  _frame            development.js:17681:20)\n -pf (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:2\n    508:13)\n -i7 (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    0861:29)\n -Nc (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    0948:11)\n -yh (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    2979:13)\n -U6 (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    2934:11)\n -yh (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    2999:11)\n -U6 (../../node_modules/react-reconciler/cjs/react-reconciler.development.js:1\n    2934:11)\n - async <anonymous> (src/index.ts:790:15)\n - async parseAsync (node_modules/commander/lib/command.js:936:16)\n - async <anonymous> (src/index.ts:802:21)",
+              "exit_code": null,
+              "error": "Timeout after 10s",
+              "timed_out": true
+            }
+          ]
+        },
+        "rebuilt": {
+          "valid": false,
+          "mode": "smoke_test",
+          "tests_run": 4,
+          "tests_passed": 3,
+          "tests_failed": 1,
+          "warnings": [],
+          "errors": [],
+          "test_results": [
+            {
+              "description": "Print version",
+              "args": [
+                "--version"
+              ],
+              "passed": true,
+              "output": "0.89.0\n",
+              "normalized_output": "0.89.0",
+              "exit_code": 0,
+              "error": null,
+              "timed_out": false
+            },
+            {
+              "description": "Print help",
+              "args": [
+                "--help"
+              ],
+              "passed": true,
+              "output": "Usage: droid [options] [command] [prompt...]\n\nDroid - Factory's AI coding agent in your terminal\n\nOptions:\n  -v, --version                  output the version number\n  --settings <path>              Path to runtime settings file merged for this\n                                 process only\n  -r, --resume [sessionId]       Resume a session (defaults to last modified)\n  -w, --worktree [name]          Run in a git worktree\n  --worktree-dir <path>          Directory for worktree creation\n  -h, --help                     display help for command\n\nCommands:\n  exec [options] [prompt]        Execute a single command (non-interactive\n                                 mode)\n  mcp                            Manage MCP servers\n  plugin                         Manage plugins\n  daemon [options]               Run the Factory daemon server\n  search|find [options] <query>  Search across local sessions (messages,\n                                 documents, tool results)\n  computer                       Manage relay computer registrations\n  update [options]               Check for and install Droid updates\n\nRunning 'droid' without any options starts interactive mode.\nProvide an inline prompt to start the session with initial context.\n\nExamples:\n  droid \"review app.tsx\"              Start interactive mode with an initial prompt\n  droid                               Start interactive mode (default)\n  droid exec \"analyze this file\"      Run non-interactively (for scripts/automation)\n  droid exec - < prompt.txt           Execute from stdin (non-interactive)\n  droid exec --help                   Show exec command options\n  droid update                        Check for and install updates manually\n\nFor more details, see: https://docs.factory.ai/cli/getting-started/overview\n",
+              "normalized_output": "Usage: droid [options] [command] [prompt...]\n\nDroid - Factory's AI coding agent in your terminal\n\nOptions:\n  -v, --version                  output the version number\n  --settings <path>              Path to runtime settings file merged for this\n                                 process only\n  -r, --resume [sessionId]       Resume a session (defaults to last modified)\n  -w, --worktree [name]          Run in a git worktree\n  --worktree-dir <path>          Directory for worktree creation\n  -h, --help                     display help for command\n\nCommands:\n  exec [options] [prompt]        Execute a single command (non-interactive\n                                 mode)\n  mcp                            Manage MCP servers\n  plugin                         Manage plugins\n  daemon [options]               Run the Factory daemon server\n  search|find [options] <query>  Search across local sessions (messages,\n                                 documents, tool results)\n  computer                       Manage relay computer registrations\n  update [options]               Check for and install Droid updates\n\nRunning 'droid' without any options starts interactive mode.\nProvide an inline prompt to start the session with initial context.\n\nExamples:\n  droid \"review app.tsx\"              Start interactive mode with an initial prompt\n  droid                               Start interactive mode (default)\n  droid exec \"analyze this file\"      Run non-interactively (for scripts/automation)\n  droid exec - < prompt.txt           Execute from stdin (non-interactive)\n  droid exec --help                   Show exec command options\n  droid update                        Check for and install updates manually\n\nFor more details, see: https://docs.factory.ai/cli/getting-started/overview",
+              "exit_code": 0,
+              "error": null,
+              "timed_out": false
+            },
+            {
+              "description": "Print short help",
+              "args": [
+                "-h"
+              ],
+              "passed": true,
+              "output": "Usage: droid [options] [command] [prompt...]\n\nDroid - Factory's AI coding agent in your terminal\n\nOptions:\n  -v, --version                  output the version number\n  --settings <path>              Path to runtime settings file merged for this\n                                 process only\n  -r, --resume [sessionId]       Resume a session (defaults to last modified)\n  -w, --worktree [name]          Run in a git worktree\n  --worktree-dir <path>          Directory for worktree creation\n  -h, --help                     display help for command\n\nCommands:\n  exec [options] [prompt]        Execute a single command (non-interactive\n                                 mode)\n  mcp                            Manage MCP servers\n  plugin                         Manage plugins\n  daemon [options]               Run the Factory daemon server\n  search|find [options] <query>  Search across local sessions (messages,\n                                 documents, tool results)\n  computer                       Manage relay computer registrations\n  update [options]               Check for and install Droid updates\n\nRunning 'droid' without any options starts interactive mode.\nProvide an inline prompt to start the session with initial context.\n\nExamples:\n  droid \"review app.tsx\"              Start interactive mode with an initial prompt\n  droid                               Start interactive mode (default)\n  droid exec \"analyze this file\"      Run non-interactively (for scripts/automation)\n  droid exec - < prompt.txt           Execute from stdin (non-interactive)\n  droid exec --help                   Show exec command options\n  droid update                        Check for and install updates manually\n\nFor more details, see: https://docs.factory.ai/cli/getting-started/overview\n",
+              "normalized_output": "Usage: droid [options] [command] [prompt...]\n\nDroid - Factory's AI coding agent in your terminal\n\nOptions:\n  -v, --version                  output the version number\n  --settings <path>              Path to runtime settings file merged for this\n                                 process only\n  -r, --resume [sessionId]       Resume a session (defaults to last modified)\n  -w, --worktree [name]          Run in a git worktree\n  --worktree-dir <path>          Directory for worktree creation\n  -h, --help                     display help for command\n\nCommands:\n  exec [options] [prompt]        Execute a single command (non-interactive\n                                 mode)\n  mcp                            Manage MCP servers\n  plugin                         Manage plugins\n  daemon [options]               Run the Factory daemon server\n  search|find [options] <query>  Search across local sessions (messages,\n                                 documents, tool results)\n  computer                       Manage relay computer registrations\n  update [options]               Check for and install Droid updates\n\nRunning 'droid' without any options starts interactive mode.\nProvide an inline prompt to start the session with initial context.\n\nExamples:\n  droid \"review app.tsx\"              Start interactive mode with an initial prompt\n  droid                               Start interactive mode (default)\n  droid exec \"analyze this file\"      Run non-interactively (for scripts/automation)\n  droid exec - < prompt.txt           Execute from stdin (non-interactive)\n  droid exec --help                   Show exec command options\n  droid update                        Check for and install updates manually\n\nFor more details, see: https://docs.factory.ai/cli/getting-started/overview",
+              "exit_code": 0,
+              "error": null,
+              "timed_out": false
+            },
+            {
+              "description": "Run without arguments (interactive characterization)",
+              "args": [],
+              "passed": false,
+              "output": null,
+              "normalized_output": null,
+              "exit_code": null,
+              "error": "Timeout after 10s",
+              "timed_out": true
+            }
+          ]
+        },
+        "parity": {
+          "matched": false,
+          "comparisons": [
+            {
+              "description": "Print version",
+              "args": [
+                "--version"
+              ],
+              "original_passed": true,
+              "rebuilt_passed": true,
+              "original_exit_code": 0,
+              "rebuilt_exit_code": 0,
+              "original_timed_out": false,
+              "rebuilt_timed_out": false,
+              "output_matched": true,
+              "error_matched": true,
+              "matched": true
+            },
+            {
+              "description": "Print help",
+              "args": [
+                "--help"
+              ],
+              "original_passed": true,
+              "rebuilt_passed": true,
+              "original_exit_code": 0,
+              "rebuilt_exit_code": 0,
+              "original_timed_out": false,
+              "rebuilt_timed_out": false,
+              "output_matched": true,
+              "error_matched": true,
+              "matched": true
+            },
+            {
+              "description": "Print short help",
+              "args": [
+                "-h"
+              ],
+              "original_passed": true,
+              "rebuilt_passed": true,
+              "original_exit_code": 0,
+              "rebuilt_exit_code": 0,
+              "original_timed_out": false,
+              "rebuilt_timed_out": false,
+              "output_matched": true,
+              "error_matched": true,
+              "matched": true
+            },
+            {
+              "description": "Run without arguments (interactive characterization)",
+              "args": [],
+              "original_passed": false,
+              "rebuilt_passed": false,
+              "original_exit_code": null,
+              "rebuilt_exit_code": null,
+              "original_timed_out": true,
+              "rebuilt_timed_out": true,
+              "output_matched": false,
+              "error_matched": true,
+              "matched": false
+            }
+          ]
+        }
+      },
+      "expectation_results": {
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "opencode",
+      "sample": ".reveng\\..\\external\\ga_binaries\\opencode\\opencode.exe",
+      "kind": "bun_live_sample",
+      "required": true,
+      "detection": {
+        "exists": true,
+        "is_bun_executable": true,
+        "section_name": ".bun",
+        "bundle_size": 57722140,
+        "javascript_start_offset": 26,
+        "indicators": [
+          "Bun PE section detected: .bun",
+          "Bun bundle size prefix detected: 8 bytes",
+          "Bun JavaScript marker detected"
+        ]
+      },
+      "workspace": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode",
+      "analyze_command": {
+        "command": "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe C:\\dev\\projects\\reveng-main\\reveng.py --no-ollama-check --output-dir C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\analyze analyze .reveng\\..\\external\\ga_binaries\\opencode\\opencode.exe",
+        "returncode": 0,
+        "stdout_tail": "Detected Bun executable; routing analyze to Bun bundle extraction.\nBundled JavaScript: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\analyze\\opencode_bundle.js\nBun virtual filesystem: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\analyze\\opencode_bunfs\nBun recovery mode: module_graph\nPreferred recompilation input: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\analyze\\opencode_bunfs\\root\\src\\index.js\nReason: Recovered Bun virtual file excludes appended bundle metadata\nNormalized project workspace: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\analyze\\normalized_project\nNormalized entrypoint: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\analyze\\normalized_project\\index.mjs\nNormalized SEA entrypoint: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\analyze\\normalized_project\\sea-entry.cjs\nBun analysis report: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\analyze\\bun_analysis.json\n",
+        "stderr_tail": "2026-03-29 19:12:24,134 - reveng.analyzer - INFO - Audit trail initialized\n2026-03-29 19:12:24,134 - reveng.analyzer - INFO - REVENG Analyzer initialized\n2026-03-29 19:12:24,134 - reveng.analyzer - INFO - Target binary: C:\\dev\\projects\\reveng-main\\external\\ga_binaries\\opencode\\opencode.exe\n2026-03-29 19:12:24,134 - reveng.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\n2026-03-29 19:12:24,135 - reveng.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\n2026-03-29 19:12:24,135 - reveng.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\n2026-03-29 19:12:24,167 - reveng.analyzer - INFO - Detected file type: native/pe (confidence: 100.00%)\n2026-03-29 19:12:24,167 - reveng.analyzer - INFO - Analysis category: native_binary\n2026-03-29 19:12:24,429 - reveng.analyzer - INFO - Java 21 detected - fully compatible\nConfig file not found: C:\\Users\\oimir\\.reveng\\config.yaml, using defaults\n2026-03-29 19:12:24,432 - reveng.analyzer - INFO - All critical tools validated successfully\n"
+      },
+      "recompile_command": {
+        "command": "C:\\Users\\oimir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe C:\\dev\\projects\\reveng-main\\reveng.py --no-ollama-check recompile .reveng\\..\\external\\ga_binaries\\opencode\\opencode.exe --output-dir C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile",
+        "returncode": 0,
+        "stdout_tail": "Detected Bun executable; routing recompile to Node SEA build.\nPreferred recompilation input: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\opencode_bunfs\\root\\src\\index.js\nNormalized project workspace: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\normalized_project\nSEA executable: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\normalized_project\\bun-sea.exe\nBuild report: C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\bun_sea_build.json\n",
+        "stderr_tail": ""
+      },
+      "analyze_report": {
+        "route": "bun",
+        "canonical_recompilation_input": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\analyze\\opencode_bunfs\\root\\src\\index.js",
+        "report_severity": {
+          "dimension": "reconstruction_risk",
+          "level": "high",
+          "score": 100,
+          "summary": "High reconstruction risk; 7 attention factors detected.",
+          "factors": [
+            {
+              "level": "high",
+              "source": "native_stub",
+              "message": "Native startup looks runtime-driven and may require dynamic observation or staged dumping."
+            },
+            {
+              "level": "medium",
+              "source": "native_stub",
+              "message": "Loader-style imports are present in the startup profile: CreateProcessW, GetProcAddress, LoadLibraryA, LoadLibraryW"
+            },
+            {
+              "level": "high",
+              "source": "dump_guidance",
+              "message": "Static recovery alone may be incomplete; dump/import reconstruction guidance was triggered."
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Dependency versions were not inferred; install and pin recovered packages manually"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Dependency inference ignored embedded package-name strings that were not used by direct import/require sites"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Node built-in modules were detected and excluded from package installation guidance"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Recovered source uses await semantics that may require ESM-aware packaging"
+            }
+          ]
+        },
+        "runtime_escalation": {
+          "dimension": "runtime_escalation",
+          "recommended": true,
+          "status": "targeted_runtime_observation",
+          "confidence": "medium",
+          "summary": "Targeted runtime observation is recommended before making stronger fidelity claims.",
+          "reasons": [
+            "Native startup looks runtime-driven, so static recovery may miss late materialization.",
+            "Dump/import-reconstruction guidance was triggered by Bun handoff or loader-style startup evidence.",
+            "Overall reconstruction risk is high, which justifies runtime validation before overclaiming fidelity."
+          ],
+          "next_steps": [
+            {
+              "priority": 1,
+              "kind": "set_breakpoints",
+              "title": "Set targeted startup breakpoints",
+              "summary": "Use the recommended entrypoint/TLS/callsite breakpoints before later startup stages hide useful evidence.",
+              "evidence": [
+                "breakpoints:entrypoint, tls_callback[0], tls_callback[1]"
+              ]
+            },
+            {
+              "priority": 3,
+              "kind": "reconstruct_imports",
+              "title": "Trace and reconstruct dynamic imports",
+              "summary": "Instrument import-resolution callsites when loader-style APIs dominate the startup path.",
+              "evidence": [
+                "dump_guidance:import_reconstruction"
+              ]
+            }
+          ],
+          "evidence": {
+            "report_severity_level": "high",
+            "report_severity_score": 100,
+            "dump_guidance_recommended": true,
+            "breakpoint_count": 9,
+            "dump_point_count": 0,
+            "differential_status": null,
+            "verification_status": null
+          }
+        },
+        "recovery_mode": "module_graph",
+        "module_layout": "full"
+      },
+      "rebuild_report": {
+        "route": "bun_node_sea",
+        "report_severity": {
+          "dimension": "reconstruction_risk",
+          "level": "high",
+          "score": 100,
+          "summary": "High reconstruction risk; 8 attention factors detected.",
+          "factors": [
+            {
+              "level": "high",
+              "source": "native_stub",
+              "message": "Native startup looks runtime-driven and may require dynamic observation or staged dumping."
+            },
+            {
+              "level": "medium",
+              "source": "native_stub",
+              "message": "Loader-style imports are present in the startup profile: CreateProcessW, GetProcAddress, LoadLibraryA, LoadLibraryW"
+            },
+            {
+              "level": "high",
+              "source": "dump_guidance",
+              "message": "Static recovery alone may be incomplete; dump/import reconstruction guidance was triggered."
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Dependency versions were not inferred; install and pin recovered packages manually"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Dependency inference ignored embedded package-name strings that were not used by direct import/require sites"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Node built-in modules were detected and excluded from package installation guidance"
+            },
+            {
+              "level": "medium",
+              "source": "semantic_checks",
+              "message": "Recovered source uses await semantics that may require ESM-aware packaging"
+            },
+            {
+              "level": "medium",
+              "source": "sea_build_verification",
+              "message": "Standalone copied SEA executable still depends on the normalized workspace bundle: 5:11)\n    at moduleResolve (node:internal/modules/esm/resolve:860:10)\n    at defaultResolve (node:internal/modules/esm/resolve:984:11)\n    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:780:12)\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:704:25)\n    at ModuleLoader.resolve (node:internal/modules/esm/loader:687:38)\n    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:305:38)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:643:36)\n    at TracingChannel.tracePromise (node:diagnostics_channel:344:14)\n    at ModuleLoader.import (node:internal/modules/esm/loader:642:21) {\n  code: 'ERR_MODULE_NOT_FOUND',\n  url: 'file:///C:/Users/oimir/AppData/Local/Temp/reveng_bun_sea_probe_p7ff7qcw/index.mjs'\n}\n\nNode.js v22.17.1"
+            }
+          ]
+        },
+        "runtime_escalation": {
+          "dimension": "runtime_escalation",
+          "recommended": true,
+          "status": "targeted_runtime_observation",
+          "confidence": "medium",
+          "summary": "Targeted runtime observation is recommended before making stronger fidelity claims.",
+          "reasons": [
+            "Native startup looks runtime-driven, so static recovery may miss late materialization.",
+            "Dump/import-reconstruction guidance was triggered by Bun handoff or loader-style startup evidence.",
+            "Overall reconstruction risk is high, which justifies runtime validation before overclaiming fidelity.",
+            "SEA build verification returned pass_with_warnings, so rebuild-side assumptions should be reviewed alongside static recovery."
+          ],
+          "next_steps": [
+            {
+              "priority": 1,
+              "kind": "set_breakpoints",
+              "title": "Set targeted startup breakpoints",
+              "summary": "Use the recommended entrypoint/TLS/callsite breakpoints before later startup stages hide useful evidence.",
+              "evidence": [
+                "breakpoints:entrypoint, tls_callback[0], tls_callback[1]"
+              ]
+            },
+            {
+              "priority": 3,
+              "kind": "reconstruct_imports",
+              "title": "Trace and reconstruct dynamic imports",
+              "summary": "Instrument import-resolution callsites when loader-style APIs dominate the startup path.",
+              "evidence": [
+                "dump_guidance:import_reconstruction"
+              ]
+            },
+            {
+              "priority": 4,
+              "kind": "review_diff_and_verification",
+              "title": "Review diff and rebuild evidence",
+              "summary": "Compare differential validation with SEA verification before treating the normalized workspace as behaviorally complete.",
+              "evidence": [
+                "differential_validation:pass",
+                "sea_build_verification:pass_with_warnings"
+              ]
+            }
+          ],
+          "evidence": {
+            "report_severity_level": "high",
+            "report_severity_score": 100,
+            "dump_guidance_recommended": true,
+            "breakpoint_count": 9,
+            "dump_point_count": 0,
+            "differential_status": "pass",
+            "verification_status": "pass_with_warnings"
+          }
+        },
+        "equivalence_validation": {
+          "dimension": "equivalence_validation",
+          "status": "candidate_with_warnings",
+          "equivalence_level": "structural_candidate",
+          "confidence": "medium",
+          "summary": "Structural Candidate with medium confidence based on differential validation=pass and rebuild verification=pass_with_warnings.",
+          "reasons": [
+            "No hard failures were found, but warnings still limit confidence in behavioral equivalence.",
+            "Known Bun-to-Node rewrites were applied: import.meta.require -> createRequire(import.meta.url), Bun global bootstrap -> ./reveng-bun-global-shim.mjs, bun:ffi -> ./reveng-bun-ffi-shim.mjs"
+          ],
+          "recommended_validations": [
+            {
+              "priority": 1,
+              "kind": "characterization_smoke_test",
+              "title": "Run black-box characterization checks",
+              "summary": "Exercise representative CLI or runtime behaviors against the original and rebuilt artifacts to confirm externally visible behavior is preserved.",
+              "evidence": [
+                "differential_validation:pass",
+                "sea_build_verification:pass_with_warnings"
+              ]
+            },
+            {
+              "priority": 2,
+              "kind": "structural_diff_review",
+              "title": "Review structural differences",
+              "summary": "Inspect transformed source and rebuild evidence to confirm changes are limited to expected rewrites and packaging differences.",
+              "evidence": [
+                "content_changed:True",
+                "expected_rewrite_count:3"
+              ]
+            }
+          ],
+          "evidence": {
+            "differential_status": "pass",
+            "verification_status": "pass_with_warnings",
+            "content_changed": true,
+            "expected_rewrite_count": 3,
+            "missing_runtime_feature_count": 0,
+            "added_runtime_feature_count": 0,
+            "differential_fail_count": 0,
+            "differential_warn_count": 0,
+            "verification_fail_count": 0,
+            "verification_warn_count": 1
+          }
+        },
+        "differential_validation": {
+          "status": "pass",
+          "artifacts": {
+            "canonical_input": {
+              "path": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\opencode_bunfs\\root\\src\\index.js",
+              "byte_size": 20362875,
+              "sha256": "d452d8306e50ddcd212b38a273c4cb242a9605133d801e4587bce6e18d2ab078"
+            },
+            "normalized_entrypoint": {
+              "path": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\normalized_project\\index.mjs",
+              "byte_size": 20872523,
+              "sha256": "a3247127c1db5181f20cd8d936178da1e4504a1b8761358d8c11eb4953fada2f"
+            }
+          },
+          "checks": [
+            {
+              "check": "canonical_input_present",
+              "severity": "info",
+              "status": "pass",
+              "message": "Canonical Bun input exists at C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\opencode_bunfs\\root\\src\\index.js"
+            },
+            {
+              "check": "normalized_entrypoint_present",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint exists at C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\normalized_project\\index.mjs"
+            },
+            {
+              "check": "dependency_runtime_parity",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint preserves the original external runtime dependency set"
+            },
+            {
+              "check": "runtime_feature_continuity",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint preserves the runtime features that should survive normalization"
+            },
+            {
+              "check": "bun_marker_continuity",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint preserves the Bun source marker header"
+            },
+            {
+              "check": "bun_require_rewrite_coverage",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint rewrites Bun require usage through createRequire(import.meta.url)"
+            },
+            {
+              "check": "bun_global_bootstrap_coverage",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint bootstraps a Node-compatible Bun global shim"
+            },
+            {
+              "check": "bun_ffi_rewrite_coverage",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint rewrites bun:ffi imports through a Node-compatible shim"
+            },
+            {
+              "check": "content_delta_recorded",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalization produced a transformed entrypoint relative to the canonical Bun input"
+            }
+          ],
+          "content_changed": true,
+          "preserved_runtime_features": [
+            "await_usage",
+            "bun_global_usage",
+            "import_meta_url"
+          ],
+          "missing_runtime_features": [],
+          "added_runtime_features": [],
+          "expected_rewrites": [
+            "import.meta.require -> createRequire(import.meta.url)",
+            "Bun global bootstrap -> ./reveng-bun-global-shim.mjs",
+            "bun:ffi -> ./reveng-bun-ffi-shim.mjs"
+          ]
+        },
+        "verification": {
+          "status": "pass_with_warnings",
+          "checks": [
+            {
+              "check": "normalized_entrypoint_present",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint exists at C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\normalized_project\\index.mjs"
+            },
+            {
+              "check": "sea_blob_generated",
+              "severity": "info",
+              "status": "pass",
+              "message": "SEA preparation blob exists at C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\normalized_project\\sea-prep.blob"
+            },
+            {
+              "check": "output_binary_generated",
+              "severity": "info",
+              "status": "pass",
+              "message": "SEA executable exists at C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix\\opencode\\recompile\\normalized_project\\bun-sea.exe"
+            },
+            {
+              "check": "standalone_copy_probe",
+              "severity": "warning",
+              "status": "warn",
+              "message": "Standalone copied SEA executable still depends on the normalized workspace bundle: 5:11)\n    at moduleResolve (node:internal/modules/esm/resolve:860:10)\n    at defaultResolve (node:internal/modules/esm/resolve:984:11)\n    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:780:12)\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:704:25)\n    at ModuleLoader.resolve (node:internal/modules/esm/loader:687:38)\n    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:305:38)\n    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:643:36)\n    at TracingChannel.tracePromise (node:diagnostics_channel:344:14)\n    at ModuleLoader.import (node:internal/modules/esm/loader:642:21) {\n  code: 'ERR_MODULE_NOT_FOUND',\n  url: 'file:///C:/Users/oimir/AppData/Local/Temp/reveng_bun_sea_probe_p7ff7qcw/index.mjs'\n}\n\nNode.js v22.17.1"
+            },
+            {
+              "check": "sea_asset_bundle_coverage",
+              "severity": "info",
+              "status": "pass",
+              "message": "SEA asset bundle records 976 runtime file(s) for workspace-companion reconstruction"
+            },
+            {
+              "check": "dependency_manifest_alignment",
+              "severity": "info",
+              "status": "pass",
+              "message": "package.json dependencies align with the inferred runtime dependency set"
+            },
+            {
+              "check": "bun_marker_continuity",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint preserves the Bun marker header"
+            },
+            {
+              "check": "shim_continuity",
+              "severity": "info",
+              "status": "pass",
+              "message": "Normalized entrypoint retains the createRequire shim for Bun require usage"
+            }
+          ]
+        }
+      },
+      "row_status": "completed",
+      "expectation_results": {
+        "passed": true,
+        "failures": []
+      }
+    },
+    {
+      "id": "sample-control",
+      "sample": ".reveng\\..\\test_samples\\sample.exe",
+      "kind": "negative_control",
+      "required": true,
+      "detection": {
+        "exists": true,
+        "is_bun_executable": false,
+        "section_name": null,
+        "bundle_size": null,
+        "javascript_start_offset": null,
+        "indicators": []
+      },
+      "row_status": "completed",
+      "expectation_results": {
+        "passed": true,
+        "failures": []
+      }
+    }
+  ],
+  "notes": [
+    "This GA matrix uses provisioned public Bun release binaries instead of ad hoc local samples.",
+    "Negative controls remain required so non-Bun binaries do not accidentally route through the Bun workflow."
+  ]
+}

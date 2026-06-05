@@ -1,131 +1,82 @@
-# Tools - Core
+# `claude.md` — `tools/core`
 
-## Overview
+**Repository path:** `src/reveng/tools/core/`
 
-Core tools provide fundamental binary analysis, deobfuscation, and binary manipulation capabilities. These are the essential tools that form the foundation of REVENG's analysis pipeline.
+Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, and one-line intent.
 
-**Location:** `/home/user/reveng-main/src/reveng/tools/core/`
+## Python modules
 
-## Files in This Directory
+### `__init__.py`
+- **Summary:** Core Analysis Tools
 
-### `__init__.py` (627 lines)
-Module initialization and exports.
+### `ai_recompiler_converter.py`
+- **Summary:** AI Recompiler Converter Tool
+- **Classes:**
+  - `ConfidenceLevel` — Confidence levels for AI suggestions
+  - `Evidence` — Evidence backing an AI claim
+  - `RenameSuggestion` — Function/variable rename suggestion
+  - `PrototypeSuggestion` — Function prototype suggestion
+  - `FunctionSummary` — Comprehensive function analysis
+  - `AIRecompilerConverter` — AI Recompiler Converter Tool
+- **Functions / coroutines:**
+  - `def main()` — Main function - AI Recompiler Converter
 
-### `optimal_binary_analysis.py` (33395 lines)
-Comprehensive binary analysis tool with optimal analysis strategies.
+### `ai_source_inspector.py`
+- **Summary:** AI Source Code Inspector
+- **Classes:**
+  - `ApplicationFeature` — Application feature specification
+  - `CodePattern` — Code pattern analysis
+  - `AISourceInspector` — AI Source Code Inspector
+- **Functions / coroutines:**
+  - `def main()` — Main function - AI Source Inspector
 
-**Features:**
-- Multi-architecture support (x86, x64, ARM, MIPS)
-- Control flow graph generation
-- Function identification and analysis
-- Cross-reference analysis
-- Symbol resolution
-- Import/export analysis
+### `binary_reassembler_v2.py`
+- **Summary:** Binary Reassembler Engine v2 - Enhanced with Documentation Generation
+- **Classes:**
+  - `Architecture` — Supported architectures
+  - `CompilerConfig` — Architecture-aware compiler configuration
+  - `DocumentationConfig` — Configuration for documentation generation
+  - `ReassemblyResult` — Result of reassembly operation
+  - `BinaryReassemblerV2` — Binary Reassembler v2
+- **Functions / coroutines:**
+  - `def main()` — Main function
 
-### `binary_reassembler_v2.py` (52589 lines)
-Advanced binary reassembly and reconstruction tool.
+### `binary_validator.py`
+- **Summary:** REVENG Binary Validator
+- **Classes:**
+  - `BinaryValidator` — Validate rebuilt binaries
 
-**Features:**
-- Binary disassembly and reassembly
-- Code relocation and patching
-- Section manipulation
-- Import table reconstruction
-- Entry point modification
+### `deobfuscation_tool.py`
+- **Summary:** Deobfuscation Tool
+- **Classes:**
+  - `DeobfuscationTool` — Deobfuscation Tool
+- **Functions / coroutines:**
+  - `def main()` — Main function - Deobfuscation Tool
 
-### `deobfuscation_tool.py` (19875 lines)
-General-purpose code deobfuscation tool.
+### `human_readable_converter_fixed.py`
+- **Summary:** Human Readable Code Converter (FIXED)
+- **Classes:**
+  - `HumanReadableConverter` — Human Readable Code Converter (FIXED)
+- **Functions / coroutines:**
+  - `def main()` — Main function
 
-**Features:**
-- Control flow flattening removal
-- String deobfuscation
-- Constant unfolding
-- Dead code elimination
-- Opaque predicate removal
+### `implementation_tool.py`
+- **Summary:** Implementation Tool
+- **Classes:**
+  - `ImplementationTool` — Implementation Tool
+- **Functions / coroutines:**
+  - `def main()` — Main function - Implementation Tool
 
-### `implementation_tool.py` (29553 lines)
-Tool implementation utilities and base classes.
+### `optimal_binary_analysis.py`
+- **Summary:** Universal Optimal Binary Analysis System
+- **Classes:**
+  - `UniversalOptimalBinaryAnalysis` — Universal Optimal Binary Analysis System
+- **Functions / coroutines:**
+  - `def main()` — Main function - Universal Optimal Binary Analysis
 
-### `ai_recompiler_converter.py` (34700 lines)
-AI-powered binary to source code conversion.
+## Other files in this folder
 
-**Features:**
-- Assembly to C/C++ conversion
-- AI-enhanced code reconstruction
-- Type inference
-- Variable naming
-- Comment generation
-
-### `ai_source_inspector.py` (28910 lines)
-AI-powered source code analysis and inspection.
-
-**Features:**
-- Code pattern recognition
-- Vulnerability detection
-- Code quality assessment
-- Semantic analysis
-
-### `binary_validator.py` (12784 lines)
-Binary file validation and verification tool.
-
-**Features:**
-- Format validation
-- Integrity checking
-- Signature verification
-- Checksum validation
-
-### `human_readable_converter_fixed.py` (16962 lines)
-Convert binary analysis results to human-readable formats.
-
-**Features:**
-- Assembly to pseudocode
-- Annotation generation
-- Report formatting
-
-## Usage Examples
-
-### Example 1: Binary Analysis
-
-```python
-from reveng.tools.core import optimal_binary_analysis
-
-analyzer = optimal_binary_analysis.OptimalBinaryAnalyzer()
-result = analyzer.analyze("/path/to/binary.exe")
-
-print(f"Functions found: {len(result['functions'])}")
-print(f"Architecture: {result['architecture']}")
-```
-
-### Example 2: Binary Deobfuscation
-
-```python
-from reveng.tools.core import deobfuscation_tool
-
-deobfuscator = deobfuscation_tool.Deobfuscator()
-result = deobfuscator.deobfuscate("/path/to/obfuscated.exe")
-
-print(f"Obfuscation techniques removed: {result['techniques_removed']}")
-```
-
-### Example 3: AI-Powered Recompilation
-
-```python
-from reveng.tools.core import ai_recompiler_converter
-
-recompiler = ai_recompiler_converter.AIRecompiler()
-source_code = recompiler.convert_to_source("/path/to/binary.exe")
-
-with open("output.c", "w") as f:
-    f.write(source_code)
-```
-
-## Related Modules
-
-- `/home/user/reveng-main/src/reveng/analyzer/` - Main analyzer
-- `/home/user/reveng-main/src/reveng/deobfuscation/` - Advanced deobfuscation
-- `/home/user/reveng-main/src/reveng/ai/` - AI utilities
+- `ghidra_types.h`
 
 ---
-
-**Status:** Implemented ✅
-
-**Maintainer:** REVENG Development Team
+*Generated or maintained for Claude / AI agents. Primary package: `src/reveng`.*

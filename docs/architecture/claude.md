@@ -1,69 +1,31 @@
-# Architecture Documentation
+# `claude.md` — `architecture`
 
-## Overview
+**Repository path:** `docs/architecture/`
 
-The `docs/architecture/` directory contains detailed architecture documentation for REVENG, including system design, component interaction, pipeline architecture, and integration patterns.
+Documentation breadcrumb: files in this folder only (non-recursive).
 
-**Purpose**: Document the technical architecture and design of REVENG.
+## Files
 
-**Location**: `/home/user/reveng-main/docs/architecture/`
-
-## Directory Contents
-
-```
-architecture/
-├── claude.md                  # This file
-├── overview.md                # Architecture overview (2,085 bytes)
-├── pipeline.md                # Pipeline architecture (2,007 bytes)
-├── package-map.md             # Package structure (1,555 bytes)
-└── ghidra-integration.md      # Ghidra integration (9,691 bytes)
-```
-
-## Key Files
-
-**overview.md** - High-level architecture overview including:
-- System components
-- Component relationships
-- Data flow
-- Technology stack
-
-**pipeline.md** - Analysis pipeline architecture:
-- Pipeline stages
-- Data transformations
-- Error handling
-- State management
-
-**package-map.md** - Code organization:
-- Package structure
-- Module hierarchy
-- Dependencies
-- Import patterns
-
-**ghidra-integration.md** - Ghidra integration architecture:
-- Server architecture
-- HTTP API design
-- Request/response flow
-- Error handling
-- Performance considerations
-
-## Usage
-
-### For Architects
-- Study `overview.md` for system design
-- Reference `pipeline.md` for workflow design
-- Use `package-map.md` for code organization
-
-### For Developers
-- Understand component interaction
-- Learn integration patterns
-- Follow architectural guidelines
-
-## Related Documentation
-- `docs/developer-guide/ARCHITECTURE.md` - Detailed architecture
-- `docs/guides/pipeline-development.md` - Pipeline development
-- `docs/development/PROJECT_STRUCTURE.md` - Project structure
+- `2026-06-03-reveng-prof-plan-phase-0-1.md` — # REVENG Professionalization — Phase 0 + Phase 1 Implementation Plan
+- `2026-06-03-reveng-professionalization-design.md` — # REVENG Professionalization — Design Spec
+- `app-reverse-engineering-corpus.md` — # App Reverse Engineering Corpus
+- `app-reverse-engineering-tdd-plan.md` — # App Reverse Engineering TDD Plan
+- `bun-escalation-paths.md` — # Bun Escalation Paths and Known Limits
+- `bun-real-sample-matrix.md` — # Bun Real-Sample Matrix
+- `current-platform-status.md` — # Current Platform Status
+- `overview.md` — # Architecture Overview
+- `reveng-capability-hardening-plan.md` — # REVENG capability hardening plan
+- `reveng-feature-roadmap.md` — # REVENG feature research and improvement roadmap
+- `reveng-ga-master-plan.md` — # REVENG GA Master Plan
+- `reveng-ir-plan.md` — # REVENG IR Plan
+- `reveng-system-paper.md` — # REVENG: Toward an AI-Assisted Reverse-Engineering and Binary Reconstruction Platform
+- `reveng-tdd-implementation-backlog.md` — # REVENG TDD implementation backlog
+- `reveng-tdd-microservices-plan.md` — # REVENG TDD refactor plan for an enterprise microservice platform
+- `reveng-world-class-execution-backlog.md` — # REVENG world-class execution backlog
+- `reveng-world-class-implementation-roadmap.md` — # REVENG world-class implementation roadmap
+- `reverse-compilation-master-roadmap.md` — # Reverse-Compilation Master Roadmap
+- `session-handoff-2026-03-29.md` — # Session Handoff 2026-03-29
+- `_baseline_failures_2026-06-03.txt`
 
 ---
-
-**Target Audience**: Architects, senior developers
-**Scope**: System-level design and architecture
+*Generated for AI navigation. Regenerate: `python scripts/generate_claude_md_index.py`.*

@@ -260,7 +260,7 @@ async def demo_symbolic_execution():
     print("DEMO 7: Symbolic Execution with angr + Z3")
     print("="*80)
 
-    from reveng.symbolic.symbolic_execution_engine import SymbolicExecutionEngine
+    from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
 
     binary = "/bin/ls"
 

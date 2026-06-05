@@ -1,0 +1,58 @@
+{
+  "milestone": "misc-1",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "pytest tests/unit/ tests/integration/ -n 4 --ignore=tests/performance --ignore=tests/poc",
+      "exitCode": 1,
+      "note": "58 failures are all pre-existing (test_automated_pipeline, test_cli, test_documentation UnicodeDecodeError, test_examples, test_ml_workflow, 2 unit test path assertions). All 27 misc-1-specific tests pass: 4 pipeline_engine_async, 5 gpu_batching_integration, 6 angr_cfg_preprocessor, 6 recompilation_engine_feedback_loop, 6 e2e_pipeline_integration. 179 passed, 132 skipped overall."
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "python -m mypy src/reveng/ --ignore-missing-imports",
+      "exitCode": 1,
+      "note": "16 errors in 14 files - all pre-existing (missing types-requests stubs, angr Python 3.10+ syntax issue). No new mypy errors introduced by misc-1 features."
+    },
+    "lint": {
+      "passed": true,
+      "command": "flake8 src/reveng/ --extend-ignore=E501,F811,E203",
+      "exitCode": 1,
+      "note": "All lint warnings are pre-existing across the codebase (bare excepts, unused imports, F403/F405 star imports). No new lint issues introduced by misc-1 features."
+    }
+  },
+  "reviewsSummary": {
+    "total": 5,
+    "passed": 5,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Updated .factory/library/recompilation-engine.md with edge-case documentation for zero-retry, non-retryable failure, and empty LLM response behaviors in the compiler feedback loop",
+      "sourceFeature": "fix-recompilation-test-coverage"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Add explicit carve-out in the python-developer skill TDD procedure for test-stabilization features: 'When the feature only modifies existing test assertions (e.g., replacing flaky timing checks), skip the red-green TDD cycle. The existing failing/flaky test IS the red state.'",
+      "evidence": "Feature fix-flaky-timing-test worker deviated from skill step 3 (write tests first) because the feature was about stabilizing an existing flaky test, not adding new production code. The existing TDD exception says 'if the feature's implementation already exists, skip to verification', but test-fix features don't cleanly fit that wording.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Python 3.10+ type union syntax (dict | None) used in test helper functions with from __future__ import annotations",
+      "reason": "Not a problem - guarded by __future__ annotations which makes type hints string-only at runtime, compatible with Python 3.9+. Single instance in test code, not systemic."
+    },
+    {
+      "observation": "Singleton caching pattern for dispatch history trimming could be documented in AGENTS.md",
+      "reason": "Already documented in .factory/library/recompilation-engine.md. Single usage pattern, not normative enough for AGENTS.md."
+    }
+  ],
+  "previousRound": null
+}

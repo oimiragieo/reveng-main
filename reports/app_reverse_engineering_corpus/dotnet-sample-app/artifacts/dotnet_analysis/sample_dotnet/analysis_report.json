@@ -1,0 +1,13 @@
+{
+  "assembly": "C:\\dev\\projects\\reveng-main\\test_samples\\sample_dotnet.dll",
+  "is_dotnet": true,
+  "architecture": "x86",
+  "version": "unknown",
+  "runtime_version": "unknown",
+  "obfuscated": false,
+  "obfuscator": null,
+  "namespaces": [],
+  "types_count": 0,
+  "methods_count": 0,
+  "entry_point": null
+}

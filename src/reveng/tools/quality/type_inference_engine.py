@@ -33,12 +33,7 @@ logger = logging.getLogger(__name__)
 
 # Import the robust C type parser
 try:
-    from reveng.tools.quality.c_type_parser import (
-        CFunctionSignature,
-        CParameter,
-        CType,
-        CTypeParser,
-    )
+    from reveng.tools.quality.c_type_parser import CTypeParser
 
     HAS_C_TYPE_PARSER = True
 except ImportError:
@@ -134,9 +129,7 @@ class TypeInferenceEngine:
             logger.error(f"MCP request failed: {e}")
             return {}
 
-    def infer_function_signature(
-        self, func_name: str, func_addr: str
-    ) -> FunctionSignature:
+    def infer_function_signature(self, func_name: str, func_addr: str) -> FunctionSignature:
         """Infer complete function signature"""
         logger.info(f"Inferring signature for {func_name} at {func_addr}")
 
@@ -148,9 +141,7 @@ class TypeInferenceEngine:
             return self._create_default_signature(func_name, func_addr)
 
         # Parse signature from decompiled code (pass func_addr to preserve it)
-        signature = self._parse_ghidra_signature(
-            decompiled.get("pseudocode", ""), func_addr
-        )
+        signature = self._parse_ghidra_signature(decompiled.get("pseudocode", ""), func_addr)
 
         if signature:
             # Enhance with xref analysis
@@ -160,9 +151,7 @@ class TypeInferenceEngine:
             # Apply heuristics
             signature = self._apply_heuristics(signature, func_name)
 
-            logger.info(
-                f"Inferred signature: {signature.return_type} {signature.name}(...)"
-            )
+            logger.info(f"Inferred signature: {signature.return_type} {signature.name}(...)")
             return signature
 
         return self._create_default_signature(func_name, func_addr)
@@ -272,9 +261,7 @@ class TypeInferenceEngine:
         else:
             return TypeCategory.UNKNOWN
 
-    def _enhance_with_xrefs(
-        self, signature: FunctionSignature, xrefs: Dict
-    ) -> FunctionSignature:
+    def _enhance_with_xrefs(self, signature: FunctionSignature, xrefs: Dict) -> FunctionSignature:
         """Enhance signature using cross-reference analysis"""
 
         # Analyze how the function is called
@@ -282,9 +269,7 @@ class TypeInferenceEngine:
 
         return signature
 
-    def _apply_heuristics(
-        self, signature: FunctionSignature, func_name: str
-    ) -> FunctionSignature:
+    def _apply_heuristics(self, signature: FunctionSignature, func_name: str) -> FunctionSignature:
         """Apply heuristic rules to improve type inference"""
 
         # Apply name-based patterns to parameters
@@ -298,9 +283,7 @@ class TypeInferenceEngine:
 
         return signature
 
-    def _create_default_signature(
-        self, func_name: str, func_addr: str
-    ) -> FunctionSignature:
+    def _create_default_signature(self, func_name: str, func_addr: str) -> FunctionSignature:
         """Create default signature when inference fails"""
         return FunctionSignature(
             name=func_name,
@@ -311,9 +294,7 @@ class TypeInferenceEngine:
             confidence=0.3,  # Low confidence
         )
 
-    def infer_types_for_project(
-        self, functions_file: Path
-    ) -> Dict[str, FunctionSignature]:
+    def infer_types_for_project(self, functions_file: Path) -> Dict[str, FunctionSignature]:
         """Infer types for all functions in a project"""
         logger.info("Inferring types for project")
 
@@ -329,9 +310,7 @@ class TypeInferenceEngine:
         logger.info(f"Inferred types for {len(signatures)} functions")
         return signatures
 
-    def export_signatures(
-        self, signatures: Dict[str, FunctionSignature], output_file: Path
-    ):
+    def export_signatures(self, signatures: Dict[str, FunctionSignature], output_file: Path):
         """Export signatures to header file"""
         logger.info(f"Exporting signatures to {output_file}")
 
@@ -340,9 +319,7 @@ class TypeInferenceEngine:
 
             for sig in signatures.values():
                 # Generate parameter list
-                params_str = (
-                    ", ".join([f"{p.type} {p.name}" for p in sig.parameters]) or "void"
-                )
+                params_str = ", ".join([f"{p.type} {p.name}" for p in sig.parameters]) or "void"
 
                 # Write signature with confidence comment
                 f.write(f"/* Confidence: {sig.confidence:.2f} */\n")

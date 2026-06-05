@@ -41,19 +41,14 @@ __author__ = "REVENG Development Team"
 # Make client import optional (requires anthropic package)
 try:
     from .client import ClaudeSDKClient
+
     _HAS_CLIENT = True
 except ImportError:
     _HAS_CLIENT = False
     ClaudeSDKClient = None
 
 # Exceptions
-from .exceptions import (
-    AgentSDKError,
-    ClientError,
-    PermissionError,
-    SessionError,
-    ToolError,
-)
+from .exceptions import AgentSDKError, ClientError, PermissionError, SessionError, ToolError
 from .tools.base import BaseTool, ToolResult
 
 # Tool framework (Phase 1 & 2 - implemented)

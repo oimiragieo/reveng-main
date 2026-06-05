@@ -26,6 +26,10 @@ class ToolRegistry:
             raise ToolError(name, f"Tool '{name}' not found in registry")
         return self._tools[name]
 
+    def try_get(self, name: str) -> Optional[BaseTool]:
+        """Get a tool by name, returning None if it is not registered."""
+        return self._tools.get(name)
+
     def list_tools(self) -> List[str]:
         """List all registered tool names."""
         return list(self._tools.keys())

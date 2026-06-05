@@ -1,0 +1,17 @@
+{
+  "milestone": "misc-quality",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "notes": "The misc-quality milestone contains one completed implementation feature (fix-pipeline-yaml-serialization) which has an empty fulfills array. No validation contract assertions are mapped to this milestone. All pending assertions (VAL-QUAL-001 through VAL-QUAL-004, VAL-CROSS-001) belong to features in the 'quality' milestone that are either pending or have different milestone assignments.",
+  "previousRound": null
+}

@@ -37,9 +37,7 @@ class NaturalLanguageInterface:
         metadata: Dict[str, Any] = {}
 
         if analysis_results:
-            summary = analysis_results.get("reveng_summary") or analysis_results.get(
-                "summary"
-            )
+            summary = analysis_results.get("reveng_summary") or analysis_results.get("summary")
             if (
                 not summary
                 and isinstance(analysis_results, dict)
@@ -59,9 +57,7 @@ class NaturalLanguageInterface:
                 if ghidra_data:
                     func_count = len(ghidra_data.get("functions", []))
                     import_count = len(ghidra_data.get("imports", []))
-                    facts.append(
-                        f"Identified {func_count} functions and {import_count} imports"
-                    )
+                    facts.append(f"Identified {func_count} functions and {import_count} imports")
                 sources.append("reveng_summary")
                 confidence = 0.65
 
@@ -91,9 +87,7 @@ class NaturalLanguageInterface:
             metadata=metadata,
         )
 
-    def _describe_network_activity(
-        self, analysis_results: Optional[Dict[str, Any]]
-    ) -> str:
+    def _describe_network_activity(self, analysis_results: Optional[Dict[str, Any]]) -> str:
         ghidra_data = self._ghidra_data(analysis_results)
         if ghidra_data:
             imports = ghidra_data.get("imports", []) or []
@@ -107,9 +101,7 @@ class NaturalLanguageInterface:
                 return f"The binary references network-related APIs such as {names}."
         return "No explicit network capabilities were detected in the available analysis data."
 
-    def _describe_vulnerabilities(
-        self, analysis_results: Optional[Dict[str, Any]]
-    ) -> str:
+    def _describe_vulnerabilities(self, analysis_results: Optional[Dict[str, Any]]) -> str:
         vuln_data = self._vulnerability_data(analysis_results)
 
         if isinstance(vuln_data, dict):
@@ -119,13 +111,9 @@ class NaturalLanguageInterface:
 
             predictions = vuln_data.get("ml_predictions") or []
             if predictions:
-                high_conf = [
-                    pred for pred in predictions if (pred.get("confidence") or 0) >= 0.7
-                ]
+                high_conf = [pred for pred in predictions if (pred.get("confidence") or 0) >= 0.7]
                 if high_conf:
-                    kinds = ", ".join(
-                        sorted({pred.get("type", "unknown") for pred in high_conf})
-                    )
+                    kinds = ", ".join(sorted({pred.get("type", "unknown") for pred in high_conf}))
                     return f"Potential vulnerabilities flagged by ML: {kinds}. Manual review recommended."
 
             report = vuln_data.get("report")
@@ -153,9 +141,7 @@ class NaturalLanguageInterface:
             return "Analysis completed, but no additional context is available."
         return "Summary: " + "; ".join(facts)
 
-    def _ghidra_data(
-        self, analysis_results: Optional[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def _ghidra_data(self, analysis_results: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         if not isinstance(analysis_results, dict):
             return {}
         if "ghidra_analysis" in analysis_results:
@@ -167,9 +153,7 @@ class NaturalLanguageInterface:
 
     def _looks_like_ioc(self, value: str) -> bool:
         value = value.lower()
-        return any(
-            token in value for token in ("http://", "https://", "://", ".com", ".net")
-        )
+        return any(token in value for token in ("http://", "https://", "://", ".com", ".net"))
 
     def _vulnerability_data(
         self, analysis_results: Optional[Dict[str, Any]]

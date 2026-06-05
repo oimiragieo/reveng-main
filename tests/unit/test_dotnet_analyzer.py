@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from reveng.analyzers.dotnet_analyzer import (
+from reveng.analysis.analyzers.dotnet_analyzer import (
     AssemblyInfo,
     DotNetAnalysisResult,
     DotNetAnalyzer,
@@ -31,12 +31,8 @@ def test_analyze_assembly_returns_result(tmp_path: Path):
         patch.object(analyzer, "_detect_framework_version", return_value="4.8"),
         patch.object(analyzer, "_detect_runtime_version", return_value="4.8.0"),
         patch.object(analyzer, "_detect_gui_framework", return_value="Windows Forms"),
-        patch.object(
-            analyzer, "_extract_dependencies", return_value=["System.Windows.Forms"]
-        ),
-        patch.object(
-            analyzer, "_extract_embedded_resources", return_value={"icons": []}
-        ),
+        patch.object(analyzer, "_extract_dependencies", return_value=["System.Windows.Forms"]),
+        patch.object(analyzer, "_extract_embedded_resources", return_value={"icons": []}),
         patch.object(analyzer, "_find_entry_points", return_value=["Main"]),
         patch.object(
             analyzer,
@@ -73,9 +69,7 @@ def test_detect_gui_framework_uses_string_indicators(indicators, expected):
 
 def test_analyze_obfuscation_categories():
     analyzer = DotNetAnalyzer()
-    with patch.object(
-        analyzer, "_extract_strings", return_value=["obfuscated", "packed"]
-    ):
+    with patch.object(analyzer, "_extract_strings", return_value=["obfuscated", "packed"]):
         assert analyzer._analyze_obfuscation("binary") == "High"
     with patch.object(analyzer, "_extract_strings", return_value=["base64", "xor"]):
         assert analyzer._analyze_obfuscation("binary") == "Medium"
