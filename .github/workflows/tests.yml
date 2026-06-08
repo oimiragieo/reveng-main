@@ -56,7 +56,7 @@ jobs:
         python -m pytest tests/unit tests/integration --cov=reveng --cov-report=xml --cov-report=term
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v6
+      uses: codecov/codecov-action@v7
       with:
         file: ./coverage.xml
         flags: unittests
