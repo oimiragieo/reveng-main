@@ -137,7 +137,7 @@ toml>=0.10.2
 sphinx>=7.0.0
 
 # ReadTheDocs theme
-sphinx-rtd-theme>=1.2.0
+sphinx-rtd-theme>=3.1.0
 
 # =============================================================================
 # DEVELOPMENT WORKFLOW
