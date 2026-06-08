@@ -60,7 +60,7 @@ requests-html>=0.10.0,<1.0.0
 # =============================================================================
 
 # Secure random number generation
-secrets>=1.0.0
+secrets>=1.0.2
 
 # Secure hashing (replaces weak MD5/SHA1 usage)
 hashlib-compat>=1.0.0
