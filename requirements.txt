@@ -62,7 +62,7 @@ scipy>=1.10.0,<2.0.0
 scikit-learn>=1.3.0,<2.0.0
 
 # Data analysis (recommended for enhanced features)
-pandas>=2.0.0,<3.0.0
+pandas>=2.3.3,<3.0.0
 
 # =============================================================================
 # AI/ML SUPPORT - Optional but recommended
