@@ -140,7 +140,7 @@ aiohttp>=3.9.0  # Async HTTP client/server for MCP transports
 
 # Cloud Platform (Kubernetes-based)
 kubernetes>=28.0.0  # Kubernetes Python client
-boto3>=1.28.0  # AWS SDK for cloud storage
+boto3>=1.42.97  # AWS SDK for cloud storage
 
 # JIT Adaptive Compilation
 # Uses existing LLVM toolchain
