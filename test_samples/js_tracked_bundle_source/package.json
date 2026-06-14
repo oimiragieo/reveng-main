@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "description": "Minimal multi-file TypeScript source used to build test_samples/js_tracked_bundle_artifact (reproducible corpus input).",
   "devDependencies": {
-    "esbuild": "0.25.0"
+    "esbuild": "0.28.1"
   }
 }
