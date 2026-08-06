@@ -54,17 +54,25 @@ def test_load_benchmark_config_resolves_relative_paths(tmp_path: Path):
 
 def test_build_reveng_command_uses_module_entry_not_removed_launcher():
     runner = _load_module("test_source_binary_benchmark_entry", RUNNER_PATH)
-    command = runner._build_reveng_command(
+    analyze_cmd = runner._build_reveng_command(
         subcommand="analyze",
         binary_path=Path("/tmp/sample.bin"),
         output_dir=Path("/tmp/out"),
         ghidra_timeout=120,
     )
-    assert command[0] == sys.executable
-    assert command[1:3] == ["-m", "reveng"]
-    assert "reveng.py" not in " ".join(command)
-    assert "--ghidra-timeout" in command
-    assert "120" in command
+    assert analyze_cmd[0] == sys.executable
+    assert analyze_cmd[1:3] == ["-m", "reveng"]
+    assert "reveng.py" not in " ".join(analyze_cmd)
+    assert analyze_cmd.index("--output-dir") < analyze_cmd.index("analyze")
+
+    recompile_cmd = runner._build_reveng_command(
+        subcommand="recompile",
+        binary_path=Path("/tmp/sample.bin"),
+        output_dir=Path("/tmp/out"),
+        ghidra_timeout=120,
+    )
+    assert recompile_cmd.index("recompile") < recompile_cmd.index("--output-dir")
+    assert "--ghidra-timeout" in recompile_cmd
 
 
 def test_normalize_output_strips_ansi_and_normalizes_newlines():

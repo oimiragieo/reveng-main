@@ -22,7 +22,9 @@ Statuses: `open` · `in_progress` · `done` · `parked` · `blocked`
 
 | id | title | phase | status | release_impact | notes |
 | --- | --- | --- | --- | --- | --- |
-| RECOMPILE-1 | Managed-language recompile still fails (Ghidra wrongly required) | 2 | open | post-GA | analyze_ok_recompile_failed for java/python hermetic set |
+| RECOMPILE-1 | Managed-language recompile still fails (Ghidra wrongly required) | 2 | done | blocker | Fixed: app-adapter route; 4 hermetic benches completed_without_behavior_checks |
+| PY39-FSTR-1 | spec_library f-string backslash SyntaxError on 3.9 | 1 | done | blocker | Blocks all app RE imports on Python 3.9 |
+| CLI-OUTDIR-1 | Benchmark --output-dir lost on recompile subparser | 2 | done | blocker | Subcommand-specific argv order in runner |
 | M1-NATIVE-FAM | Expand to ≥5 native / ≥3 families with hermetic fixtures | 2 | open | post-GA | opencode Windows binary not hermetic on Linux CI |
 | P3-BP-2 | npm pack/run probes | 6 | open | post-GA | |
 | RALPH-2 | cli.js 0.8+ recall | 6 | open | post-GA | |
@@ -32,8 +34,8 @@ Statuses: `open` · `in_progress` · `done` · `parked` · `blocked`
 
 | phase | focus | status |
 | --- | --- | --- |
-| 1 | Honesty + known_gaps + GA gate integrity | done (preview) |
-| 2 | M1 corpus + GA-P2 + recompile for managed langs | open |
+| 1 | Honesty + known_gaps + GA gate integrity | done |
+| 2 | Managed recompile + GA report honesty | done (preview) |
 | 3–13 | See Scope C master plan | open |
 
 ## Parked (Tier 3 honesty non-goals)

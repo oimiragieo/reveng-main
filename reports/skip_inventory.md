@@ -1,6 +1,6 @@
 # REVENG Skip-Lane Inventory
 
-- Generated at: `2026-08-06T00:55:54.015913Z`
+- Generated at: `2026-08-06T01:26:17.793730Z`
 - Tests root: `/mnt/c/dev/projects/reveng-main/tests`
 - Total skip sites: `65`
 
@@ -69,12 +69,12 @@
 - `tests/poc/test_symbolic_execution_poc.py:218` `runtime_skip` `external_tooling`: Dependencies not available: {e}
 - `tests/poc/test_symbolic_execution_poc.py:240` `runtime_skip` `uncategorized`: No vulnerabilities found for exploit generation test
 - `tests/poc/test_symbolic_execution_poc.py:267` `runtime_skip` `external_tooling`: Dependencies not available: {e}
-- `tests/unit/test_analyzer.py:186` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
-- `tests/unit/test_analyzer.py:197` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
-- `tests/unit/test_analyzer.py:210` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
-- `tests/unit/test_analyzer.py:220` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
-- `tests/unit/test_analyzer.py:234` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
-- `tests/unit/test_analyzer.py:246` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
+- `tests/unit/test_analyzer.py:182` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
+- `tests/unit/test_analyzer.py:193` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
+- `tests/unit/test_analyzer.py:206` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
+- `tests/unit/test_analyzer.py:216` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
+- `tests/unit/test_analyzer.py:230` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
+- `tests/unit/test_analyzer.py:242` `skip` `asset_or_fixture`: Internal step methods testing - requires mock_analyzer fixture
 - `tests/unit/test_angr_cfg_preprocessor.py:19` `runtime_skip` `asset_or_fixture`: PE sample missing from test_samples/sample.exe
 - `tests/unit/test_import_contracts.py:28` `skipif` `uncategorized`: import-linter not installed
 - `tests/unit/test_import_contracts.py:39` `runtime_skip` `uncategorized`: reveng package not resolvable as top-level here (needs editable install)

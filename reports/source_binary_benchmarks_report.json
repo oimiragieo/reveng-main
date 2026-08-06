@@ -22,7 +22,7 @@
         ],
         "returncode": 0,
         "stdout_tail": "Running end-to-end pipeline...\nGhidra stage timeout: 120s (retries: 0)\n\n[SUCCESS] REVENG analysis completed successfully!\nPipeline status: partial_success\nResults stored in: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-class/analyze\nUnified report: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-class/analyze/reports/unified_analysis_report.json\n",
-        "stderr_tail": "2026-08-05 20:54:20,473 - reveng.analysis.analyzer - INFO - Audit trail initialized\n2026-08-05 20:54:20,475 - reveng.analysis.analyzer - INFO - REVENG Analyzer initialized\n2026-08-05 20:54:20,476 - reveng.analysis.analyzer - INFO - Target binary: /mnt/c/dev/projects/reveng-main/test_samples/HelloWorld.class\n2026-08-05 20:54:20,477 - reveng.analysis.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\n2026-08-05 20:54:20,479 - reveng.analysis.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\n2026-08-05 20:54:20,480 - reveng.analysis.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\n2026-08-05 20:54:21,898 - reveng.analysis.analyzer - INFO - Detected file type: java/class (confidence: 100.00%)\n2026-08-05 20:54:21,899 - reveng.analysis.analyzer - INFO - Analysis category: java_bytecode\n2026-08-05 20:54:22,126 - reveng.analysis.analyzer - WARNING - Java 11 detected - Ghidra recommends Java 17+, but will work\n2026-08-05 20:54:22,127 - reveng.analysis.analyzer - WARNING - Consider upgrading to Java 17+ for best compatibility\nConfig file not found: /home/james/.reveng/config.yaml, using defaults\n2026-08-05 20:54:22,271 - reveng.analysis.analyzer - WARNING - Ghidra not installed - native binary analysis will be limited\n2026-08-05 20:54:22,272 - reveng.analysis.analyzer - INFO - All critical tools validated successfully\npyelftools not available. Install with: pip install pyelftools\n\u26a0\ufe0f Gemini API key not found. Set GEMINI_API_KEY environment variable.\n\u274c Pipeline failed: GhidraEngine not configured\nTraceback (most recent call last):\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 405, in full_reconstruction_pipeline\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 506, in _phase1_decompilation\n    raise ValueError(\"GhidraEngine not configured\")\nValueError: GhidraEngine not configured\nBehavioral monitoring failed: warning() takes 2 positional arguments but 4 were given\nNo monitoring in progress\n",
+        "stderr_tail": "2026-08-05 21:24:35,838 - reveng.analysis.analyzer - INFO - Audit trail initialized\n2026-08-05 21:24:35,839 - reveng.analysis.analyzer - INFO - REVENG Analyzer initialized\n2026-08-05 21:24:35,840 - reveng.analysis.analyzer - INFO - Target binary: /mnt/c/dev/projects/reveng-main/test_samples/HelloWorld.class\n2026-08-05 21:24:35,841 - reveng.analysis.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\n2026-08-05 21:24:35,841 - reveng.analysis.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\n2026-08-05 21:24:35,842 - reveng.analysis.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\n2026-08-05 21:24:36,735 - reveng.analysis.analyzer - INFO - Detected file type: java/class (confidence: 100.00%)\n2026-08-05 21:24:36,736 - reveng.analysis.analyzer - INFO - Analysis category: java_bytecode\n2026-08-05 21:24:36,973 - reveng.analysis.analyzer - WARNING - Java 11 detected - Ghidra recommends Java 17+, but will work\n2026-08-05 21:24:36,975 - reveng.analysis.analyzer - WARNING - Consider upgrading to Java 17+ for best compatibility\nConfig file not found: /home/james/.reveng/config.yaml, using defaults\n2026-08-05 21:24:37,044 - reveng.analysis.analyzer - WARNING - Ghidra not installed - native binary analysis will be limited\n2026-08-05 21:24:37,045 - reveng.analysis.analyzer - INFO - All critical tools validated successfully\npyelftools not available. Install with: pip install pyelftools\n\u26a0\ufe0f Gemini API key not found. Set GEMINI_API_KEY environment variable.\n\u274c Pipeline failed: GhidraEngine not configured\nTraceback (most recent call last):\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 405, in full_reconstruction_pipeline\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 506, in _phase1_decompilation\n    raise ValueError(\"GhidraEngine not configured\")\nValueError: GhidraEngine not configured\nBehavioral monitoring failed: warning() takes 2 positional arguments but 4 were given\nNo monitoring in progress\n",
         "timed_out": false
       },
       "recompile_command": {
@@ -31,25 +31,25 @@
           "-m",
           "reveng",
           "--no-ollama-check",
+          "recompile",
           "--output-dir",
           "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-class/recompile",
-          "recompile",
           "/mnt/c/dev/projects/reveng-main/test_samples/HelloWorld.class",
           "--ghidra-timeout",
           "120"
         ],
-        "returncode": 1,
-        "stdout_tail": "",
-        "stderr_tail": "\u274c Engine initialization failed: \u274c Error: Could not connect to Ghidra Analysis Server at http://127.0.0.1:13370\n\n   The server is not running. Please start it with:\n\n   Option 1 - Start the REVENG Ghidra server:\n     python -m reveng.server.ghidra_analysis_server --port 13370\n\n   Option 2 - Use the external Ghidra HTTP server:\n     cd external/ghidra-server && python ghidra_http_server.py\n\n   Option 3 - Use Docker (recommended):\n     docker-compose up ghidra-server\n\n   For native binary analysis (PE/ELF/Mach-O), Ghidra is REQUIRED.\n   For Java/Python/C# files, Ghidra is NOT needed.\n\n",
+        "returncode": 0,
+        "stdout_tail": "[SUCCESS] Managed-language recompile via jvm_app_workflow\nLanguage: jvm\nAnalysis: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-class/recompile/analysis.json\nRebuilt artifacts: 0\nReport: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-class/recompile/recompilation_report.json\n",
+        "stderr_tail": "No decompilers available - using fallback\n",
         "timed_out": false
       },
       "analyze_report_exists": true,
-      "recompile_report_exists": false,
+      "recompile_report_exists": true,
       "original_behavior": [],
-      "rebuilt_binary_path": null,
+      "rebuilt_binary_path": "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-class/recompile/rebuilt/HelloWorld.class",
       "rebuilt_behavior": [],
       "behavior_comparisons": [],
-      "status": "analyze_ok_recompile_failed"
+      "status": "completed_without_behavior_checks"
     },
     {
       "id": "java-helloworld-jar",
@@ -71,7 +71,7 @@
         ],
         "returncode": 0,
         "stdout_tail": "Running end-to-end pipeline...\nGhidra stage timeout: 120s (retries: 0)\n\n[SUCCESS] REVENG analysis completed successfully!\nPipeline status: partial_success\nResults stored in: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-jar/analyze\nUnified report: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-jar/analyze/reports/unified_analysis_report.json\n",
-        "stderr_tail": "2026-08-05 20:54:37,159 - reveng.analysis.analyzer - INFO - Audit trail initialized\n2026-08-05 20:54:37,161 - reveng.analysis.analyzer - INFO - REVENG Analyzer initialized\n2026-08-05 20:54:37,162 - reveng.analysis.analyzer - INFO - Target binary: /mnt/c/dev/projects/reveng-main/test_samples/HelloWorld.jar\n2026-08-05 20:54:37,166 - reveng.analysis.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\n2026-08-05 20:54:37,167 - reveng.analysis.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\n2026-08-05 20:54:37,168 - reveng.analysis.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\n2026-08-05 20:54:37,717 - reveng.analysis.analyzer - INFO - Detected file type: java/jar (confidence: 95.00%)\n2026-08-05 20:54:37,721 - reveng.analysis.analyzer - INFO - Analysis category: java_bytecode\n2026-08-05 20:54:37,855 - reveng.analysis.analyzer - WARNING - Java 11 detected - Ghidra recommends Java 17+, but will work\n2026-08-05 20:54:37,856 - reveng.analysis.analyzer - WARNING - Consider upgrading to Java 17+ for best compatibility\nConfig file not found: /home/james/.reveng/config.yaml, using defaults\n2026-08-05 20:54:37,902 - reveng.analysis.analyzer - WARNING - Ghidra not installed - native binary analysis will be limited\n2026-08-05 20:54:37,902 - reveng.analysis.analyzer - INFO - All critical tools validated successfully\npyelftools not available. Install with: pip install pyelftools\n\u26a0\ufe0f Gemini API key not found. Set GEMINI_API_KEY environment variable.\n\u274c Pipeline failed: GhidraEngine not configured\nTraceback (most recent call last):\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 405, in full_reconstruction_pipeline\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 506, in _phase1_decompilation\n    raise ValueError(\"GhidraEngine not configured\")\nValueError: GhidraEngine not configured\nBehavioral monitoring failed: warning() takes 2 positional arguments but 4 were given\nNo monitoring in progress\n",
+        "stderr_tail": "2026-08-05 21:25:00,335 - reveng.analysis.analyzer - INFO - Audit trail initialized\n2026-08-05 21:25:00,337 - reveng.analysis.analyzer - INFO - REVENG Analyzer initialized\n2026-08-05 21:25:00,338 - reveng.analysis.analyzer - INFO - Target binary: /mnt/c/dev/projects/reveng-main/test_samples/HelloWorld.jar\n2026-08-05 21:25:00,339 - reveng.analysis.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\n2026-08-05 21:25:00,340 - reveng.analysis.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\n2026-08-05 21:25:00,340 - reveng.analysis.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\n2026-08-05 21:25:01,529 - reveng.analysis.analyzer - INFO - Detected file type: java/jar (confidence: 95.00%)\n2026-08-05 21:25:01,530 - reveng.analysis.analyzer - INFO - Analysis category: java_bytecode\n2026-08-05 21:25:01,780 - reveng.analysis.analyzer - WARNING - Java 11 detected - Ghidra recommends Java 17+, but will work\n2026-08-05 21:25:01,780 - reveng.analysis.analyzer - WARNING - Consider upgrading to Java 17+ for best compatibility\nConfig file not found: /home/james/.reveng/config.yaml, using defaults\n2026-08-05 21:25:01,884 - reveng.analysis.analyzer - WARNING - Ghidra not installed - native binary analysis will be limited\n2026-08-05 21:25:01,885 - reveng.analysis.analyzer - INFO - All critical tools validated successfully\npyelftools not available. Install with: pip install pyelftools\n\u26a0\ufe0f Gemini API key not found. Set GEMINI_API_KEY environment variable.\n\u274c Pipeline failed: GhidraEngine not configured\nTraceback (most recent call last):\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 405, in full_reconstruction_pipeline\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 506, in _phase1_decompilation\n    raise ValueError(\"GhidraEngine not configured\")\nValueError: GhidraEngine not configured\nBehavioral monitoring failed: warning() takes 2 positional arguments but 4 were given\nNo monitoring in progress\n",
         "timed_out": false
       },
       "recompile_command": {
@@ -80,25 +80,25 @@
           "-m",
           "reveng",
           "--no-ollama-check",
+          "recompile",
           "--output-dir",
           "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-jar/recompile",
-          "recompile",
           "/mnt/c/dev/projects/reveng-main/test_samples/HelloWorld.jar",
           "--ghidra-timeout",
           "120"
         ],
-        "returncode": 1,
-        "stdout_tail": "",
-        "stderr_tail": "\u274c Engine initialization failed: \u274c Error: Could not connect to Ghidra Analysis Server at http://127.0.0.1:13370\n\n   The server is not running. Please start it with:\n\n   Option 1 - Start the REVENG Ghidra server:\n     python -m reveng.server.ghidra_analysis_server --port 13370\n\n   Option 2 - Use the external Ghidra HTTP server:\n     cd external/ghidra-server && python ghidra_http_server.py\n\n   Option 3 - Use Docker (recommended):\n     docker-compose up ghidra-server\n\n   For native binary analysis (PE/ELF/Mach-O), Ghidra is REQUIRED.\n   For Java/Python/C# files, Ghidra is NOT needed.\n\n",
+        "returncode": 0,
+        "stdout_tail": "[SUCCESS] Managed-language recompile via jvm_app_workflow\nLanguage: jvm\nAnalysis: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-jar/recompile/analysis.json\nRebuilt artifacts: 0\nReport: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-jar/recompile/recompilation_report.json\n",
+        "stderr_tail": "No decompilers available - using fallback\nDecompiled directory not found: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-jar/recompile/artifacts/java_bytecode_analysis/decompiled\nNo decompiled sources found\n",
         "timed_out": false
       },
       "analyze_report_exists": true,
-      "recompile_report_exists": false,
+      "recompile_report_exists": true,
       "original_behavior": [],
-      "rebuilt_binary_path": null,
+      "rebuilt_binary_path": "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/java-helloworld-jar/recompile/rebuilt/HelloWorld.jar",
       "rebuilt_behavior": [],
       "behavior_comparisons": [],
-      "status": "analyze_ok_recompile_failed"
+      "status": "completed_without_behavior_checks"
     },
     {
       "id": "python-sample-bytecode",
@@ -120,7 +120,7 @@
         ],
         "returncode": 0,
         "stdout_tail": "Running end-to-end pipeline...\nGhidra stage timeout: 120s (retries: 0)\n\n[SUCCESS] REVENG analysis completed successfully!\nPipeline status: partial_success\nResults stored in: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-bytecode/analyze\nUnified report: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-bytecode/analyze/reports/unified_analysis_report.json\n",
-        "stderr_tail": "2026-08-05 20:54:53,317 - reveng.analysis.analyzer - INFO - Audit trail initialized\n2026-08-05 20:54:53,318 - reveng.analysis.analyzer - INFO - REVENG Analyzer initialized\n2026-08-05 20:54:53,319 - reveng.analysis.analyzer - INFO - Target binary: /mnt/c/dev/projects/reveng-main/test_samples/sample_app.pyc\n2026-08-05 20:54:53,320 - reveng.analysis.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\n2026-08-05 20:54:53,321 - reveng.analysis.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\n2026-08-05 20:54:53,322 - reveng.analysis.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\n2026-08-05 20:54:54,241 - reveng.analysis.analyzer - INFO - Detected file type: python/pyc (confidence: 85.00%)\n2026-08-05 20:54:54,242 - reveng.analysis.analyzer - INFO - Analysis category: python_bytecode\n2026-08-05 20:54:54,422 - reveng.analysis.analyzer - WARNING - Java 11 detected - Ghidra recommends Java 17+, but will work\n2026-08-05 20:54:54,423 - reveng.analysis.analyzer - WARNING - Consider upgrading to Java 17+ for best compatibility\nConfig file not found: /home/james/.reveng/config.yaml, using defaults\n2026-08-05 20:54:54,540 - reveng.analysis.analyzer - WARNING - Ghidra not installed - native binary analysis will be limited\n2026-08-05 20:54:54,541 - reveng.analysis.analyzer - INFO - All critical tools validated successfully\npyelftools not available. Install with: pip install pyelftools\n\u26a0\ufe0f Gemini API key not found. Set GEMINI_API_KEY environment variable.\n\u274c Pipeline failed: GhidraEngine not configured\nTraceback (most recent call last):\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 405, in full_reconstruction_pipeline\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 506, in _phase1_decompilation\n    raise ValueError(\"GhidraEngine not configured\")\nValueError: GhidraEngine not configured\nBehavioral monitoring failed: warning() takes 2 positional arguments but 4 were given\nNo monitoring in progress\n",
+        "stderr_tail": "2026-08-05 21:25:25,667 - reveng.analysis.analyzer - INFO - Audit trail initialized\n2026-08-05 21:25:25,668 - reveng.analysis.analyzer - INFO - REVENG Analyzer initialized\n2026-08-05 21:25:25,668 - reveng.analysis.analyzer - INFO - Target binary: /mnt/c/dev/projects/reveng-main/test_samples/sample_app.pyc\n2026-08-05 21:25:25,669 - reveng.analysis.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\n2026-08-05 21:25:25,670 - reveng.analysis.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\n2026-08-05 21:25:25,671 - reveng.analysis.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\n2026-08-05 21:25:26,225 - reveng.analysis.analyzer - INFO - Detected file type: python/pyc (confidence: 85.00%)\n2026-08-05 21:25:26,226 - reveng.analysis.analyzer - INFO - Analysis category: python_bytecode\n2026-08-05 21:25:26,384 - reveng.analysis.analyzer - WARNING - Java 11 detected - Ghidra recommends Java 17+, but will work\n2026-08-05 21:25:26,385 - reveng.analysis.analyzer - WARNING - Consider upgrading to Java 17+ for best compatibility\nConfig file not found: /home/james/.reveng/config.yaml, using defaults\n2026-08-05 21:25:26,439 - reveng.analysis.analyzer - WARNING - Ghidra not installed - native binary analysis will be limited\n2026-08-05 21:25:26,440 - reveng.analysis.analyzer - INFO - All critical tools validated successfully\npyelftools not available. Install with: pip install pyelftools\n\u26a0\ufe0f Gemini API key not found. Set GEMINI_API_KEY environment variable.\n\u274c Pipeline failed: GhidraEngine not configured\nTraceback (most recent call last):\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 405, in full_reconstruction_pipeline\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 506, in _phase1_decompilation\n    raise ValueError(\"GhidraEngine not configured\")\nValueError: GhidraEngine not configured\nBehavioral monitoring failed: warning() takes 2 positional arguments but 4 were given\nNo monitoring in progress\n",
         "timed_out": false
       },
       "recompile_command": {
@@ -129,25 +129,25 @@
           "-m",
           "reveng",
           "--no-ollama-check",
+          "recompile",
           "--output-dir",
           "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-bytecode/recompile",
-          "recompile",
           "/mnt/c/dev/projects/reveng-main/test_samples/sample_app.pyc",
           "--ghidra-timeout",
           "120"
         ],
-        "returncode": 1,
-        "stdout_tail": "",
-        "stderr_tail": "\u274c Engine initialization failed: \u274c Error: Could not connect to Ghidra Analysis Server at http://127.0.0.1:13370\n\n   The server is not running. Please start it with:\n\n   Option 1 - Start the REVENG Ghidra server:\n     python -m reveng.server.ghidra_analysis_server --port 13370\n\n   Option 2 - Use the external Ghidra HTTP server:\n     cd external/ghidra-server && python ghidra_http_server.py\n\n   Option 3 - Use Docker (recommended):\n     docker-compose up ghidra-server\n\n   For native binary analysis (PE/ELF/Mach-O), Ghidra is REQUIRED.\n   For Java/Python/C# files, Ghidra is NOT needed.\n\n",
+        "returncode": 0,
+        "stdout_tail": "[SUCCESS] Managed-language recompile via python_app_workflow\nLanguage: python\nAnalysis: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-bytecode/recompile/analysis.json\nRebuilt artifacts: 0\nReport: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-bytecode/recompile/recompilation_report.json\n",
+        "stderr_tail": "",
         "timed_out": false
       },
       "analyze_report_exists": true,
-      "recompile_report_exists": false,
+      "recompile_report_exists": true,
       "original_behavior": [],
-      "rebuilt_binary_path": null,
+      "rebuilt_binary_path": "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-bytecode/recompile/rebuilt/sample_app.pyc",
       "rebuilt_behavior": [],
       "behavior_comparisons": [],
-      "status": "analyze_ok_recompile_failed"
+      "status": "completed_without_behavior_checks"
     },
     {
       "id": "python-sample-zipapp",
@@ -169,7 +169,7 @@
         ],
         "returncode": 0,
         "stdout_tail": "Running end-to-end pipeline...\nGhidra stage timeout: 120s (retries: 0)\n\n[SUCCESS] REVENG analysis completed successfully!\nPipeline status: partial_success\nResults stored in: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-zipapp/analyze\nUnified report: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-zipapp/analyze/reports/unified_analysis_report.json\n",
-        "stderr_tail": "2026-08-05 20:55:11,904 - reveng.analysis.analyzer - INFO - Audit trail initialized\n2026-08-05 20:55:11,906 - reveng.analysis.analyzer - INFO - REVENG Analyzer initialized\n2026-08-05 20:55:11,907 - reveng.analysis.analyzer - INFO - Target binary: /mnt/c/dev/projects/reveng-main/test_samples/sample_app.pyz\n2026-08-05 20:55:11,909 - reveng.analysis.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\n2026-08-05 20:55:11,910 - reveng.analysis.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\n2026-08-05 20:55:11,910 - reveng.analysis.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\n2026-08-05 20:55:12,846 - reveng.analysis.analyzer - INFO - Detected file type: unknown/zip (confidence: 50.00%)\n2026-08-05 20:55:12,847 - reveng.analysis.analyzer - INFO - Analysis category: unknown\n2026-08-05 20:55:13,135 - reveng.analysis.analyzer - WARNING - Java 11 detected - Ghidra recommends Java 17+, but will work\n2026-08-05 20:55:13,137 - reveng.analysis.analyzer - WARNING - Consider upgrading to Java 17+ for best compatibility\nConfig file not found: /home/james/.reveng/config.yaml, using defaults\n2026-08-05 20:55:13,261 - reveng.analysis.analyzer - WARNING - Ghidra not installed - native binary analysis will be limited\n2026-08-05 20:55:13,262 - reveng.analysis.analyzer - INFO - All critical tools validated successfully\npyelftools not available. Install with: pip install pyelftools\n\u26a0\ufe0f Gemini API key not found. Set GEMINI_API_KEY environment variable.\n\u274c Pipeline failed: GhidraEngine not configured\nTraceback (most recent call last):\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 405, in full_reconstruction_pipeline\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 506, in _phase1_decompilation\n    raise ValueError(\"GhidraEngine not configured\")\nValueError: GhidraEngine not configured\nBehavioral monitoring failed: warning() takes 2 positional arguments but 4 were given\nNo monitoring in progress\n",
+        "stderr_tail": "2026-08-05 21:25:42,217 - reveng.analysis.analyzer - INFO - Audit trail initialized\n2026-08-05 21:25:42,218 - reveng.analysis.analyzer - INFO - REVENG Analyzer initialized\n2026-08-05 21:25:42,219 - reveng.analysis.analyzer - INFO - Target binary: /mnt/c/dev/projects/reveng-main/test_samples/sample_app.pyz\n2026-08-05 21:25:42,220 - reveng.analysis.analyzer - INFO - Enterprise-grade binary analysis for ANY binary\n2026-08-05 21:25:42,221 - reveng.analysis.analyzer - INFO - AI-Enhanced analysis modules: ENABLED\n2026-08-05 21:25:42,221 - reveng.analysis.analyzer - INFO - Enabled modules: Corporate Exposure, Vulnerability Discovery, Threat Intelligence, Enhanced Reconstruction, Demonstration Generation\n2026-08-05 21:25:42,915 - reveng.analysis.analyzer - INFO - Detected file type: unknown/zip (confidence: 50.00%)\n2026-08-05 21:25:42,916 - reveng.analysis.analyzer - INFO - Analysis category: unknown\n2026-08-05 21:25:43,067 - reveng.analysis.analyzer - WARNING - Java 11 detected - Ghidra recommends Java 17+, but will work\n2026-08-05 21:25:43,069 - reveng.analysis.analyzer - WARNING - Consider upgrading to Java 17+ for best compatibility\nConfig file not found: /home/james/.reveng/config.yaml, using defaults\n2026-08-05 21:25:43,189 - reveng.analysis.analyzer - WARNING - Ghidra not installed - native binary analysis will be limited\n2026-08-05 21:25:43,191 - reveng.analysis.analyzer - INFO - All critical tools validated successfully\npyelftools not available. Install with: pip install pyelftools\n\u26a0\ufe0f Gemini API key not found. Set GEMINI_API_KEY environment variable.\n\u274c Pipeline failed: GhidraEngine not configured\nTraceback (most recent call last):\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 405, in full_reconstruction_pipeline\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\n  File \"/mnt/c/dev/projects/reveng-main/src/reveng/ai/recompilation_engine.py\", line 506, in _phase1_decompilation\n    raise ValueError(\"GhidraEngine not configured\")\nValueError: GhidraEngine not configured\nBehavioral monitoring failed: warning() takes 2 positional arguments but 4 were given\nNo monitoring in progress\n",
         "timed_out": false
       },
       "recompile_command": {
@@ -178,25 +178,25 @@
           "-m",
           "reveng",
           "--no-ollama-check",
+          "recompile",
           "--output-dir",
           "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-zipapp/recompile",
-          "recompile",
           "/mnt/c/dev/projects/reveng-main/test_samples/sample_app.pyz",
           "--ghidra-timeout",
           "120"
         ],
-        "returncode": 1,
-        "stdout_tail": "",
-        "stderr_tail": "\u274c Engine initialization failed: \u274c Error: Could not connect to Ghidra Analysis Server at http://127.0.0.1:13370\n\n   The server is not running. Please start it with:\n\n   Option 1 - Start the REVENG Ghidra server:\n     python -m reveng.server.ghidra_analysis_server --port 13370\n\n   Option 2 - Use the external Ghidra HTTP server:\n     cd external/ghidra-server && python ghidra_http_server.py\n\n   Option 3 - Use Docker (recommended):\n     docker-compose up ghidra-server\n\n   For native binary analysis (PE/ELF/Mach-O), Ghidra is REQUIRED.\n   For Java/Python/C# files, Ghidra is NOT needed.\n\n",
+        "returncode": 0,
+        "stdout_tail": "[SUCCESS] Managed-language recompile via python_app_workflow\nLanguage: python\nAnalysis: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-zipapp/recompile/analysis.json\nRebuilt artifacts: 0\nReport: /mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-zipapp/recompile/recompilation_report.json\n",
+        "stderr_tail": "",
         "timed_out": false
       },
       "analyze_report_exists": true,
-      "recompile_report_exists": false,
+      "recompile_report_exists": true,
       "original_behavior": [],
-      "rebuilt_binary_path": null,
+      "rebuilt_binary_path": "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks/python-sample-zipapp/recompile/rebuilt/sample_app.pyz",
       "rebuilt_behavior": [],
       "behavior_comparisons": [],
-      "status": "analyze_ok_recompile_failed"
+      "status": "completed_without_behavior_checks"
     }
   ]
 }

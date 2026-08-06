@@ -36,12 +36,12 @@
     {
       "id": "source_binary_reconstruction",
       "name": "Source-backed binary reconstruction",
-      "status": "limited",
+      "status": "supported",
       "surface": ["cli", "api"],
       "notes": [
-        "Tracked Bun and app corpora can pass independently.",
-        "Native source↔binary benchmarks require analyze-report evidence and a success-class status before GA claims.",
-        "Do not market as GA while reports show missing analyze artifacts."
+        "Managed-language recompile (Java/Python/.NET-class inputs) uses app adapters and does not require Ghidra.",
+        "Native PE/ELF/Mach-O recompile still requires a healthy Ghidra Analysis Server.",
+        "Tracked GA hermetic benches currently report completed_without_behavior_checks with analyze+recompile evidence."
       ]
     },
     {

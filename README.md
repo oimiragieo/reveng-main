@@ -5,18 +5,19 @@ REVENG is a large Python reverse-engineering repository with real core infrastru
 ## Current Status
 
 - Package version in this checkout: `4.0.0`
-- Development status: `beta`, not production-stable
-- Core platform areas that are real:
-  - main CLI and Python package
-  - Ghidra integration points
-  - MCP server surface
-  - YARA, malware, and reporting modules
-  - JVM, JavaScript, Python, and .NET app reverse-engineering adapters
-- Advanced capability areas that should be treated as experimental until verified on tracked corpora:
-  - exploit generation
+- Development status: `beta` with a **customer-safe GA readiness gate** (`scripts/verify_ga_readiness.py --profile ga`)
+- Supported GA surface (see `docs/support_matrix.json`):
+  - CLI threat triage
+  - App reverse engineering (JavaScript, JVM, Python, .NET)
+  - Managed-language source↔binary reconstruction (Java/Python hermetic benches tracked)
+- Still limited / experimental until corpus-proven:
+  - Native PE/ELF/Mach-O recompile (requires Ghidra Analysis Server)
+  - exploit generation (CLI watermarked EXPERIMENTAL/non-GA)
   - end-to-end symbolic execution workflows
   - broad JavaScript deobfuscation claims
   - full binary-to-source-to-binary equivalence claims
+
+Ops backlog: [`backlog.md`](backlog.md). Release evidence: `reports/ga_readiness_target.json`, `reports/release_report.md`.
 
 ## What This Repository Is
 

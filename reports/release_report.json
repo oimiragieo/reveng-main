@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "result_type": "release_report",
-  "generated_at": "2026-03-29T23:59:16.490665Z",
+  "generated_at": "2026-08-06T01:26:18.088914Z",
   "version": "4.0.0",
   "summary": {
     "ship_status": "ready",
@@ -10,7 +10,7 @@
     "blocking_gate_ids": []
   },
   "support": {
-    "supported_workflow_count": 2,
+    "supported_workflow_count": 3,
     "supported_workflows": [
       {
         "id": "cli_triage",
@@ -18,6 +18,10 @@
       },
       {
         "id": "app_reverse_engineering",
+        "status": "supported"
+      },
+      {
+        "id": "source_binary_reconstruction",
         "status": "supported"
       }
     ]
@@ -28,9 +32,8 @@
       "by_category": {
         "asset_or_fixture": 24,
         "external_tooling": 31,
-        "known_gap": 3,
         "service_environment": 1,
-        "uncategorized": 6
+        "uncategorized": 9
       }
     }
   },
@@ -41,14 +44,9 @@
       "config_path": ".reveng\\app_reverse_engineering_corpus.ga.json"
     },
     "source_benchmarks": {
-      "benchmark_count": 5,
-      "config_path": ".reveng\\source_binary_benchmarks.ga.json",
-      "failed_statuses": {
-        "java-helloworld-class": "recompile_failed",
-        "java-helloworld-jar": "recompile_failed",
-        "python-sample-bytecode": "recompile_failed",
-        "python-sample-zipapp": "recompile_failed"
-      }
+      "benchmark_count": 4,
+      "config_path": ".reveng/source_binary_benchmarks.ga.json",
+      "failed_statuses": {}
     },
     "bun_matrix": {
       "matrix_status": "pass",
@@ -58,12 +56,12 @@
     }
   },
   "inputs": {
-    "baseline_report": "C:\\dev\\projects\\reveng-main\\reports\\ga_readiness_baseline.json",
-    "ga_report": "C:\\dev\\projects\\reveng-main\\reports\\ga_readiness_target.json",
-    "app_report": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_report.json",
-    "source_report": "C:\\dev\\projects\\reveng-main\\reports\\source_binary_benchmarks_report.json",
-    "bun_report": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix.json",
-    "support_matrix": "C:\\dev\\projects\\reveng-main\\docs\\support_matrix.json",
-    "skip_inventory": "C:\\dev\\projects\\reveng-main\\reports\\skip_inventory.json"
+    "baseline_report": "/mnt/c/dev/projects/reveng-main/reports/ga_readiness_baseline.json",
+    "ga_report": "/mnt/c/dev/projects/reveng-main/reports/ga_readiness_target.json",
+    "app_report": "/mnt/c/dev/projects/reveng-main/reports/app_reverse_engineering_corpus_report.json",
+    "source_report": "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks_report.json",
+    "bun_report": "/mnt/c/dev/projects/reveng-main/reports/bun_sample_matrix.json",
+    "support_matrix": "/mnt/c/dev/projects/reveng-main/docs/support_matrix.json",
+    "skip_inventory": "/mnt/c/dev/projects/reveng-main/reports/skip_inventory.json"
   }
 }

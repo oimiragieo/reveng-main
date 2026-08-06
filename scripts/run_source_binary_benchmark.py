@@ -149,16 +149,31 @@ def _build_reveng_command(
     ghidra_timeout: int | None = None,
 ) -> list[str]:
     # Repo-root reveng.py was removed; use the package module entry point.
-    command = [
-        sys.executable,
-        "-m",
-        REVENG_MODULE,
-        "--no-ollama-check",
-        "--output-dir",
-        str(output_dir),
-        subcommand,
-        str(binary_path),
-    ]
+    # argparse quirk: recompile defines its own --output-dir, so that flag must
+    # appear AFTER the subcommand. analyze uses the parent --output-dir, which
+    # must appear BEFORE the subcommand.
+    if subcommand == "recompile":
+        command = [
+            sys.executable,
+            "-m",
+            REVENG_MODULE,
+            "--no-ollama-check",
+            "recompile",
+            "--output-dir",
+            str(output_dir),
+            str(binary_path),
+        ]
+    else:
+        command = [
+            sys.executable,
+            "-m",
+            REVENG_MODULE,
+            "--no-ollama-check",
+            "--output-dir",
+            str(output_dir),
+            subcommand,
+            str(binary_path),
+        ]
     if ghidra_timeout is not None:
         command.extend(["--ghidra-timeout", str(ghidra_timeout)])
     return command

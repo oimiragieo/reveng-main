@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "result_type": "skip_inventory_report",
-  "generated_at": "2026-08-06T00:55:54.015913Z",
+  "generated_at": "2026-08-06T01:26:17.793730Z",
   "tests_root": "/mnt/c/dev/projects/reveng-main/tests",
   "summary": {
     "total_skip_sites": 65,
@@ -370,42 +370,42 @@
     },
     {
       "path": "tests/unit/test_analyzer.py",
-      "line": 186,
+      "line": 182,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
       "path": "tests/unit/test_analyzer.py",
-      "line": 197,
+      "line": 193,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
       "path": "tests/unit/test_analyzer.py",
-      "line": 210,
+      "line": 206,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
       "path": "tests/unit/test_analyzer.py",
-      "line": 220,
+      "line": 216,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
       "path": "tests/unit/test_analyzer.py",
-      "line": 234,
+      "line": 230,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
       "path": "tests/unit/test_analyzer.py",
-      "line": 246,
+      "line": 242,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
