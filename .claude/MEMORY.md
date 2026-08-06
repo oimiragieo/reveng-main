@@ -4,33 +4,27 @@ Cross-session facts for agents working in **reveng-main**. Keep terse; details l
 
 ## North star
 
-- Product is **beta 4.0.0**; public **preview** after Phase 1–2 honesty + managed recompile — not full Scope C GA.
+- Product is **beta 4.0.0**; public **preview** — not full Scope C GA.
 - Ops index: `/backlog.md` (root — not `docs/BACKLOG.md`)
-- Latest CEO briefing: `docs/architecture/ceo-update-2026-08-06-wave2.md`
-- Prior CEO: `docs/architecture/ceo-update-2026-08-06.md`
-- Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (L1–L18)
+- Latest CEO: `docs/architecture/ceo-update-2026-08-06-wave3.md`
+- Priors: `ceo-update-2026-08-06-wave2.md`, `ceo-update-2026-08-06.md`
+- Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (L1–L24)
 - Skill: `.cursor/skills/reveng-release-honesty/SKILL.md`
+- Wave B gates: `docs/architecture/wave-b-exit-criteria.md`
 
-## Hard-won facts (2026-08-06 waves 1–2)
+## Hard-won facts (waves 1–3 / Wave A on main)
 
-- Use **python3.9** for gates on this host; system 3.13 may lack stdlib.
-- `capability_report` must go through `enrich_app_analysis_payload` or it is dead code.
-- Managed recompile path: `recompile_command.is_managed_language_input` → app adapters (no Ghidra).
-- GA report rows: four hermetic managed benches `completed_without_behavior_checks`.
-- Do not full-`git status` with huge `reports/` trees on WSL/DrvFS.
-- Native fixtures (`test_samples/native/`) ≠ analyze capability; keep `fixture_only` / `required: false`.
-- Analyze probe v1.1: nonzero → `could_not_measure` + exit 2; scrub dishonest stamps when fixing `latest.json`.
-- Fable/Sol via CLI (`claude-fable-5`, `gpt-5.6-sol`); Cursor Pro ≠ Fable; alive ≠ working.
-- Host C linker may be broken; Go `CGO_ENABLED=0` works; skip markers must be loud.
+- Use **python3.9**; avoid full-`git status` on dirty `reports/` — use `scripts/git_status_scoped.sh` (DF-4 done).
+- Fixture ≠ capability; probe v1.2: `tool_absent` / `input_absent`; process `completed` ≠ native GA (**DF-5**).
+- Evidence dir: exactly one stamp matching `latest.json` (re-check after merge).
+- Research: R-HEX-1 **blocked** until timed hexyl; R-RALPH-2-BASELINE done / R-RALPH-2 **open**; PIPE/SEC/VRL decisions done.
+- Fable/Sol via CLI; inline Sol packets; worktree-reachable thinktank paths; `git -c user.name/email` for merges.
+- Wave A merged: no `src/reveng` product changes in that wave.
 
-## Open long poles
+## Open long poles (Wave B+)
 
-- RALPH-2 (cli.js 0.8+ recall) — needs **R-RALPH-2** research then engine work
-- M1-NATIVE-FAM — fixtures landed; need analyze ≤120s success + flip `required`
-- M2 / R-HEX-1 — probe shipped; **hexyl binary timed run still open** on this host
-- R-PIPE-1, R-SEC-1, R-VRL-1 — research before large builds
-- Phases 4–13, M4 CI corpus gates — see `backlog.md`
-
-## Active branch (wave 2)
-
-- `feat/scope-c-phase-next` in `.worktrees/scope-c-phase-next` (Sol APPROVE native-fixtures)
+- RALPH-2 engine (R-RALPH-2 still open)
+- M1-NATIVE-FAM / M1 — analyze hermetic + `required: true`
+- M2 — hexyl timed run (R-HEX-1 blocked on tool)
+- M4 CI corpus gates; phases 4–13; P4/P5/P6 leftovers
+- Exploit expansion still gated (SEC decision = Docker-only preview)

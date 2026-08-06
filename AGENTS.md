@@ -2,13 +2,13 @@
 
 ## Release honesty (read first for GA / ship claims)
 
-- Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO briefing: `docs/architecture/ceo-update-2026-08-06-wave2.md` (wave 1: `ceo-update-2026-08-06.md`).
-- Lessons from Scope C 2026-08: `docs/architecture/lessons-learned-scope-c-2026-08.md` (L1–L18).
+- Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO: `docs/architecture/ceo-update-2026-08-06-wave3.md` (wave 2/1: `ceo-update-2026-08-06-wave2.md`, `ceo-update-2026-08-06.md`).
+- Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (L1–L24). Wave B: `docs/architecture/wave-b-exit-criteria.md`.
 - Cursor skill: `.cursor/skills/reveng-release-honesty/SKILL.md`. Agent memory: `.claude/MEMORY.md`.
-- **Never trust a green GA verifier alone** — open tracked `reports/*.json` / `.reveng/*.json` and confirm analyze/recompile evidence fields.
-- **Fixture ≠ capability** — native micro-CLIs stay `fixture_only` until analyze is measured green. Probe: nonzero exit ≠ `completed`; scrub dishonest evidence stamps when fixing `latest.json`.
-- Prefer `/usr/bin/python3.9` for local gates on this host. Stage **named paths** for git commits when `reports/` is dirty (full `git status` can hang on WSL/DrvFS).
-- Plan/validate seats: Fable = `claude -p --model claude-fable-5`; Sol = `codex exec --model gpt-5.6-sol` (Cursor Pro quota ≠ Fable; alive ≠ working).
+- **Never trust a green GA verifier alone** — open tracked JSON and confirm evidence fields (baseline **and** ga profiles).
+- **Fixture ≠ capability**; process `completed` ≠ native GA (DF-5). Probe v1.2: `tool_absent` ≠ research done (R-HEX-1 stays blocked). Exactly one evidence stamp matching `latest.json`.
+- Prefer `/usr/bin/python3.9`. Use `scripts/git_status_scoped.sh` / named-path commits (DF-4). No `git stash` across worktrees; merges need `git -c user.name/email` from `git log -1`.
+- Plan/validate: Fable = `claude -p --model claude-fable-5`; Sol = `codex exec --model gpt-5.6-sol` (inline packets if sandbox greps hang).
 
 ## Project Structure & Module Organization
 Primary code lives in `src/reveng/`. Add new runtime code to the closest domain package instead of creating new root scripts (there is **no** repo-root `reveng.py` — it was removed because it shadowed the package; use the `reveng` / `python -m reveng` entry points or `src/reveng/cli/reveng.py`). Key packages:

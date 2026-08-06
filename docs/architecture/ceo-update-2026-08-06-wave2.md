@@ -2,6 +2,8 @@
 
 Plain English. **Previous briefing:** [`ceo-update-2026-08-06.md`](ceo-update-2026-08-06.md) (Phases 1–3 honesty + JS behavior).
 
+**Superseded for “what’s next” by:** [`ceo-update-2026-08-06-wave3.md`](ceo-update-2026-08-06-wave3.md) (Wave A clearance on main). Keep this file as the native-fixtures snapshot.
+
 ## Bottom line (one sentence)
 
 We built tiny real C/Go test programs and a stopwatch for “does analyze finish?”, measured that analyze **fails fast** (does not hang forever on our Go fixture), and we still **must not** say native reverse-engineering is ready.

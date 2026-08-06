@@ -1,16 +1,14 @@
 # Development Rules for REVENG
 
-## Release honesty (Scope C lessons — 2026-08, L1–L18)
+## Release honesty (Scope C lessons — 2026-08, L1–L24)
 
-See `.claude/MEMORY.md`, `docs/architecture/lessons-learned-scope-c-2026-08.md`, skill `.cursor/skills/reveng-release-honesty/SKILL.md`, and CEO `docs/architecture/ceo-update-2026-08-06-wave2.md`.
+See `.claude/MEMORY.md`, `docs/architecture/lessons-learned-scope-c-2026-08.md`, skill `.cursor/skills/reveng-release-honesty/SKILL.md`, and CEO `docs/architecture/ceo-update-2026-08-06-wave3.md`.
 
-- Green `verify_ga_readiness` ≠ proof — confirm tracked report evidence fields.
-- Wire helpers through product paths (`enrich_app_analysis_payload`), not only unit tests.
-- Managed language inputs must not require Ghidra; keep exploit surfaces EXPERIMENTAL until SEC-1.
-- Fixture builds ≠ analyze capability; probe nonzero ≠ `completed`; evidence dirs must not keep lying stamps.
-- `REVENGLogger` supports printf `*args`; do not assume stdlib Logger without checking.
-- Dogfood with Python 3.9; avoid repo-wide `git status` over huge `reports/` trees on DrvFS.
-- Fable/Sol via CLI models; Cursor Pro ≠ Fable; background alive ≠ working.
+- Green `verify_ga_readiness` ≠ proof — open tracked JSON (baseline and ga).
+- Fixture ≠ capability; process `completed` ≠ native GA; `tool_absent` ≠ research done.
+- Evidence hygiene: one stamp ≡ `latest.json` (re-check after merge).
+- Wave-scope plans; Wave B exit criteria for engine work; no exploit expansion without SEC proofs.
+- Dogfood python3.9; `git_status_scoped.sh`; Fable/Sol CLI + inline Sol packets; `git -c user.name/email` for merges.
 
 ## Code Quality Standards
 

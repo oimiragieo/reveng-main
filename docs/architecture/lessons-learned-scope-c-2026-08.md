@@ -73,3 +73,30 @@ A background implementer with a live PID, **~0 CPU**, and a **0-byte log** is st
 ## L18 — Host C linker may be broken; Go still works; skips must be loud
 
 This WSL host’s `cc`/`clang` can fail linking (`libc.so.6` / `.relr.dyn`). That is **environment**, not a missing fixture. Prefer `CGO_ENABLED=0 go build` for hermetic Go toys. Absent/broken toolchain → actionable skip marker (`NATIVE_FIXTURE_SKIPPED: …`); present toolchain → **no** marker (two-arm test). Plan paths saying `docs/BACKLOG.md` mean root **`backlog.md`**.
+
+## L19 — “Close all backlog” is not one plan
+
+A Superpowers plan that claims to finish Scope C phases 4–13, RALPH-2 engine, and native GA in one wave will (and should) be **REJECT**ed by Thinktank/Sol. Scope Wave A as honesty/ops/research-*decisions* + measurement; put engine work behind **Wave B exit criteria** with concrete close conditions.
+
+## L20 — `tool_absent` is blocked, not done
+
+Recording `tool_absent:hexyl` proves the instrument was missing. It does **not** answer “is hexyl still timeout-only?” Keep **R-HEX-1** as `blocked` until a real timed run on an obtained binary. Never mark research `done` from absence alone.
+
+## L21 — Split baseline research from product rows
+
+When a research question asks for both a measurement *and* a design wedge, close a **BASELINE** row (or `could_not_measure` with reason) separately. Keep the product/engine id (`R-RALPH-2`, `RALPH-2`) **open** until the wedge is chosen and implemented. Exact-id matching in tests — substring match will confuse `R-RALPH-2` with `R-RALPH-2-BASELINE`.
+
+## L22 — Process `completed` ≠ native capability (DF-5)
+
+`reveng analyze` / probe `status: completed` (exit 0) can still be CLI `partial_success` with empty native fallback / no useful rebuild. Always carry semantic fields (`analysis_report_present`, `native_fallback_empty`, `semantic_reason`) and say so in CEO/backlog language. Do not flip `required: true` from process green alone.
+
+## L23 — Evidence hygiene must survive merge
+
+Merging a clean worktree onto a dirty `main` can resurrect stale `20*.json` stamps beside `latest.json`. Post-merge: assert exactly one stamp, byte-identical to `latest.json`, before calling Wave A green. Prefer explicit paths over `git add reports/**/*.json` globs.
+
+## L24 — Plan/validate seats need reachable paths and git identity
+
+- Put thinktank question packs under the **worktree** (Windows-reachable), not only Linux `/tmp`, or Fable returns CANNOT_READ.
+- Sol: prefer **fully inlined** evidence packets (“do not shell”) when sandbox greps hang.
+- Merges/commits on this host need `git -c user.name=… -c user.email=…` from `git log -1` — empty ident aborts with exit 128.
+- Do **not** `git stash` with live `.worktrees/`; discard or commit named paths instead.
