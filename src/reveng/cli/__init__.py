@@ -10,6 +10,8 @@ Version: 4.0.0
 License: MIT
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import sys
@@ -144,9 +146,7 @@ def create_parser() -> argparse.ArgumentParser:
         default=3000,
         help=t["port_help"],
     )
-    serve_parser.add_argument(
-        "--reload", action="store_true", help=t["reload_help"]
-    )
+    serve_parser.add_argument("--reload", action="store_true", help=t["reload_help"])
 
     # Ask command (Natural Language Interface)
     ask_parser = subparsers.add_parser(
@@ -154,17 +154,13 @@ def create_parser() -> argparse.ArgumentParser:
         help=t["ask_help"],
         description=t["ask_desc"],
     )
-    ask_parser.add_argument(
-        "question", help=t["question_help"]
-    )
+    ask_parser.add_argument("question", help=t["question_help"])
     ask_parser.add_argument(
         "binary_path",
         nargs="?",
         help=t["binary_path_opt_help"],
     )
-    ask_parser.add_argument(
-        "--analysis-results", help=t["results_help"]
-    )
+    ask_parser.add_argument("--analysis-results", help=t["results_help"])
     ask_parser.add_argument(
         "--conversational",
         action="store_true",
@@ -217,9 +213,7 @@ def create_parser() -> argparse.ArgumentParser:
         description=t["vt_lookup_desc"],
     )
     vt_lookup_parser.add_argument("binary_path", help=t["binary_path_help"])
-    vt_lookup_parser.add_argument(
-        "--api-key", help=t["api_key_help"]
-    )
+    vt_lookup_parser.add_argument("--api-key", help=t["api_key_help"])
 
     # VirusTotal submit command
     vt_submit_parser = subparsers.add_parser(
@@ -228,12 +222,8 @@ def create_parser() -> argparse.ArgumentParser:
         description=t["vt_submit_desc"],
     )
     vt_submit_parser.add_argument("binary_path", help=t["binary_path_help"])
-    vt_submit_parser.add_argument(
-        "--api-key", help=t["api_key_help"]
-    )
-    vt_submit_parser.add_argument(
-        "--wait", action="store_true", help=t["wait_help"]
-    )
+    vt_submit_parser.add_argument("--api-key", help=t["api_key_help"])
+    vt_submit_parser.add_argument("--wait", action="store_true", help=t["wait_help"])
 
     # YARA rule generation command
     yara_gen_parser = subparsers.add_parser(
@@ -316,9 +306,7 @@ def create_parser() -> argparse.ArgumentParser:
         description=t["unpack_desc"],
     )
     unpack_parser.add_argument("binary_path", help=t["binary_path_help"])
-    unpack_parser.add_argument(
-        "--output", help=t["output_help"]
-    )
+    unpack_parser.add_argument("--output", help=t["output_help"])
     unpack_parser.add_argument(
         "--method",
         choices=["auto", "specialized", "generic"],
@@ -333,12 +321,8 @@ def create_parser() -> argparse.ArgumentParser:
         description=t["enhance_desc"],
     )
     enhance_parser.add_argument("code_file", help=t["binary_path_help"])
-    enhance_parser.add_argument(
-        "--function-name", default="unknown", help=t["func_name_help"]
-    )
-    enhance_parser.add_argument(
-        "--output", help=t["output_help"]
-    )
+    enhance_parser.add_argument("--function-name", default="unknown", help=t["func_name_help"])
+    enhance_parser.add_argument("--output", help=t["output_help"])
 
     # Recompile command (Binary -> Source -> Binary pipeline)
     recompile_parser = subparsers.add_parser(
@@ -425,8 +409,8 @@ def create_parser() -> argparse.ArgumentParser:
     # Generate exploit command
     generate_exploit_parser = subparsers.add_parser(
         "generate-exploit",
-        help=t["exploit_help"],
-        description=t["exploit_desc"],
+        help="[EXPERIMENTAL/non-GA] " + t["exploit_help"],
+        description="EXPERIMENTAL (non-GA). " + t["exploit_desc"],
     )
     generate_exploit_parser.add_argument("binary_path", help=t["binary_path_help"])
     generate_exploit_parser.add_argument(
@@ -449,9 +433,7 @@ def create_parser() -> argparse.ArgumentParser:
     )
 
     # Enhanced analysis options
-    enhanced_group = parser.add_argument_group(
-        t["enhanced_group"], t["enhanced_group_desc"]
-    )
+    enhanced_group = parser.add_argument_group(t["enhanced_group"], t["enhanced_group_desc"])
     enhanced_group.add_argument(
         "--no-enhanced",
         action="store_true",
@@ -462,9 +444,7 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=t["no_corporate_help"],
     )
-    enhanced_group.add_argument(
-        "--no-vuln", action="store_true", help=t["no_vuln_help"]
-    )
+    enhanced_group.add_argument("--no-vuln", action="store_true", help=t["no_vuln_help"])
     enhanced_group.add_argument(
         "--no-threat",
         action="store_true",
@@ -475,31 +455,21 @@ def create_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=t["no_recon_help"],
     )
-    enhanced_group.add_argument(
-        "--no-demo", action="store_true", help=t["no_demo_help"]
-    )
+    enhanced_group.add_argument("--no-demo", action="store_true", help=t["no_demo_help"])
 
     # Configuration options
-    config_group = parser.add_argument_group(
-        t["config_group"], t["config_group_desc"]
-    )
+    config_group = parser.add_argument_group(t["config_group"], t["config_group_desc"])
     config_group.add_argument("--config", help=t["config_help"])
-    config_group.add_argument(
-        "--no-ollama-check", action="store_true", help=t["no_ollama_help"]
-    )
+    config_group.add_argument("--no-ollama-check", action="store_true", help=t["no_ollama_help"])
     config_group.add_argument(
         "--output-dir",
         help=t["out_dir_help"],
     )
 
     # Logging options
-    logging_group = parser.add_argument_group(
-        t["logging_group"], t["logging_group_desc"]
-    )
+    logging_group = parser.add_argument_group(t["logging_group"], t["logging_group_desc"])
     logging_group.add_argument("--verbose", "-V", action="store_true", help=t["verbose_help"])
-    logging_group.add_argument(
-        "--quiet", "-q", action="store_true", help=t["quiet_help"]
-    )
+    logging_group.add_argument("--quiet", "-q", action="store_true", help=t["quiet_help"])
     logging_group.add_argument("--log-file", help=t["log_file_help"])
 
     return parser
@@ -1781,8 +1751,14 @@ def handle_generate_exploit_command(args):
     """Handle the generate-exploit command."""
     try:
         print("=" * 70)
-        print("  REVENG Exploit Generation")
+        print("  REVENG Exploit Generation — EXPERIMENTAL (non-GA)")
         print("=" * 70)
+        print()
+        print(
+            "WARNING: Exploit generation is experimental and not part of the "
+            "supported GA surface. See docs/support_matrix.json "
+            "(workflow: exploit_generation, status: experimental)."
+        )
         print()
 
         # Validate binary exists
