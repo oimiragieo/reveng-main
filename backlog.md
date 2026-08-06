@@ -30,7 +30,7 @@ Statuses: `open` · `in_progress` · `done` · `parked` · `blocked`
 | P3-BP-3 | Behavior probe promotes validation.grade | 6 | done | post-GA | tier2+syntax_ok → evidence_backed; capability_report now attached in enrich |
 | P3-BP-4 | Size-scaled JS probe timeouts | 6 | done | post-GA | resolve_javascript_probe_timeout_sec by file_count |
 | RALPH-2 | cli.js 0.8+ recall | 6 | open | post-GA | |
-| M5-PIPE | pipeline vs pipelines consolidation | 9 | open | post-GA | |
+| M5-PIPE | pipeline vs pipelines consolidation | 9 | partial | post-GA | Documented split + package `__init__`s; full merge deferred |
 | DF-2 | Lazy conftest heavy imports | 3 | done | quality | Heavy deps imported inside fixtures only |
 | LOG-PRINTF-1 | REVENGLogger.warning rejected %-args (sandbox arity crash) | 3 | done | quality | stdlib-compatible *args on debug/info/warning/error/critical |
 
