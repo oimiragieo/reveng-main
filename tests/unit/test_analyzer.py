@@ -93,13 +93,13 @@ class TestREVENGAnalyzer:
 
         assert analyzer.file_type is None
 
-    @pytest.mark.skip(reason="Ollama checking functionality not implemented in current analyzer")
-    @patch("reveng.analysis.analyzer.OllamaPreflightChecker")
-    @patch("reveng.analysis.analyzer.get_config")
-    def test_check_ollama_availability_success(
-        self, mock_get_config, mock_checker_class, mock_binary_file
-    ):
+    @patch("reveng.agents.ai.ollama_preflight.OllamaPreflightChecker")
+    @patch("reveng.tools.config.config_manager.get_config")
+    def test_check_ollama_availability_success(self, mock_get_config, mock_checker_class, tmp_path):
         """Test successful Ollama availability check."""
+        binary = tmp_path / "sample.bin"
+        binary.write_bytes(b"MZ\x00\x00test")
+
         # Mock config
         mock_config = Mock()
         mock_ai_config = Mock()
@@ -118,17 +118,17 @@ class TestREVENGAnalyzer:
         )
         mock_checker_class.return_value = mock_checker
 
-        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=True)
+        analyzer = REVENGAnalyzer(binary_path=str(binary), check_ollama=True)
 
         assert analyzer.ollama_available is True
 
-    @pytest.mark.skip(reason="Ollama checking functionality not implemented in current analyzer")
-    @patch("reveng.analysis.analyzer.OllamaPreflightChecker")
-    @patch("reveng.analysis.analyzer.get_config")
-    def test_check_ollama_availability_failure(
-        self, mock_get_config, mock_checker_class, mock_binary_file
-    ):
+    @patch("reveng.agents.ai.ollama_preflight.OllamaPreflightChecker")
+    @patch("reveng.tools.config.config_manager.get_config")
+    def test_check_ollama_availability_failure(self, mock_get_config, mock_checker_class, tmp_path):
         """Test failed Ollama availability check."""
+        binary = tmp_path / "sample.bin"
+        binary.write_bytes(b"MZ\x00\x00test")
+
         # Mock config
         mock_config = Mock()
         mock_ai_config = Mock()
@@ -147,7 +147,7 @@ class TestREVENGAnalyzer:
         )
         mock_checker_class.return_value = mock_checker
 
-        analyzer = REVENGAnalyzer(binary_path=str(mock_binary_file), check_ollama=True)
+        analyzer = REVENGAnalyzer(binary_path=str(binary), check_ollama=True)
 
         assert analyzer.ollama_available is False
 

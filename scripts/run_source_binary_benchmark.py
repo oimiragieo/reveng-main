@@ -15,7 +15,7 @@ if str(SRC_ROOT) not in sys.path:
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(1, str(REPO_ROOT))
 
-REVENG_PY = REPO_ROOT / "reveng.py"
+REVENG_MODULE = "reveng"
 DEFAULT_CONFIG = REPO_ROOT / ".reveng" / "source_binary_benchmarks.json"
 DEFAULT_OUTPUT = REPO_ROOT / "reports" / "source_binary_benchmarks_report.json"
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
@@ -29,8 +29,10 @@ def _load_json(path: Path) -> dict[str, Any] | None:
 
 
 def _resolve_config_path(value: str, base_dir: Path) -> Path:
-    path = Path(value)
-    return path if path.is_absolute() else (base_dir / path)
+    # Configs may carry Windows-style separators from cross-platform checkouts.
+    normalized = value.replace("\\", "/")
+    path = Path(normalized)
+    return path if path.is_absolute() else (base_dir / path).resolve()
 
 
 def _normalize_output(value: str | None) -> str | None:
@@ -65,8 +67,12 @@ def load_benchmark_config(config_path: Path = DEFAULT_CONFIG) -> dict[str, Any]:
     benchmarks: list[dict[str, Any]] = []
     for benchmark in raw.get("benchmarks", []):
         benchmark_copy = dict(benchmark)
-        benchmark_copy["source_repo"] = str(_resolve_config_path(benchmark["source_repo"], base_dir))
-        benchmark_copy["binary_path"] = str(_resolve_config_path(benchmark["binary_path"], base_dir))
+        benchmark_copy["source_repo"] = str(
+            _resolve_config_path(benchmark["source_repo"], base_dir)
+        )
+        benchmark_copy["binary_path"] = str(
+            _resolve_config_path(benchmark["binary_path"], base_dir)
+        )
         benchmark_copy["output_dir"] = str(_resolve_config_path(benchmark["output_dir"], base_dir))
         benchmark_copy.setdefault("analyze_timeout", 900)
         benchmark_copy.setdefault("recompile_timeout", 900)
@@ -121,7 +127,9 @@ def _run_process(command: list[str], timeout: int, cwd: Path | None = None) -> d
         }
 
 
-def _run_reveng(subcommand: str, binary_path: Path, output_dir: Path, timeout: int) -> dict[str, Any]:
+def _run_reveng(
+    subcommand: str, binary_path: Path, output_dir: Path, timeout: int
+) -> dict[str, Any]:
     return _run_process(
         _build_reveng_command(
             subcommand=subcommand,
@@ -140,9 +148,11 @@ def _build_reveng_command(
     output_dir: Path,
     ghidra_timeout: int | None = None,
 ) -> list[str]:
+    # Repo-root reveng.py was removed; use the package module entry point.
     command = [
         sys.executable,
-        str(REVENG_PY),
+        "-m",
+        REVENG_MODULE,
         "--no-ollama-check",
         "--output-dir",
         str(output_dir),
@@ -173,7 +183,9 @@ def _run_reveng_with_ghidra_timeout(
     )
 
 
-def _run_behavior_case(binary_path: Path, command_config: dict[str, Any], variables: dict[str, str]) -> dict[str, Any]:
+def _run_behavior_case(
+    binary_path: Path, command_config: dict[str, Any], variables: dict[str, str]
+) -> dict[str, Any]:
     args = [_expand_template(arg, variables) for arg in command_config.get("args", [])]
     command = [str(binary_path), *args]
     try:
@@ -220,7 +232,11 @@ def _run_behavior_case(binary_path: Path, command_config: dict[str, Any], variab
     if expected_exit_code is not None and result.get("returncode") != expected_exit_code:
         passed = False
         error = f"Exit code {result.get('returncode')}, expected {expected_exit_code}"
-    if expected_output_contains and passed and expected_output_contains not in (normalized_output or ""):
+    if (
+        expected_output_contains
+        and passed
+        and expected_output_contains not in (normalized_output or "")
+    ):
         passed = False
         error = f"Expected output fragment not found: {expected_output_contains!r}"
 
@@ -270,7 +286,9 @@ def _compare_behavior_results(
     }
 
 
-def _find_rebuilt_binary(recompile_dir: Path, glob_pattern: str, original_binary_path: Path) -> Path | None:
+def _find_rebuilt_binary(
+    recompile_dir: Path, glob_pattern: str, original_binary_path: Path
+) -> Path | None:
     candidates = [
         path
         for path in recompile_dir.glob(glob_pattern)
@@ -288,6 +306,9 @@ def _rollup_benchmark_status(benchmark_report: dict[str, Any]) -> str:
     if analyze_command.get("returncode") not in {0}:
         return "analyze_failed"
     if recompile_command.get("returncode") not in {0}:
+        # Analyze produced a usable artifact even when recompile failed.
+        if benchmark_report.get("analyze_report_exists"):
+            return "analyze_ok_recompile_failed"
         return "recompile_failed"
     if not benchmark_report.get("rebuilt_binary_path"):
         return "rebuilt_binary_missing"
@@ -304,6 +325,27 @@ def _rollup_benchmark_status(benchmark_report: dict[str, Any]) -> str:
     if comparisons:
         return "behavior_mismatch"
     return "completed_without_behavior_checks"
+
+
+def _analyze_report_exists(analyze_dir: Path) -> bool:
+    candidates = (
+        analyze_dir / "analysis_report.json",
+        analyze_dir / "universal_analysis_report.json",
+        analyze_dir / "reports" / "unified_analysis_report.json",
+        analyze_dir / "reports" / "universal_analysis_report.json",
+        analyze_dir / "e2e_pipeline_execution.json",
+    )
+    return any(path.exists() for path in candidates)
+
+
+def _recompile_report_exists(recompile_dir: Path) -> bool:
+    candidates = (
+        recompile_dir / "recompilation_report.json",
+        recompile_dir / "reconstruction_results.json",
+        recompile_dir / "recompilation" / "reconstruction_results.json",
+        recompile_dir / "reports" / "unified_analysis_report.json",
+    )
+    return any(path.exists() for path in candidates)
 
 
 def run_benchmark(benchmark: dict[str, Any]) -> dict[str, Any]:
@@ -366,8 +408,8 @@ def run_benchmark(benchmark: dict[str, Any]) -> dict[str, Any]:
         "output_dir": benchmark["output_dir"],
         "analyze_command": analyze_command,
         "recompile_command": recompile_command,
-        "analyze_report_exists": (analyze_dir / "analysis_report.json").exists(),
-        "recompile_report_exists": (recompile_dir / "recompilation_report.json").exists(),
+        "analyze_report_exists": _analyze_report_exists(analyze_dir),
+        "recompile_report_exists": _recompile_report_exists(recompile_dir),
         "original_behavior": original_behavior,
         "rebuilt_binary_path": rebuilt_binary_path,
         "rebuilt_behavior": rebuilt_behavior,
@@ -377,7 +419,9 @@ def run_benchmark(benchmark: dict[str, Any]) -> dict[str, Any]:
     return report
 
 
-def build_report(config_path: Path = DEFAULT_CONFIG, selected_ids: list[str] | None = None) -> dict[str, Any]:
+def build_report(
+    config_path: Path = DEFAULT_CONFIG, selected_ids: list[str] | None = None
+) -> dict[str, Any]:
     config = load_benchmark_config(config_path)
     benchmarks = config["benchmarks"]
     if selected_ids:

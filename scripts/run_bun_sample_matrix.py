@@ -20,7 +20,7 @@ from reveng.tools.anti_analysis.bun_extractor import BunExecutableExtractor  # n
 from reveng.tools.binary.validation_config import SmokeTest  # noqa: E402
 
 
-REVENG_PY = REPO_ROOT / "reveng.py"
+REVENG_MODULE = "reveng"
 DEFAULT_OUTPUT = REPO_ROOT / "reports" / "bun_sample_matrix.json"
 DEFAULT_WORKSPACE = REPO_ROOT / "reports" / "bun_sample_matrix"
 DEFAULT_CONFIG = REPO_ROOT / ".reveng" / "bun_sample_matrix.json"
@@ -28,9 +28,14 @@ DEFAULT_VALIDATION_POLICY = REPO_ROOT / ".reveng" / "validation_policy.json"
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 
 
+def _reveng_command(args: list[str]) -> list[str]:
+    return [sys.executable, "-m", REVENG_MODULE, "--no-ollama-check", *args]
+
+
 def _run_reveng(args: list[str], timeout: int = 600) -> dict[str, Any]:
+    command = _reveng_command(args)
     completed = subprocess.run(
-        [sys.executable, str(REVENG_PY), "--no-ollama-check", *args],
+        command,
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
@@ -38,7 +43,7 @@ def _run_reveng(args: list[str], timeout: int = 600) -> dict[str, Any]:
         check=False,
     )
     return {
-        "command": " ".join([sys.executable, str(REVENG_PY), "--no-ollama-check", *args]),
+        "command": " ".join(command),
         "returncode": completed.returncode,
         "stdout_tail": completed.stdout[-4000:],
         "stderr_tail": completed.stderr[-4000:],
@@ -105,9 +110,7 @@ def _run_bun_row(binary_path: Path, workspace_root: Path) -> dict[str, Any]:
     analyze_dir.mkdir(parents=True, exist_ok=True)
     recompile_dir.mkdir(parents=True, exist_ok=True)
 
-    analyze_result = _run_reveng(
-        ["--output-dir", str(analyze_dir), "analyze", str(binary_path)]
-    )
+    analyze_result = _run_reveng(["--output-dir", str(analyze_dir), "analyze", str(binary_path)])
     analyze_report = _load_json(analyze_dir / "bun_analysis.json")
 
     recompile_result = _run_reveng(
@@ -128,7 +131,9 @@ def _run_bun_row(binary_path: Path, workspace_root: Path) -> dict[str, Any]:
                 analyze_report.get("canonical_recompilation_input") if analyze_report else None
             ),
             "report_severity": analyze_report.get("report_severity") if analyze_report else None,
-            "runtime_escalation": analyze_report.get("runtime_escalation") if analyze_report else None,
+            "runtime_escalation": (
+                analyze_report.get("runtime_escalation") if analyze_report else None
+            ),
             "recovery_mode": (
                 analyze_report.get("bunfs_recovery", {}).get("mode") if analyze_report else None
             ),
@@ -141,7 +146,9 @@ def _run_bun_row(binary_path: Path, workspace_root: Path) -> dict[str, Any]:
         "rebuild_report": {
             "route": rebuild_report.get("route") if rebuild_report else None,
             "report_severity": rebuild_report.get("report_severity") if rebuild_report else None,
-            "runtime_escalation": rebuild_report.get("runtime_escalation") if rebuild_report else None,
+            "runtime_escalation": (
+                rebuild_report.get("runtime_escalation") if rebuild_report else None
+            ),
             "equivalence_validation": (
                 rebuild_report.get("equivalence_validation") if rebuild_report else None
             ),
@@ -149,9 +156,7 @@ def _run_bun_row(binary_path: Path, workspace_root: Path) -> dict[str, Any]:
                 rebuild_report.get("differential_validation") if rebuild_report else None
             ),
             "verification": (
-                rebuild_report.get("sea_build", {}).get("verification")
-                if rebuild_report
-                else None
+                rebuild_report.get("sea_build", {}).get("verification") if rebuild_report else None
             ),
         },
     }
@@ -315,7 +320,9 @@ def _evaluate_expectations(row: dict[str, Any], expectations: dict[str, Any]) ->
 
     for key, expected in expectations.get("analyze", {}).items():
         if analyze_report.get(key) != expected:
-            failures.append(f"analyze.{key}: expected {expected!r}, got {analyze_report.get(key)!r}")
+            failures.append(
+                f"analyze.{key}: expected {expected!r}, got {analyze_report.get(key)!r}"
+            )
 
     rebuild_expectations = expectations.get("rebuild", {})
     for key, expected in rebuild_expectations.items():
@@ -352,7 +359,9 @@ def _evaluate_expectations(row: dict[str, Any], expectations: dict[str, Any]) ->
     }
 
 
-def _rollup_matrix_status(rows: list[dict[str, Any]], min_live_bun_samples_for_pass: int) -> dict[str, Any]:
+def _rollup_matrix_status(
+    rows: list[dict[str, Any]], min_live_bun_samples_for_pass: int
+) -> dict[str, Any]:
     bun_rows = [row for row in rows if row.get("kind") == "bun_live_sample"]
     successful_rebuilds = [
         row
@@ -363,7 +372,8 @@ def _rollup_matrix_status(rows: list[dict[str, Any]], min_live_bun_samples_for_p
     hard_failures = [
         row
         for row in rows
-        if row.get("row_status") in {"missing_required_sample", "expectation_failed", "command_failed"}
+        if row.get("row_status")
+        in {"missing_required_sample", "expectation_failed", "command_failed"}
     ]
 
     if hard_failures:
@@ -394,7 +404,9 @@ def _build_configured_row(sample: dict[str, Any], workspace_root: Path) -> dict[
 
     if not binary_path.exists():
         row["detection"] = {"exists": False}
-        row["row_status"] = "missing_required_sample" if row["required"] else "missing_optional_sample"
+        row["row_status"] = (
+            "missing_required_sample" if row["required"] else "missing_optional_sample"
+        )
         row["expectation_results"] = _evaluate_expectations(row, sample.get("expectations", {}))
         return row
 
@@ -428,7 +440,9 @@ def _build_configured_row(sample: dict[str, Any], workspace_root: Path) -> dict[
         row.update(_run_negative_control(binary_path))
         row["row_status"] = "completed"
     else:
-        row["row_status"] = "unexpected_non_bun" if sample["kind"] == "bun_live_sample" else "completed"
+        row["row_status"] = (
+            "unexpected_non_bun" if sample["kind"] == "bun_live_sample" else "completed"
+        )
 
     row["expectation_results"] = _evaluate_expectations(row, sample.get("expectations", {}))
     if row["row_status"] == "completed" and not row["expectation_results"]["passed"]:

@@ -52,6 +52,21 @@ def test_load_benchmark_config_resolves_relative_paths(tmp_path: Path):
     assert benchmark["recompile_ghidra_timeout"] == 900
 
 
+def test_build_reveng_command_uses_module_entry_not_removed_launcher():
+    runner = _load_module("test_source_binary_benchmark_entry", RUNNER_PATH)
+    command = runner._build_reveng_command(
+        subcommand="analyze",
+        binary_path=Path("/tmp/sample.bin"),
+        output_dir=Path("/tmp/out"),
+        ghidra_timeout=120,
+    )
+    assert command[0] == sys.executable
+    assert command[1:3] == ["-m", "reveng"]
+    assert "reveng.py" not in " ".join(command)
+    assert "--ghidra-timeout" in command
+    assert "120" in command
+
+
 def test_normalize_output_strips_ansi_and_normalizes_newlines():
     runner = _load_module("test_source_binary_benchmark_normalize", RUNNER_PATH)
 
@@ -77,6 +92,33 @@ def test_compare_behavior_results_honors_output_and_exit_code_flags():
     assert comparison["matched"] is False
     assert comparison["exit_code_matched"] is False
     assert comparison["output_matched"] is False
+
+
+def test_rollup_status_reports_analyze_ok_when_recompile_fails_with_report():
+    runner = _load_module("test_source_binary_benchmark_rollup_analyze_ok", RUNNER_PATH)
+
+    status = runner._rollup_benchmark_status(
+        {
+            "analyze_command": {"returncode": 0},
+            "recompile_command": {"returncode": 1},
+            "analyze_report_exists": True,
+            "rebuilt_binary_path": None,
+            "original_behavior": [],
+            "rebuilt_behavior": [],
+            "behavior_comparisons": [],
+        }
+    )
+
+    assert status == "analyze_ok_recompile_failed"
+
+
+def test_analyze_report_exists_detects_unified_report(tmp_path: Path):
+    runner = _load_module("test_source_binary_benchmark_report_detect", RUNNER_PATH)
+    analyze_dir = tmp_path / "analyze"
+    reports = analyze_dir / "reports"
+    reports.mkdir(parents=True)
+    (reports / "unified_analysis_report.json").write_text("{}", encoding="utf-8")
+    assert runner._analyze_report_exists(analyze_dir) is True
 
 
 def test_rollup_status_reports_rebuilt_binary_missing():

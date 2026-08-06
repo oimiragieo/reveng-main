@@ -34,12 +34,24 @@
       ]
     },
     {
+      "id": "source_binary_reconstruction",
+      "name": "Source-backed binary reconstruction",
+      "status": "limited",
+      "surface": ["cli", "api"],
+      "notes": [
+        "Tracked Bun and app corpora can pass independently.",
+        "Native source↔binary benchmarks require analyze-report evidence and a success-class status before GA claims.",
+        "Do not market as GA while reports show missing analyze artifacts."
+      ]
+    },
+    {
       "id": "exploit_generation",
       "name": "Exploit generation",
       "status": "experimental",
       "surface": ["cli"],
       "notes": [
-        "Not a GA workflow and should not be represented as production-ready."
+        "Not a GA workflow and should not be represented as production-ready.",
+        "CLI command generate-exploit is watermarked EXPERIMENTAL/non-GA."
       ]
     },
     {

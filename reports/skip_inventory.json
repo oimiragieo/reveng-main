@@ -1,477 +1,477 @@
 {
   "schema_version": "1.0",
   "result_type": "skip_inventory_report",
-  "generated_at": "2026-03-29T23:58:40.925121Z",
-  "tests_root": "C:\\dev\\projects\\reveng-main\\tests",
+  "generated_at": "2026-08-06T00:55:54.015913Z",
+  "tests_root": "/mnt/c/dev/projects/reveng-main/tests",
   "summary": {
     "total_skip_sites": 65,
     "by_kind": {
-      "runtime_skip": 57,
-      "skip": 8
+      "runtime_skip": 58,
+      "skip": 6,
+      "skipif": 1
     },
     "by_category": {
       "asset_or_fixture": 24,
       "external_tooling": 31,
-      "known_gap": 3,
       "service_environment": 1,
-      "uncategorized": 6
+      "uncategorized": 9
     }
   },
   "entries": [
     {
-      "path": "tests\\integration\\test_app_reverse_engineering_external_tools.py",
-      "line": 43,
+      "path": "tests/integration/test_app_reverse_engineering_external_tools.py",
+      "line": 44,
       "kind": "runtime_skip",
       "reason": "sample_dotnet.dll fixture is missing",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_cli.py",
-      "line": 358,
+      "path": "tests/integration/test_cli.py",
+      "line": 362,
       "kind": "runtime_skip",
       "reason": "Java sample not found",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_cli.py",
-      "line": 375,
+      "path": "tests/integration/test_cli.py",
+      "line": 379,
       "kind": "runtime_skip",
       "reason": "Java sample not found",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_cli.py",
-      "line": 483,
+      "path": "tests/integration/test_cli.py",
+      "line": 487,
       "kind": "runtime_skip",
       "reason": "Java sample not found",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_cli.py",
-      "line": 602,
+      "path": "tests/integration/test_cli.py",
+      "line": 609,
       "kind": "runtime_skip",
       "reason": "Java sample not found",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_cli.py",
-      "line": 616,
+      "path": "tests/integration/test_cli.py",
+      "line": 623,
       "kind": "runtime_skip",
       "reason": "Windows bootstrap script not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_cli.py",
-      "line": 623,
+      "path": "tests/integration/test_cli.py",
+      "line": 630,
       "kind": "runtime_skip",
       "reason": "Linux bootstrap script not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_cli.py",
-      "line": 643,
+      "path": "tests/integration/test_cli.py",
+      "line": 650,
       "kind": "runtime_skip",
       "reason": "Cleanup script not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_documentation.py",
+      "path": "tests/integration/test_documentation.py",
       "line": 125,
       "kind": "runtime_skip",
       "reason": "Could not test external link {url}: {exc}",
       "category": "uncategorized"
     },
     {
-      "path": "tests\\integration\\test_e2e_cli.py",
+      "path": "tests/integration/test_e2e_cli.py",
       "line": 35,
       "kind": "runtime_skip",
       "reason": "Ghidra service unavailable: {exc}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_e2e_cli.py",
+      "path": "tests/integration/test_e2e_cli.py",
       "line": 38,
       "kind": "runtime_skip",
       "reason": "Ghidra health endpoint is up but reports ghidra_available=false",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_e2e_cli.py",
+      "path": "tests/integration/test_e2e_cli.py",
       "line": 45,
       "kind": "runtime_skip",
       "reason": "Ollama service unavailable: {exc}",
       "category": "service_environment"
     },
     {
-      "path": "tests\\integration\\test_e2e_cli.py",
+      "path": "tests/integration/test_e2e_cli.py",
       "line": 49,
       "kind": "runtime_skip",
       "reason": "Required Ollama model not available: {OLLAMA_MODEL}",
       "category": "uncategorized"
     },
     {
-      "path": "tests\\integration\\test_e2e_cli.py",
+      "path": "tests/integration/test_e2e_cli.py",
       "line": 65,
       "kind": "runtime_skip",
       "reason": "Native sample binary not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 23,
       "kind": "runtime_skip",
       "reason": "Analysis template not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 40,
       "kind": "runtime_skip",
       "reason": "Basic examples directory not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 62,
       "kind": "runtime_skip",
       "reason": "Advanced examples directory not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 84,
       "kind": "runtime_skip",
       "reason": "Examples README not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 101,
       "kind": "runtime_skip",
       "reason": "Template or sample not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 117,
       "kind": "runtime_skip",
       "reason": "Basic examples not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 122,
       "kind": "runtime_skip",
       "reason": "No analysis examples found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 126,
       "kind": "runtime_skip",
       "reason": "Sample file not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 148,
       "kind": "runtime_skip",
       "reason": "Example outputs directory not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 158,
       "kind": "runtime_skip",
       "reason": "Example outputs directory not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 176,
       "kind": "runtime_skip",
       "reason": "Examples README not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_examples.py",
+      "path": "tests/integration/test_examples.py",
       "line": 189,
       "kind": "runtime_skip",
       "reason": "Examples directory not found",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\integration\\test_ml_enhancements.py",
+      "path": "tests/integration/test_ml_enhancements.py",
       "line": 76,
       "kind": "runtime_skip",
       "reason": "ML vulnerability predictor dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_ml_enhancements.py",
+      "path": "tests/integration/test_ml_enhancements.py",
       "line": 150,
       "kind": "runtime_skip",
       "reason": "ML malware classifier dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_ml_enhancements.py",
-      "line": 153,
-      "kind": "runtime_skip",
-      "reason": "Legacy malware classifier API mismatch: {e}",
-      "category": "known_gap"
-    },
-    {
-      "path": "tests\\integration\\test_ml_enhancements.py",
-      "line": 274,
+      "path": "tests/integration/test_ml_enhancements.py",
+      "line": 270,
       "kind": "runtime_skip",
       "reason": "NLP analyzer dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_ml_enhancements.py",
-      "line": 390,
+      "path": "tests/integration/test_ml_enhancements.py",
+      "line": 386,
       "kind": "runtime_skip",
       "reason": "ML pipeline dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_symbolic_execution_integration.py",
+      "path": "tests/integration/test_symbolic_execution_integration.py",
       "line": 54,
       "kind": "runtime_skip",
       "reason": "angr not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_symbolic_execution_integration.py",
+      "path": "tests/integration/test_symbolic_execution_integration.py",
       "line": 74,
       "kind": "runtime_skip",
       "reason": "Dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\integration\\test_symbolic_execution_integration.py",
+      "path": "tests/integration/test_symbolic_execution_integration.py",
       "line": 110,
       "kind": "runtime_skip",
       "reason": "Dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\performance\\test_incremental_compilation.py",
-      "line": 88,
+      "path": "tests/performance/test_incremental_compilation.py",
+      "line": 86,
       "kind": "runtime_skip",
       "reason": "Compiler cache not available. Install ccache or sccache.",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\performance\\test_incremental_compilation.py",
-      "line": 150,
+      "path": "tests/performance/test_incremental_compilation.py",
+      "line": 148,
       "kind": "runtime_skip",
       "reason": "Cache backend did not report a warm-cache hit in this environment",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\performance\\test_incremental_compilation.py",
-      "line": 176,
+      "path": "tests/performance/test_incremental_compilation.py",
+      "line": 174,
       "kind": "runtime_skip",
       "reason": "Compiler cache not available. Install ccache or sccache.",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\performance\\test_incremental_compilation.py",
-      "line": 225,
+      "path": "tests/performance/test_incremental_compilation.py",
+      "line": 223,
       "kind": "runtime_skip",
       "reason": "Compiler cache not available.",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\performance\\test_incremental_compilation.py",
-      "line": 276,
+      "path": "tests/performance/test_incremental_compilation.py",
+      "line": 274,
       "kind": "runtime_skip",
       "reason": "Compiler cache not available.",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\poc\\test_llm4decompile_poc.py",
+      "path": "tests/poc/test_llm4decompile_poc.py",
       "line": 65,
       "kind": "runtime_skip",
       "reason": "Failed to compile test binary: {result.stderr.decode()}",
       "category": "uncategorized"
     },
     {
-      "path": "tests\\poc\\test_llm4decompile_poc.py",
+      "path": "tests/poc/test_llm4decompile_poc.py",
       "line": 109,
       "kind": "runtime_skip",
       "reason": "LLM4Decompile dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\poc\\test_llm4decompile_poc.py",
+      "path": "tests/poc/test_llm4decompile_poc.py",
       "line": 144,
       "kind": "runtime_skip",
       "reason": "LLM4Decompile dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\poc\\test_llm4decompile_poc.py",
+      "path": "tests/poc/test_llm4decompile_poc.py",
       "line": 177,
       "kind": "runtime_skip",
       "reason": "LLM4Decompile dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\poc\\test_llm4decompile_poc.py",
+      "path": "tests/poc/test_llm4decompile_poc.py",
       "line": 225,
       "kind": "runtime_skip",
       "reason": "LLM4Decompile dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\poc\\test_llm4decompile_poc.py",
+      "path": "tests/poc/test_llm4decompile_poc.py",
       "line": 243,
       "kind": "runtime_skip",
       "reason": "Ensemble dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\poc\\test_symbolic_execution_poc.py",
+      "path": "tests/poc/test_symbolic_execution_poc.py",
       "line": 77,
       "kind": "runtime_skip",
       "reason": "Failed to compile vulnerable binary: {result.stderr.decode()}",
       "category": "uncategorized"
     },
     {
-      "path": "tests\\poc\\test_symbolic_execution_poc.py",
+      "path": "tests/poc/test_symbolic_execution_poc.py",
       "line": 116,
       "kind": "runtime_skip",
       "reason": "Failed to compile vulnerable binary",
       "category": "uncategorized"
     },
     {
-      "path": "tests\\poc\\test_symbolic_execution_poc.py",
+      "path": "tests/poc/test_symbolic_execution_poc.py",
       "line": 172,
       "kind": "runtime_skip",
       "reason": "Dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\poc\\test_symbolic_execution_poc.py",
+      "path": "tests/poc/test_symbolic_execution_poc.py",
       "line": 218,
       "kind": "runtime_skip",
       "reason": "Dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\poc\\test_symbolic_execution_poc.py",
+      "path": "tests/poc/test_symbolic_execution_poc.py",
       "line": 240,
       "kind": "runtime_skip",
       "reason": "No vulnerabilities found for exploit generation test",
       "category": "uncategorized"
     },
     {
-      "path": "tests\\poc\\test_symbolic_execution_poc.py",
+      "path": "tests/poc/test_symbolic_execution_poc.py",
       "line": 267,
       "kind": "runtime_skip",
       "reason": "Dependencies not available: {e}",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\unit\\test_analyzer.py",
-      "line": 96,
-      "kind": "skip",
-      "reason": "Ollama checking functionality not implemented in current analyzer",
-      "category": "known_gap"
-    },
-    {
-      "path": "tests\\unit\\test_analyzer.py",
-      "line": 125,
-      "kind": "skip",
-      "reason": "Ollama checking functionality not implemented in current analyzer",
-      "category": "known_gap"
-    },
-    {
-      "path": "tests\\unit\\test_analyzer.py",
-      "line": 182,
+      "path": "tests/unit/test_analyzer.py",
+      "line": 186,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\unit\\test_analyzer.py",
-      "line": 193,
+      "path": "tests/unit/test_analyzer.py",
+      "line": 197,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\unit\\test_analyzer.py",
-      "line": 206,
+      "path": "tests/unit/test_analyzer.py",
+      "line": 210,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\unit\\test_analyzer.py",
-      "line": 216,
+      "path": "tests/unit/test_analyzer.py",
+      "line": 220,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\unit\\test_analyzer.py",
-      "line": 230,
+      "path": "tests/unit/test_analyzer.py",
+      "line": 234,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\unit\\test_analyzer.py",
-      "line": 242,
+      "path": "tests/unit/test_analyzer.py",
+      "line": 246,
       "kind": "skip",
       "reason": "Internal step methods testing - requires mock_analyzer fixture",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\unit\\test_angr_cfg_preprocessor.py",
+      "path": "tests/unit/test_angr_cfg_preprocessor.py",
       "line": 19,
       "kind": "runtime_skip",
       "reason": "PE sample missing from test_samples/sample.exe",
       "category": "asset_or_fixture"
     },
     {
-      "path": "tests\\unit\\test_installation.py",
+      "path": "tests/unit/test_import_contracts.py",
+      "line": 28,
+      "kind": "skipif",
+      "reason": "import-linter not installed",
+      "category": "uncategorized"
+    },
+    {
+      "path": "tests/unit/test_import_contracts.py",
+      "line": 39,
+      "kind": "runtime_skip",
+      "reason": "reveng package not resolvable as top-level here (needs editable install)",
+      "category": "uncategorized"
+    },
+    {
+      "path": "tests/unit/test_installation.py",
       "line": 72,
       "kind": "runtime_skip",
       "reason": "Java not available (optional)",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\unit\\test_installation.py",
+      "path": "tests/unit/test_installation.py",
       "line": 78,
       "kind": "runtime_skip",
       "reason": "Ghidra not available (optional)",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\unit\\test_installation.py",
+      "path": "tests/unit/test_installation.py",
       "line": 99,
       "kind": "runtime_skip",
       "reason": "No Unix compilers on Windows (optional)",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\unit\\test_installation.py",
+      "path": "tests/unit/test_installation.py",
       "line": 133,
       "kind": "runtime_skip",
       "reason": "Toolchain check timed out",
       "category": "external_tooling"
     },
     {
-      "path": "tests\\unit\\test_installation.py",
+      "path": "tests/unit/test_installation.py",
       "line": 135,
       "kind": "runtime_skip",
       "reason": "Toolchain check script not found",
       "category": "external_tooling"
+    },
+    {
+      "path": "tests/unit/test_tracked_js_bundle_manifest.py",
+      "line": 96,
+      "kind": "runtime_skip",
+      "reason": "Tracked bundle artifact not present",
+      "category": "uncategorized"
     }
   ]
 }
