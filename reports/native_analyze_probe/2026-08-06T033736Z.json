@@ -1,0 +1,23 @@
+{
+  "probe_version": "1.0",
+  "recorded_at_utc": "2026-08-06T03:37:36Z",
+  "results": [
+    {
+      "binary": "test_samples/native/hello_go/build/hello_go",
+      "binary_sha256": "8a5084e6b0a86b39dab194d98dc195ec53e0dd06a69160942f7195c3314441aa",
+      "binary_size_bytes": 2250930,
+      "analyze_cmd": [
+        "true",
+        "test_samples/native/hello_go/build/hello_go"
+      ],
+      "timeout_budget_s": 5.0,
+      "elapsed_s": 0.0039088090416044,
+      "status": "completed",
+      "returncode": 0,
+      "reason": null,
+      "measured": true,
+      "probe_version": "1.0",
+      "recorded_at_utc": "2026-08-06T03:37:36Z"
+    }
+  ]
+}

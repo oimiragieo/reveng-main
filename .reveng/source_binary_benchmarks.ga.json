@@ -59,6 +59,32 @@
       "analyze_ghidra_timeout": 600,
       "recompile_ghidra_timeout": 600,
       "commands": []
+    },
+    {
+      "id": "native_hello_c",
+      "language": "c",
+      "source": "test_samples/native/hello_c/hello.c",
+      "binary": "test_samples/native/hello_c/build/hello_c",
+      "binary_path": "test_samples/native/hello_c/build/hello_c",
+      "build": "make -C test_samples/native hello_c",
+      "required": false,
+      "status": "fixture_only",
+      "status_note": "Fixture builds and its CLI surface is byte-stable-tested. REVENG analyze has NOT been shown to complete hermetically on this binary; see reports/native_analyze_probe/latest.json for the measured outcome. No GA or capability claim attaches to this entry.",
+      "evidence_ref": "reports/native_analyze_probe/latest.json",
+      "commands": []
+    },
+    {
+      "id": "native_hello_go",
+      "language": "go",
+      "source": "test_samples/native/hello_go/main.go",
+      "binary": "test_samples/native/hello_go/build/hello_go",
+      "binary_path": "test_samples/native/hello_go/build/hello_go",
+      "build": "make -C test_samples/native hello_go (CGO_ENABLED=0)",
+      "required": false,
+      "status": "fixture_only",
+      "status_note": "Fixture builds and its CLI surface is byte-stable-tested. REVENG analyze has NOT been shown to complete hermetically on this binary; see reports/native_analyze_probe/latest.json for the measured outcome. No GA or capability claim attaches to this entry.",
+      "evidence_ref": "reports/native_analyze_probe/latest.json",
+      "commands": []
     }
   ]
 }

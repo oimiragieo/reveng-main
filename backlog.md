@@ -39,11 +39,11 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 
 | id | title | phase | status | needs research? | notes |
 | --- | --- | --- | --- | --- | --- |
-| M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic | 2 | open | see R-NATIVE-1 doc | Inventory done; still need C/Go fixtures + Linux pins |
+| M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic | 2 | open | see R-NATIVE-1 + fixtures | C+Go micro-CLIs landed (`test_samples/native/`); `required:false`/`fixture_only`. Close when analyze completes ≤120s on both without Ghidra + flip required true. Host C linker may skip hello_c. |
 | RALPH-1 | Source-map path alias recall | 6 | partial | domain recall separate | file overlap fixed |
 | RALPH-2 | cli.js 0.8+ recall | 6 | open | **yes R-RALPH-2** | harness done; engine long pole |
 | M5-PIPE | pipeline vs pipelines merge | 9 | partial | **yes R-PIPE-1** | documented split; merge deferred |
-| M0 | Baseline reporting discipline | exec | open | | hexyl report-always / doc sync |
+| M0 | Baseline reporting discipline | exec | open | | + `reports/native_analyze_probe/` (timestamped + latest.json, 3-valued status) |
 | M1 | Multi-codebase corpus gate | exec | open | see R-NATIVE-1 | overlaps M1-NATIVE-FAM |
 | M2 | Hexyl frontier hardening | 4 | open | **yes R-HEX-1** | beyond timeout |
 | M3 | Validation/evidence unified contract | 3 | partial | | MCP top-level validation_grade + capability_report landed |
@@ -56,7 +56,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | --- | --- | --- |
 | R-NATIVE-1 | Linux-hermetic native CLI set for ≥5/≥3 families | **done** — `docs/architecture/research-r-native-1-linux-hermetic-candidates.md` |
 | R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | RALPH-2, Phase 6 |
-| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | M2, Phase 4 |
+| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **probe shipped** — `scripts/probe_native_analyze_timeout.py`; hello_go measured `completed` with `nonzero_exit:1` in ~0.04s (analyze not success); C fixture unbuilt on this host (linker). Hexyl not re-run this slice. |
 | R-TSX-1 | Ship `tsx` probe vs keep smoke stub | **done** — optional tsx runner in behavior probe |
 | R-PIPE-1 | Merge pipeline packages vs permanent split | M5-PIPE |
 | R-SEC-1 | Sandbox class before exploit expansion | Phase 10, Track J |

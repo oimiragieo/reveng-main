@@ -42,6 +42,6 @@ Parent + subcommand both defining `--output-dir` can drop the value depending on
 
 Thinktank recommended narrow Scope B; CEO chose full Scope C. Still execute **honesty / security first** (Phases 1–2), then the long roadmap. Do not market GA from preview gates alone.
 
-## L11 — Bidirectional oracles on grades
+## L12 — A fixture that builds is not a capability that works (2026-08-06)
 
-Grade promotion (behavior tier → `evidence_backed`) must have tests that **refuse** promotion on tier 1 / missing syntax / packaging_only. A one-arm “happy path” green is a hollow gate (see L1).
+Native micro-CLIs under `test_samples/native/` prove **byte-stable CLI surfaces**, not that REVENG analyzes them. Manifest entries stay `required: false` / `status: fixture_only` with a `status_note` naming the gap; a unit test forbids flipping status to `ga`/`verified`/`supported` without evidence. Measured analyze outcomes live only in `reports/native_analyze_probe/`.
