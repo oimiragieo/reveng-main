@@ -11,7 +11,10 @@
       "analyze_ghidra_timeout": 120,
       "recompile_ghidra_timeout": 120,
       "rebuilt_binary_glob": "**/*.class",
-      "commands": []
+      "commands": [],
+      "required": false,
+      "status": "legacy_corpus",
+      "status_note": "Legacy corpus entry; `required` backfilled false in native-fixtures honesty pass. Not newly claimed GA by this phase."
     },
     {
       "id": "java-helloworld-jar",
@@ -23,7 +26,10 @@
       "analyze_ghidra_timeout": 120,
       "recompile_ghidra_timeout": 120,
       "rebuilt_binary_glob": "**/*.jar",
-      "commands": []
+      "commands": [],
+      "required": false,
+      "status": "legacy_corpus",
+      "status_note": "Legacy corpus entry; `required` backfilled false in native-fixtures honesty pass. Not newly claimed GA by this phase."
     },
     {
       "id": "python-sample-bytecode",
@@ -35,7 +41,10 @@
       "analyze_ghidra_timeout": 120,
       "recompile_ghidra_timeout": 120,
       "rebuilt_binary_glob": "**/*.pyc",
-      "commands": []
+      "commands": [],
+      "required": false,
+      "status": "legacy_corpus",
+      "status_note": "Legacy corpus entry; `required` backfilled false in native-fixtures honesty pass. Not newly claimed GA by this phase."
     },
     {
       "id": "python-sample-zipapp",
@@ -47,7 +56,10 @@
       "analyze_ghidra_timeout": 120,
       "recompile_ghidra_timeout": 120,
       "rebuilt_binary_glob": "**/*.pyz",
-      "commands": []
+      "commands": [],
+      "required": false,
+      "status": "legacy_corpus",
+      "status_note": "Legacy corpus entry; `required` backfilled false in native-fixtures honesty pass. Not newly claimed GA by this phase."
     },
     {
       "id": "opencode",
@@ -58,7 +70,10 @@
       "recompile_timeout": 900,
       "analyze_ghidra_timeout": 600,
       "recompile_ghidra_timeout": 600,
-      "commands": []
+      "commands": [],
+      "required": false,
+      "status": "legacy_corpus",
+      "status_note": "Legacy corpus entry; `required` backfilled false in native-fixtures honesty pass. Not newly claimed GA by this phase."
     },
     {
       "id": "native_hello_c",

@@ -14,19 +14,16 @@ def _load():
     return json.loads(MANIFEST.read_text(encoding="utf-8"))
 
 
-def test_manifest_parses_and_optional_entries_have_status():
+def test_manifest_parses_and_every_entry_has_required_and_status():
     data = _load()
     benches = data["benchmarks"]
     assert isinstance(benches, list)
-    for entry in benches:
-        if entry.get("required") is False:
-            assert entry.get("status")
-            assert entry.get("status_note")
-
-
-def test_manifest_saw_at_least_n_entries():
-    benches = _load()["benchmarks"]
     assert len(benches) >= 3
+    for entry in benches:
+        assert isinstance(entry.get("required"), bool), entry.get("id")
+        if entry["required"] is False:
+            assert entry.get("status"), entry.get("id")
+            assert entry.get("status_note"), entry.get("id")
 
 
 def test_native_fixture_entries_are_not_required():

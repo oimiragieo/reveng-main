@@ -40,6 +40,7 @@ scripts/probe_native_analyze_timeout.py
 |---|---|---|
 | analyze returned 0 within budget | measured success | `"completed"` |
 | analyze exceeded the wall budget | measured timeout — a real, reportable finding | `"timeout"` |
+| analyze exited nonzero within budget | executed but not a clean success — not completed, not timeout | `"could_not_measure"` (`reason: nonzero_exit:<code>`) |
 | binary missing / toolchain absent / exec failed | **did not measure** | `"could_not_measure"` |
 
 The third case must never read as either of the first two. `could_not_measure` carries `reason` and exits **2** (integer, per the `SystemExit("2: …")` trap — always `raise SystemExit(2)`).
@@ -144,7 +145,7 @@ The third case must never read as either of the first two. `could_not_measure` c
   - Returned dict fields: `binary`, `binary_sha256`, `binary_size_bytes`, `analyze_cmd`, `timeout_budget_s`, `elapsed_s`, `status` (one of the three), `returncode` (nullable), `reason` (nullable), `measured` (bool), `probe_version`, `recorded_at_utc`.
   - `main(argv)` — argparse with `--binary` (repeatable), `--timeout-s` (default 120.0), `--out-dir` (default `reports/native_analyze_probe`), `--analyze-cmd` (default `["reveng", "analyze"]`).
   - Writes one JSON file per run: `reports/native_analyze_probe/<recorded_at_utc>.json` containing `{"probe_version": ..., "results": [...]}`, plus a copy at `reports/native_analyze_probe/latest.json` (a real copy, not a symlink — DrvFS).
-  - Exit code: **0** if every target produced `completed` or `timeout` (i.e. we measured something, even a bad something); **2** if any target is `could_not_measure`. A timeout is a successful measurement and must not exit non-zero — conflating "the tool is slow" with "the probe broke" is the exact false-signal this phase exists to avoid.
+  - Exit code: **0** if every target produced `completed` or `timeout`; **2** if any target is `could_not_measure` (including absent binary, OSError, or analyze nonzero exit). A timeout is a successful measurement and must not exit non-zero — conflating "the tool is slow" with "the probe broke" is the exact false-signal this phase exists to avoid. A nonzero analyze exit is **not** `completed`.
   - Never writes into `src/`; never mutates the manifest.
 
 - [ ] Re-run the unit suite to GREEN:

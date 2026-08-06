@@ -56,7 +56,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | --- | --- | --- |
 | R-NATIVE-1 | Linux-hermetic native CLI set for ≥5/≥3 families | **done** — `docs/architecture/research-r-native-1-linux-hermetic-candidates.md` |
 | R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | RALPH-2, Phase 6 |
-| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **probe shipped** — `scripts/probe_native_analyze_timeout.py`; hello_go measured `completed` with `nonzero_exit:1` in ~0.04s (analyze not success); C fixture unbuilt on this host (linker). Hexyl not re-run this slice. |
+| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **probe shipped** (native fixtures). hello_go: `could_not_measure`/`nonzero_exit:1` ~0.04s. **Hexyl binary not present on this host** — hexyl-specific timed run remains open under M2; this phase does not claim hexyl remeasured. |
 | R-TSX-1 | Ship `tsx` probe vs keep smoke stub | **done** — optional tsx runner in behavior probe |
 | R-PIPE-1 | Merge pipeline packages vs permanent split | M5-PIPE |
 | R-SEC-1 | Sandbox class before exploit expansion | Phase 10, Track J |

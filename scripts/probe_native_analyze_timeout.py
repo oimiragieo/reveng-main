@@ -62,11 +62,14 @@ def probe_one(
         )
         result["elapsed_s"] = time.perf_counter() - started
         result["returncode"] = proc.returncode
-        result["measured"] = True
         if proc.returncode == 0:
+            result["measured"] = True
             result["status"] = "completed"
         else:
-            result["status"] = "completed"
+            # Executed, but did not successfully measure a clean analyze — not
+            # "completed" and not a wall-clock timeout.
+            result["measured"] = True
+            result["status"] = "could_not_measure"
             result["reason"] = f"nonzero_exit:{proc.returncode}"
         return result
     except subprocess.TimeoutExpired:
