@@ -1,6 +1,6 @@
 # Lessons learned — Scope C wave (2026-08-06)
 
-Durable agent/operator rules from the GA honesty + managed recompile + JS behavior campaign. **Do not re-derive these the hard way.**
+Durable agent/operator rules from the GA honesty + managed recompile + JS behavior + native-fixtures campaign. **Do not re-derive these the hard way.**
 
 ## L1 — Green gate ≠ real evidence
 
@@ -42,6 +42,34 @@ Parent + subcommand both defining `--output-dir` can drop the value depending on
 
 Thinktank recommended narrow Scope B; CEO chose full Scope C. Still execute **honesty / security first** (Phases 1–2), then the long roadmap. Do not market GA from preview gates alone.
 
-## L12 — A fixture that builds is not a capability that works (2026-08-06)
+## L11 — Bidirectional oracles on grades
+
+Grade promotion (behavior tier → `evidence_backed`) must have tests that **refuse** promotion on tier 1 / missing syntax / packaging_only. A one-arm “happy path” green is a hollow gate (see L1).
+
+## L12 — A fixture that builds is not a capability that works
 
 Native micro-CLIs under `test_samples/native/` prove **byte-stable CLI surfaces**, not that REVENG analyzes them. Manifest entries stay `required: false` / `status: fixture_only` with a `status_note` naming the gap; a unit test forbids flipping status to `ga`/`verified`/`supported` without evidence. Measured analyze outcomes live only in `reports/native_analyze_probe/`.
+
+## L13 — Nonzero exit is not `completed`
+
+A three-valued probe (`completed` / `timeout` / `could_not_measure`) must map **returncode ≠ 0** to `could_not_measure` with `reason: nonzero_exit:<code>`, never to `completed`. Exit **2** on any `could_not_measure`; exit **0** on measured `timeout`. Process-level tests (real OS returncodes) beat catching `SystemExit` in-process alone. Bump `probe_version` when semantics change (v1.0 → v1.1).
+
+## L14 — Regenerating `latest.json` does not scrub dishonest siblings
+
+Every file retained under a tracked evidence directory must satisfy the same invariants as `latest.json`. Synthetic `true`-command runs and pre-fix stamps that contradict the status contract must be **deleted or quarantined**, not left beside a fixed pointer. Prefer a short README stating what is allowed in the folder.
+
+## L15 — Cursor Pro quota is not Fable (and Auto is not Fable)
+
+Fable is reached via **`claude -p --model claude-fable-5`** (or thinktank seat 1). Sol via **`codex exec --model gpt-5.6-sol`**. Cursor Task “premium” seats failing on Pro limits are a different product — do not report “Fable unavailable” because Cursor quota reset. Prefer CLI seats for plan/validate when the IDE router is exhausted.
+
+## L16 — Alive ≠ working
+
+A background implementer with a live PID, **~0 CPU**, and a **0-byte log** is stuck, not “buffering.” Measure CPU delta + log growth within ~1–2 minutes; run a tiny positive control. Kill and continue in-session rather than waiting on a silent seat.
+
+## L17 — Inline evidence for Sol when the sandbox blocks greps
+
+`codex exec --sandbox read-only` on this host may reject PowerShell `Select-String` / path probes (`blocked by policy`) and hang. For re-audits, **paste the file contents into the prompt** and instruct Sol not to shell. A hung validator is not a REJECT.
+
+## L18 — Host C linker may be broken; Go still works; skips must be loud
+
+This WSL host’s `cc`/`clang` can fail linking (`libc.so.6` / `.relr.dyn`). That is **environment**, not a missing fixture. Prefer `CGO_ENABLED=0 go build` for hermetic Go toys. Absent/broken toolchain → actionable skip marker (`NATIVE_FIXTURE_SKIPPED: …`); present toolchain → **no** marker (two-arm test). Plan paths saying `docs/BACKLOG.md` mean root **`backlog.md`**.

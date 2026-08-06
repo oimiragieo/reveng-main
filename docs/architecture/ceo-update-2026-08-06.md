@@ -2,6 +2,8 @@
 
 Plain-language status after Scope C Phases 1–3 (preview + behavior probes). **Last CEO update:** none on file; this is the first dated briefing.
 
+**Superseded for “what’s next” by:** [`ceo-update-2026-08-06-wave2.md`](ceo-update-2026-08-06-wave2.md) (native fixtures + probe + Sol APPROVE). Keep this file as the Phase 1–3 snapshot.
+
 ## Bottom line (one sentence)
 
 We made the “ready to ship” lights honest, fixed managed-language rebuild without Ghidra, and wired real JS behavior into grades — **public preview can be claimed carefully**; full Scope C is still a multi-month program.

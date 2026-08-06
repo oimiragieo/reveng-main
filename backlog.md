@@ -2,8 +2,9 @@
 
 Ops index for the full roadmap clearance program. Update `status` when work lands.
 
-**CEO briefing:** [`docs/architecture/ceo-update-2026-08-06.md`](docs/architecture/ceo-update-2026-08-06.md)  
-**Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md)
+**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-06-wave2.md`](docs/architecture/ceo-update-2026-08-06-wave2.md)  
+**Prior CEO:** [`docs/architecture/ceo-update-2026-08-06.md`](docs/architecture/ceo-update-2026-08-06.md)  
+**Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (L1–L18)
 
 Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `research`
 
