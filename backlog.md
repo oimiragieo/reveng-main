@@ -109,6 +109,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | DF-2 | Conftest heavy imports | done |
 | DF-3 | Wrong analyze report filename in runner | done |
 | DF-4 | Full `git status` hangs on dirty `reports/` (DrvFS) | done |
+| DF-5 | hello_go analyze can process-exit 0 / probe `completed` with partial_success / empty native fallback — not native GA | open (honesty) |
 
 ## I. Decisions / waivers
 
