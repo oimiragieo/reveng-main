@@ -417,6 +417,8 @@ class REVENGMCPServer(MCPServer):
                 payload={
                     "language": result.language,
                     "analysis_file": str(result.analysis_file),
+                    "validation_grade": result.validation_grade,
+                    "capability_report": (result.metadata or {}).get("capability_report"),
                     "app_result": result.metadata,
                 },
                 provenance=provenance,

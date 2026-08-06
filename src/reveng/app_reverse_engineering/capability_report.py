@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Sequence,
 CAPABILITY_REPORT_SCHEMA_VERSION = "1.0"
 
 _JS_SYNTAX_SUFFIXES = {".js", ".cjs", ".mjs"}
+_TS_SYNTAX_SUFFIXES = {".ts", ".tsx", ".mts", ".cts"}
 
 # Size-scaled probe timeouts (P3-BP-4): keep small trees snappy, give large trees room.
 _JS_PROBE_TIMEOUT_BASE_SEC = 25.0
@@ -203,6 +204,39 @@ def _resolve_package_cli_entry(project_dir: Path, package_data: Any) -> Optional
     return None
 
 
+def _resolve_typescript_cli_entry(project_dir: Path, package_data: Any) -> Optional[Path]:
+    """Pick a TypeScript entry (``bin`` / ``main``) when no JS entry resolves."""
+    if not isinstance(package_data, dict):
+        return None
+    pkg = cast(Dict[str, Any], package_data)
+    candidates: List[str] = []
+    bin_field = pkg.get("bin")
+    if isinstance(bin_field, str):
+        candidates.append(bin_field)
+    elif isinstance(bin_field, dict) and bin_field:
+        first_key = sorted(bin_field.keys())[0]
+        val = bin_field[first_key]
+        if isinstance(val, str):
+            candidates.append(val)
+    main = pkg.get("main")
+    if isinstance(main, str):
+        candidates.append(main)
+
+    root = project_dir.resolve()
+    for rel in candidates:
+        if not rel.strip():
+            continue
+        entry = (project_dir / rel).resolve()
+        try:
+            entry.relative_to(root)
+        except ValueError:
+            continue
+        if entry.suffix.lower() not in _TS_SYNTAX_SUFFIXES or not entry.is_file():
+            continue
+        return entry
+    return None
+
+
 def run_javascript_behavior_probe(
     project_dir: Path,
     *,
@@ -248,19 +282,29 @@ def run_javascript_behavior_probe(
         return section
 
     entry = _resolve_package_cli_entry(root, package_data)
-    if entry is None:
-        section["reason"] = "no_cli_entry"
-        return section
-
-    node_exe = which("node")
-    if not node_exe:
-        section["reason"] = "node_not_found"
-        return section
+    runner = "node"
+    runner_exe: Optional[str] = None
+    if entry is not None:
+        runner_exe = which("node")
+        if not runner_exe:
+            section["reason"] = "node_not_found"
+            return section
+    else:
+        entry = _resolve_typescript_cli_entry(root, package_data)
+        if entry is None:
+            section["reason"] = "no_cli_entry"
+            return section
+        runner = "tsx"
+        runner_exe = which("tsx")
+        if not runner_exe:
+            section["reason"] = "tsx_not_found"
+            return section
 
     rel_posix = entry.relative_to(root).as_posix()
-    cmd = [node_exe, rel_posix, "--help"]
+    cmd = [runner_exe, rel_posix, "--help"]
     section["entry_relative"] = rel_posix
     section["command"] = cmd
+    section["runner"] = runner
 
     try:
         proc = subprocess.run(

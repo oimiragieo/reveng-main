@@ -28,7 +28,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 
 | id | title | status | notes |
 | --- | --- | --- | --- |
-| P3-BP-1 | TS `main` behavior probe | partial | smoke `.cjs` stub; **tsx research** open |
+| P3-BP-1 | TS `main` behavior probe | done | optional `tsx` runner when present; else `tsx_not_found` |
 | P3-BP-2 | npm pack/run probes | done | optional dry-run, default off |
 | P3-BP-3 | Behavior promotes `validation.grade` | done | tier2+syntax → evidence_backed |
 | P3-BP-4 | Size-scaled probe timeouts | done | by file_count |
@@ -39,14 +39,14 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 
 | id | title | phase | status | needs research? | notes |
 | --- | --- | --- | --- | --- | --- |
-| M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic | 2 | open | **yes R-NATIVE-1** | Windows opencode not Linux CI |
+| M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic | 2 | open | see R-NATIVE-1 doc | Inventory done; still need C/Go fixtures + Linux pins |
 | RALPH-1 | Source-map path alias recall | 6 | partial | domain recall separate | file overlap fixed |
 | RALPH-2 | cli.js 0.8+ recall | 6 | open | **yes R-RALPH-2** | harness done; engine long pole |
 | M5-PIPE | pipeline vs pipelines merge | 9 | partial | **yes R-PIPE-1** | documented split; merge deferred |
 | M0 | Baseline reporting discipline | exec | open | | hexyl report-always / doc sync |
-| M1 | Multi-codebase corpus gate | exec | open | **yes R-NATIVE-1** | overlaps M1-NATIVE-FAM |
+| M1 | Multi-codebase corpus gate | exec | open | see R-NATIVE-1 | overlaps M1-NATIVE-FAM |
 | M2 | Hexyl frontier hardening | 4 | open | **yes R-HEX-1** | beyond timeout |
-| M3 | Validation/evidence unified contract | 3 | open | | CLI/API/MCP spine |
+| M3 | Validation/evidence unified contract | 3 | partial | | MCP top-level validation_grade + capability_report landed |
 | M4 | CI/PR/nightly corpus gates | 5 | open | | workflows lack bench jobs |
 | M5 | Post-gate architecture extraction | 9–10 | open | after M0–M4 | workers/ports |
 
@@ -54,10 +54,10 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 
 | id | question | blocks |
 | --- | --- | --- |
-| R-NATIVE-1 | Linux-hermetic native CLI set for ≥5/≥3 families | M1-NATIVE-FAM, M1 |
+| R-NATIVE-1 | Linux-hermetic native CLI set for ≥5/≥3 families | **done** — `docs/architecture/research-r-native-1-linux-hermetic-candidates.md` |
 | R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | RALPH-2, Phase 6 |
 | R-HEX-1 | Fresh hexyl timed run: still timeout-only? | M2, Phase 4 |
-| R-TSX-1 | Ship `tsx` probe vs keep smoke stub | P3-BP-1 close |
+| R-TSX-1 | Ship `tsx` probe vs keep smoke stub | **done** — optional tsx runner in behavior probe |
 | R-PIPE-1 | Merge pipeline packages vs permanent split | M5-PIPE |
 | R-SEC-1 | Sandbox class before exploit expansion | Phase 10, Track J |
 | R-VRL-1 | Min seeds + provider for honest VRL LLM gate | Phase 4 |
@@ -68,7 +68,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | --- | --- | --- |
 | 1 | Honesty + known_gaps + GA gate integrity | **done** |
 | 2 | Managed recompile + GA report honesty (preview) | **done (preview)**; native corpus still open |
-| 3 | Behavior-backed JS validation | **done** (BP-1 partial) |
+| 3 | Behavior-backed JS validation | **done** (incl. optional tsx) |
 | 4 | Hexyl frontier + VRL LLM round-trip honesty | open |
 | 5 | Equivalence product gates + CI corpus enforcement | open |
 | 6 | JS close: RALPH-2 + bundler graph (P4) | open (BP-2/3/4 done) |

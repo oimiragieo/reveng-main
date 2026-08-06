@@ -72,7 +72,7 @@ Single place to pick up this thread without re-deriving context from chat. Updat
 
 | ID | Issue | Evidence / artifact | Next step | Status |
 | --- | --- | --- | --- | --- |
-| **P3-BP-1** | Behavior probe skipped when **`main`** was **TypeScript** (Node cannot run it for `--help`). | Landed: `reveng_behavior_smoke.cjs` written into each reconstructed project + `package.json` field **`reveng.behavior_probe_main`**; `_resolve_package_cli_entry` tries it after `bin`/`main`. | Optional: `tsx`/npm lifecycle probes for “real” entry behavior (still open). | Partial |
+| **P3-BP-1** | Behavior probe skipped when **`main`** was **TypeScript** (Node cannot run it for `--help`). | Landed: smoke stub + optional **`tsx`** runner when on PATH (`runner=tsx`); `tsx_not_found` when missing. | Done |
 | **P3-BP-2** | **`npm pack` / `npm run`**-class probes not implemented. | Phase 3 baseline is only `node <entry> --help`. | Landed: optional `run_javascript_npm_lifecycle_probe` (`npm pack --dry-run --ignore-scripts`, default off) as `javascript_npm_lifecycle_probe` dimension. | Done |
 | **P3-BP-3** | Behavior signal does not yet **promote** `validation.grade` (only capability + Ralph tie-break). | `contracts.build_validation_summary` today. | Landed: tier 2 + `all_checked_ok` + sources promotes `partial_recovery`/`structure_only` → `evidence_backed`; `capability_report` attached in `enrich_app_analysis_payload`. | Done |
 | **P3-BP-4** | Fixed probe timeouts under/over-serve small vs large trees. | `resolve_javascript_probe_timeout_sec` + `project_tree_stats`. | Auto-scale help/npm timeouts by file_count (skip `node_modules`); explicit timeout still wins. | Done |
