@@ -28,6 +28,7 @@ Statuses: `open` · `in_progress` · `done` · `parked` · `blocked`
 | M1-NATIVE-FAM | Expand to ≥5 native / ≥3 families with hermetic fixtures | 2 | open | post-GA | opencode Windows binary not hermetic on Linux CI; managed benches already 4 |
 | P3-BP-2 | npm pack/run probes | 6 | done | post-GA | Optional `run_javascript_npm_lifecycle_probe` (default off); dimension wired |
 | P3-BP-3 | Behavior probe promotes validation.grade | 6 | done | post-GA | tier2+syntax_ok → evidence_backed; capability_report now attached in enrich |
+| P3-BP-4 | Size-scaled JS probe timeouts | 6 | done | post-GA | resolve_javascript_probe_timeout_sec by file_count |
 | RALPH-2 | cli.js 0.8+ recall | 6 | open | post-GA | |
 | M5-PIPE | pipeline vs pipelines consolidation | 9 | open | post-GA | |
 | DF-2 | Lazy conftest heavy imports | 3 | done | quality | Heavy deps imported inside fixtures only |
@@ -39,7 +40,8 @@ Statuses: `open` · `in_progress` · `done` · `parked` · `blocked`
 | --- | --- | --- |
 | 1 | Honesty + known_gaps + GA gate integrity | done |
 | 2 | Managed recompile + GA report honesty | done (preview) |
-| 3–13 | See Scope C master plan | open |
+| 3 | Behavior-backed JS validation (BP-2/3/4) | done (BP-1 partial: tsx optional) |
+| 4–13 | See Scope C master plan / hardening plan | open |
 
 ## Parked (Tier 3 honesty non-goals)
 

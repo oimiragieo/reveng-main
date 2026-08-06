@@ -12,6 +12,66 @@ CAPABILITY_REPORT_SCHEMA_VERSION = "1.0"
 
 _JS_SYNTAX_SUFFIXES = {".js", ".cjs", ".mjs"}
 
+# Size-scaled probe timeouts (P3-BP-4): keep small trees snappy, give large trees room.
+_JS_PROBE_TIMEOUT_BASE_SEC = 25.0
+_JS_PROBE_TIMEOUT_MID_SEC = 60.0
+_JS_PROBE_TIMEOUT_LARGE_SEC = 90.0
+_JS_PROBE_TIMEOUT_MAX_SEC = 120.0
+_JS_NPM_PROBE_TIMEOUT_BASE_SEC = 90.0
+_JS_NPM_PROBE_TIMEOUT_MAX_SEC = 180.0
+
+
+def project_tree_stats(project_dir: Path) -> Dict[str, int]:
+    """Count files and bytes under a reconstructed project (skips node_modules)."""
+    root = project_dir.expanduser().resolve()
+    file_count = 0
+    total_bytes = 0
+    if not root.is_dir():
+        return {"file_count": 0, "total_bytes": 0}
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        if "node_modules" in {p.lower() for p in path.parts}:
+            continue
+        file_count += 1
+        try:
+            total_bytes += path.stat().st_size
+        except OSError:
+            continue
+    return {"file_count": file_count, "total_bytes": total_bytes}
+
+
+def resolve_javascript_probe_timeout_sec(
+    project_dir: Path,
+    *,
+    explicit: Optional[float] = None,
+    base_sec: float = _JS_PROBE_TIMEOUT_BASE_SEC,
+    for_npm: bool = False,
+) -> float:
+    """
+    Pick a subprocess timeout from tree size unless the caller set ``explicit``.
+
+    Rough bands (file_count, excluding node_modules):
+    - ≤50 files → base (25s help / 90s npm)
+    - ≤500 files → mid (60s / 120s)
+    - larger → large (90s / 180s), hard-capped
+    """
+    if explicit is not None and explicit > 0:
+        return float(explicit)
+    stats = project_tree_stats(project_dir)
+    n = stats["file_count"]
+    if for_npm:
+        if n <= 50:
+            return _JS_NPM_PROBE_TIMEOUT_BASE_SEC
+        if n <= 500:
+            return min(_JS_NPM_PROBE_TIMEOUT_MAX_SEC, 120.0)
+        return _JS_NPM_PROBE_TIMEOUT_MAX_SEC
+    if n <= 50:
+        return base_sec
+    if n <= 500:
+        return _JS_PROBE_TIMEOUT_MID_SEC
+    return min(_JS_PROBE_TIMEOUT_LARGE_SEC, _JS_PROBE_TIMEOUT_MAX_SEC)
+
 
 def _safe_float(value: Any) -> Optional[float]:
     if value is None:
@@ -146,16 +206,17 @@ def _resolve_package_cli_entry(project_dir: Path, package_data: Any) -> Optional
 def run_javascript_behavior_probe(
     project_dir: Path,
     *,
-    timeout_sec: float = 25.0,
+    timeout_sec: Optional[float] = None,
     run_probe: bool = True,
 ) -> Dict[str, Any]:
     """
     Run ``node <entry> --help`` from the project root (npm-style CLI smoke).
 
     Persists evidence tails and a small ``tier`` for ranking (0=none, 1=help-like output,
-    2=exit code 0).
+    2=exit code 0). When ``timeout_sec`` is omitted, scales by project tree size (P3-BP-4).
     """
     root = project_dir.expanduser().resolve()
+    effective_timeout = resolve_javascript_probe_timeout_sec(root, explicit=timeout_sec)
     section: Dict[str, Any] = {
         "project_dir": str(root),
         "skipped": True,
@@ -167,6 +228,7 @@ def run_javascript_behavior_probe(
         "stdout_tail": "",
         "stderr_tail": "",
         "summary": "skipped",
+        "timeout_sec": effective_timeout,
     }
     if not run_probe:
         section["reason"] = "disabled"
@@ -206,7 +268,7 @@ def run_javascript_behavior_probe(
             cwd=str(root),
             capture_output=True,
             text=True,
-            timeout=timeout_sec,
+            timeout=effective_timeout,
             check=False,
         )
     except subprocess.TimeoutExpired:
@@ -258,7 +320,7 @@ def run_javascript_behavior_probe(
 def run_javascript_npm_lifecycle_probe(
     project_dir: Path,
     *,
-    timeout_sec: float = 90.0,
+    timeout_sec: Optional[float] = None,
     run_probe: bool = False,
 ) -> Dict[str, Any]:
     """
@@ -266,9 +328,12 @@ def run_javascript_npm_lifecycle_probe(
 
     Default-off: packaging can be slow and needs ``npm`` on PATH. When enabled,
     records whether ``npm pack --dry-run`` exits 0 (tier 2) or emits pack-like
-    output with a non-zero exit (tier 1).
+    output with a non-zero exit (tier 1). Timeout scales by tree size when omitted.
     """
     root = project_dir.expanduser().resolve()
+    effective_timeout = resolve_javascript_probe_timeout_sec(
+        root, explicit=timeout_sec, for_npm=True
+    )
     section: Dict[str, Any] = {
         "project_dir": str(root),
         "skipped": True,
@@ -279,6 +344,7 @@ def run_javascript_npm_lifecycle_probe(
         "stdout_tail": "",
         "stderr_tail": "",
         "summary": "skipped",
+        "timeout_sec": effective_timeout,
     }
     if not run_probe:
         return section
@@ -303,7 +369,7 @@ def run_javascript_npm_lifecycle_probe(
             cwd=str(root),
             capture_output=True,
             text=True,
-            timeout=timeout_sec,
+            timeout=effective_timeout,
             check=False,
         )
     except subprocess.TimeoutExpired:

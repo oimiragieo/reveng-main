@@ -59,11 +59,12 @@ Hitting **0.80+ recall** on production `cli.js` still requires **engine work**; 
 **Implemented (baseline):**
 
 - **`capability_report.dimensions.javascript_behavior_probe`** — resolves `package.json` `bin` / `main`, runs `node <entry> --help` from the reconstructed project root; records `tier` (0–2), exit code, stdout/stderr tails, `summary`.
-- **`validation.metadata.js_behavior_probe`** (when tier > 0) — compact echo for humans.
+- **`capability_report` on enrich** — `enrich_app_analysis_payload` builds the report and may promote `validation.grade` (P3-BP-3).
+- **Optional npm pack dry-run** — `javascript_npm_lifecycle_probe` (default off).
+- **Size-scaled timeouts** — `resolve_javascript_probe_timeout_sec` (P3-BP-4).
 - **Ralph loop** — `ralph_score_key` lexicographic order adds **behavior tier** after recall/precision (see `js_behavior_probe_tier`); attempts log `js_behavior_probe_tier`.
-- **CLI / API / framework** — `--no-js-behavior-probe` and `run_js_behavior_probe=` mirror the syntax-check toggle; tracked-bundle benchmark keeps probes off for speed.
 
-**Still open:** npm lifecycle probes, stricter `VALIDATION_GRADE` promotion from behavior alone, and richer subprocess policy (timeouts per project size).
+**Still open:** optional `tsx` for true TS entry behavior (smoke stub covers most cases).
 
 ## Tracked open items (Phase 3 + Ralph)
 
@@ -72,8 +73,9 @@ Single place to pick up this thread without re-deriving context from chat. Updat
 | ID | Issue | Evidence / artifact | Next step | Status |
 | --- | --- | --- | --- | --- |
 | **P3-BP-1** | Behavior probe skipped when **`main`** was **TypeScript** (Node cannot run it for `--help`). | Landed: `reveng_behavior_smoke.cjs` written into each reconstructed project + `package.json` field **`reveng.behavior_probe_main`**; `_resolve_package_cli_entry` tries it after `bin`/`main`. | Optional: `tsx`/npm lifecycle probes for “real” entry behavior (still open). | Partial |
-| **P3-BP-2** | **`npm pack` / `npm run`**-class probes not implemented. | Phase 3 baseline is only `node <entry> --help`. | Add optional lifecycle section under `javascript_behavior_probe` or a sibling dimension; gate on timeout and repo size. | Open |
-| **P3-BP-3** | Behavior signal does not yet **promote** `validation.grade` (only capability + Ralph tie-break). | `contracts.build_validation_summary` today. | Define grade bump rules (e.g. tier 2 + syntax ok) without overstating oracle fidelity. | Open |
+| **P3-BP-2** | **`npm pack` / `npm run`**-class probes not implemented. | Phase 3 baseline is only `node <entry> --help`. | Landed: optional `run_javascript_npm_lifecycle_probe` (`npm pack --dry-run --ignore-scripts`, default off) as `javascript_npm_lifecycle_probe` dimension. | Done |
+| **P3-BP-3** | Behavior signal does not yet **promote** `validation.grade` (only capability + Ralph tie-break). | `contracts.build_validation_summary` today. | Landed: tier 2 + `all_checked_ok` + sources promotes `partial_recovery`/`structure_only` → `evidence_backed`; `capability_report` attached in `enrich_app_analysis_payload`. | Done |
+| **P3-BP-4** | Fixed probe timeouts under/over-serve small vs large trees. | `resolve_javascript_probe_timeout_sec` + `project_tree_stats`. | Auto-scale help/npm timeouts by file_count (skip `node_modules`); explicit timeout still wins. | Done |
 | **RALPH-1** | Source-map recovered files lived under **`_/…/src/…`** anchors while the oracle used logical **`index` / `lib/greet`** keys, so **project_file_recall** read **0.0** even when files aligned. | Fixed in `JavaScriptBundleReverseEngineer._project_anchor_match_keys` + `_build_benchmark_scorecard` (alias match set). Tests: `test_benchmark_scorecard_aligns_source_map_mirror_paths_with_oracle`. | **Domain** recall for this corpus may still be **0** (single `lib` oracle vs many synthetic domains); treat separately from file overlap. | Partial |
 | **RALPH-2** | Real **`cli.js`** + `claude-code-main` loop still the long pole for **0.8+ recall**; harness is done, engine is not. | `projects/js-oracle-ralph/README.md`, local corpus template / reports per execution backlog. | Continue `bundle_reverse_engineer` module synthesis; use `ralph_report.json` + `variant_schedule` to compare variants. | Open |
 
