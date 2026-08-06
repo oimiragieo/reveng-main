@@ -1,5 +1,15 @@
 # Development Rules for REVENG
 
+## Release honesty (Scope C lessons — 2026-08)
+
+See `.claude/MEMORY.md`, `docs/architecture/lessons-learned-scope-c-2026-08.md`, and skill `.cursor/skills/reveng-release-honesty/SKILL.md`.
+
+- Green `verify_ga_readiness` ≠ proof — confirm tracked report evidence fields.
+- Wire helpers through product paths (`enrich_app_analysis_payload`), not only unit tests.
+- Managed language inputs must not require Ghidra; keep exploit surfaces EXPERIMENTAL until SEC-1.
+- `REVENGLogger` supports printf `*args`; do not assume stdlib Logger without checking.
+- Dogfood with Python 3.9; avoid repo-wide `git status` over huge `reports/` trees on DrvFS.
+
 ## Code Quality Standards
 
 ### Python Code Style
@@ -49,6 +59,7 @@ Hooks include:
 - Include comprehensive overview, file listings, and usage
 - Update when directory structure or purpose changes
 - Maintain consistency with root claude.md format
+- When release/GA status changes, update `backlog.md` + tracked-evidence prose in the same change (docs rot is a defect)
 
 ### Code Comments
 - Use inline comments for complex logic only

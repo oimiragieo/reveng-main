@@ -1,5 +1,13 @@
 # Repository Guidelines
 
+## Release honesty (read first for GA / ship claims)
+
+- Living ops index: root `backlog.md`. Latest CEO briefing: `docs/architecture/ceo-update-2026-08-06.md`.
+- Lessons from Scope C 2026-08: `docs/architecture/lessons-learned-scope-c-2026-08.md`.
+- Cursor skill: `.cursor/skills/reveng-release-honesty/SKILL.md`. Agent memory: `.claude/MEMORY.md`.
+- **Never trust a green GA verifier alone** — open tracked `reports/*.json` / `.reveng/*.json` and confirm analyze/recompile evidence fields.
+- Prefer `/usr/bin/python3.9` for local gates on this host. Stage **named paths** for git commits when `reports/` is dirty (full `git status` can hang on WSL/DrvFS).
+
 ## Project Structure & Module Organization
 Primary code lives in `src/reveng/`. Add new runtime code to the closest domain package instead of creating new root scripts (there is **no** repo-root `reveng.py` — it was removed because it shadowed the package; use the `reveng` / `python -m reveng` entry points or `src/reveng/cli/reveng.py`). Key packages:
 - `reveng.core` — foundation layer (exceptions, error codes, validation, config, `result_contracts`, `ir`, `ai_models`); must not import higher-level domains.
