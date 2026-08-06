@@ -290,7 +290,9 @@ def write_report(results: List[Dict[str, Any]], out_dir: Path, now_iso: str) -> 
     text = json.dumps(payload, indent=2) + "\n"
     data = text.encode("utf-8")
 
-    fd_latest, tmp_latest_name = tempfile.mkstemp(prefix=".latest.", suffix=".tmp", dir=str(out_dir))
+    fd_latest, tmp_latest_name = tempfile.mkstemp(
+        prefix=".latest.", suffix=".tmp", dir=str(out_dir)
+    )
     fd_stamp, tmp_stamp_name = tempfile.mkstemp(prefix=".stamp.", suffix=".tmp", dir=str(out_dir))
     tmp_latest = Path(tmp_latest_name)
     tmp_stamp = Path(tmp_stamp_name)

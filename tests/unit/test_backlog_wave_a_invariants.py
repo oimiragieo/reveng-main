@@ -51,9 +51,7 @@ def _parse_md_tables(text: str) -> List[Tuple[List[str], List[List[str]]]]:
             i += 1
             continue
         header_cells = [_strip_cell(c) for c in line.strip().strip("|").split("|")]
-        if i + 1 >= len(lines) or not re.match(
-            r"^\s*\|?\s*:?-{3,}", lines[i + 1]
-        ):
+        if i + 1 >= len(lines) or not re.match(r"^\s*\|?\s*:?-{3,}", lines[i + 1]):
             i += 1
             continue
         i += 2
@@ -112,9 +110,7 @@ def _backlog_status(item_id: str) -> str:
 def _section_e_phase_status(phase: int) -> str:
     text = BACKLOG.read_text(encoding="utf-8")
     # Narrow to section E heading through next ## heading.
-    m = re.search(
-        r"^## E\..*?(?=^## |\Z)", text, flags=re.MULTILINE | re.DOTALL
-    )
+    m = re.search(r"^## E\..*?(?=^## |\Z)", text, flags=re.MULTILINE | re.DOTALL)
     assert m, "section E not found in backlog.md"
     tables = _parse_md_tables(m.group(0))
     headers, row = _row_by_exact_id(tables, str(phase))
@@ -146,12 +142,12 @@ def test_ralph_baseline_could_not_measure_forbids_numeric_zero_recall():
         r"(?im)^(?:\|?\s*)?recall\s*[|:]\s*`?(?:0(?:\.0+)?|0\.0)`?\b",
         text,
     )
-    assert fake_zero is None, (
-        "must not present numeric 0 / 0.0 as recall when status is could_not_measure"
-    )
-    assert re.search(r"(?im)recall\s*[|:].*\bnull\b", text), (
-        "could_not_measure baseline must label recall as null"
-    )
+    assert (
+        fake_zero is None
+    ), "must not present numeric 0 / 0.0 as recall when status is could_not_measure"
+    assert re.search(
+        r"(?im)recall\s*[|:].*\bnull\b", text
+    ), "could_not_measure baseline must label recall as null"
 
 
 def test_vrl_decision_states_min_seeds_and_provider_policy():
