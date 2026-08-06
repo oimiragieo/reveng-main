@@ -11,6 +11,7 @@ from reveng.app_reverse_engineering.capability_report import (
     analyze_js_reconstructed_project,
     build_capability_report,
     run_javascript_behavior_probe,
+    run_javascript_npm_lifecycle_probe,
 )
 
 
@@ -140,6 +141,57 @@ def test_build_capability_report_includes_behavior_dimension(tmp_path: Path) -> 
     assert isinstance(beh, dict)
     assert beh.get("skipped") is True
     assert beh.get("reason") == "node_not_found"
+
+
+def test_run_javascript_npm_lifecycle_probe_disabled(tmp_path: Path) -> None:
+    proj = tmp_path / "rp"
+    proj.mkdir()
+    out = run_javascript_npm_lifecycle_probe(proj, run_probe=False)
+    assert out["skipped"] is True
+    assert out["reason"] == "disabled"
+    assert out["tier"] == 0
+
+
+def test_run_javascript_npm_lifecycle_probe_dry_run_ok(tmp_path: Path) -> None:
+    proj = tmp_path / "rp"
+    proj.mkdir()
+    (proj / "package.json").write_text(
+        json.dumps({"name": "t", "version": "1.0.0"}), encoding="utf-8"
+    )
+    with patch("reveng.app_reverse_engineering.capability_report.which", return_value="/fake/npm"):
+        with patch(
+            "reveng.app_reverse_engineering.capability_report.subprocess.run",
+            return_value=SimpleNamespace(
+                returncode=0,
+                stdout="npm notice\nfilename: t-1.0.0.tgz\n",
+                stderr="",
+            ),
+        ):
+            out = run_javascript_npm_lifecycle_probe(proj, run_probe=True, timeout_sec=5.0)
+    assert out["skipped"] is False
+    assert out["tier"] == 2
+    assert out["summary"] == "npm_pack_dry_run_ok"
+
+
+def test_build_capability_report_includes_npm_dimension_when_enabled(tmp_path: Path) -> None:
+    recon = tmp_path / "reconstructed_project"
+    recon.mkdir()
+    (recon / "package.json").write_text(
+        json.dumps({"name": "x", "version": "0.0.1"}), encoding="utf-8"
+    )
+    primary = {"reconstructed_project": recon}
+    with patch("reveng.app_reverse_engineering.capability_report.which", return_value=None):
+        report = build_capability_report(
+            language="javascript",
+            primary_artifacts=primary,
+            adapter_metadata={},
+            run_js_syntax_check=False,
+            run_js_behavior_probe=False,
+            run_js_npm_lifecycle_probe=True,
+        )
+    npm = report["dimensions"]["javascript_npm_lifecycle_probe"]
+    assert isinstance(npm, dict)
+    assert npm.get("reason") == "npm_not_found"
 
 
 def test_analyze_js_reconstructed_project_skips_when_no_node(tmp_path: Path) -> None:

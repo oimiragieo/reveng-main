@@ -255,6 +255,94 @@ def run_javascript_behavior_probe(
     return section
 
 
+def run_javascript_npm_lifecycle_probe(
+    project_dir: Path,
+    *,
+    timeout_sec: float = 90.0,
+    run_probe: bool = False,
+) -> Dict[str, Any]:
+    """
+    Optional ``npm pack --dry-run`` smoke for reconstructed Node projects (P3-BP-2).
+
+    Default-off: packaging can be slow and needs ``npm`` on PATH. When enabled,
+    records whether ``npm pack --dry-run`` exits 0 (tier 2) or emits pack-like
+    output with a non-zero exit (tier 1).
+    """
+    root = project_dir.expanduser().resolve()
+    section: Dict[str, Any] = {
+        "project_dir": str(root),
+        "skipped": True,
+        "reason": "disabled",
+        "tier": 0,
+        "command": None,
+        "exit_code": None,
+        "stdout_tail": "",
+        "stderr_tail": "",
+        "summary": "skipped",
+    }
+    if not run_probe:
+        return section
+    if not root.is_dir():
+        section["reason"] = "project_dir_missing"
+        return section
+    pkg = root / "package.json"
+    if not pkg.is_file():
+        section["reason"] = "no_package_json"
+        return section
+
+    npm_exe = which("npm")
+    if not npm_exe:
+        section["reason"] = "npm_not_found"
+        return section
+
+    cmd = [npm_exe, "pack", "--dry-run", "--ignore-scripts"]
+    section["command"] = cmd
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=timeout_sec,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        section["skipped"] = False
+        section["reason"] = "timeout"
+        section["summary"] = "npm_pack_timeout"
+        return section
+    except OSError as exc:
+        section["skipped"] = False
+        section["reason"] = f"os_error:{exc.__class__.__name__}"
+        section["summary"] = "npm_pack_os_error"
+        return section
+
+    stdout = proc.stdout or ""
+    stderr = proc.stderr or ""
+    section["stdout_tail"] = stdout[-800:]
+    section["stderr_tail"] = stderr[-800:]
+    section["exit_code"] = proc.returncode
+    section["skipped"] = False
+
+    combined = (stdout + stderr).lower()
+    pack_hints = (".tgz", "npm notice", "package:", "filename:")
+    has_hint = any(h in combined for h in pack_hints)
+    if proc.returncode == 0:
+        section["tier"] = 2
+        section["reason"] = "exit_zero"
+        section["summary"] = "npm_pack_dry_run_ok"
+    elif has_hint:
+        section["tier"] = 1
+        section["reason"] = "pack_like_output"
+        section["summary"] = "npm_pack_like_nonzero_exit"
+    else:
+        section["tier"] = 0
+        section["reason"] = f"nonzero_exit:{proc.returncode}"
+        section["summary"] = "npm_pack_failed"
+
+    return section
+
+
 def _run_node_check(js_path: Path, *, timeout_sec: float = 60.0) -> Dict[str, Any]:
     node_exe = which("node")
     if not node_exe:
@@ -373,6 +461,7 @@ def build_capability_report(
     adapter_metadata: Mapping[str, Any],
     run_js_syntax_check: bool = True,
     run_js_behavior_probe: bool = True,
+    run_js_npm_lifecycle_probe: bool = False,
 ) -> Dict[str, Any]:
     """Assemble the `capability_report` object persisted into app analysis.json."""
     oracle = _extract_oracle_alignment(adapter_metadata)
@@ -380,6 +469,7 @@ def build_capability_report(
 
     js_smoke: Optional[Dict[str, Any]] = None
     js_behavior: Optional[Dict[str, Any]] = None
+    js_npm: Optional[Dict[str, Any]] = None
     if language == "javascript":
         recon = primary_artifacts.get("reconstructed_project")
         if recon is not None:
@@ -391,6 +481,10 @@ def build_capability_report(
                 recon,
                 run_probe=run_js_behavior_probe,
             )
+            js_npm = run_javascript_npm_lifecycle_probe(
+                recon,
+                run_probe=run_js_npm_lifecycle_probe,
+            )
 
     recall = _safe_float(oracle.get("project_file_recall")) if oracle.get("present") else None
     precision = _safe_float(oracle.get("project_file_precision")) if oracle.get("present") else None
@@ -400,6 +494,8 @@ def build_capability_report(
         headline_parts.append(f"js_smoke={js_smoke.get('syntax_summary', 'unknown')}")
     if js_behavior and int(js_behavior.get("tier", 0) or 0) > 0:
         headline_parts.append(f"js_behavior={js_behavior.get('summary', 'tier')}")
+    if js_npm and int(js_npm.get("tier", 0) or 0) > 0:
+        headline_parts.append(f"js_npm={js_npm.get('summary', 'tier')}")
     if recall is not None and precision is not None:
         headline_parts.append(f"oracle_files recall={recall:.4f} precision={precision:.4f}")
     elif oracle.get("present"):
@@ -416,5 +512,6 @@ def build_capability_report(
             "oracle_alignment": oracle,
             "javascript_smoke": js_smoke,
             "javascript_behavior_probe": js_behavior,
+            "javascript_npm_lifecycle_probe": js_npm,
         },
     }

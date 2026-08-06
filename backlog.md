@@ -25,10 +25,13 @@ Statuses: `open` · `in_progress` · `done` · `parked` · `blocked`
 | RECOMPILE-1 | Managed-language recompile still fails (Ghidra wrongly required) | 2 | done | blocker | Fixed: app-adapter route; 4 hermetic benches completed_without_behavior_checks |
 | PY39-FSTR-1 | spec_library f-string backslash SyntaxError on 3.9 | 1 | done | blocker | Blocks all app RE imports on Python 3.9 |
 | CLI-OUTDIR-1 | Benchmark --output-dir lost on recompile subparser | 2 | done | blocker | Subcommand-specific argv order in runner |
-| M1-NATIVE-FAM | Expand to ≥5 native / ≥3 families with hermetic fixtures | 2 | open | post-GA | opencode Windows binary not hermetic on Linux CI |
-| P3-BP-2 | npm pack/run probes | 6 | open | post-GA | |
+| M1-NATIVE-FAM | Expand to ≥5 native / ≥3 families with hermetic fixtures | 2 | open | post-GA | opencode Windows binary not hermetic on Linux CI; managed benches already 4 |
+| P3-BP-2 | npm pack/run probes | 6 | done | post-GA | Optional `run_javascript_npm_lifecycle_probe` (default off); dimension wired |
+| P3-BP-3 | Behavior probe promotes validation.grade | 6 | done | post-GA | tier2+syntax_ok → evidence_backed; capability_report now attached in enrich |
 | RALPH-2 | cli.js 0.8+ recall | 6 | open | post-GA | |
 | M5-PIPE | pipeline vs pipelines consolidation | 9 | open | post-GA | |
+| DF-2 | Lazy conftest heavy imports | 3 | done | quality | Heavy deps imported inside fixtures only |
+| LOG-PRINTF-1 | REVENGLogger.warning rejected %-args (sandbox arity crash) | 3 | done | quality | stdlib-compatible *args on debug/info/warning/error/critical |
 
 ## Phase index (Scope C)
 
@@ -61,5 +64,5 @@ Statuses: `open` · `in_progress` · `done` · `parked` · `blocked`
 | id | finding | severity | disposition |
 | --- | --- | --- | --- |
 | DF-1 | System python3.13 stdlib incomplete (no shutil) on this host | medium | Use python3.9 for local gates |
-| DF-2 | tests/conftest.py imports volatility3/sklearn — blocks default pytest without extra deps | medium | --noconftest for focused unit lanes; install deps for full suite |
+| DF-2 | tests/conftest.py imports volatility3/sklearn — blocks default pytest without extra deps | medium | Fixed: lazy imports inside fixtures (2026-08-06) |
 | DF-3 | Analyze writes `reports/unified_analysis_report.json` but runner looked for `analysis_report.json` | high | Fixed detector |

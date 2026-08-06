@@ -206,24 +206,34 @@ class REVENGLogger:
             self.progress_tracker.complete()
             self.progress_tracker = None
 
-    def debug(self, message: str, **kwargs):
-        """Log debug message"""
+    def debug(self, message: str, *args, **kwargs):
+        """Log debug message (stdlib-compatible ``%`` formatting via *args)."""
+        if args:
+            message = message % args
         self._log(logging.DEBUG, message, **kwargs)
 
-    def info(self, message: str, **kwargs):
-        """Log info message"""
+    def info(self, message: str, *args, **kwargs):
+        """Log info message (stdlib-compatible ``%`` formatting via *args)."""
+        if args:
+            message = message % args
         self._log(logging.INFO, message, **kwargs)
 
-    def warning(self, message: str, **kwargs):
-        """Log warning message"""
+    def warning(self, message: str, *args, **kwargs):
+        """Log warning message (stdlib-compatible ``%`` formatting via *args)."""
+        if args:
+            message = message % args
         self._log(logging.WARNING, message, **kwargs)
 
-    def error(self, message: str, **kwargs):
-        """Log error message"""
+    def error(self, message: str, *args, **kwargs):
+        """Log error message (stdlib-compatible ``%`` formatting via *args)."""
+        if args:
+            message = message % args
         self._log(logging.ERROR, message, **kwargs)
 
-    def critical(self, message: str, **kwargs):
-        """Log critical message"""
+    def critical(self, message: str, *args, **kwargs):
+        """Log critical message (stdlib-compatible ``%`` formatting via *args)."""
+        if args:
+            message = message % args
         self._log(logging.CRITICAL, message, **kwargs)
 
     def _log(self, level: int, message: str, **kwargs):
