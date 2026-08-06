@@ -211,7 +211,7 @@ The third case must never read as either of the first two. `could_not_measure` c
 
 - [ ] Edit `docs/BACKLOG.md`:
   - **M1-NATIVE-FAM** — move from "inventory done" to "fixtures landed (C + Go, hermetic, byte-stable CLI); analyze-path status = *measured, see reports/native_analyze_probe/latest.json*". State explicitly that the item is **not** closed and what would close it: `reveng analyze` completing on both fixtures inside the 120 s budget without Ghidra, with the manifest entries flipped to `required: true` in the same change.
-  - **R-HEX-1** — mark the probe as shipped and the hexyl timeout as *recorded, not fixed*, with the observed outcome from Task 3's real run written in as a number, not a word.
+  - **R-HEX-1** — mark the **probe script** as shipped. Record the observed native-fixture outcome as a number (status + elapsed_s + returncode). If a hexyl binary is **not** present on the host, state that explicitly and leave hexyl-specific remeasurement open under M2 — do not claim hexyl was timed.
   - **M0 report discipline** — note the new `reports/native_analyze_probe/` convention (one timestamped JSON per run + `latest.json` copy, three-valued `status`).
   - **RALPH-2** — leave untouched; note only that it remains the long pole and is out of scope for this phase.
 
