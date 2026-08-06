@@ -2861,6 +2861,8 @@ class REVENGEnterpriseServer(MCPServer):
                     "analysis_id": analysis_id,
                     "language": app_result.language,
                     "analysis_file": str(app_result.analysis_file),
+                    "validation_grade": app_result.validation_grade,
+                    "capability_report": (app_result.metadata or {}).get("capability_report"),
                     "app_result": app_result.metadata,
                 },
                 provenance={
