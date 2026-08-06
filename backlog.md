@@ -4,9 +4,10 @@ Ops index for the full roadmap clearance program. Update `status` when work land
 
 **CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-06-wave2.md`](docs/architecture/ceo-update-2026-08-06-wave2.md)  
 **Prior CEO:** [`docs/architecture/ceo-update-2026-08-06.md`](docs/architecture/ceo-update-2026-08-06.md)  
+**Wave B exit criteria:** [`docs/architecture/wave-b-exit-criteria.md`](docs/architecture/wave-b-exit-criteria.md)  
 **Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (L1–L18)
 
-Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `research`
+Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `mitigated` · `research`
 
 ---
 
@@ -43,10 +44,10 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic | 2 | open | see R-NATIVE-1 + fixtures | C+Go micro-CLIs landed (`test_samples/native/`); `required:false`/`fixture_only`. Close when analyze completes ≤120s on both without Ghidra + flip required true. Host C linker may skip hello_c. |
 | RALPH-1 | Source-map path alias recall | 6 | partial | domain recall separate | file overlap fixed |
 | RALPH-2 | cli.js 0.8+ recall | 6 | open | **yes R-RALPH-2** | harness done; engine long pole |
-| M5-PIPE | pipeline vs pipelines merge | 9 | partial | **yes R-PIPE-1** | documented split; merge deferred |
-| M0 | Baseline reporting discipline | exec | open | | + `reports/native_analyze_probe/` (timestamped + latest.json, 3-valued status) |
+| M5-PIPE | pipeline vs pipelines merge | 9 | partial | R-PIPE-1 decision done | documented split freeze; Wave B merge optional |
+| M0 | Baseline reporting discipline | exec | partial | | + `reports/native_analyze_probe/` (timestamped + latest.json, 3-valued status); Wave A probe v1.2 + DF-4 scoped status |
 | M1 | Multi-codebase corpus gate | exec | open | see R-NATIVE-1 | overlaps M1-NATIVE-FAM |
-| M2 | Hexyl frontier hardening | 4 | open | **yes R-HEX-1** | beyond timeout |
+| M2 | Hexyl frontier hardening | 4 | open | **yes R-HEX-1** | beyond timeout; hexyl timed run still blocked |
 | M3 | Validation/evidence unified contract | 3 | partial | | MCP top-level validation_grade + capability_report landed |
 | M4 | CI/PR/nightly corpus gates | 5 | open | | workflows lack bench jobs |
 | M5 | Post-gate architecture extraction | 9–10 | open | after M0–M4 | workers/ports |
@@ -56,19 +57,20 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | id | question | blocks |
 | --- | --- | --- |
 | R-NATIVE-1 | Linux-hermetic native CLI set for ≥5/≥3 families | **done** — `docs/architecture/research-r-native-1-linux-hermetic-candidates.md` |
-| R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | RALPH-2, Phase 6 |
-| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **probe shipped** v1.1 (native fixtures). hello_go: `could_not_measure`/`nonzero_exit:1` ~0.03s. **Hexyl binary not present on this host** — hexyl-specific timed run remains open under M2; this phase does not claim hexyl remeasured. |
+| R-RALPH-2-BASELINE | Measure current cli.js recall (or label could_not_measure) | **done** — `docs/architecture/research-r-ralph-2-baseline.md` |
+| R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | **open** — RALPH-2, Phase 6 |
+| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **blocked** — `docs/architecture/research-r-hex-1-hexyl-availability-block.md` (hexyl tool absent; not done) |
 | R-TSX-1 | Ship `tsx` probe vs keep smoke stub | **done** — optional tsx runner in behavior probe |
-| R-PIPE-1 | Merge pipeline packages vs permanent split | M5-PIPE |
-| R-SEC-1 | Sandbox class before exploit expansion | Phase 10, Track J |
-| R-VRL-1 | Min seeds + provider for honest VRL LLM gate | Phase 4 |
+| R-PIPE-1 | Merge pipeline packages vs permanent split | **done** — decision: permanent documented split; see `docs/architecture/decision-r-pipe-1-pipeline-packages.md` |
+| R-SEC-1 | Sandbox class before exploit expansion | **done** — decision: Docker-only preview; no exploit expansion; see `docs/architecture/decision-r-sec-1-sandbox-class.md` |
+| R-VRL-1 | Min seeds + provider for honest VRL LLM gate | **done** — decision: `min_seeds: 3`, `provider: ollama`; see `docs/architecture/decision-r-vrl-1-seeds-and-provider.md` |
 
 ## E. Scope C phase catalog (program backlog)
 
 | phase | focus | status |
 | --- | --- | --- |
 | 1 | Honesty + known_gaps + GA gate integrity | **done** |
-| 2 | Managed recompile + GA report honesty (preview) | **done (preview)**; native corpus still open |
+| 2 | Managed recompile + GA report honesty (preview) | **done** (preview); native corpus still open |
 | 3 | Behavior-backed JS validation | **done** (incl. optional tsx) |
 | 4 | Hexyl frontier + VRL LLM round-trip honesty | open |
 | 5 | Equivalence product gates + CI corpus enforcement | open |
@@ -103,10 +105,10 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 
 | id | finding | status |
 | --- | --- | --- |
-| DF-1 | Host python3.13 stdlib broken — use 3.9 | open (env) |
+| DF-1 | Host python3.13 stdlib broken — use 3.9 | mitigated |
 | DF-2 | Conftest heavy imports | done |
 | DF-3 | Wrong analyze report filename in runner | done |
-| DF-4 | Full `git status` hangs on dirty `reports/` (DrvFS) | open (ops) |
+| DF-4 | Full `git status` hangs on dirty `reports/` (DrvFS) | done |
 
 ## I. Decisions / waivers
 
@@ -115,3 +117,4 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Scope C over thinktank B; honesty still first |
 | 2026-08-06 | GA floor may accept analyze-ok / recompile-failed styles when evidence is real |
 | 2026-08-06 | Public preview: CLI + app RE supported; native limited; exploits experimental |
+| 2026-08-06 | Wave A backlog clearance: research decisions recorded (PIPE/SEC/VRL); R-HEX-1 blocked (hexyl absent); R-RALPH-2-BASELINE done / R-RALPH-2 open; DF-4 scoped git status; dual `verify_ga_readiness` dogfood (neither profile proves native GA); see `docs/architecture/dogfood-verify-ga-readiness-2026-08-06.md` + `docs/architecture/wave-b-exit-criteria.md` |
