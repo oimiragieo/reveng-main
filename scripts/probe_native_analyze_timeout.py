@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 
-PROBE_VERSION = "1.0"
+PROBE_VERSION = "1.1"
 
 
 def _sha256_file(path: Path) -> str:

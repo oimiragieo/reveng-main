@@ -1,6 +1,6 @@
 {
-  "probe_version": "1.0",
-  "recorded_at_utc": "2026-08-06T03:38:16Z",
+  "probe_version": "1.1",
+  "recorded_at_utc": "2026-08-06T03:51:33Z",
   "results": [
     {
       "binary": "test_samples/native/hello_go/build/hello_go",
@@ -14,13 +14,13 @@
         "test_samples/native/hello_go/build/hello_go"
       ],
       "timeout_budget_s": 30.0,
-      "elapsed_s": 0.03646115004085004,
-      "status": "completed",
+      "elapsed_s": 0.028772306046448648,
+      "status": "could_not_measure",
       "returncode": 1,
       "reason": "nonzero_exit:1",
       "measured": true,
-      "probe_version": "1.0",
-      "recorded_at_utc": "2026-08-06T03:38:16Z"
+      "probe_version": "1.1",
+      "recorded_at_utc": "2026-08-06T03:51:33Z"
     }
   ]
 }
