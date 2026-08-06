@@ -16,11 +16,12 @@ It is intentionally near-term and operational. Longer-range service extraction a
 Use these as the starting anchors for planning and reporting (verified 2026-08-06):
 
 - `.reveng/source_binary_benchmarks.ga.json` registers managed-language benchmarks (Java class/jar, Python bytecode/zipapp) plus optional native binaries
-- `reports/source_binary_benchmarks_report.json` currently tracks four hermetic rows at `analyze_ok_recompile_failed` with `analyze_report_exists=True` (recompile/Ghidra still open)
+- `reports/source_binary_benchmarks_report.json` currently tracks four hermetic managed-language rows at `completed_without_behavior_checks` with analyze + recompile evidence (managed recompile no longer requires Ghidra)
 - `.reveng/bun_sample_matrix.json` / `reports/bun_sample_matrix.json`: `matrix_status=pass`, `live_bun_sample_count=2`, `successful_rebuild_count=2`
 - App corpus report: `matrix_status=pass` with 7 completed required rows
 - `scripts/verify_ga_readiness.py` now enforces `native-analyze-evidence` and `native-success-floor` (hollow reports fail)
 - `HARDENING_PRIORITIES.md` still documents hexyl recompilation slices; hexyl is not in the current GA hermetic set
+- Root `backlog.md` is the Scope C ops index (Phase 1–2 preview + Phase 3 BP-2/3/4 done)
 
 ## Backlog operating rules
 
