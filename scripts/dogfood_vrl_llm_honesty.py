@@ -57,7 +57,7 @@ _RUN_VRL = _REPO_ROOT / "scripts" / "run_vrl.py"
 _GATE = _REPO_ROOT / "scripts" / "verify_vrl_llm_honesty.py"
 
 MIN_SEEDS = 3
-ARGV_SEEDS: List[List[str]] = [["--help"], ["--version"], ["sample"]]
+CORPUS_ENTRY_NAME = "vrl_llm_micro_go"
 TARGET_GRADE = "behavior_matched"
 DEFAULT_SMALL_MODEL = "hf.co/unsloth/Llama-3.2-1B-Instruct-GGUF:Q4_K_M"
 BLOCKER_C_TOOLCHAIN = "vrl_compile_toolchain_broken"
@@ -74,6 +74,42 @@ def _load_module(path: Path, name: str):
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _load_corpus_entry(name: str = CORPUS_ENTRY_NAME) -> Dict[str, Any]:
+    """Load the tracked corpus entry used for argv seeds + honesty subject metadata."""
+    import yaml
+
+    corpus = yaml.safe_load(_CORPUS_YAML.read_text(encoding="utf-8"))
+    for entry in corpus.get("binaries", []) or []:
+        if isinstance(entry, dict) and entry.get("name") == name:
+            return entry
+    raise KeyError(f"corpus entry {name!r} not found in {_CORPUS_YAML}")
+
+
+def _argv_seeds_from_corpus(entry: Dict[str, Any]) -> List[List[str]]:
+    """
+    Convert corpus ``seed_inputs`` into per-seed argv lists.
+
+    Matches dogfood oracle usage: each seed_inputs string is one argv token list
+    (single token today: ``--help``, ``--version``, ``sample``).
+    """
+    raw = entry.get("seed_inputs") or entry.get("test_inputs") or []
+    if not isinstance(raw, list) or len(raw) < MIN_SEEDS:
+        raise ValueError(
+            f"corpus entry {entry.get('name')!r} needs ≥{MIN_SEEDS} seed_inputs; got {raw!r}"
+        )
+    seeds: List[List[str]] = []
+    for item in raw:
+        if isinstance(item, list):
+            seeds.append([str(x) for x in item])
+        else:
+            seeds.append([str(item)])
+    return seeds
 
 
 def _go_compile(source: str, out_bin: Path) -> Tuple[bool, str]:
@@ -188,11 +224,13 @@ def _score_seed_oracle(
     }
 
 
-def _run_control_arm(original: Path, candidate: Path) -> Dict[str, Any]:
+def _run_control_arm(
+    original: Path, candidate: Path, argv_seeds: Sequence[Sequence[str]]
+) -> Dict[str, Any]:
     """No-LLM control: oracle-only on broken candidate. Hollow iff all matched."""
     grades: List[str] = []
     rows_meta: List[Dict[str, Any]] = []
-    for idx, argv in enumerate(ARGV_SEEDS):
+    for idx, argv in enumerate(argv_seeds):
         grade, meta = _score_seed_oracle(original, candidate, argv)
         if not meta.get("scored"):
             return {
@@ -204,7 +242,7 @@ def _run_control_arm(original: Path, candidate: Path) -> Dict[str, Any]:
                 "seed_meta": rows_meta,
             }
         grades.append(grade)
-        rows_meta.append({"seed_index": idx, "argv": argv, "grade": grade, **meta})
+        rows_meta.append({"seed_index": idx, "argv": list(argv), "grade": grade, **meta})
 
     hollow = bool(grades) and all(g == TARGET_GRADE for g in grades)
     return {
@@ -249,6 +287,7 @@ def _run_treatment_load_bearing(
     broken_src: str,
     control_candidate: Path,
     model: str,
+    argv_seeds: Sequence[Sequence[str]],
 ) -> Tuple[Dict[str, Any], Optional[str]]:
     """
     LLM fix → apply to candidate → go build → regrade.
@@ -273,45 +312,70 @@ def _run_treatment_load_bearing(
 
     response = llm_result.content or ""
     tokens_used = int(getattr(llm_result, "tokens_used", 0) or 0)
+    tokens_used_estimated = False
     if tokens_used <= 0:
         # OllamaAnalyzer often omits usage — count approximate prompt+response tokens.
         tokens_used = max(1, (len(prompt) + len(response)) // 4)
+        tokens_used_estimated = True
 
     new_source = _extract_go_source(response)
     if not new_source.strip():
         return {}, "llm_empty_source"
 
-    pre_hash = _sha256(control_candidate)
-    out_bin = Path(tempfile.mkdtemp(prefix="vrl_llm_treat_")) / "candidate.bin"
+    control_sha = _sha256(control_candidate)
+    applied_source_sha = _sha256_text(new_source)
+    out_dir = Path(tempfile.mkdtemp(prefix="vrl_llm_treat_"))
+    out_bin = out_dir / "candidate.bin"
+    # Durable receipt under evidence dir (survives /tmp cleanup; cited by gate).
+    _EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
+    applied_src_path = _EVIDENCE_DIR / "applied_main.go"
+    applied_src_path.write_text(new_source, encoding="utf-8")
+    applied_src_rel = str(applied_src_path.relative_to(_REPO_ROOT))
     ok, note = _go_compile(new_source, out_bin)
     if not ok:
         return {
             "ollama_actually_ran": True,
             "tokens_used": tokens_used,
+            "tokens_used_estimated": tokens_used_estimated,
             "vrl_iterations": 1,
             "llm_preview": response[:120],
             "compile_note": note,
+            "control_candidate_sha256": control_sha,
+            "applied_source_path": applied_src_rel,
+            "applied_source_sha256": applied_source_sha,
         }, f"llm_source_compile_failed: {note[:200]}"
 
-    post_hash = _sha256(out_bin)
-    hash_changed = post_hash != pre_hash
+    treatment_sha = _sha256(out_bin)
+    hash_changed = bool(control_sha and treatment_sha and control_sha != treatment_sha)
     if new_source.strip() == broken_src.strip():
         return {
             "ollama_actually_ran": True,
             "tokens_used": tokens_used,
-            "candidate_hash_changed": False,
+            "tokens_used_estimated": tokens_used_estimated,
+            "control_candidate_sha256": control_sha,
+            "treatment_candidate_sha256": treatment_sha,
+            "candidate_hash_before": control_sha,
+            "candidate_hash_after": treatment_sha,
+            "candidate_hash_changed": hash_changed,
+            "applied_source_path": applied_src_rel,
+            "applied_source_sha256": applied_source_sha,
         }, "llm_source_identical_to_broken"
 
     seed_runs: List[Dict[str, Any]] = []
     grades: List[str] = []
-    for idx, argv in enumerate(ARGV_SEEDS):
+    for idx, argv in enumerate(argv_seeds):
         grade, meta = _score_seed_oracle(original, out_bin, argv)
         if not meta.get("scored") or grade not in VALIDATION_GRADE_LADDER:
             return (
                 {
                     "ollama_actually_ran": True,
                     "tokens_used": tokens_used,
+                    "tokens_used_estimated": tokens_used_estimated,
+                    "control_candidate_sha256": control_sha,
+                    "treatment_candidate_sha256": treatment_sha,
                     "candidate_hash_changed": hash_changed,
+                    "applied_source_path": applied_src_rel,
+                    "applied_source_sha256": applied_source_sha,
                 },
                 f"oracle_unscored_at_seed_{idx}: {meta.get('reason', 'invalid_grade')}",
             )
@@ -334,11 +398,16 @@ def _run_treatment_load_bearing(
         "ollama_actually_ran": True,
         "ollama_model": analyzer.model_name,
         "tokens_used": tokens_used,
+        "tokens_used_estimated": tokens_used_estimated,
         "vrl_iterations": 1,
         "vrl_compile_blocked": False,
-        "candidate_hash_before": pre_hash,
-        "candidate_hash_after": post_hash,
+        "control_candidate_sha256": control_sha,
+        "treatment_candidate_sha256": treatment_sha,
+        "candidate_hash_before": control_sha,
+        "candidate_hash_after": treatment_sha,
         "candidate_hash_changed": hash_changed,
+        "applied_source_path": applied_src_rel,
+        "applied_source_sha256": applied_source_sha,
         "grades": grades,
         "seed_runs": seed_runs,
         "seed_runs_detail": list(seed_runs),
@@ -425,6 +494,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     os.environ.setdefault("REVENG_AI_PROVIDER", "ollama")
 
+    try:
+        corpus_entry = _load_corpus_entry(CORPUS_ENTRY_NAME)
+        argv_seeds = _argv_seeds_from_corpus(corpus_entry)
+    except (KeyError, ValueError, OSError) as exc:
+        gate.write_could_not_measure_evidence(
+            _LATEST,
+            reason=f"corpus_entry_unavailable: {exc}",
+            ollama_reachable=True,
+            ollama_tags_url=tags_url,
+        )
+        print(f"CNM: corpus entry {CORPUS_ENTRY_NAME!r} unavailable: {exc}")
+        return 2
+
     prior_corpus_grade = None
     try:
         import yaml
@@ -456,27 +538,54 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     "returncode": run_vrl_note.get("returncode"),
                     "compile_blocked": run_vrl_note.get("compile_blocked"),
                     "notes": run_vrl_note.get("notes"),
-                }
+                },
+                "corpus_entry": CORPUS_ENTRY_NAME,
+                "argv_seeds": argv_seeds,
             },
             indent=2,
         )
     )
 
+    # Prefer corpus build_recipe → binary_path when present; else compile sources.
     work = Path(tempfile.mkdtemp(prefix="vrl_llm_micro_"))
     orig_bin = work / "orig.bin"
     broken_bin = work / "broken.bin"
     orig_src = _ORIG_SRC.read_text(encoding="utf-8")
     broken_src = _BROKEN_SRC.read_text(encoding="utf-8")
 
-    ok, note = _go_compile(orig_src, orig_bin)
-    if not ok:
-        _cnm_payload(
-            gate,
-            reason=f"micro_go_orig_compile_failed: {note[:200]}",
-            tags_url=tags_url,
-            run_vrl_note=run_vrl_note,
-        )
-        return 2
+    build_recipe = corpus_entry.get("build_recipe")
+    recipe_path = (
+        (_REPO_ROOT / str(build_recipe)).resolve() if build_recipe else None
+    )
+    if recipe_path and recipe_path.is_file():
+        try:
+            subprocess.run(
+                ["bash", str(recipe_path)],
+                cwd=str(recipe_path.parent),
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            built = _REPO_ROOT / str(
+                corpus_entry.get("binary_path")
+                or "test_samples/vrl_llm_micro_go/micro.bin"
+            )
+            if built.is_file():
+                shutil.copy2(built, orig_bin)
+        except Exception as exc:  # noqa: BLE001
+            print(json.dumps({"build_recipe_note": f"{type(exc).__name__}: {exc}"}))
+
+    if not orig_bin.is_file():
+        ok, note = _go_compile(orig_src, orig_bin)
+        if not ok:
+            _cnm_payload(
+                gate,
+                reason=f"micro_go_orig_compile_failed: {note[:200]}",
+                tags_url=tags_url,
+                run_vrl_note=run_vrl_note,
+            )
+            return 2
     ok, note = _go_compile(broken_src, broken_bin)
     if not ok:
         _cnm_payload(
@@ -487,7 +596,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         )
         return 2
 
-    control = _run_control_arm(orig_bin, broken_bin)
+    control = _run_control_arm(orig_bin, broken_bin, argv_seeds)
     if control.get("hollow_or_unscored"):
         _cnm_payload(
             gate,
@@ -520,7 +629,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print(json.dumps({"selected_model": model, "models_seen": len(models)}, indent=2))
 
     treatment, cnm_reason = _run_treatment_load_bearing(
-        orig_bin, broken_src, broken_bin, model
+        orig_bin, broken_src, broken_bin, model, argv_seeds
     )
     if cnm_reason:
         _cnm_payload(
@@ -532,7 +641,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             run_vrl_note=run_vrl_note,
             extra={
                 "tokens_used": treatment.get("tokens_used"),
+                "tokens_used_estimated": treatment.get("tokens_used_estimated"),
                 "candidate_hash_changed": treatment.get("candidate_hash_changed"),
+                "control_candidate_sha256": treatment.get("control_candidate_sha256"),
+                "treatment_candidate_sha256": treatment.get(
+                    "treatment_candidate_sha256"
+                ),
+                "applied_source_path": treatment.get("applied_source_path"),
+                "applied_source_sha256": treatment.get("applied_source_sha256"),
+                "corpus_entry": CORPUS_ENTRY_NAME,
                 "infra_progress": {
                     "ollama_host_probe": "ok",
                     "go_cgo_disabled_compile": "ok",
@@ -546,6 +663,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     grades = list(treatment["grades"])
     control_grades = list(control.get("grades") or [])
     treatment_differs = grades != control_grades
+    control_sha = treatment.get("control_candidate_sha256")
+    treatment_sha = treatment.get("treatment_candidate_sha256")
+    hash_changed = bool(
+        control_sha and treatment_sha and control_sha != treatment_sha
+    )
     gate_seed_runs = [
         {
             "seed_id": r["seed_id"],
@@ -557,7 +679,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         for r in treatment["seed_runs"]
     ]
 
-    if not treatment.get("candidate_hash_changed") and not treatment_differs:
+    if not hash_changed and not treatment_differs:
         _cnm_payload(
             gate,
             reason="llm_not_load_bearing: no hash change and grades match control",
@@ -578,12 +700,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         "ollama_tags_url": tags_url,
         "ollama_model": treatment.get("ollama_model") or model,
         "tokens_used": treatment.get("tokens_used"),
+        "tokens_used_estimated": bool(treatment.get("tokens_used_estimated")),
         "vrl_iterations": treatment.get("vrl_iterations", 1),
         "vrl_compile_blocked": False,
         "treatment_differs_from_control": treatment_differs,
-        "candidate_hash_changed": bool(treatment.get("candidate_hash_changed")),
-        "candidate_hash_before": treatment.get("candidate_hash_before"),
-        "candidate_hash_after": treatment.get("candidate_hash_after"),
+        "control_candidate_sha256": control_sha,
+        "treatment_candidate_sha256": treatment_sha,
+        "candidate_hash_before": control_sha,
+        "candidate_hash_after": treatment_sha,
+        "candidate_hash_changed": hash_changed,
+        "applied_source_path": treatment.get("applied_source_path"),
+        "applied_source_sha256": treatment.get("applied_source_sha256"),
         "grades": grades,
         "seed_runs": gate_seed_runs,
         "seed_runs_detail": treatment.get("seed_runs_detail"),
@@ -594,15 +721,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "notes": control.get("notes"),
             "grades": control_grades,
         },
+        "corpus_entry": CORPUS_ENTRY_NAME,
+        "corpus_seed_inputs": list(corpus_entry.get("seed_inputs") or []),
         "binary": {
-            "name": "vrl_llm_micro_go",
+            "name": CORPUS_ENTRY_NAME,
             "original_source": str(_ORIG_SRC.relative_to(_REPO_ROOT)),
             "broken_source": str(_BROKEN_SRC.relative_to(_REPO_ROOT)),
+            "binary_path": corpus_entry.get("binary_path"),
+            "build_recipe": corpus_entry.get("build_recipe"),
             "notes": (
                 "Load-bearing micro path: Go CGO_ENABLED=0 compile → Ollama revise "
-                "broken_main.go → recompile → DifferentialOracle on 3 argv seeds. "
-                "Hexyl/PE C refine remains blocked on this WSL (recorded under "
-                "run_vrl_customer_path)."
+                "broken_main.go → recompile → DifferentialOracle on corpus "
+                f"{CORPUS_ENTRY_NAME} seed_inputs. Hexyl/PE C refine remains blocked "
+                "on this WSL (recorded under run_vrl_customer_path)."
             ),
         },
         "run_vrl_customer_path": run_vrl_note,
@@ -618,8 +749,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             "provider": "ollama",
             "source": "docs/architecture/decision-r-vrl-1-seeds-and-provider.md",
             "load_bearing": (
-                "treatment_differs_from_control | candidate_hash_changed | "
-                "seed_runs.llm_influenced | tokens_used>0 with iterations>0"
+                "treatment_differs_from_control | derived candidate_hash_changed "
+                "(control/treatment sha256 unequal) | seed_runs.llm_influenced+"
+                "applied_source receipt | tokens_used>0 with iterations>0"
             ),
         },
         "wsl_ollama_note": (
@@ -640,6 +772,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 "grades": grades,
                 "control_grades": control_grades,
                 "candidate_hash_changed": payload["candidate_hash_changed"],
+                "corpus_entry": CORPUS_ENTRY_NAME,
             },
             indent=2,
         )

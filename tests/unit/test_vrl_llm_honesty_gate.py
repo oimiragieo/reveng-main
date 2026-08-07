@@ -65,6 +65,10 @@ def _base(**overrides):
         "ollama_actually_ran": True,
         "treatment_differs_from_control": True,
         "candidate_hash_changed": True,
+        "control_candidate_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "treatment_candidate_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "applied_source_path": "test_samples/vrl_llm_micro_go/broken_main.go.llm_applied",
+        "applied_source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
         "grades": ["analysis_only", "compile_only", "launches_but_divergent"],
         "seed_runs": _seed_runs(
             "analysis_only", "compile_only", "launches_but_divergent"
@@ -92,6 +96,109 @@ def test_measured_happy_path_passes():
     assert v.min_seeds == 3
 
 
+def test_candidate_hash_changed_true_missing_sha_fails():
+    """Self-asserted candidate_hash_changed with missing hashes must fail."""
+    payload = _base(
+        candidate_hash_changed=True,
+        control_candidate_sha256=None,
+        treatment_candidate_sha256=None,
+    )
+    # Drop legacy aliases too if present via overrides clearing.
+    payload.pop("control_candidate_sha256", None)
+    payload.pop("treatment_candidate_sha256", None)
+    payload.pop("candidate_hash_before", None)
+    payload.pop("candidate_hash_after", None)
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 1
+    assert "candidate_hash_changed_unverified_missing_sha256" in v.reasons
+    assert "candidate_sha256_pair_required" in v.reasons
+
+
+def test_candidate_hash_changed_true_equal_sha_fails():
+    """Self-asserted candidate_hash_changed with equal hashes must fail."""
+    same = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    payload = _base(
+        candidate_hash_changed=True,
+        control_candidate_sha256=same,
+        treatment_candidate_sha256=same,
+        # Still load-bearing via grade delta + applied source.
+        treatment_differs_from_control=True,
+    )
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 1
+    assert "candidate_hash_changed_unverified_equal_sha256" in v.reasons
+
+
+def test_derive_candidate_hash_changed_from_unequal_sha():
+    """Hashes present and unequal ⇒ derived true; lone boolean ignored."""
+    payload = _base(
+        candidate_hash_changed=False,  # forgeable false; hashes prove change
+        control_candidate_sha256="1111111111111111111111111111111111111111111111111111111111111111",
+        treatment_candidate_sha256="2222222222222222222222222222222222222222222222222222222222222222",
+        treatment_differs_from_control=False,
+        grades=[
+            "launches_but_divergent",
+            "launches_but_divergent",
+            "launches_but_divergent",
+        ],
+        seed_runs=_seed_runs(
+            "launches_but_divergent",
+            "launches_but_divergent",
+            "launches_but_divergent",
+            llm_influenced=True,
+        ),
+        control_arm={
+            "llm_enabled": False,
+            "passed": False,
+            "executed": True,
+            "grades": [
+                "launches_but_divergent",
+                "launches_but_divergent",
+                "launches_but_divergent",
+            ],
+        },
+    )
+    assert gate.derive_candidate_hash_changed(payload) is True
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 0
+
+
+def test_llm_influenced_requires_applied_source_receipt():
+    """llm_influenced without applied_source_path/sha256 must fail measured."""
+    payload = _base()
+    payload.pop("applied_source_path", None)
+    payload.pop("applied_source_sha256", None)
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 1
+    assert "llm_influenced_missing_applied_source_receipt" in v.reasons
+
+
+def test_measured_requires_candidate_sha256_pair():
+    """measured requires control/treatment SHA256 (or legacy before/after)."""
+    payload = _base(candidate_hash_changed=False)
+    payload.pop("control_candidate_sha256", None)
+    payload.pop("treatment_candidate_sha256", None)
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 1
+    assert "candidate_sha256_pair_required" in v.reasons
+
+
+def test_legacy_candidate_hash_before_after_accepted_as_sha_pair():
+    """candidate_hash_before/after are accepted equivalents of the SHA pair."""
+    payload = _base()
+    payload.pop("control_candidate_sha256", None)
+    payload.pop("treatment_candidate_sha256", None)
+    payload["candidate_hash_before"] = (
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    )
+    payload["candidate_hash_after"] = (
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    )
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 0
+    assert gate.derive_candidate_hash_changed(payload) is True
+
+
 def test_hollow_ack_ping_identical_grades_fails():
     """Sol REJECT: ACK ping + same control/treatment grades must not unlock measured."""
     grades = [
@@ -102,6 +209,7 @@ def test_hollow_ack_ping_identical_grades_fails():
     seed_runs = _seed_runs(*grades, llm_influenced=False)
     for row in seed_runs:
         row.pop("llm_influenced", None)
+    same = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
     payload = _base(
         grades=grades,
         seed_runs=seed_runs,
@@ -110,6 +218,8 @@ def test_hollow_ack_ping_identical_grades_fails():
         ],
         treatment_differs_from_control=False,
         candidate_hash_changed=False,
+        control_candidate_sha256=same,
+        treatment_candidate_sha256=same,
         control_arm={
             "llm_enabled": False,
             "passed": False,
@@ -117,6 +227,9 @@ def test_hollow_ack_ping_identical_grades_fails():
             "grades": list(grades),
         },
     )
+    # No llm_influenced → applied_source not required; drop to avoid false signal.
+    payload.pop("applied_source_path", None)
+    payload.pop("applied_source_sha256", None)
     v = gate.evaluate_evidence(payload)
     assert v.exit_code == 1
     assert any(
@@ -127,9 +240,12 @@ def test_hollow_ack_ping_identical_grades_fails():
 
 def test_measured_requires_llm_load_bearing_signal():
     """measured fails when no influence / hash change / grade delta / refine tokens."""
+    same = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
     payload = _base(
         treatment_differs_from_control=False,
         candidate_hash_changed=False,
+        control_candidate_sha256=same,
+        treatment_candidate_sha256=same,
         seed_runs=_seed_runs(
             "analysis_only", "compile_only", "launches_but_divergent",
             llm_influenced=False,
@@ -141,16 +257,20 @@ def test_measured_requires_llm_load_bearing_signal():
             "grades": ["analysis_only", "compile_only", "launches_but_divergent"],
         },
     )
+    payload.pop("applied_source_path", None)
+    payload.pop("applied_source_sha256", None)
     v = gate.evaluate_evidence(payload)
     assert v.exit_code == 1
     assert "llm_not_load_bearing" in v.reasons
 
 
 def test_load_bearing_via_candidate_hash_change_passes():
-    """Bidirectional: hash change after LLM applied ⇒ measured may pass."""
+    """Bidirectional: derived hash change after LLM applied ⇒ measured may pass."""
     payload = _base(
         treatment_differs_from_control=False,
         candidate_hash_changed=True,
+        control_candidate_sha256="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        treatment_candidate_sha256="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         seed_runs=_seed_runs(
             "launches_but_divergent",
             "launches_but_divergent",
@@ -180,8 +300,11 @@ def test_load_bearing_via_candidate_hash_change_passes():
 
 def test_load_bearing_via_grade_delta_passes():
     """Bidirectional: treatment grade list differs from control ⇒ measured ok."""
+    same = "9999999999999999999999999999999999999999999999999999999999999999"
     payload = _base(
         candidate_hash_changed=False,
+        control_candidate_sha256=same,
+        treatment_candidate_sha256=same,
         treatment_differs_from_control=True,
         grades=["behavior_matched", "behavior_matched", "behavior_matched"],
         seed_runs=_seed_runs(

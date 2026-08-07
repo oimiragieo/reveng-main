@@ -7,4 +7,5 @@ toolchain cannot link on WSL (`vrl_compile_toolchain_broken` for hexyl/PE).
 - `broken_main.go` — control candidate (always `WRONG`)
 - Seeds (argv): `--help`, `--version`, `sample`
 
-Build: `CGO_ENABLED=0 go build -o micro.bin .`
+Build original: `bash build.sh` (or `CGO_ENABLED=0 go build -o micro.bin ./main.go`).
+Do not `go build .` — `broken_main.go` also declares `main`.

@@ -7,12 +7,17 @@
   "ollama_tags_url": "http://172.28.160.1:11434/api/tags",
   "ollama_model": "hf.co/unsloth/Llama-3.2-1B-Instruct-GGUF:Q4_K_M",
   "tokens_used": 183,
+  "tokens_used_estimated": true,
   "vrl_iterations": 1,
   "vrl_compile_blocked": false,
   "treatment_differs_from_control": true,
+  "control_candidate_sha256": "aa4e665f00076f4ee386576a151ac3e65bbb4de08f051f3b5a4c71c6e3586fc9",
+  "treatment_candidate_sha256": "f7507784a9c8ad670c6079ba72f32e6c5a220cb8c453a6deba1b9001ff072bcd",
+  "candidate_hash_before": "aa4e665f00076f4ee386576a151ac3e65bbb4de08f051f3b5a4c71c6e3586fc9",
+  "candidate_hash_after": "f7507784a9c8ad670c6079ba72f32e6c5a220cb8c453a6deba1b9001ff072bcd",
   "candidate_hash_changed": true,
-  "candidate_hash_before": "409e81ad0334843ee2356d79aea4d533cfebef7ac62e93e8af730261d20e8f1b",
-  "candidate_hash_after": "b798cee9f80be4dcb56a7b13be2e26d6819e3550e02e7f20cebe4c45b4281086",
+  "applied_source_path": "reports/vrl_llm_honesty/applied_main.go",
+  "applied_source_sha256": "c3b0936a11ac5732497ea961148f720ebdb8241d22e1064bf0eee8852555e77b",
   "grades": [
     "behavior_matched",
     "behavior_matched",
@@ -99,17 +104,25 @@
       "launches_but_divergent"
     ]
   },
+  "corpus_entry": "vrl_llm_micro_go",
+  "corpus_seed_inputs": [
+    "--help",
+    "--version",
+    "sample"
+  ],
   "binary": {
     "name": "vrl_llm_micro_go",
     "original_source": "test_samples/vrl_llm_micro_go/main.go",
     "broken_source": "test_samples/vrl_llm_micro_go/broken_main.go",
-    "notes": "Load-bearing micro path: Go CGO_ENABLED=0 compile \u2192 Ollama revise broken_main.go \u2192 recompile \u2192 DifferentialOracle on 3 argv seeds. Hexyl/PE C refine remains blocked on this WSL (recorded under run_vrl_customer_path)."
+    "binary_path": "test_samples/vrl_llm_micro_go/micro.bin",
+    "build_recipe": "test_samples/vrl_llm_micro_go/build.sh",
+    "notes": "Load-bearing micro path: Go CGO_ENABLED=0 compile \u2192 Ollama revise broken_main.go \u2192 recompile \u2192 DifferentialOracle on corpus vrl_llm_micro_go seed_inputs. Hexyl/PE C refine remains blocked on this WSL (recorded under run_vrl_customer_path)."
   },
   "run_vrl_customer_path": {
     "executed": true,
     "returncode": 0,
-    "stdout_tail": "\n============================================================\nVRL RUN SUMMARY\n============================================================\n  binary       : hexyl\n  status       : llm_error\n  final grade  : unknown\n  iterations   : 0\n  elapsed      : 0.9s\n  tokens used  : 0\n  notes        : Initial compile_fn raised: All compilers failed for vrl_source_f8eb505e. Last error: cl: [Errno 13] Permission denied: 'cl'\n============================================================\n",
-    "stderr_tail": "16:34:24  INFO      run_vrl  Processing 'hexyl'  current_grade=launches_but_divergent  target_grade=behavior_matched\n16:34:24  INFO      run_vrl  Loading pre-existing decompilation from /mnt/c/dev/projects/reveng-main/_archive/2026-04-10-cleanup/analysis-dirs/analysis_hexyl/reconstructed.c\n16:34:24  INFO      run_vrl  Workspace: /mnt/c/dev/projects/reveng-main/.reveng/vrl-runs/workspaces/hexyl\n16:34:24  INFO      run_vrl  AI provider: ollama\n16:34:24  INFO      reveng.agents.ai.ollama_analyzer  Auto-selected model: phi3.5:latest\n16:34:24  INFO      reveng.agents.ai.ollama_analyzer  Ollama analyzer initialized with model: phi3.5:latest\n16:34:24  INFO      reveng.agents.ai.ollama_analyzer  Config: timeout=60s, temperature=0.1, max_tokens=500\n16:34:24  INFO      reveng.agents.ai.ollama_analyzer  Available models: 11\n16:34:24  INFO      run_vrl  Seed contract: 3 argv token(s), 1 stdin payload(s)\n16:34:24  INFO      run_vrl  Starting refinement loop (max_iterations=1)\u2026\n16:34:25  ERROR     reveng.verification.refinement.refiner  Initial compile failed: All compilers failed for vrl_source_f8eb505e. Last error: cl: [Errno 13] Permission denied: 'cl'\n16:34:25  INFO      run_vrl  Updated corpus.yaml: hexyl.current_grade = unknown\n16:34:25  INFO      run_vrl  Run log written to /mnt/c/dev/projects/reveng-main/.reveng/vrl-runs/hexyl-2026-08-07.json\n",
+    "stdout_tail": "\n============================================================\nVRL RUN SUMMARY\n============================================================\n  binary       : hexyl\n  status       : llm_error\n  final grade  : unknown\n  iterations   : 0\n  elapsed      : 0.8s\n  tokens used  : 0\n  notes        : Initial compile_fn raised: All compilers failed for vrl_source_f8eb505e. Last error: cl: [Errno 13] Permission denied: 'cl'\n============================================================\n",
+    "stderr_tail": "16:49:46  INFO      run_vrl  Processing 'hexyl'  current_grade=launches_but_divergent  target_grade=behavior_matched\n16:49:46  INFO      run_vrl  Loading pre-existing decompilation from /mnt/c/dev/projects/reveng-main/_archive/2026-04-10-cleanup/analysis-dirs/analysis_hexyl/reconstructed.c\n16:49:46  INFO      run_vrl  Workspace: /mnt/c/dev/projects/reveng-main/.reveng/vrl-runs/workspaces/hexyl\n16:49:46  INFO      run_vrl  AI provider: ollama\n16:49:46  INFO      reveng.agents.ai.ollama_analyzer  Ollama analyzer initialized with model: hf.co/unsloth/Llama-3.2-1B-Instruct-GGUF:Q4_K_M\n16:49:46  INFO      reveng.agents.ai.ollama_analyzer  Config: timeout=60s, temperature=0.1, max_tokens=500\n16:49:46  INFO      reveng.agents.ai.ollama_analyzer  Available models: 11\n16:49:46  INFO      run_vrl  Seed contract: 3 argv token(s), 1 stdin payload(s)\n16:49:46  INFO      run_vrl  Starting refinement loop (max_iterations=1)\u2026\n16:49:47  ERROR     reveng.verification.refinement.refiner  Initial compile failed: All compilers failed for vrl_source_f8eb505e. Last error: cl: [Errno 13] Permission denied: 'cl'\n16:49:47  INFO      run_vrl  Updated corpus.yaml: hexyl.current_grade = unknown\n16:49:47  INFO      run_vrl  Run log written to /mnt/c/dev/projects/reveng-main/.reveng/vrl-runs/hexyl-2026-08-07.json\n",
     "compile_blocked": true,
     "tokens_used": 0,
     "iterations": 0,
@@ -122,13 +135,13 @@
     "go_cgo_disabled_compile": "ok",
     "hexyl_c_refine": "vrl_compile_toolchain_broken"
   },
-  "measured_at": "2026-08-07T20:34:28.137751+00:00",
+  "measured_at": "2026-08-07T20:49:49.953415+00:00",
   "corpus_path": ".reveng/benchmarks/corpus.yaml",
   "policy": {
     "min_seeds": 3,
     "provider": "ollama",
     "source": "docs/architecture/decision-r-vrl-1-seeds-and-provider.md",
-    "load_bearing": "treatment_differs_from_control | candidate_hash_changed | seed_runs.llm_influenced | tokens_used>0 with iterations>0"
+    "load_bearing": "treatment_differs_from_control | derived candidate_hash_changed (control/treatment sha256 unequal) | seed_runs.llm_influenced+applied_source receipt | tokens_used>0 with iterations>0"
   },
   "wsl_ollama_note": "From WSL, Ollama on Windows is reached via the Hyper-V/WSL gateway (e.g. OLLAMA_HOST=http://172.28.160.1:11434), not 127.0.0.1."
 }

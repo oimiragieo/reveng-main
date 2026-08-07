@@ -22,10 +22,13 @@ Evaluates a tracked evidence JSON against R-VRL-1 policy:
   actually ran
 * **LLM must be load-bearing** for ``measured`` (Sol REJECT 2026-08-07): at
   least one of (a) ``treatment_differs_from_control`` with different grade
-  lists, (b) ``candidate_hash_changed`` after LLM text applied, (c) any
-  ``seed_runs[].llm_influenced: true``, (d) refine ``tokens_used > 0`` with
+  lists, (b) **derived** ``candidate_hash_changed`` (control/treatment SHA256
+  present and unequal — never trust a lone boolean), (c) any
+  ``seed_runs[].llm_influenced: true`` **with** ``applied_source_path`` or
+  ``applied_source_sha256`` receipt, (d) refine ``tokens_used > 0`` with
   ``vrl_iterations > 0`` and not compile-blocked. Hollow ACK-ping + identical
   control/treatment grades ⇒ ``hollow_ack_ping_identical_grades`` / fail.
+  Self-asserted ``candidate_hash_changed: true`` with missing/equal hashes ⇒ fail.
 
 Exit codes
 ----------
@@ -230,6 +233,62 @@ def _refine_tokens_load_bearing(evidence: Dict[str, Any]) -> bool:
     )
 
 
+def _nonempty_sha256(value: Any) -> Optional[str]:
+    """Return stripped hex digest string, or None when absent/invalid."""
+    if not isinstance(value, str):
+        return None
+    text = value.strip().lower()
+    if len(text) < 16:
+        return None
+    # Accept hex digests (sha256 is 64 chars; allow shorter for tests).
+    if any(c not in "0123456789abcdef" for c in text):
+        return None
+    return text
+
+
+def candidate_sha256_pair(
+    evidence: Dict[str, Any],
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Resolve control/treatment candidate digests.
+
+    Prefer ``control_candidate_sha256`` / ``treatment_candidate_sha256``;
+    accept legacy ``candidate_hash_before`` / ``candidate_hash_after``.
+    """
+    control = _nonempty_sha256(
+        evidence.get("control_candidate_sha256")
+        or evidence.get("candidate_hash_before")
+    )
+    treatment = _nonempty_sha256(
+        evidence.get("treatment_candidate_sha256")
+        or evidence.get("candidate_hash_after")
+    )
+    return control, treatment
+
+
+def derive_candidate_hash_changed(evidence: Dict[str, Any]) -> bool:
+    """
+    True only when both SHA256 fields are present and unequal.
+
+    Never trusts a lone ``candidate_hash_changed`` boolean.
+    """
+    control, treatment = candidate_sha256_pair(evidence)
+    if control is None or treatment is None:
+        return False
+    return control != treatment
+
+
+def _applied_source_receipt_present(evidence: Dict[str, Any]) -> bool:
+    """True when evidence carries an applied-source path or digest receipt."""
+    path = evidence.get("applied_source_path")
+    digest = evidence.get("applied_source_sha256")
+    if isinstance(path, str) and path.strip():
+        return True
+    if _nonempty_sha256(digest) is not None:
+        return True
+    return False
+
+
 def llm_load_bearing_reasons(evidence: Dict[str, Any]) -> List[str]:
     """
     Reasons why a ``measured`` claim fails the load-bearing LLM contract.
@@ -254,16 +313,33 @@ def llm_load_bearing_reasons(evidence: Dict[str, Any]) -> List[str]:
         and bool(control_grades)
         and list(control_grades) != list(treatment_grades)
     )
-    hash_changed = evidence.get("candidate_hash_changed") is True
+
+    control_sha, treatment_sha = candidate_sha256_pair(evidence)
+    hash_changed = derive_candidate_hash_changed(evidence)
+    claimed_hash_changed = evidence.get("candidate_hash_changed") is True
+
+    # Forgeable boolean: self-asserted true with missing or equal hashes.
+    if claimed_hash_changed and not hash_changed:
+        if control_sha is None or treatment_sha is None:
+            reasons.append("candidate_hash_changed_unverified_missing_sha256")
+        else:
+            reasons.append("candidate_hash_changed_unverified_equal_sha256")
+
+    # Measured honesty requires the SHA pair present (not merely a boolean).
+    if control_sha is None or treatment_sha is None:
+        reasons.append("candidate_sha256_pair_required")
+
     llm_influenced_any = any(
         isinstance(row, dict) and row.get("llm_influenced") is True
         for row in (evidence.get("seed_runs") or [])
     )
+    if llm_influenced_any and not _applied_source_receipt_present(evidence):
+        reasons.append("llm_influenced_missing_applied_source_receipt")
 
     load_bearing = (
         (treatment_differs_flag and grades_differ)
         or hash_changed
-        or llm_influenced_any
+        or (llm_influenced_any and _applied_source_receipt_present(evidence))
         or _refine_tokens_load_bearing(evidence)
     )
     if not load_bearing:
