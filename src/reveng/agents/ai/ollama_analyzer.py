@@ -59,13 +59,37 @@ class _OllamaTextResult:
     tokens_used: int = 0
 
 
+def _resolve_ollama_host(ollama_host: Optional[str] = None) -> str:
+    """
+    Resolve Ollama base URL.
+
+    Precedence: explicit *ollama_host* → ``REVENG_OLLAMA_HOST`` →
+    ``OLLAMA_HOST`` → ``http://localhost:11434``.
+    Accepts bare ``host:port`` (standard Ollama env) by prefixing ``http://``.
+    """
+    import os
+
+    raw = (ollama_host or "").strip()
+    if not raw:
+        raw = (
+            os.environ.get("REVENG_OLLAMA_HOST")
+            or os.environ.get("OLLAMA_HOST")
+            or ""
+        ).strip()
+    if not raw:
+        raw = "http://localhost:11434"
+    if "://" not in raw:
+        raw = f"http://{raw}"
+    return raw.rstrip("/")
+
+
 class OllamaAnalyzer:
     """Ollama-powered code analysis"""
 
     def __init__(
         self,
         model_name: Optional[str] = None,
-        ollama_host: str = "http://localhost:11434",
+        ollama_host: Optional[str] = None,
         timeout: int = 60,
         temperature: float = 0.1,
         max_tokens: int = 500,
@@ -74,20 +98,29 @@ class OllamaAnalyzer:
         Initialize Ollama analyzer
 
         Args:
-            model_name: Model to use (None = auto-select best available)
-            ollama_host: Ollama API endpoint
+            model_name: Model to use (None = auto-select best available;
+                also honors ``REVENG_OLLAMA_MODEL`` / ``OLLAMA_MODEL``)
+            ollama_host: Ollama API endpoint (also honors ``REVENG_OLLAMA_HOST`` /
+                ``OLLAMA_HOST`` — required for WSL→Windows Ollama)
             timeout: Request timeout in seconds (default: 60)
             temperature: LLM temperature for sampling (default: 0.1 for consistent analysis)
             max_tokens: Maximum tokens to generate (default: 500)
         """
-        self.ollama_host = ollama_host
+        import os
+
+        self.ollama_host = _resolve_ollama_host(ollama_host)
         self.timeout = timeout
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.available_models = self._get_available_models()
 
+        env_model = (
+            os.environ.get("REVENG_OLLAMA_MODEL") or os.environ.get("OLLAMA_MODEL") or ""
+        ).strip()
         if model_name:
             self.model_name = model_name
+        elif env_model:
+            self.model_name = env_model
         else:
             self.model_name = self._select_best_model()
 

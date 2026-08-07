@@ -359,6 +359,101 @@ def test_invalid_runtime_status_rejected():
     assert "invalid_runtime_status" in v.reasons
 
 
+def test_resolve_ollama_tags_url_default():
+    assert (
+        gate.resolve_ollama_tags_url(environ={})
+        == "http://127.0.0.1:11434/api/tags"
+    )
+
+
+def test_resolve_ollama_tags_url_from_ollama_host(monkeypatch):
+    monkeypatch.delenv("REVENG_OLLAMA_HOST", raising=False)
+    monkeypatch.setenv("OLLAMA_HOST", "http://172.28.160.1:11434")
+    assert (
+        gate.resolve_ollama_tags_url()
+        == "http://172.28.160.1:11434/api/tags"
+    )
+
+
+def test_resolve_ollama_tags_url_bare_host_and_reveng_override():
+    assert (
+        gate.resolve_ollama_tags_url(
+            environ={"OLLAMA_HOST": "10.0.0.1:11434"}
+        )
+        == "http://10.0.0.1:11434/api/tags"
+    )
+    assert (
+        gate.resolve_ollama_tags_url(
+            environ={
+                "OLLAMA_HOST": "http://ignored:1",
+                "REVENG_OLLAMA_HOST": "http://override:11434",
+            }
+        )
+        == "http://override:11434/api/tags"
+    )
+
+
+def test_probe_ollama_uses_resolved_host(monkeypatch):
+    """--probe-ollama / probe_ollama must hit OLLAMA_HOST, not hardcoded localhost."""
+    seen = {}
+
+    class _Resp:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def _fake_urlopen(url, timeout=None):
+        seen["url"] = url
+        seen["timeout"] = timeout
+        return _Resp()
+
+    monkeypatch.setattr(gate.urllib.request, "urlopen", _fake_urlopen)
+    ok = gate.probe_ollama(environ={"OLLAMA_HOST": "http://172.28.160.1:11434"})
+    assert ok is True
+    assert seen["url"] == "http://172.28.160.1:11434/api/tags"
+
+
+def test_cli_probe_ollama_prints_resolved_url(monkeypatch, capsys):
+    monkeypatch.setenv("OLLAMA_HOST", "http://172.28.160.1:11434")
+    monkeypatch.delenv("REVENG_OLLAMA_HOST", raising=False)
+
+    class _Resp:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(
+        gate.urllib.request, "urlopen", lambda url, timeout=None: _Resp()
+    )
+    rc = gate.main(["--probe-ollama"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["ollama_reachable"] is True
+    assert payload["url"] == "http://172.28.160.1:11434/api/tags"
+
+
+def test_write_cnm_reason_includes_resolved_url(tmp_path: Path, monkeypatch):
+    monkeypatch.setenv("OLLAMA_HOST", "http://172.28.160.1:11434")
+    out = tmp_path / "latest.json"
+    tags = gate.resolve_ollama_tags_url()
+    payload = gate.write_could_not_measure_evidence(
+        out,
+        reason=f"ollama_unreachable: connection refused at {tags}",
+        ollama_reachable=False,
+        ollama_tags_url=tags,
+    )
+    assert "172.28.160.1:11434" in payload["reason"]
+    assert payload["ollama_tags_url"] == tags
+
+
 def test_build_seed_run_log_schema_helper():
     """run_vrl helper emits gate-consumable seed_runs without inventing measured grades."""
     import importlib.util

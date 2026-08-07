@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -52,7 +53,42 @@ _CORPUS_YAML = _REPO_ROOT / ".reveng" / "benchmarks" / "corpus.yaml"
 
 MIN_SEEDS = 3
 REQUIRED_PROVIDER = "ollama"
-OLLAMA_TAGS_URL = "http://127.0.0.1:11434/api/tags"
+_DEFAULT_OLLAMA_BASE = "http://127.0.0.1:11434"
+OLLAMA_TAGS_URL = f"{_DEFAULT_OLLAMA_BASE}/api/tags"
+
+
+def resolve_ollama_tags_url(
+    host_override: Optional[str] = None,
+    *,
+    environ: Optional[Dict[str, str]] = None,
+) -> str:
+    """
+    Resolve the Ollama ``/api/tags`` URL from env (or an explicit override).
+
+    Precedence:
+      1. *host_override* argument
+      2. ``REVENG_OLLAMA_HOST``
+      3. ``OLLAMA_HOST`` (standard Ollama env — may be ``http://host:11434``
+         or bare ``host:11434``)
+      4. Default ``http://127.0.0.1:11434``
+
+    Appends ``/api/tags`` when the resolved base does not already end with it.
+    """
+    env = environ if environ is not None else os.environ
+    raw = (host_override or "").strip()
+    if not raw:
+        raw = (env.get("REVENG_OLLAMA_HOST") or env.get("OLLAMA_HOST") or "").strip()
+    if not raw:
+        raw = _DEFAULT_OLLAMA_BASE
+
+    # Bare host:port → assume http://
+    if "://" not in raw:
+        raw = f"http://{raw}"
+
+    raw = raw.rstrip("/")
+    if raw.endswith("/api/tags"):
+        return raw
+    return f"{raw}/api/tags"
 
 VALIDATION_GRADE_LADDER = (
     "unknown",
@@ -83,10 +119,16 @@ class GateVerdict:
         return self.exit_code == 0
 
 
-def probe_ollama(url: str = OLLAMA_TAGS_URL, timeout_s: float = 2.0) -> bool:
-    """Return True when local Ollama answers ``/api/tags``."""
+def probe_ollama(
+    url: Optional[str] = None,
+    timeout_s: float = 2.0,
+    *,
+    environ: Optional[Dict[str, str]] = None,
+) -> bool:
+    """Return True when Ollama answers ``/api/tags`` at the resolved URL."""
+    resolved = url or resolve_ollama_tags_url(environ=environ)
     try:
-        with urllib.request.urlopen(url, timeout=timeout_s) as resp:
+        with urllib.request.urlopen(resolved, timeout=timeout_s) as resp:
             return 200 <= int(getattr(resp, "status", 200)) < 300
     except (urllib.error.URLError, TimeoutError, OSError):
         return False
@@ -336,6 +378,7 @@ def write_could_not_measure_evidence(
     provider: str = REQUIRED_PROVIDER,
     min_seeds: int = MIN_SEEDS,
     ollama_reachable: bool = False,
+    ollama_tags_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Write an honest could_not_measure evidence stamp.
@@ -343,12 +386,14 @@ def write_could_not_measure_evidence(
     Control arm is recorded as ``executed: false`` with ``passed: null`` —
     do not claim a failed control that never ran.
     """
+    tags_url = ollama_tags_url or resolve_ollama_tags_url()
     payload: Dict[str, Any] = {
         "provider": provider,
         "min_seeds": min_seeds,
         "runtime_status": "could_not_measure",
         "ollama_reachable": ollama_reachable,
         "ollama_actually_ran": False,
+        "ollama_tags_url": tags_url,
         "grades": [],
         "seed_runs": [],
         "control_arm": {
@@ -381,7 +426,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "--probe-ollama",
         action="store_true",
-        help="Probe local Ollama and print reachability; exit 0 if up, 2 if down",
+        help="Probe Ollama (OLLAMA_HOST / REVENG_OLLAMA_HOST) and print reachability; "
+        "exit 0 if up, 2 if down",
     )
     parser.add_argument(
         "--write-cnm",
@@ -390,11 +436,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
-    reachable = probe_ollama()
+    tags_url = resolve_ollama_tags_url()
+    reachable = probe_ollama(tags_url)
 
     if args.probe_ollama and not args.write_cnm and args.evidence == _DEFAULT_EVIDENCE:
         # Probe-only mode (no evaluate) unless write-cnm requested.
-        print(json.dumps({"ollama_reachable": reachable, "url": OLLAMA_TAGS_URL}, indent=2))
+        print(json.dumps({"ollama_reachable": reachable, "url": tags_url}, indent=2))
         return 0 if reachable else 2
 
     if args.write_cnm:
@@ -403,8 +450,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             return 1
         write_could_not_measure_evidence(
             args.evidence,
-            reason="ollama_unreachable: connection refused on 127.0.0.1:11434",
+            reason=f"ollama_unreachable: connection refused at {tags_url}",
             ollama_reachable=False,
+            ollama_tags_url=tags_url,
         )
         print(f"wrote could_not_measure evidence → {args.evidence}")
 

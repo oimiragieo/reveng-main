@@ -110,6 +110,11 @@ def make_compile_fn(workspace_dir: Path | str | None = None) -> Callable[[str], 
                 # Compiler not installed — try next.
                 last_error = f"{compiler}: not found"
                 continue
+            except OSError as exc:
+                # WSL/Windows interop can raise PermissionError for a missing
+                # ``cl`` stub; treat like not-found and continue the chain.
+                last_error = f"{compiler}: {exc}"
+                continue
             except subprocess.TimeoutExpired:
                 last_error = f"{compiler}: compilation timeout"
                 continue
