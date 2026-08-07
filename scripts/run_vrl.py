@@ -475,6 +475,10 @@ def main(argv: Optional[List[str]] = None) -> int:  # noqa: C901  (complexity is
         "workspace": str(workspace_dir),
         "original_binary": str(original_binary),
         "seed_inputs_count": len(seed_argv) + len(stdin_inputs),
+        # Honesty fields for VRL-LLM-1 / verify_vrl_llm_honesty.py
+        "provider": provider,
+        "min_seeds_policy": 3,
+        "seed_argv_count": len(seed_argv),
     }
     log_path.write_text(json.dumps(log_data, indent=2), encoding="utf-8")
     logger.info("Run log written to %s", log_path)
