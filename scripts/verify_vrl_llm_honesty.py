@@ -5,14 +5,15 @@ VRL LLM honesty gate (Phase 4 / VRL-LLM-1).
 Evaluates a tracked evidence JSON against R-VRL-1 policy:
 
 * ``min_seeds >= 3`` whenever ``runtime_status`` claims ``measured``
-* measured also requires ``len(grades) >= MIN_SEEDS`` (or ≥3 executed
-  ``seed_runs`` with valid ValidationGrade) — declaring ``min_seeds: 3`` with
-  one grade must FAIL
-* measured via ``seed_runs`` also requires ≥3 executed rows with **distinct**
-  non-empty ``seed_id`` (or distinct seed input identity) and valid grades —
-  three identical ``seed_id`` values must FAIL
+* measured **requires** non-empty ``seed_runs`` with ≥3 executed rows carrying
+  **distinct** non-empty ``seed_id`` + valid ValidationGrade — missing/empty
+  ``seed_runs`` ⇒ ``seed_runs_required`` (legacy bare ``grades`` alone never
+  unlocks exit 0; may remain informational)
+* declaring ``min_seeds: 3`` with fewer than three executed graded seed runs
+  must FAIL (``grades_below_min_seeds`` / ``seed_ids_not_distinct``)
+* three identical ``seed_id`` values must FAIL
 * every scored run records a real ValidationGrade (ladder value) — missing grade
-  ⇒ ``could_not_measure``, never a pass
+  ⇒ fail measured / never a pass
 * no-LLM control arm must be *executed* and FAIL for measured
   (``executed: true``, ``passed: false``, ``llm_enabled: false``)
 * unexecuted control (``executed: false``) is a CNM contribution — never a
@@ -104,8 +105,9 @@ def derive_grades_from_evidence(evidence: Dict[str, Any]) -> Tuple[List[Any], Li
 
     Prefer ``seed_runs`` when present: only ``executed: true`` rows with a valid
     ValidationGrade count. Those rows must also carry distinct non-empty
-    ``seed_id`` values (duplicate ids cannot pad ``min_seeds``). Otherwise fall
-    back to the legacy ``grades`` list.
+    ``seed_id`` values (duplicate ids cannot pad ``min_seeds``). Legacy
+    ``grades`` alone is informational — measured exit 0 still requires
+    ``seed_runs`` (enforced by ``evaluate_evidence``).
     Returns ``(grades, reasons)`` where *reasons* are schema problems found while
     deriving (caller still enforces length / validity for measured).
     """
@@ -278,6 +280,11 @@ def evaluate_evidence(evidence: Dict[str, Any]) -> GateVerdict:
         reasons.append("ollama_did_not_run")
     if ollama_reachable is False:
         reasons.append("ollama_unreachable_cannot_be_measured")
+
+    # Measured exit 0 requires seed_runs; legacy bare grades never unlock it.
+    seed_runs_raw = evidence.get("seed_runs")
+    if seed_runs_raw is None or seed_runs_raw == []:
+        reasons.append("seed_runs_required")
 
     grades, derive_reasons = derive_grades_from_evidence(evidence)
     reasons.extend(derive_reasons)

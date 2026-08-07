@@ -6,6 +6,7 @@ Fail-first shape:
 * missing ValidationGrade must never pass
 * no-LLM control that *passes* must fail the gate (hollow)
 * measured requires ollama_actually_ran
+* measured requires seed_runs (≥3 distinct executed seed_ids); legacy grades alone never unlock exit 0
 * could_not_measure exits 2 (not a green pass)
 """
 
@@ -36,24 +37,6 @@ def _load_gate():
 gate = _load_gate()
 
 
-def _base(**overrides):
-    payload = {
-        "provider": "ollama",
-        "min_seeds": 3,
-        "runtime_status": "measured",
-        "ollama_reachable": True,
-        "ollama_actually_ran": True,
-        "grades": ["analysis_only", "compile_only", "launches_but_divergent"],
-        "control_arm": {
-            "llm_enabled": False,
-            "passed": False,
-            "executed": True,
-        },
-    }
-    payload.update(overrides)
-    return payload
-
-
 def _seed_runs(*grades, executed=True):
     """Build gate-consumable seed_runs rows (one per grade)."""
     rows = []
@@ -69,12 +52,44 @@ def _seed_runs(*grades, executed=True):
     return rows
 
 
+def _base(**overrides):
+    payload = {
+        "provider": "ollama",
+        "min_seeds": 3,
+        "runtime_status": "measured",
+        "ollama_reachable": True,
+        "ollama_actually_ran": True,
+        "grades": ["analysis_only", "compile_only", "launches_but_divergent"],
+        "seed_runs": _seed_runs(
+            "analysis_only", "compile_only", "launches_but_divergent"
+        ),
+        "control_arm": {
+            "llm_enabled": False,
+            "passed": False,
+            "executed": True,
+        },
+    }
+    payload.update(overrides)
+    return payload
+
+
 def test_measured_happy_path_passes():
     v = gate.evaluate_evidence(_base())
     assert v.exit_code == 0
     assert v.runtime_status == "measured"
     assert v.provider == "ollama"
     assert v.min_seeds == 3
+
+
+def test_measured_legacy_grades_only_fails():
+    """Bare grades list alone must never unlock measured exit 0 (Sol Round-3)."""
+    payload = _base(
+        grades=["analysis_only", "compile_only", "launches_but_divergent"]
+    )
+    del payload["seed_runs"]
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 1
+    assert any("seed_runs_required" in r for r in v.reasons)
 
 
 def test_min_seeds_below_policy_cannot_claim_measured():
@@ -84,7 +99,16 @@ def test_min_seeds_below_policy_cannot_claim_measured():
 
 
 def test_missing_grades_never_pass():
-    v = gate.evaluate_evidence(_base(grades=[]))
+    v = gate.evaluate_evidence(
+        _base(
+            grades=[],
+            seed_runs=[
+                {"seed_id": "a", "argv": ["x"], "executed": True},
+                {"seed_id": "b", "argv": ["y"], "executed": True},
+                {"seed_id": "c", "argv": ["z"], "executed": True},
+            ],
+        )
+    )
     assert v.exit_code == 1
     assert "grades_missing" in v.reasons
 
@@ -92,14 +116,20 @@ def test_missing_grades_never_pass():
 def test_measured_with_min_seeds_field_but_one_grade_fails():
     """Declaring min_seeds: 3 with a single grade must FAIL (Sol HIGH 1)."""
     v = gate.evaluate_evidence(
-        _base(min_seeds=3, grades=["analysis_only"])
+        _base(
+            min_seeds=3,
+            grades=["analysis_only"],
+            seed_runs=_seed_runs("analysis_only"),
+        )
     )
     assert v.exit_code == 1
     assert any("grades_below_min_seeds" in r for r in v.reasons)
 
 
 def test_invalid_grade_never_pass():
-    v = gate.evaluate_evidence(_base(grades=["llm_error"]))  # RefinementStatus leak
+    v = gate.evaluate_evidence(
+        _base(grades=["llm_error"], seed_runs=_seed_runs("llm_error"))
+    )  # RefinementStatus leak
     assert v.exit_code == 1
     assert any("invalid_grade" in r for r in v.reasons)
 
@@ -174,11 +204,12 @@ def test_seed_runs_unexecuted_rows_do_not_count():
 
 
 def test_legacy_grades_still_require_three_for_measured():
-    v = gate.evaluate_evidence(
-        _base(grades=["analysis_only", "compile_only"])
-    )
+    """Legacy grades without seed_runs never unlock measured (informational only)."""
+    payload = _base(grades=["analysis_only", "compile_only"])
+    del payload["seed_runs"]
+    v = gate.evaluate_evidence(payload)
     assert v.exit_code == 1
-    assert any("grades_below_min_seeds" in r for r in v.reasons)
+    assert any("seed_runs_required" in r for r in v.reasons)
 
 
 def test_no_llm_control_passing_fails_gate_bidirectional():

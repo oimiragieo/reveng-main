@@ -16,18 +16,19 @@ Prior Sol REJECT called out hollow measured predicates. Fixes landed (TDD):
 
 | Severity | Issue | Fix |
 | --- | --- | --- |
+| CRITICAL (R3) | Legacy bare `grades` (≥3) could unlock measured exit 0 without `seed_runs` | Measured requires non-empty `seed_runs` with ≥3 distinct executed `seed_id`s + valid grades; missing/empty ⇒ `seed_runs_required` — `test_measured_legacy_grades_only_fails` |
 | CRITICAL | Three identical `seed_id`s could pad measured | Measured via `seed_runs` requires ≥3 executed rows with **distinct** non-empty `seed_id` + valid grades (`seed_ids_not_distinct`) — `test_measured_three_duplicate_seed_ids_fails` / `test_measured_three_distinct_seed_ids_passes` |
 | HIGH 1 | `min_seeds: 3` with one grade could pass | Measured requires `len(grades) >= MIN_SEEDS` (`grades_below_min_seeds`) — `test_measured_with_min_seeds_field_but_one_grade_fails` |
-| HIGH 2 | Run log not gate-consumable | Evidence may carry `seed_runs[{seed_id,grade,argv,executed}]`; gate derives grades from executed rows; legacy `grades` still needs `len>=3`. `run_vrl.build_seed_runs_for_log` writes **one row per declared corpus seed** (unrun → `executed:false`); a single refine() must not claim 3 measured |
+| HIGH 2 | Run log not gate-consumable | Evidence must carry `seed_runs[{seed_id,grade,argv,executed}]` for measured; gate derives grades from executed rows; legacy `grades` is informational only (never exit 0 alone). `run_vrl.build_seed_runs_for_log` writes **one row per declared corpus seed** (unrun → `executed:false`); a single refine() must not claim 3 measured |
 | MEDIUM | CNM stamped phantom `passed: false` | `control_arm.executed` required; unexecuted → CNM only; measured needs `executed:true` + `passed:false` + `llm_enabled:false`; CNM writer sets `executed:false`, `passed:null` |
-| LOW | R-HEX-1 still said M2 open | Section D notes: M2 closed by Phase 4 frontier (`phase-04-m2-hexyl-frontier.md`); VRL/Phase4 overall remain partial. Timed-run doc is the timing receipt only |
+| LOW | R-HEX-1 still said M2 open | `wave-c-exit-criteria.md` R-HEX-1 row notes M2 closed by Phase 4 frontier; VRL/Phase4 overall remain partial. Timed-run doc is the timing receipt only |
 
 Validation:
 
 ```bash
 PYTHONPATH=src /usr/bin/python3.9 -m pytest --no-cov \
   tests/unit/test_vrl_llm_honesty_gate.py -q
-# expect: 24 passed
+# expect: 25 passed
 ```
 
 Tracked CNM stamp: `reports/vrl_llm_honesty/latest.json` →
@@ -100,7 +101,8 @@ PYTHONPATH=src /usr/bin/python3.9 scripts/probe_native_analyze_timeout.py \
 6. `reports/vrl_llm_honesty/latest.json` → `runtime_status: could_not_measure`
    with honest reason; `control_arm.executed: false`; gate exit 2.
 7. Unit tests prove: one-grade + `min_seeds:3` fails; duplicate `seed_id`s
-   fail; three distinct seed_ids pass; no-LLM control pass ⇒ gate fail;
+   fail; three distinct seed_ids pass; legacy grades-only fails
+   (`seed_runs_required`); no-LLM control pass ⇒ gate fail;
    unexecuted control cannot unlock measured.
 8. Backlog: Phase 4 `partial`; M2 evidenced/`done` or `partial` with notes;
    VRL-LLM-1 not `done`.
