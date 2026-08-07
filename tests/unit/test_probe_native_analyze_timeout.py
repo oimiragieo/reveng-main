@@ -22,8 +22,8 @@ PROBE_MOD = Path(__file__).resolve().parents[2] / "scripts" / "probe_native_anal
 NATIVE_FALLBACK_EMPTY_PATH = ("native_analysis", "fallback_empty")
 
 
-def test_probe_version_is_1_2():
-    assert PROBE_VERSION == "1.2"
+def test_probe_version_is_1_3():
+    assert PROBE_VERSION == "1.3"
 
 
 def test_probe_records_completed_when_command_exits_zero(tmp_path: Path):
@@ -534,7 +534,7 @@ def test_main_job_runs_multiple_results(tmp_path: Path):
     # hexyl tool_absent → could_not_measure → exit 2
     assert code == 2
     latest = json.loads((out_dir / "latest.json").read_text(encoding="utf-8"))
-    assert latest["probe_version"] == "1.2"
+    assert latest["probe_version"] == "1.3"
     assert len(latest["results"]) == 2
     reasons = {r["id"]: r["reason"] for r in latest["results"] if "id" in r}
     # Results may carry id at top level from job; also check reasons list.
@@ -553,7 +553,7 @@ def test_write_report_exactly_one_stamp_and_latest(tmp_path: Path):
     (out_dir / "2026-08-06T035133Z.json").write_text("{}\n")
     (out_dir / "2026-08-06T131213Z.json").write_text("{}\n")
 
-    results = [{"status": "completed", "probe_version": "1.2"}]
+    results = [{"status": "completed", "probe_version": "1.3"}]
     latest = write_report(results, out_dir, "2026-08-06T15:00:00Z")
     assert latest.name == "latest.json"
     stamps = sorted(out_dir.glob("20*.json"))
@@ -565,11 +565,97 @@ def test_write_report_exactly_one_stamp_and_latest(tmp_path: Path):
     assert (out_dir / "runs").is_dir()
 
 
-def test_write_report_payload_probe_version_1_2(tmp_path: Path):
+def test_write_report_payload_probe_version_1_3(tmp_path: Path):
     out_dir = tmp_path / "out"
     write_report([{"status": "timeout"}], out_dir, "2026-08-06T00:00:00Z")
     payload = json.loads((out_dir / "latest.json").read_text(encoding="utf-8"))
-    assert payload["probe_version"] == "1.2"
+    assert payload["probe_version"] == "1.3"
+
+
+def test_completed_partial_success_empty_fallback_sets_semantic(tmp_path: Path, monkeypatch):
+    """completed + partial_success + empty native fallback → semantic fields set (v1.3)."""
+    binary = tmp_path / "bin"
+    binary.write_bytes(b"x")
+
+    class FakeProc:
+        returncode = 0
+        stdout = "Pipeline status: partial_success\nother noise\n"
+        stderr = "Native fallback analysis returned no analysis_data\n"
+
+    monkeypatch.setattr(
+        "scripts.probe_native_analyze_timeout.subprocess.run",
+        lambda *args, **kwargs: FakeProc(),
+    )
+    out = probe_one(
+        binary,
+        ["true"],
+        timeout_s=5.0,
+        now_iso="2026-08-07T00:00:00Z",
+        out_dir=tmp_path / "out",
+        result_id="df5_streams",
+    )
+    assert out["status"] == "completed"
+    assert out["probe_version"] == "1.3"
+    sem = out["semantic"]
+    assert sem["process_status"] == "completed"
+    assert sem["native_fallback_empty"] is True
+    assert sem["semantic_reason"] == "native_fallback_empty"
+
+
+def test_completed_clean_success_leaves_fallback_honest(tmp_path: Path, monkeypatch):
+    """completed + clean success → native_fallback_empty false or null (not falsely True)."""
+    binary = tmp_path / "bin"
+    binary.write_bytes(b"x")
+
+    class FakeProc:
+        returncode = 0
+        stdout = "Pipeline status: success\nAnalysis complete.\n"
+        stderr = ""
+
+    monkeypatch.setattr(
+        "scripts.probe_native_analyze_timeout.subprocess.run",
+        lambda *args, **kwargs: FakeProc(),
+    )
+    out = probe_one(
+        binary,
+        ["true"],
+        timeout_s=5.0,
+        now_iso="2026-08-07T00:00:00Z",
+        out_dir=tmp_path / "out",
+        result_id="clean_ok",
+    )
+    assert out["status"] == "completed"
+    sem = out["semantic"]
+    assert sem["native_fallback_empty"] is not True
+    assert sem["semantic_reason"] != "native_fallback_empty"
+    assert sem["semantic_reason"] != "pipeline_partial_success"
+
+
+def test_completed_partial_success_alone_sets_pipeline_reason(tmp_path: Path, monkeypatch):
+    """partial_success without empty-fallback message → pipeline_partial_success."""
+    binary = tmp_path / "bin"
+    binary.write_bytes(b"x")
+
+    class FakeProc:
+        returncode = 0
+        stdout = "Pipeline status:   partial_success\n"
+        stderr = ""
+
+    monkeypatch.setattr(
+        "scripts.probe_native_analyze_timeout.subprocess.run",
+        lambda *args, **kwargs: FakeProc(),
+    )
+    out = probe_one(
+        binary,
+        ["true"],
+        timeout_s=5.0,
+        now_iso="2026-08-07T00:00:00Z",
+        out_dir=tmp_path / "out",
+        result_id="partial_only",
+    )
+    assert out["status"] == "completed"
+    assert out["semantic"]["native_fallback_empty"] is not True
+    assert out["semantic"]["semantic_reason"] == "pipeline_partial_success"
 
 
 def test_safe_id_pattern():

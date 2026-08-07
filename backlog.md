@@ -2,13 +2,19 @@
 
 Ops index for the full roadmap clearance program. Update `status` when work lands.
 
-**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-06-wave3.md`](docs/architecture/ceo-update-2026-08-06-wave3.md)  
-**Prior CEO:** [`docs/architecture/ceo-update-2026-08-06-wave2.md`](docs/architecture/ceo-update-2026-08-06-wave2.md) · [`docs/architecture/ceo-update-2026-08-06.md`](docs/architecture/ceo-update-2026-08-06.md)  
+**Scope C full index** — living ops file; phases sequential, honesty-first.
+**Execution charter:** [`docs/architecture/scope-c-execution-charter.md`](docs/architecture/scope-c-execution-charter.md)
+(not one clearance wave for phases 4–13; disposition ≠ capability `done`).
+
+**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-07-scope-c-charter.md`](docs/architecture/ceo-update-2026-08-07-scope-c-charter.md)  
+**Prior CEO:** [`docs/architecture/ceo-update-2026-08-06-wave3.md`](docs/architecture/ceo-update-2026-08-06-wave3.md) · [`docs/architecture/ceo-update-2026-08-06-wave2.md`](docs/architecture/ceo-update-2026-08-06-wave2.md) · [`docs/architecture/ceo-update-2026-08-06.md`](docs/architecture/ceo-update-2026-08-06.md)  
 **Wave B exit criteria:** [`docs/architecture/wave-b-exit-criteria.md`](docs/architecture/wave-b-exit-criteria.md)  
 **Wave C exit criteria:** [`docs/architecture/wave-c-exit-criteria.md`](docs/architecture/wave-c-exit-criteria.md)  
 **Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (L1–L24)
 
-Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `mitigated` · `research`
+Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `mitigated` · `research` · `deferred` · `wontfix`
+
+`deferred` / `wontfix` / `parked` resolve roadmap decisions only — they never equal capability `done`.
 
 ---
 
@@ -120,3 +126,114 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | GA floor may accept analyze-ok / recompile-failed styles when evidence is real |
 | 2026-08-06 | Public preview: CLI + app RE supported; native limited; exploits experimental |
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈4.68s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
+| 2026-08-07 | Thinktank REJECT must-fixes: execution charter + Phase 4-only plan; probe v1.3 stream semantic attribution; backlog `deferred`/`wontfix`; CEO reconciled (R-HEX-1/DF-5 done, M2 open); see `docs/architecture/ceo-update-2026-08-07-scope-c-charter.md` |
+
+---
+
+## J. Scope C full roadmap index (source ingest)
+
+One row per distinct open checkbox / epic / milestone leftover from roadmap sources.
+Statuses for items already closed in sections A–I stay `done` / `partial` / `parked` — not reopened.
+Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 1–13, or `parked`.
+
+| id | title | source_doc | phase | status | notes |
+| --- | --- | --- | --- | --- | --- |
+| M0 | Baseline and reporting discipline | reveng-world-class-execution-backlog.md | 1 | done | Probe v1.2 + evidence hygiene + scoped git (DF-4); CI corpus residual tracked under M4 |
+| M1 | Multiple-codebase corpus gate | reveng-world-class-execution-backlog.md | 2 | open | ≥5 native / ≥3 families; overlaps M1-NATIVE-FAM; Bun 2 live already measured |
+| M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic analyze | reveng-world-class-execution-backlog.md | 2 | open | Fixtures landed required:false; flip true only after analyze ≤120s without Ghidra |
+| M2 | Hexyl frontier hardening beyond timed probe | reveng-world-class-execution-backlog.md | 4 | open | R-HEX-1 measurement alone does not close; HARDENING slices in engine vs frontier still open |
+| M3 | Validation and evidence grade lift | reveng-world-class-execution-backlog.md | 3 | partial | MCP top-level validation_grade + capability_report landed; unified benchmark contract residual |
+| M4 | CI/PR/nightly corpus gate enforcement | reveng-world-class-execution-backlog.md | 5 | partial | Thin wave-b-honesty.yml landed; full corpus/nightly blocking still open |
+| M5 | Post-gate architecture extraction | reveng-world-class-execution-backlog.md | 9 | open | After M0–M4 stable; workers/ports |
+| M5-PIPE | pipeline vs pipelines reconciliation | reveng-world-class-execution-backlog.md | 9 | partial | R-PIPE-1 permanent documented split freeze; optional merge later |
+| EPIC-0 | Establish trustworthy baseline | reveng-tdd-implementation-backlog.md | 1 | partial | M0 reporting discipline done; residual suite/characterization isolation |
+| EPIC-1 | Define canonical result schemas | reveng-tdd-implementation-backlog.md | 3 | open | Versioned analysis/reconstruction/validation/MCP schemas |
+| EPIC-2 | Introduce evidence and provenance | reveng-tdd-implementation-backlog.md | 3 | open | First-class evidence graph + provenance across analyzer/API/MCP |
+| EPIC-3 | Split bounded contexts inside monolith | reveng-tdd-implementation-backlog.md | 9 | open | Ports for analyze/decomp/AI/recon/validate/report |
+| EPIC-4 | Reconcile orchestration layers | reveng-tdd-implementation-backlog.md | 9 | open | Unify or permanently separate pipeline/ vs pipelines/ |
+| EPIC-5 | Stabilize MCP as product surface | reveng-tdd-implementation-backlog.md | 8 | open | Stable schemas, auth, rate, audit; overlaps REV-MCP |
+| EPIC-6 | Harden Ollama and AI routing | reveng-tdd-implementation-backlog.md | 8 | open | Model profiles, fallback routing, latency accounting |
+| EPIC-7 | Elevate reconstruction and validation | reveng-tdd-implementation-backlog.md | 5 | open | Equivalence product gates; LibAFL/angr opt-in wiring |
+| EPIC-8 | Extract heavy workers | reveng-tdd-implementation-backlog.md | 10 | open | Ghidra/dynamic/compile workers; retries/timeouts/retention |
+| EPIC-9 | Analyst review and governance | reveng-tdd-implementation-backlog.md | 11 | open | Review workspace, policy, case export |
+| P3-BP-1 | TS main behavior probe (tsx optional) | reveng-capability-hardening-plan.md | 3 | done | Already in section B; do not reopen |
+| P3-BP-2 | npm pack/run lifecycle probes | reveng-capability-hardening-plan.md | 3 | done | Already in section B; do not reopen |
+| P3-BP-3 | Behavior promotes validation.grade | reveng-capability-hardening-plan.md | 3 | done | Already in section B; do not reopen |
+| P3-BP-4 | Size-scaled probe timeouts | reveng-capability-hardening-plan.md | 3 | done | Already in section B; do not reopen |
+| RALPH-1 | Source-map path alias recall | reveng-capability-hardening-plan.md | 6 | partial | File overlap fixed; domain recall separate |
+| RALPH-2 | cli.js 0.8+ engine recall | reveng-capability-hardening-plan.md | 6 | open | Harness done; engine long pole; see R-RALPH-2 |
+| P4-BUNDLER | Bundler-aware module / import-graph scoring | reveng-capability-hardening-plan.md | 6 | open | Chunk graph + import-graph precision/recall |
+| P5-NATIVE-EQ | Native entry→partial_equivalence | reveng-capability-hardening-plan.md | 7 | open | Entry-reachable helper chains + multi-file synthesis |
+| P6-PLATFORM | Single orchestration + MCP evidence uniformity | reveng-capability-hardening-plan.md | 9 | open | Thread result_contracts uniformly through MCP |
+| T3-KERNEL | Kernel reverse engineering | reverse-compilation-master-roadmap.md | parked | parked | Tier 3 honesty non-goal |
+| T3-PACKED | Packed/protected binaries depth | reverse-compilation-master-roadmap.md | parked | parked | Tier 3 honesty non-goal |
+| T3-JIT | Self-modifying/JIT outside JS | reverse-compilation-master-roadmap.md | parked | parked | Tier 3 honesty non-goal |
+| T3-ANTI | Malware anti-analysis depth | reverse-compilation-master-roadmap.md | parked | parked | Tier 3 honesty non-goal |
+| T3-GUI | Large GUI-first without eval strategy | reverse-compilation-master-roadmap.md | parked | parked | Tier 3 honesty non-goal |
+| GA-P0 | Freeze supported surface; non-GA watermarks | reveng-ga-master-plan.md | 1 | done | Exploits/symbolic/equivalence experimental; section A SEC-EXP-1 |
+| GA-P1 | Baseline release gates (hollow-proof) | reveng-ga-master-plan.md | 1 | done | native-analyze-evidence + success-floor; section A GA-HOLLOW-1 |
+| GA-P2 | GA target corpus gates (5 native / Bun / app) | reveng-ga-master-plan.md | 2 | open | provision_ga_assets + fresh .ga.json; overlaps M1 |
+| GA-P3 | Operational hardening (external-tool CI lanes) | reveng-ga-master-plan.md | 10 | open | ilspycmd/pyi/Java/Ghidra CI where supported |
+| GA-P4 | Customer packaging (matrix, notes, checklist) | reveng-ga-master-plan.md | 11 | open | Support matrix + troubleshooting + RELEASE_CHECKLIST live |
+| FEAT-1 | Evidence graph and provenance ledger | reveng-feature-roadmap.md | 3 | open | Overlaps EPIC-2 / M3 |
+| FEAT-2 | Equivalence validation service | reveng-feature-roadmap.md | 5 | open | Overlaps EPIC-7 |
+| FEAT-3 | Retrieval-augmented binary context for AI | reveng-feature-roadmap.md | 12 | open | CFG/strings/signatures before LLM stages |
+| FEAT-4 | Service-level Ghidra/dynamic/validation workers | reveng-feature-roadmap.md | 10 | open | Overlaps EPIC-8 |
+| FEAT-5 | Analyst review workspace | reveng-feature-roadmap.md | 11 | open | Overlaps EPIC-9 |
+| FEAT-6 | Corpus and benchmark management | reveng-feature-roadmap.md | 2 | open | Overlaps M1 / GA-P2 |
+| FEAT-7 | Policy and safety guardrails | reveng-feature-roadmap.md | 11 | open | Exploit auth gates, egress, retention |
+| FEAT-8 | Better MCP productization | reveng-feature-roadmap.md | 8 | open | Schemas, streaming, approval hooks; overlaps EPIC-5 |
+| FEAT-9 | Stronger local-model orchestration | reveng-feature-roadmap.md | 8 | open | Ollama profiles/routing; overlaps EPIC-6 |
+| FEAT-10 | Recompilation developer kit | reveng-feature-roadmap.md | 12 | open | Compiler profiles, shims, artifact comparison |
+| REV-P0-INSTALLERS | Finish or deprecate dependency-manager installer stubs | REVOLUTION_PLAN.md | 1 | open | dnSpy/uncompyle6/exeinfo_pe/x64dbg/imhex/lordpe |
+| REV-P0-EVIDENCE-AUDIT | Evidence propagation adoption-matrix audit | REVOLUTION_PLAN.md | 1 | open | Read-only audit incomplete in prior session |
+| REV-P0-ANALYSIS-CLEANUP | Cleanup policy for analysis_* dirs at repo root | REVOLUTION_PLAN.md | 1 | open | Policy: no untracked deletes without permission |
+| REV-P1-LLM-REFINER | Iterative LLM refiner on oracle divergence | REVOLUTION_PLAN.md | 4 | open | Phase 1.5; feeds failing I/O + source to Claude/GPT |
+| REV-P1-WHOLE-PROGRAM | Whole-program context / type propagation | REVOLUTION_PLAN.md | 12 | open | Cross-function types before LLM decomp |
+| REV-P1-CI-CORPUS | Regression-gated CI on benchmark corpus | REVOLUTION_PLAN.md | 5 | open | Overlaps M4 residual |
+| REV-P2-GATE-LLM-RT | Proven LLM round-trip improves grade | REVOLUTION_PLAN.md | 4 | open | Phase 2 gate: divergence→fix→recompile→grade↑ |
+| REV-P2-GATE-BM3 | 3 binaries reach behavior_matched via VRL | REVOLUTION_PLAN.md | 4 | open | Phase 2 gate; R-VRL-1 says min_seeds=3 / ollama |
+| REV-P2-GATE-SEEDS | ≥5 non-trivial seeds per binary | REVOLUTION_PLAN.md | 4 | open | No --help-only convergence; decision min_seeds=3 for honesty gate |
+| REV-MCP | MCP server first-class installable product | REVOLUTION_PLAN.md | 8 | open | pip install reveng-mcp; OIDC/API-key; rate; audit |
+| REV-SUBAGENTS | Specialized MCP sub-agent tool bundles | REVOLUTION_PLAN.md | 8 | open | Triage/deobf/decomp/recomp/verify/report/hunt |
+| REV-STATE | Shared state store (SQLite + LanceDB) | REVOLUTION_PLAN.md | 12 | open | .reveng/state/ embeddings |
+| REV-JOURNAL | Session journal append-only audit log | REVOLUTION_PLAN.md | 8 | open | Agent calls/decisions/confidence |
+| REV-SANDBOX | Firecracker/gVisor sandbox for binary exec | REVOLUTION_PLAN.md | 10 | open | Post R-SEC-1 Docker-only preview; no exploit expansion |
+| REV-FINGERPRINT | Function fingerprint DB | REVOLUTION_PLAN.md | 12 | open | BinaryAI/rev.ng/Lumina/self-hosted ANN |
+| REV-KG | Knowledge graph (Neo4j/Kuzu) | REVOLUTION_PLAN.md | 12 | open | Samples/families/CVE/ATT&CK annotations |
+| REV-ANNOTATE | Collaborative annotation merge | REVOLUTION_PLAN.md | 11 | open | Git/CRDT-backed multi-analyst |
+| REV-VARIANT | Cross-binary variant hunting | REVOLUTION_PLAN.md | 12 | open | CVE+patch_diff semantic sweep |
+| REV-SELF-IMPROVE | Self-improving rename/type training loop | REVOLUTION_PLAN.md | 12 | open | Human corrections → fine-tune corpus |
+| REV-COMPILER-ARCH | Compiler archaeology classifier | REVOLUTION_PLAN.md | 13 | open | Blue-ocean Phase 4 |
+| REV-XARCH | Cross-architecture binary translation | REVOLUTION_PLAN.md | 13 | open | x86→ARM64 via VRL prerequisite |
+| REV-SEMDIFF | Semantic patch diff reporter | REVOLUTION_PLAN.md | 13 | open | v1/v2 binary CWE-oriented report |
+| REV-NLQ | Natural-language binary queries | REVOLUTION_PLAN.md | 13 | open | LLM→IR+KG query |
+| REV-YARA | Auto-generated YARA/Sigma with atom quality | REVOLUTION_PLAN.md | 13 | open | malicious/benign set rule gen |
+| REV-ARCH-OWN | eBPF / WASM / RISC-V ownership | REVOLUTION_PLAN.md | 13 | open | Underserved arch blue ocean |
+| REV-SPA | Browser-based report viewer SPA | REVOLUTION_PLAN.md | 13 | open | Static SPA over analysis_* dirs |
+| REV-IDE | VS Code + Cursor extension | REVOLUTION_PLAN.md | 13 | open | Refine/verify/variants/YARA actions |
+| V6-TS-INFER | TypeScript type inference | changelogs/v6.0.md | 13 | open | v6.1+ future |
+| V6-REACT-VUE | React/Vue component detection | changelogs/v6.0.md | 13 | open | v6.1+ future |
+| V6-NPM | npm package analysis | changelogs/v6.0.md | 13 | open | v6.1+ future |
+| V6-SUPPLY | Supply chain security scanning | changelogs/v6.0.md | 13 | open | v6.1+ future |
+| V6-BROWSER-EXT | Browser extension on-the-fly deobfuscation | changelogs/v6.0.md | 13 | open | v6.1+ future |
+| V6-WEB-UI | Web UI dashboard | changelogs/v6.0.md | 13 | open | v6.1+ future |
+| V6-REST | REST API endpoints | changelogs/v6.0.md | 13 | open | v6.1+ future |
+| V6-DOCKER | Docker container | changelogs/v6.0.md | 13 | open | v6.1+ future |
+| V6-K8S | Kubernetes deployment | changelogs/v6.0.md | 13 | open | v6.1+ future |
+| V6-GHA | GitHub Actions integration | changelogs/v6.0.md | 13 | open | v6.1+ future |
+| PROF-SHIM-4 | Phase-4 shim removal + back-compat policy | 2026-06-03-reveng-professionalization-design.md | 11 | open | Shims remain; decide public API before retirement |
+| VRL-LLM-1 | Measured VRL LLM round-trip honesty gate | decision-r-vrl-1-seeds-and-provider.md | 4 | open | min_seeds=3 × ollama; no-LLM control fails; runtime_status=measured |
+
+### Source docs ingested
+
+- `docs/architecture/reveng-world-class-execution-backlog.md`
+- `docs/architecture/reveng-tdd-implementation-backlog.md`
+- `docs/architecture/reveng-capability-hardening-plan.md`
+- `docs/architecture/reverse-compilation-master-roadmap.md`
+- `docs/architecture/reveng-ga-master-plan.md`
+- `docs/architecture/reveng-feature-roadmap.md`
+- `docs/architecture/2026-06-03-reveng-professionalization-design.md`
+- `docs/architecture/decision-r-vrl-1-seeds-and-provider.md`
+- `docs/REVOLUTION_PLAN.md`
+- `docs/changelogs/v6.0.md`
