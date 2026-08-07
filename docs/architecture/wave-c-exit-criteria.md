@@ -22,10 +22,10 @@ Policy integers and honesty docs are **not** a substitute for measured product e
 | RALPH-2 | Measured engine wedge moves tracked `cli.js` recall toward 0.8+ | **open** |
 | R-RALPH-2 | Smallest engine wedge chosen + implemented (baseline already recorded) | **open** |
 | M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic; flip `required: true` only after analyze ≤120s **without** Ghidra on tracked fixtures | **open** (`required` stays false) |
-| M2 | Hexyl frontier hardening **beyond** a single timed probe (R-HEX-1 measurement alone does not close M2) | **open** |
+| M2 | Hexyl frontier hardening **beyond** a single timed probe (R-HEX-1 measurement alone does not close M2) | **done** (Phase 4) — probe v1.3 attribution + re-stamp; see `phase-04-m2-hexyl-frontier.md` |
 | R-HEX-1 | Bounded timed `reveng analyze` on hexyl **subject** ELF; status must match probe JSON (`completed` / `timeout` / `could_not_measure`) | **done** (measured) — `hexyl_subject` `completed` ≈4.68s in `latest.json`; M2 still open |
 | M4 corpus residual | CI/PR/**nightly corpus** gates blocking (thin honesty workflow is **partial** only) | **partial** (honesty gate); corpus still open |
-| VRL LLM measured | `min_seeds: 3` × tracked corpus under `ollama`, no-LLM control fails, `runtime_status: measured` | decision only until measured |
+| VRL LLM measured | `min_seeds: 3` × tracked corpus under `ollama`, no-LLM control fails, `runtime_status: measured` | **partial** — honesty gate shipped; live `could_not_measure` (ollama unreachable); see `evidence-vrl-llm-honesty-phase-04.md` |
 | M5-PIPE | Optional merge under criteria **or** keep permanent split | partial (split freeze) |
 | Scope C phases 4–13 | Per-phase product exits | **open** |
 | P4-BUNDLER / P5-NATIVE-EQ / P6-PLATFORM | Capability hardening leftovers | **open** |
