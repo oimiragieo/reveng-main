@@ -49,9 +49,9 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | id | title | phase | status | needs research? | notes |
 | --- | --- | --- | --- | --- | --- |
 | M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic | 2 | open | see R-NATIVE-1 + fixtures | C+Go micro-CLIs landed (`test_samples/native/`); `required:false`/`fixture_only`. Close when analyze completes ≤120s on both without Ghidra + flip required true. Host C linker may skip hello_c. |
-| RALPH-1 | Source-map path alias recall | 6 | partial | domain recall separate | file overlap fixed |
+| RALPH-1 | Source-map path alias recall | 6 | partial | blocked_on_phase_4| file overlap fixed |
 | RALPH-2 | cli.js 0.8+ recall | 6 | open | **yes R-RALPH-2** | harness done; engine long pole |
-| M5-PIPE | pipeline vs pipelines merge | 9 | partial | R-PIPE-1 decision done | documented split freeze; Wave B merge optional |
+| M5-PIPE | pipeline vs pipelines merge | 9 | partial | blocked_on_phase_4| documented split freeze; Wave B merge optional |
 | M0 | Baseline reporting discipline | exec | done | | preview reporting discipline: probe v1.2 + evidence hygiene (exact one stamp≡latest) + scoped git (DF-4); CI corpus gates remain **M4 residual** |
 | M1 | Multi-codebase corpus gate | exec | open | see R-NATIVE-1 | overlaps M1-NATIVE-FAM |
 | M2 | Hexyl frontier hardening | 4 | partial | no (R-HEX-1 measured) | Probe v1.3 semantic attribution + re-stamp done (Phase 4 Track A honesty); deeper hexyl analyze/recompile/behavior still open — world-class M2 not closed. See `phase-04-m2-hexyl-frontier.md`. No `required:true`; M1-NATIVE-FAM still open. |
@@ -80,15 +80,15 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2 | Managed recompile + GA report honesty (preview) | **done** (preview); native corpus still open |
 | 3 | Behavior-backed JS validation | **done** (incl. optional tsx) |
 | 4 | Hexyl frontier + VRL LLM round-trip honesty | **partial** (M2 Track A honesty attribution done; world-class M2 still open; VRL CNM — ollama down) |
-| 5 | Equivalence product gates + CI corpus enforcement | open |
+| 5 | Equivalence product gates + CI corpus enforcement | blocked_on_phase_4|
 | 6 | JS close: RALPH-2 + bundler graph (P4) | open (BP-2/3/4 done) |
-| 7 | Native depth → partial_equivalence + multi-file | open |
-| 8 | MCP + AI ops productization | open |
+| 7 | Native depth → partial_equivalence + multi-file | blocked_on_phase_4|
+| 8 | MCP + AI ops productization | blocked_on_phase_4|
 | 9 | Orchestration + modular monolith / ports | open |
-| 10 | Workers + external-tool CI + SEC-1 sandbox | open |
-| 11 | Analyst / governance / packaging (GA-P4) | open |
-| 12 | Platform depth (IR, Ralph opt, RAG, KG start) | open |
-| 13 | Blue-ocean / v6.1+ futures (post SEC-1 for exploits) | open |
+| 10 | Workers + external-tool CI + SEC-1 sandbox | blocked_on_phase_4|
+| 11 | Analyst / governance / packaging (GA-P4) | blocked_on_phase_4|
+| 12 | Platform depth (IR, Ralph opt, RAG, KG start) | blocked_on_phase_4|
+| 13 | Blue-ocean / v6.1+ futures (post SEC-1 for exploits) | blocked_on_phase_4|
 
 ## F. Capability hardening leftovers
 
@@ -237,3 +237,8 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 - `docs/architecture/decision-r-vrl-1-seeds-and-provider.md`
 - `docs/REVOLUTION_PLAN.md`
 - `docs/changelogs/v6.0.md`
+
+
+## K. Phase 4 HOLD
+
+Phases 5–13 product exits blocked until Phase 4 go (see `scope-c-hold-prep-policy.md`). Plans exist under `docs/superpowers/plans/`.

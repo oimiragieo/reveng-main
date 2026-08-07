@@ -24,15 +24,15 @@ Ops: root [`backlog.md`](../../backlog.md) §E. Governance:
 | 2 | Managed recompile + GA report honesty (preview) | **done** (preview; native corpus residuals open) | (shipped; see backlog §A / M1) |
 | 3 | Behavior-backed JS validation | **done** | (shipped; see backlog §B) |
 | 4 | Hexyl frontier + VRL LLM round-trip honesty | **partial** | [`2026-08-07-reveng-phase-04-hexyl-vrl.md`](../superpowers/plans/2026-08-07-reveng-phase-04-hexyl-vrl.md) |
-| 5 | Equivalence product gates + CI corpus enforcement | planned / **unauthorized** | [`2026-08-07-reveng-phase-05-equiv-ci.md`](../superpowers/plans/2026-08-07-reveng-phase-05-equiv-ci.md) |
-| 6 | JS close: RALPH-2 + bundler graph (P4) | planned / **unauthorized** | [`2026-08-07-reveng-phase-06-js.md`](../superpowers/plans/2026-08-07-reveng-phase-06-js.md) |
-| 7 | Native depth → partial_equivalence + multi-file | planned / **unauthorized** | [`2026-08-07-reveng-phase-07-native-depth.md`](../superpowers/plans/2026-08-07-reveng-phase-07-native-depth.md) |
-| 8 | MCP + AI ops productization | planned / **unauthorized** | [`2026-08-07-reveng-phase-08-mcp-ai.md`](../superpowers/plans/2026-08-07-reveng-phase-08-mcp-ai.md) |
-| 9 | Orchestration + modular monolith / ports | planned / **unauthorized** | [`2026-08-07-reveng-phase-09-orchestration.md`](../superpowers/plans/2026-08-07-reveng-phase-09-orchestration.md) |
-| 10 | Workers + external-tool CI + SEC-1 sandbox proofs | planned / **unauthorized** | [`2026-08-07-reveng-phase-10-workers.md`](../superpowers/plans/2026-08-07-reveng-phase-10-workers.md) |
-| 11 | Analyst / governance / packaging (GA-P4) | planned / **unauthorized** | [`2026-08-07-reveng-phase-11-packaging.md`](../superpowers/plans/2026-08-07-reveng-phase-11-packaging.md) |
-| 12 | Platform depth (IR, Ralph opt, RAG, KG start) | planned / **unauthorized** | [`2026-08-07-reveng-phase-12-platform.md`](../superpowers/plans/2026-08-07-reveng-phase-12-platform.md) |
-| 13 | Blue-ocean / v6.1+ futures (post SEC-1 for exploits) | planned / **unauthorized** | [`2026-08-07-reveng-phase-13-blue-ocean.md`](../superpowers/plans/2026-08-07-reveng-phase-13-blue-ocean.md) |
+| 5 | Equivalence product gates + CI corpus enforcement | **blocked_on_phase_4** / unauthorized | [`2026-08-07-reveng-phase-05-equiv-ci.md`](../superpowers/plans/2026-08-07-reveng-phase-05-equiv-ci.md) |
+| 6 | JS close: RALPH-2 + bundler graph (P4) | **blocked_on_phase_4** / unauthorized | [`2026-08-07-reveng-phase-06-js.md`](../superpowers/plans/2026-08-07-reveng-phase-06-js.md) |
+| 7 | Native depth → partial_equivalence + multi-file | **blocked_on_phase_4** / unauthorized | [`2026-08-07-reveng-phase-07-native-depth.md`](../superpowers/plans/2026-08-07-reveng-phase-07-native-depth.md) |
+| 8 | MCP + AI ops productization | **blocked_on_phase_4** / unauthorized | [`2026-08-07-reveng-phase-08-mcp-ai.md`](../superpowers/plans/2026-08-07-reveng-phase-08-mcp-ai.md) |
+| 9 | Orchestration + modular monolith / ports | **blocked_on_phase_4** / unauthorized | [`2026-08-07-reveng-phase-09-orchestration.md`](../superpowers/plans/2026-08-07-reveng-phase-09-orchestration.md) |
+| 10 | Workers + external-tool CI + SEC-1 sandbox proofs | **blocked_on_phase_4** / unauthorized | [`2026-08-07-reveng-phase-10-workers.md`](../superpowers/plans/2026-08-07-reveng-phase-10-workers.md) |
+| 11 | Analyst / governance / packaging (GA-P4) | **blocked_on_phase_4** / unauthorized | [`2026-08-07-reveng-phase-11-packaging.md`](../superpowers/plans/2026-08-07-reveng-phase-11-packaging.md) |
+| 12 | Platform depth (IR, Ralph opt, RAG, KG start) | **blocked_on_phase_4** / unauthorized | [`2026-08-07-reveng-phase-12-platform.md`](../superpowers/plans/2026-08-07-reveng-phase-12-platform.md) |
+| 13 | Blue-ocean / v6.1+ futures (post SEC-1 for exploits) | **blocked_on_phase_4** / unauthorized | [`2026-08-07-reveng-phase-13-blue-ocean.md`](../superpowers/plans/2026-08-07-reveng-phase-13-blue-ocean.md) |
 
 ## Cross-cutting gates
 

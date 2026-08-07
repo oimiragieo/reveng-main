@@ -1,30 +1,19 @@
-# Scope C — Phase 4 HOLD prep policy (2026-08-07)
+# Scope C — Phase 4 HOLD policy (narrowed, 2026-08-07)
 
 ## Situation
-Phase 4 stop/go = **HOLD** (partial): VRL measured blocked on Ollama; world-class M2 still open.
-Charter default: do not start Phase N+1 product exits until Phase N = go.
+Phase 4 stop/go = **HOLD** (partial). Charter: do not execute Phase 5–13 product exits until Phase 4 = **go**.
 
-## Exception (authorized prep only)
-While Phase 4 is HOLD, agents MAY land **fail-closed prep** for phases 5–13 that:
+## Allowed while HOLD (docs / honesty guards only)
 
-1. Does **not** mark the phase or capability row `done`
-2. Does **not** flip native `required: true` or claim GA/Scope C complete
-3. Does **not** expand exploit surface (R-SEC-1)
-4. Adds tests/gates that **fail** on empty/hollow evidence (bidirectional)
-5. Updates backlog with `partial` / `open` / `parked` / `deferred` honestly
-6. Leaves phase catalog status as planned/unauthorized or prep-partial until formal stop/go after Phase 4 go
-
-## Allowed examples
-- M4 CI workflow that fails closed on missing corpus report (Phase 5 prep)
-- Equivalence helper + empty-fixture fail test (Phase 5 prep)
-- Ralph `oracle_dir` wiring + scorecard tests without claiming 0.8 recall (Phase 6 prep)
-- Import-linter / pipeline split docs already decided (Phase 9)
-- Tier-3 honesty refuse tests (Phase 13 parked)
+1. Keep/update phase **plans** and catalog status (`planned / unauthorized` or `blocked_on_phase_4`).
+2. Backlog rows may be `open` / `blocked` / `parked` / `deferred` — never `done` for phase 5–13 product exits.
+3. Add **refuse/overclaim regression tests** that fail if docs/matrix claim phase 5–13 complete, native GA from process green, or T3-* unparked without CEO reopen.
+4. No new feature modules, CI corpus product gates, MCP productization, workers, exploit surface, or capability `done` flips.
 
 ## Forbidden
-- Claiming phase 5–13 `done` or Scope C complete
-- Exploit scaffolding / Track J
-- Hollow greens / fake ValidationGrade / fake measured VRL
+- Substantive implementation across phases 5–13 labeled as “prep”
+- Retrospective stop/go
+- Hollow greens; Scope C complete claims
 
-## Reversion
-If Phase 4 later goes go, re-run Sol stop/go per phase plan before marking phase exits.
+## Unblock
+When Ollama yields VRL `runtime_status: measured` (and Phase 4 both exits met), record Phase 4 **go**, then Sol-authorize Phase 5 plan before any Phase 5 product code.
