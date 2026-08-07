@@ -54,7 +54,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | M5-PIPE | pipeline vs pipelines merge | 9 | partial | R-PIPE-1 decision done | documented split freeze; Wave B merge optional |
 | M0 | Baseline reporting discipline | exec | done | | preview reporting discipline: probe v1.2 + evidence hygiene (exact one stamp≡latest) + scoped git (DF-4); CI corpus gates remain **M4 residual** |
 | M1 | Multi-codebase corpus gate | exec | open | see R-NATIVE-1 | overlaps M1-NATIVE-FAM |
-| M2 | Hexyl frontier hardening | 4 | open | **yes R-HEX-1** | beyond a timed probe; R-HEX-1 measurement alone does not close M2 |
+| M2 | Hexyl frontier hardening | 4 | done | no (R-HEX-1 measured) | Phase 4 slice: probe v1.3 attribution + re-stamp — `docs/architecture/phase-04-m2-hexyl-frontier.md`. No `required:true`; M1-NATIVE-FAM still open. |
 | M3 | Validation/evidence unified contract | 3 | partial | | MCP top-level validation_grade + capability_report landed |
 | M4 | CI/PR/nightly corpus gates | 5 | partial | | thin Wave B honesty workflow landed (`.github/workflows/wave-b-honesty.yml`); full corpus/nightly blocking still open |
 | M5 | Post-gate architecture extraction | 9–10 | open | after M0–M4 | workers/ports |
@@ -79,7 +79,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 1 | Honesty + known_gaps + GA gate integrity | **done** |
 | 2 | Managed recompile + GA report honesty (preview) | **done** (preview); native corpus still open |
 | 3 | Behavior-backed JS validation | **done** (incl. optional tsx) |
-| 4 | Hexyl frontier + VRL LLM round-trip honesty | open |
+| 4 | Hexyl frontier + VRL LLM round-trip honesty | **partial** (M2 frontier done; VRL CNM — ollama down) |
 | 5 | Equivalence product gates + CI corpus enforcement | open |
 | 6 | JS close: RALPH-2 + bundler graph (P4) | open (BP-2/3/4 done) |
 | 7 | Native depth → partial_equivalence + multi-file | open |
@@ -126,7 +126,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | GA floor may accept analyze-ok / recompile-failed styles when evidence is real |
 | 2026-08-06 | Public preview: CLI + app RE supported; native limited; exploits experimental |
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈4.68s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
-| 2026-08-07 | Thinktank REJECT must-fixes: execution charter + Phase 4-only plan; probe v1.3 stream semantic attribution; backlog `deferred`/`wontfix`; CEO reconciled (R-HEX-1/DF-5 done, M2 open); see `docs/architecture/ceo-update-2026-08-07-scope-c-charter.md` |
+| 2026-08-07 | Phase 4 Track A: probe v1.3 re-stamp + M2 frontier doc; Track B: VRL honesty gate shipped, `runtime_status: could_not_measure` (ollama unreachable). Phase 4 **partial**. See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
 
 ---
 
@@ -141,7 +141,7 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 | M0 | Baseline and reporting discipline | reveng-world-class-execution-backlog.md | 1 | done | Probe v1.2 + evidence hygiene + scoped git (DF-4); CI corpus residual tracked under M4 |
 | M1 | Multiple-codebase corpus gate | reveng-world-class-execution-backlog.md | 2 | open | ≥5 native / ≥3 families; overlaps M1-NATIVE-FAM; Bun 2 live already measured |
 | M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic analyze | reveng-world-class-execution-backlog.md | 2 | open | Fixtures landed required:false; flip true only after analyze ≤120s without Ghidra |
-| M2 | Hexyl frontier hardening beyond timed probe | reveng-world-class-execution-backlog.md | 4 | open | R-HEX-1 measurement alone does not close; HARDENING slices in engine vs frontier still open |
+| M2 | Hexyl frontier hardening beyond timed probe | reveng-world-class-execution-backlog.md | 4 | done | Phase 4 v1.3 attribution + re-stamp evidenced; see phase-04-m2-hexyl-frontier.md; M1-NATIVE-FAM still open |
 | M3 | Validation and evidence grade lift | reveng-world-class-execution-backlog.md | 3 | partial | MCP top-level validation_grade + capability_report landed; unified benchmark contract residual |
 | M4 | CI/PR/nightly corpus gate enforcement | reveng-world-class-execution-backlog.md | 5 | partial | Thin wave-b-honesty.yml landed; full corpus/nightly blocking still open |
 | M5 | Post-gate architecture extraction | reveng-world-class-execution-backlog.md | 9 | open | After M0–M4 stable; workers/ports |
@@ -223,7 +223,7 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 | V6-K8S | Kubernetes deployment | changelogs/v6.0.md | 13 | open | v6.1+ future |
 | V6-GHA | GitHub Actions integration | changelogs/v6.0.md | 13 | open | v6.1+ future |
 | PROF-SHIM-4 | Phase-4 shim removal + back-compat policy | 2026-06-03-reveng-professionalization-design.md | 11 | open | Shims remain; decide public API before retirement |
-| VRL-LLM-1 | Measured VRL LLM round-trip honesty gate | decision-r-vrl-1-seeds-and-provider.md | 4 | open | min_seeds=3 × ollama; no-LLM control fails; runtime_status=measured |
+| VRL-LLM-1 | Measured VRL LLM round-trip honesty gate | decision-r-vrl-1-seeds-and-provider.md | 4 | partial | Gate + tests shipped; runtime_status=could_not_measure (ollama unreachable); see evidence-vrl-llm-honesty-phase-04.md |
 
 ### Source docs ingested
 
