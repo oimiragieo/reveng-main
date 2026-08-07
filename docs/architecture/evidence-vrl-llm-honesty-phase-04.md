@@ -17,16 +17,19 @@ Local Ollama at `http://127.0.0.1:11434/api/tags` → connection refused.
 
 Per R-VRL-1 / Phase 4 kill rule: do **not** fake ValidationGrade rows; leave the
 VRL half `could_not_measure`. Phase 4 overall stays **partial** / open until a
-live ollama round-trip records grades under `min_seeds: 3` with the no-LLM
-control failing.
+live ollama round-trip records **≥3 executed** seed grades under `min_seeds: 3`
+with an *executed* no-LLM control failing.
 
 ## What did ship (gate honesty)
 
 | Predicate | Status |
 | --- | --- |
-| Gate requires `min_seeds >= 3` when claiming `measured` | tested |
+| Gate requires `min_seeds >= 3` **and** `len(grades) >= 3` when claiming `measured` | tested |
+| `min_seeds: 3` with a single grade ⇒ gate fail | tested (`test_measured_with_min_seeds_field_but_one_grade_fails`) |
+| Preferred `seed_runs[]` schema; derive grades from executed rows | tested + `run_vrl.build_seed_runs_for_log` |
 | Missing / invalid ValidationGrade never passes | tested |
-| No-LLM control `passed: true` ⇒ gate fail (bidirectional) | tested |
+| Measured requires control `executed: true` + `passed: false` + `llm_enabled: false` | tested |
+| Unexecuted control (`executed: false`) is CNM — no phantom `passed: false` | tested + stamped |
 | `runtime_status: measured` only when `ollama_actually_ran` | tested |
 | Unreachable ollama ⇒ exit 2 + tracked CNM evidence | dogfood + tests |
 | Customer path `scripts/run_vrl.py` exercised | attempted (see below) |
@@ -43,19 +46,20 @@ PYTHONPATH=src REVENG_AI_PROVIDER=ollama \
 # Ollama also unreachable — would not have produced a measured LLM round-trip
 ```
 
-`run_vrl.py` now records `provider` / `min_seeds_policy` / `seed_argv_count` on
-successful run logs for the honesty gate to consume later. No corpus grade was
-written on this failed dogfood (correct — never invent a pass).
+`run_vrl.py` emits gate-consumable `seed_runs` / `grades` on successful run logs
+via `build_seed_runs_for_log` (does not invent grades to pad `min_seeds`). No
+corpus grade was written on this failed dogfood (correct — never invent a pass).
 
 ## Control arm (bidirectional)
 
-Evidence stamps `control_arm.llm_enabled: false` and `control_arm.passed: false`.
-A fixture with `passed: true` fails the gate in unit tests — the gate cannot go
-green without an LLM simply because grades are absent.
+CNM evidence stamps `control_arm.executed: false` and `passed: null` — do not
+claim a failed control that never ran. Measured pass requires `executed: true`
+and `passed: false` with `llm_enabled: false`. A fixture with `passed: true`
+(executed) fails the gate in unit tests.
 
 ## Exit remaining for VRL half
 
 1. Ollama up on dogfood host.
-2. ≥3 seeds × tracked corpus under `REVENG_AI_PROVIDER=ollama`.
-3. Real ValidationGrade(s) in `.reveng/benchmarks/corpus.yaml`.
-4. No-LLM control still fails; `runtime_status: measured` in evidence.
+2. ≥3 **executed** seed runs × tracked corpus under `REVENG_AI_PROVIDER=ollama`.
+3. Real ValidationGrade(s) in evidence `seed_runs` / `grades` and corpus.yaml.
+4. No-LLM control **executed** and fails; `runtime_status: measured` in evidence.

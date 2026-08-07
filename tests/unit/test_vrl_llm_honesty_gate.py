@@ -44,10 +44,29 @@ def _base(**overrides):
         "ollama_reachable": True,
         "ollama_actually_ran": True,
         "grades": ["analysis_only", "compile_only", "launches_but_divergent"],
-        "control_arm": {"llm_enabled": False, "passed": False},
+        "control_arm": {
+            "llm_enabled": False,
+            "passed": False,
+            "executed": True,
+        },
     }
     payload.update(overrides)
     return payload
+
+
+def _seed_runs(*grades, executed=True):
+    """Build gate-consumable seed_runs rows (one per grade)."""
+    rows = []
+    for idx, grade in enumerate(grades):
+        rows.append(
+            {
+                "seed_id": f"seed_{idx}",
+                "grade": grade,
+                "argv": [f"--seed={idx}"],
+                "executed": executed,
+            }
+        )
+    return rows
 
 
 def test_measured_happy_path_passes():
@@ -70,16 +89,64 @@ def test_missing_grades_never_pass():
     assert "grades_missing" in v.reasons
 
 
+def test_measured_with_min_seeds_field_but_one_grade_fails():
+    """Declaring min_seeds: 3 with a single grade must FAIL (Sol HIGH 1)."""
+    v = gate.evaluate_evidence(
+        _base(min_seeds=3, grades=["analysis_only"])
+    )
+    assert v.exit_code == 1
+    assert any("grades_below_min_seeds" in r for r in v.reasons)
+
+
 def test_invalid_grade_never_pass():
     v = gate.evaluate_evidence(_base(grades=["llm_error"]))  # RefinementStatus leak
     assert v.exit_code == 1
     assert any("invalid_grade" in r for r in v.reasons)
 
 
+def test_seed_runs_derive_grades_and_require_three_executed():
+    """When seed_runs present, gate derives grades from executed runs (Sol HIGH 2)."""
+    seed_runs = _seed_runs(
+        "analysis_only", "compile_only", "launches_but_divergent"
+    )
+    v = gate.evaluate_evidence(_base(grades=[], seed_runs=seed_runs))
+    assert v.exit_code == 0
+    assert v.runtime_status == "measured"
+
+
+def test_seed_runs_with_fewer_than_three_executed_fails():
+    seed_runs = _seed_runs("analysis_only", "compile_only")
+    v = gate.evaluate_evidence(_base(grades=[], seed_runs=seed_runs))
+    assert v.exit_code == 1
+    assert any("grades_below_min_seeds" in r or "seed_runs_below" in r for r in v.reasons)
+
+
+def test_seed_runs_unexecuted_rows_do_not_count():
+    seed_runs = _seed_runs(
+        "analysis_only", "compile_only", "launches_but_divergent", executed=False
+    )
+    v = gate.evaluate_evidence(_base(grades=[], seed_runs=seed_runs))
+    assert v.exit_code == 1
+
+
+def test_legacy_grades_still_require_three_for_measured():
+    v = gate.evaluate_evidence(
+        _base(grades=["analysis_only", "compile_only"])
+    )
+    assert v.exit_code == 1
+    assert any("grades_below_min_seeds" in r for r in v.reasons)
+
+
 def test_no_llm_control_passing_fails_gate_bidirectional():
     """Control arm that passes without LLM ⇒ hollow gate ⇒ fail."""
     v = gate.evaluate_evidence(
-        _base(control_arm={"llm_enabled": False, "passed": True})
+        _base(
+            control_arm={
+                "llm_enabled": False,
+                "passed": True,
+                "executed": True,
+            }
+        )
     )
     assert v.exit_code == 1
     assert "no_llm_control_passed" in v.reasons
@@ -87,9 +154,47 @@ def test_no_llm_control_passing_fails_gate_bidirectional():
 
 def test_no_llm_control_failing_allows_measurement_path():
     v = gate.evaluate_evidence(
-        _base(control_arm={"llm_enabled": False, "passed": False})
+        _base(
+            control_arm={
+                "llm_enabled": False,
+                "passed": False,
+                "executed": True,
+            }
+        )
     )
     assert v.exit_code == 0
+
+
+def test_unexecuted_control_cannot_claim_passed_false_as_executed_fail():
+    """Phantom control fail (executed:false + passed:false) must not unlock measured."""
+    v = gate.evaluate_evidence(
+        _base(
+            control_arm={
+                "llm_enabled": False,
+                "passed": False,
+                "executed": False,
+            }
+        )
+    )
+    assert v.exit_code == 1
+    assert "control_arm_not_executed" in v.reasons
+
+
+def test_cnm_with_unexecuted_control_omits_phantom_fail():
+    """CNM may stamp executed:false without claiming a failed control that never ran."""
+    v = gate.evaluate_evidence(
+        _base(
+            runtime_status="could_not_measure",
+            ollama_reachable=False,
+            ollama_actually_ran=False,
+            grades=[],
+            control_arm={"llm_enabled": False, "executed": False},
+            reason="ollama_unreachable: connection refused on 127.0.0.1:11434",
+        )
+    )
+    assert v.exit_code == 2
+    assert "control_arm_passed_not_bool_false" not in v.reasons
+    assert "control_arm_not_executed" not in v.reasons
 
 
 def test_measured_requires_ollama_actually_ran():
@@ -111,6 +216,7 @@ def test_could_not_measure_exits_two():
             ollama_reachable=False,
             ollama_actually_ran=False,
             grades=[],
+            control_arm={"llm_enabled": False, "executed": False},
             reason="ollama_unreachable: connection refused on 127.0.0.1:11434",
         )
     )
@@ -128,7 +234,8 @@ def test_write_cnm_evidence_roundtrip(tmp_path: Path):
     )
     assert out.is_file()
     assert payload["runtime_status"] == "could_not_measure"
-    assert payload["control_arm"]["passed"] is False
+    assert payload["control_arm"]["executed"] is False
+    assert payload["control_arm"].get("passed") is None
     assert payload["control_arm"]["llm_enabled"] is False
     loaded = json.loads(out.read_text(encoding="utf-8"))
     v = gate.evaluate_evidence(loaded)
@@ -151,7 +258,11 @@ def test_cli_rejects_hollow_measured_evidence(tmp_path: Path):
         json.dumps(
             _base(
                 min_seeds=1,
-                control_arm={"llm_enabled": False, "passed": True},
+                control_arm={
+                    "llm_enabled": False,
+                    "passed": True,
+                    "executed": True,
+                },
             )
         ),
         encoding="utf-8",
@@ -171,3 +282,38 @@ def test_invalid_runtime_status_rejected():
     v = gate.evaluate_evidence(_base(runtime_status="passed"))
     assert v.exit_code == 1
     assert "invalid_runtime_status" in v.reasons
+
+
+def test_build_seed_run_log_schema_helper():
+    """run_vrl helper emits gate-consumable seed_runs without inventing measured grades."""
+    import importlib.util
+    import sys
+
+    run_vrl_path = _REPO_ROOT / "scripts" / "run_vrl.py"
+    spec = importlib.util.spec_from_file_location("run_vrl_honesty_schema", run_vrl_path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    sys.modules[spec.name] = mod
+    spec.loader.exec_module(mod)
+
+    rows = mod.build_seed_runs_for_log(
+        [
+            {"seed_id": "a", "argv": ["--help"], "grade": "analysis_only", "executed": True},
+            {"seed_id": "b", "argv": ["x"], "grade": "compile_only", "executed": True},
+            {
+                "seed_id": "c",
+                "argv": ["y"],
+                "grade": "launches_but_divergent",
+                "executed": True,
+            },
+        ]
+    )
+    assert len(rows) == 3
+    assert rows[0]["seed_id"] == "a"
+    assert rows[0]["executed"] is True
+    assert "grade" in rows[0]
+    assert "argv" in rows[0]
+
+    # Empty / not-yet-run path: writer exists, does not fake grades.
+    empty = mod.build_seed_runs_for_log([])
+    assert empty == []

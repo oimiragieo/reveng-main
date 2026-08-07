@@ -5,9 +5,15 @@ VRL LLM honesty gate (Phase 4 / VRL-LLM-1).
 Evaluates a tracked evidence JSON against R-VRL-1 policy:
 
 * ``min_seeds >= 3`` whenever ``runtime_status`` claims ``measured``
+* measured also requires ``len(grades) >= MIN_SEEDS`` (or ≥3 executed
+  ``seed_runs`` with valid ValidationGrade) — declaring ``min_seeds: 3`` with
+  one grade must FAIL
 * every scored run records a real ValidationGrade (ladder value) — missing grade
   ⇒ ``could_not_measure``, never a pass
-* no-LLM control arm must FAIL (bidirectional: control pass ⇒ gate fail)
+* no-LLM control arm must be *executed* and FAIL for measured
+  (``executed: true``, ``passed: false``, ``llm_enabled: false``)
+* unexecuted control (``executed: false``) is a CNM contribution — never a
+  phantom ``passed: false`` that unlocks measured
 * provider identity recorded; ``runtime_status: measured`` only when ollama
   actually ran
 
@@ -34,7 +40,7 @@ import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_EVIDENCE = _REPO_ROOT / "reports" / "vrl_llm_honesty" / "latest.json"
@@ -89,6 +95,44 @@ def is_valid_grade(grade: Any) -> bool:
     return grade.strip() in VALIDATION_GRADE_LADDER
 
 
+def derive_grades_from_evidence(evidence: Dict[str, Any]) -> Tuple[List[Any], List[str]]:
+    """
+    Resolve the grade list the gate will score.
+
+    Prefer ``seed_runs`` when present: only ``executed: true`` rows with a valid
+    ValidationGrade count. Otherwise fall back to the legacy ``grades`` list.
+    Returns ``(grades, reasons)`` where *reasons* are schema problems found while
+    deriving (caller still enforces length / validity for measured).
+    """
+    reasons: List[str] = []
+    seed_runs = evidence.get("seed_runs")
+    if seed_runs is not None:
+        if not isinstance(seed_runs, list):
+            reasons.append("seed_runs_not_list")
+            return [], reasons
+        derived: List[Any] = []
+        for idx, row in enumerate(seed_runs):
+            if not isinstance(row, dict):
+                reasons.append(f"seed_run_not_object_at_{idx}")
+                continue
+            if row.get("executed") is not True:
+                continue
+            grade = row.get("grade")
+            if not is_valid_grade(grade):
+                reasons.append(f"invalid_grade_at_{idx}:{grade!r}")
+                continue
+            derived.append(grade)
+        return derived, reasons
+
+    grades = evidence.get("grades")
+    if grades is None:
+        return [], reasons
+    if not isinstance(grades, list):
+        reasons.append("grades_not_list")
+        return [], reasons
+    return list(grades), reasons
+
+
 def evaluate_evidence(evidence: Dict[str, Any]) -> GateVerdict:
     """
     Evaluate a VRL LLM honesty evidence document.
@@ -101,10 +145,15 @@ def evaluate_evidence(evidence: Dict[str, Any]) -> GateVerdict:
           "runtime_status": "measured" | "could_not_measure",
           "ollama_reachable": true | false,
           "ollama_actually_ran": true | false,
-          "grades": ["analysis_only", ...],   # one per scored run
+          "grades": ["analysis_only", ...],   # legacy: one per scored run
+          "seed_runs": [                      # preferred run-log schema
+            {"seed_id": "...", "grade": "...", "argv": ["..."], "executed": true},
+            ...
+          ],
           "control_arm": {
             "llm_enabled": false,
-            "passed": false
+            "executed": true | false,
+            "passed": false | null            # null/omit when executed is false
           },
           "reason": "optional free-text when could_not_measure"
         }
@@ -133,20 +182,30 @@ def evaluate_evidence(evidence: Dict[str, Any]) -> GateVerdict:
 
     ollama_reachable = evidence.get("ollama_reachable")
     ollama_actually_ran = evidence.get("ollama_actually_ran")
-    grades = evidence.get("grades")
     control = evidence.get("control_arm") or {}
 
-    # --- Bidirectional control: no-LLM arm must FAIL -----------------------
-    if not isinstance(control, dict):
+    # --- Control arm: executed flag + bidirectional no-LLM fail ------------
+    control_executed: Optional[bool] = None
+    if not isinstance(control, dict) or not control:
         reasons.append("control_arm_missing")
     else:
+        executed_raw = control.get("executed")
+        if executed_raw is not True and executed_raw is not False:
+            reasons.append("control_arm_executed_missing")
+        else:
+            control_executed = bool(executed_raw)
+
         if control.get("llm_enabled") is not False:
             reasons.append("control_arm_must_disable_llm")
-        if control.get("passed") is True:
-            # Hollow gate: passes without an LLM — fail closed.
-            reasons.append("no_llm_control_passed")
-        elif control.get("passed") is not False:
-            reasons.append("control_arm_passed_not_bool_false")
+
+        if control_executed is True:
+            if control.get("passed") is True:
+                # Hollow gate: passes without an LLM — fail closed.
+                reasons.append("no_llm_control_passed")
+            elif control.get("passed") is not False:
+                reasons.append("control_arm_passed_not_bool_false")
+        # executed:false → CNM contribution; do not require passed:false
+        # (that would invent a failed control that never ran).
 
     if "no_llm_control_passed" in reasons:
         return GateVerdict(
@@ -160,6 +219,16 @@ def evaluate_evidence(evidence: Dict[str, Any]) -> GateVerdict:
 
     # --- could_not_measure path (honest incomplete) ------------------------
     if runtime_status == "could_not_measure":
+        # Drop measured-only control reasons that do not apply to CNM.
+        reasons = [
+            r
+            for r in reasons
+            if r
+            not in (
+                "control_arm_executed_missing",
+                "control_arm_passed_not_bool_false",
+            )
+        ]
         if not reasons:
             reason = evidence.get("reason")
             if isinstance(reason, str) and reason.strip():
@@ -176,6 +245,9 @@ def evaluate_evidence(evidence: Dict[str, Any]) -> GateVerdict:
         )
 
     # --- measured path -----------------------------------------------------
+    if control_executed is not True:
+        reasons.append("control_arm_not_executed")
+
     if not isinstance(provider, str) or not provider.strip():
         reasons.append("provider_missing")
     elif provider != REQUIRED_PROVIDER:
@@ -191,12 +263,17 @@ def evaluate_evidence(evidence: Dict[str, Any]) -> GateVerdict:
     if ollama_reachable is False:
         reasons.append("ollama_unreachable_cannot_be_measured")
 
-    if not isinstance(grades, list) or not grades:
+    grades, derive_reasons = derive_grades_from_evidence(evidence)
+    reasons.extend(derive_reasons)
+
+    if not grades:
         reasons.append("grades_missing")
     else:
         for idx, grade in enumerate(grades):
             if not is_valid_grade(grade):
                 reasons.append(f"invalid_grade_at_{idx}:{grade!r}")
+        if len(grades) < MIN_SEEDS:
+            reasons.append(f"grades_below_min_seeds:{len(grades)}<{MIN_SEEDS}")
 
     if reasons:
         # Claiming measured with broken evidence is a hard fail (not CNM).
@@ -236,13 +313,12 @@ def write_could_not_measure_evidence(
     provider: str = REQUIRED_PROVIDER,
     min_seeds: int = MIN_SEEDS,
     ollama_reachable: bool = False,
-    control_passed: bool = False,
 ) -> Dict[str, Any]:
     """
     Write an honest could_not_measure evidence stamp.
 
-    The no-LLM control is recorded as failed (``passed: false``) so the
-    bidirectional oracle stays intact even when the measured arm is absent.
+    Control arm is recorded as ``executed: false`` with ``passed: null`` —
+    do not claim a failed control that never ran.
     """
     payload: Dict[str, Any] = {
         "provider": provider,
@@ -251,10 +327,12 @@ def write_could_not_measure_evidence(
         "ollama_reachable": ollama_reachable,
         "ollama_actually_ran": False,
         "grades": [],
+        "seed_runs": [],
         "control_arm": {
             "llm_enabled": False,
-            "passed": control_passed,
-            "notes": "no-LLM control must fail; recorded failed without provider",
+            "executed": False,
+            "passed": None,
+            "notes": "control not executed; CNM — do not invent a failed control",
         },
         "reason": reason,
         "corpus_path": str(_CORPUS_YAML.relative_to(_REPO_ROOT)),

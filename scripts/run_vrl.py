@@ -241,6 +241,41 @@ def _resolve_binary_path(entry: Dict[str, Any]) -> Path:
     )
 
 
+def build_seed_runs_for_log(
+    seed_runs: Optional[List[Dict[str, Any]]] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Normalize seed-run rows into the schema consumed by
+    ``scripts/verify_vrl_llm_honesty.py``.
+
+    Each row::
+
+        {"seed_id": str, "grade": str|None, "argv": [str, ...], "executed": bool}
+
+    Empty input yields ``[]`` — callers must not invent grades to pad
+    ``min_seeds``. The writer path exists even when a PE/subject is missing
+    upstream of a measured run.
+    """
+    if not seed_runs:
+        return []
+    normalized: List[Dict[str, Any]] = []
+    for row in seed_runs:
+        if not isinstance(row, dict):
+            continue
+        argv = row.get("argv") or []
+        if not isinstance(argv, list):
+            argv = [str(argv)]
+        normalized.append(
+            {
+                "seed_id": str(row.get("seed_id", "")),
+                "grade": row.get("grade"),
+                "argv": [str(a) for a in argv],
+                "executed": bool(row.get("executed", False)),
+            }
+        )
+    return normalized
+
+
 def _grade_for_result(result: Any) -> str:
     """
     Resolve a ValidationGrade ladder value for a RefinementResult.
@@ -459,10 +494,22 @@ def main(argv: Optional[List[str]] = None) -> int:  # noqa: C901  (complexity is
     # 9a. Update corpus.yaml
     _update_corpus_grade(_CORPUS_YAML, args.binary, final_grade)
 
-    # 9b. Write JSON run log
+    # 9b. Write JSON run log (gate-consumable seed_runs schema)
     _RUNS_DIR.mkdir(parents=True, exist_ok=True)
     today = date.today().isoformat()
     log_path = _RUNS_DIR / f"{args.binary}-{today}.json"
+    # One executed row for this refine() invocation — do NOT invent extra
+    # grades to satisfy min_seeds=3; the honesty gate rejects hollow padding.
+    seed_runs = build_seed_runs_for_log(
+        [
+            {
+                "seed_id": f"{args.binary}:refine",
+                "argv": list(seed_argv),
+                "grade": final_grade,
+                "executed": True,
+            }
+        ]
+    )
     log_data: Dict[str, Any] = {
         "binary_name": args.binary,
         "date": today,
@@ -479,6 +526,8 @@ def main(argv: Optional[List[str]] = None) -> int:  # noqa: C901  (complexity is
         "provider": provider,
         "min_seeds_policy": 3,
         "seed_argv_count": len(seed_argv),
+        "seed_runs": seed_runs,
+        "grades": [r["grade"] for r in seed_runs if r.get("executed") and r.get("grade")],
     }
     log_path.write_text(json.dumps(log_data, indent=2), encoding="utf-8")
     logger.info("Run log written to %s", log_path)

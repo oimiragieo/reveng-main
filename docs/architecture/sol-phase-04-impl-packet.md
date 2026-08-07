@@ -5,10 +5,33 @@ greps that hang on DrvFS.
 
 ## Ask
 
-Approve / APPROVE_WITH_NITS / REJECT Phase 4 implementation on branch
+Re-audit / APPROVE / APPROVE_WITH_NITS / REJECT Phase 4 implementation on branch
 `feat/phase-04-hexyl-vrl` against
 `docs/superpowers/plans/2026-08-07-reveng-phase-04-hexyl-vrl.md` and
 `docs/architecture/scope-c-execution-charter.md`. Honesty-first.
+
+## Sol REJECT → must-fix summary (re-audit)
+
+Prior Sol REJECT called out hollow measured predicates. Fixes landed (TDD):
+
+| Severity | Issue | Fix |
+| --- | --- | --- |
+| HIGH 1 | `min_seeds: 3` with one grade could pass | Measured requires `len(grades) >= MIN_SEEDS` (`grades_below_min_seeds`) — `test_measured_with_min_seeds_field_but_one_grade_fails` |
+| HIGH 2 | Run log not gate-consumable | Evidence may carry `seed_runs[{seed_id,grade,argv,executed}]`; gate derives grades from executed rows; legacy `grades` still needs `len>=3`. `run_vrl.build_seed_runs_for_log` writes the schema (no fake measured grades) |
+| MEDIUM | CNM stamped phantom `passed: false` | `control_arm.executed` required; unexecuted → CNM only; measured needs `executed:true` + `passed:false` + `llm_enabled:false`; CNM writer sets `executed:false`, `passed:null` |
+| LOW | R-HEX-1 still said M2 open | Timed-run doc notes M2 closed later by Phase 4 frontier (`phase-04-m2-hexyl-frontier.md`); R-HEX-1 remains the timing record |
+
+Validation:
+
+```bash
+PYTHONPATH=src /usr/bin/python3.9 -m pytest --no-cov \
+  tests/unit/test_vrl_llm_honesty_gate.py -q
+# expect: 22 passed
+```
+
+Tracked CNM stamp: `reports/vrl_llm_honesty/latest.json` →
+`runtime_status: could_not_measure`, `control_arm.executed: false`,
+`passed: null`, `seed_runs: []`. Gate exit 2.
 
 ## Expected Phase 4 stop/go
 
@@ -16,21 +39,21 @@ Approve / APPROVE_WITH_NITS / REJECT Phase 4 implementation on branch
 Track A (M2 frontier attribution slice) is evidenced. Do **not** authorize
 phases 5–13. Do **not** treat disposition as capability `done`.
 
-## Files touched (impl)
+## Files touched (impl + Sol must-fix)
 
 | Path | Role |
 | --- | --- |
-| `scripts/verify_vrl_llm_honesty.py` | VRL LLM honesty gate |
-| `scripts/run_vrl.py` | Record provider / seed policy fields on run log |
-| `tests/unit/test_vrl_llm_honesty_gate.py` | Bidirectional + policy unit tests |
+| `scripts/verify_vrl_llm_honesty.py` | VRL LLM honesty gate (grades length, seed_runs, control.executed) |
+| `scripts/run_vrl.py` | `build_seed_runs_for_log` + emit `seed_runs` / `grades` on run log |
+| `tests/unit/test_vrl_llm_honesty_gate.py` | Bidirectional + policy + Sol must-fix unit tests |
 | `tests/unit/test_hexyl_fixture_provenance.py` | Pin Phase 4 rebuild sha256 |
 | `tests/unit/test_backlog_wave_a_invariants.py` | Phase 4 may be `partial`; hexyl sha pin |
 | `reports/native_analyze_probe/latest.json` | Probe v1.3 re-stamp |
 | `reports/native_analyze_probe/2026-08-07T191850Z.json` | Sole stamp ≡ latest |
-| `reports/vrl_llm_honesty/latest.json` | CNM evidence |
+| `reports/vrl_llm_honesty/latest.json` | CNM evidence (executed:false control) |
 | `docs/architecture/phase-04-m2-hexyl-frontier.md` | M2 frontier slice doc |
 | `docs/architecture/evidence-vrl-llm-honesty-phase-04.md` | VRL CNM evidence doc |
-| `docs/architecture/research-r-hex-1-hexyl-timed-run.md` | Rebuild digest note |
+| `docs/architecture/research-r-hex-1-hexyl-timed-run.md` | Timing record + M2 post-date note |
 | `docs/architecture/sol-phase-04-impl-packet.md` | This packet |
 | `docs/superpowers/plans/2026-08-07-reveng-phase-04-hexyl-vrl.md` | Checkboxes |
 | `backlog.md` | M2 / VRL-LLM-1 / Phase 4 status |
@@ -74,8 +97,9 @@ PYTHONPATH=src /usr/bin/python3.9 scripts/probe_native_analyze_timeout.py \
    populated (`native_fallback_empty: true`, `semantic_reason` non-null).
 5. No native `required: true` flips; M1-NATIVE-FAM still open.
 6. `reports/vrl_llm_honesty/latest.json` → `runtime_status: could_not_measure`
-   with honest reason; gate exit 2.
-7. Unit tests prove no-LLM control pass ⇒ gate fail.
+   with honest reason; `control_arm.executed: false`; gate exit 2.
+7. Unit tests prove: one-grade + `min_seeds:3` fails; no-LLM control pass ⇒
+   gate fail; unexecuted control cannot unlock measured.
 8. Backlog: Phase 4 `partial`; M2 evidenced/`done` or `partial` with notes;
    VRL-LLM-1 not `done`.
 
