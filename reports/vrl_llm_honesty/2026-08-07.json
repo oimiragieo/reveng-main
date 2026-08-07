@@ -6,73 +6,86 @@
   "ollama_actually_ran": true,
   "ollama_tags_url": "http://172.28.160.1:11434/api/tags",
   "ollama_model": "hf.co/unsloth/Llama-3.2-1B-Instruct-GGUF:Q4_K_M",
+  "tokens_used": 183,
+  "vrl_iterations": 1,
+  "vrl_compile_blocked": false,
+  "treatment_differs_from_control": true,
+  "candidate_hash_changed": true,
+  "candidate_hash_before": "409e81ad0334843ee2356d79aea4d533cfebef7ac62e93e8af730261d20e8f1b",
+  "candidate_hash_after": "b798cee9f80be4dcb56a7b13be2e26d6819e3550e02e7f20cebe4c45b4281086",
   "grades": [
-    "launches_but_divergent",
-    "launches_but_divergent",
-    "launches_but_divergent"
+    "behavior_matched",
+    "behavior_matched",
+    "behavior_matched"
   ],
   "seed_runs": [
     {
-      "seed_id": "hexyl:seed_0:0bdbc8fb00a4",
-      "grade": "launches_but_divergent",
+      "seed_id": "vrl_micro_go:seed_0",
+      "grade": "behavior_matched",
       "argv": [
         "--help"
       ],
-      "executed": true
+      "executed": true,
+      "llm_influenced": true
     },
     {
-      "seed_id": "hexyl:seed_1:46dcd820f40e",
-      "grade": "launches_but_divergent",
+      "seed_id": "vrl_micro_go:seed_1",
+      "grade": "behavior_matched",
       "argv": [
         "--version"
       ],
-      "executed": true
+      "executed": true,
+      "llm_influenced": true
     },
     {
-      "seed_id": "hexyl:seed_2:32c419412186",
-      "grade": "launches_but_divergent",
+      "seed_id": "vrl_micro_go:seed_2",
+      "grade": "behavior_matched",
       "argv": [
-        "tests/fixtures/hexyl/sample.bin"
+        "sample"
       ],
-      "executed": true
+      "executed": true,
+      "llm_influenced": true
     }
   ],
   "seed_runs_detail": [
     {
-      "seed_id": "hexyl:seed_0:0bdbc8fb00a4",
-      "grade": "launches_but_divergent",
+      "seed_id": "vrl_micro_go:seed_0",
+      "grade": "behavior_matched",
       "argv": [
         "--help"
       ],
       "executed": true,
+      "llm_influenced": true,
       "ollama_model": "hf.co/unsloth/Llama-3.2-1B-Instruct-GGUF:Q4_K_M",
-      "ollama_preview": "ACK",
-      "oracle_verdict": "divergent",
-      "oracle_notes": "Phase 1 differential oracle; grade=launches_but_divergent"
+      "ollama_preview": "```go // Intentionally divergent candidate source for the no-LLM control arm. //",
+      "oracle_verdict": "equivalent",
+      "oracle_notes": "Phase 1 differential oracle; grade=behavior_matched"
     },
     {
-      "seed_id": "hexyl:seed_1:46dcd820f40e",
-      "grade": "launches_but_divergent",
+      "seed_id": "vrl_micro_go:seed_1",
+      "grade": "behavior_matched",
       "argv": [
         "--version"
       ],
       "executed": true,
+      "llm_influenced": true,
       "ollama_model": "hf.co/unsloth/Llama-3.2-1B-Instruct-GGUF:Q4_K_M",
-      "ollama_preview": "ACK",
-      "oracle_verdict": "divergent",
-      "oracle_notes": "Phase 1 differential oracle; grade=launches_but_divergent"
+      "ollama_preview": "```go // Intentionally divergent candidate source for the no-LLM control arm. //",
+      "oracle_verdict": "equivalent",
+      "oracle_notes": "Phase 1 differential oracle; grade=behavior_matched"
     },
     {
-      "seed_id": "hexyl:seed_2:32c419412186",
-      "grade": "launches_but_divergent",
+      "seed_id": "vrl_micro_go:seed_2",
+      "grade": "behavior_matched",
       "argv": [
-        "tests/fixtures/hexyl/sample.bin"
+        "sample"
       ],
       "executed": true,
+      "llm_influenced": true,
       "ollama_model": "hf.co/unsloth/Llama-3.2-1B-Instruct-GGUF:Q4_K_M",
-      "ollama_preview": "ACK",
-      "oracle_verdict": "divergent",
-      "oracle_notes": "Phase 1 differential oracle; grade=launches_but_divergent"
+      "ollama_preview": "```go // Intentionally divergent candidate source for the no-LLM control arm. //",
+      "oracle_verdict": "equivalent",
+      "oracle_notes": "Phase 1 differential oracle; grade=behavior_matched"
     }
   ],
   "control_arm": {
@@ -87,26 +100,35 @@
     ]
   },
   "binary": {
-    "name": "hexyl",
-    "original": "external/ga_binaries/hexyl/hexyl.exe",
-    "oracle_candidate": "test_samples/sample.exe",
-    "notes": "Hermetic seed\u00d7oracle path: DifferentialOracle(original=hexyl.exe, candidate=test_samples/sample.exe) per corpus seed argv. Candidate is a divergent PE stand-in because local C link is broken on this WSL (glibc RELR); grades are real oracle ValidationGrade values, not invented."
+    "name": "vrl_llm_micro_go",
+    "original_source": "test_samples/vrl_llm_micro_go/main.go",
+    "broken_source": "test_samples/vrl_llm_micro_go/broken_main.go",
+    "notes": "Load-bearing micro path: Go CGO_ENABLED=0 compile \u2192 Ollama revise broken_main.go \u2192 recompile \u2192 DifferentialOracle on 3 argv seeds. Hexyl/PE C refine remains blocked on this WSL (recorded under run_vrl_customer_path)."
   },
   "run_vrl_customer_path": {
     "executed": true,
     "returncode": 0,
-    "stdout_tail": "\n============================================================\nVRL RUN SUMMARY\n============================================================\n  binary       : hexyl\n  status       : llm_error\n  final grade  : unknown\n  iterations   : 0\n  elapsed      : 0.7s\n  tokens used  : 0\n  notes        : Initial compile_fn raised: All compilers failed for vrl_source_f8eb505e. Last error: cl: [Errno 13] Permission denied: 'cl'\n============================================================\n",
-    "stderr_tail": "16:25:00  INFO      run_vrl  Processing 'hexyl'  current_grade=launches_but_divergent  target_grade=behavior_matched\n16:25:00  INFO      run_vrl  Loading pre-existing decompilation from /mnt/c/dev/projects/reveng-main/_archive/2026-04-10-cleanup/analysis-dirs/analysis_hexyl/reconstructed.c\n16:25:00  INFO      run_vrl  Workspace: /mnt/c/dev/projects/reveng-main/.reveng/vrl-runs/workspaces/hexyl\n16:25:00  INFO      run_vrl  AI provider: ollama\n16:25:00  INFO      reveng.agents.ai.ollama_analyzer  Ollama analyzer initialized with model: hf.co/unsloth/Llama-3.2-1B-Instruct-GGUF:Q4_K_M\n16:25:00  INFO      reveng.agents.ai.ollama_analyzer  Config: timeout=60s, temperature=0.1, max_tokens=500\n16:25:00  INFO      reveng.agents.ai.ollama_analyzer  Available models: 11\n16:25:00  INFO      run_vrl  Seed contract: 3 argv token(s), 1 stdin payload(s)\n16:25:00  INFO      run_vrl  Starting refinement loop (max_iterations=1)\u2026\n16:25:00  ERROR     reveng.verification.refinement.refiner  Initial compile failed: All compilers failed for vrl_source_f8eb505e. Last error: cl: [Errno 13] Permission denied: 'cl'\n16:25:00  INFO      run_vrl  Updated corpus.yaml: hexyl.current_grade = unknown\n16:25:00  INFO      run_vrl  Run log written to /mnt/c/dev/projects/reveng-main/.reveng/vrl-runs/hexyl-2026-08-07.json\n",
-    "notes": "Customer path exercised. Non-zero / linker failure on PE-on-Linux is expected; hermetic seed\u00d7oracle\u00d7ollama path supplies measured grades.",
+    "stdout_tail": "\n============================================================\nVRL RUN SUMMARY\n============================================================\n  binary       : hexyl\n  status       : llm_error\n  final grade  : unknown\n  iterations   : 0\n  elapsed      : 0.9s\n  tokens used  : 0\n  notes        : Initial compile_fn raised: All compilers failed for vrl_source_f8eb505e. Last error: cl: [Errno 13] Permission denied: 'cl'\n============================================================\n",
+    "stderr_tail": "16:34:24  INFO      run_vrl  Processing 'hexyl'  current_grade=launches_but_divergent  target_grade=behavior_matched\n16:34:24  INFO      run_vrl  Loading pre-existing decompilation from /mnt/c/dev/projects/reveng-main/_archive/2026-04-10-cleanup/analysis-dirs/analysis_hexyl/reconstructed.c\n16:34:24  INFO      run_vrl  Workspace: /mnt/c/dev/projects/reveng-main/.reveng/vrl-runs/workspaces/hexyl\n16:34:24  INFO      run_vrl  AI provider: ollama\n16:34:24  INFO      reveng.agents.ai.ollama_analyzer  Auto-selected model: phi3.5:latest\n16:34:24  INFO      reveng.agents.ai.ollama_analyzer  Ollama analyzer initialized with model: phi3.5:latest\n16:34:24  INFO      reveng.agents.ai.ollama_analyzer  Config: timeout=60s, temperature=0.1, max_tokens=500\n16:34:24  INFO      reveng.agents.ai.ollama_analyzer  Available models: 11\n16:34:24  INFO      run_vrl  Seed contract: 3 argv token(s), 1 stdin payload(s)\n16:34:24  INFO      run_vrl  Starting refinement loop (max_iterations=1)\u2026\n16:34:25  ERROR     reveng.verification.refinement.refiner  Initial compile failed: All compilers failed for vrl_source_f8eb505e. Last error: cl: [Errno 13] Permission denied: 'cl'\n16:34:25  INFO      run_vrl  Updated corpus.yaml: hexyl.current_grade = unknown\n16:34:25  INFO      run_vrl  Run log written to /mnt/c/dev/projects/reveng-main/.reveng/vrl-runs/hexyl-2026-08-07.json\n",
+    "compile_blocked": true,
+    "tokens_used": 0,
+    "iterations": 0,
+    "notes": "vrl_compile_toolchain_broken: hexyl/PE C refine cannot link on this WSL (glibc RELR / cl PermissionError). Infra-only probe \u2014 not load-bearing.",
     "prior_corpus_grade": "launches_but_divergent",
     "corpus_grade_restored": "launches_but_divergent"
   },
-  "measured_at": "2026-08-07T20:25:03.155184+00:00",
+  "infra_progress": {
+    "ollama_host_probe": "ok",
+    "go_cgo_disabled_compile": "ok",
+    "hexyl_c_refine": "vrl_compile_toolchain_broken"
+  },
+  "measured_at": "2026-08-07T20:34:28.137751+00:00",
   "corpus_path": ".reveng/benchmarks/corpus.yaml",
   "policy": {
     "min_seeds": 3,
     "provider": "ollama",
-    "source": "docs/architecture/decision-r-vrl-1-seeds-and-provider.md"
+    "source": "docs/architecture/decision-r-vrl-1-seeds-and-provider.md",
+    "load_bearing": "treatment_differs_from_control | candidate_hash_changed | seed_runs.llm_influenced | tokens_used>0 with iterations>0"
   },
-  "wsl_ollama_note": "From WSL, Ollama on Windows is reached via the Hyper-V/WSL gateway (e.g. OLLAMA_HOST=http://172.28.160.1:11434), not 127.0.0.1. Discover: `ip route show | awk '/default/ {print $3}'` or Windows vEthernet (WSL) adapter address."
+  "wsl_ollama_note": "From WSL, Ollama on Windows is reached via the Hyper-V/WSL gateway (e.g. OLLAMA_HOST=http://172.28.160.1:11434), not 127.0.0.1."
 }

@@ -1,87 +1,61 @@
 # Evidence: VRL LLM honesty gate — Phase 4 (2026-08-07)
 
-**runtime_status:** `measured`  
+**runtime_status:** `measured` (load-bearing Go micro path)  
 **provider:** `ollama`  
 **min_seeds:** `3`  
 **Gate script:** `scripts/verify_vrl_llm_honesty.py`  
 **Dogfood:** `scripts/dogfood_vrl_llm_honesty.py`  
 **Tracked JSON:** `reports/vrl_llm_honesty/latest.json` (stamp `2026-08-07.json`, byte-identical)
 
-## Measured result (Track B)
+## Sol REJECT correction (hollow → load-bearing)
+
+Prior Track B stamped `measured` from an Ollama **ACK ping** plus
+`DifferentialOracle(hexyl.exe, sample.exe)` with identical control/treatment
+`launches_but_divergent` grades. LLM output never touched the candidate.
+`run_vrl.py` stayed compile-blocked (`llm_error`, 0 iterations, 0 tokens).
+That pattern is now a **hard gate fail**
+(`hollow_ack_ping_identical_grades` / `llm_not_load_bearing`).
+
+## Measured result (load-bearing)
 
 | Field | Value |
 | --- | --- |
 | `runtime_status` | `measured` |
-| `ollama_actually_ran` | `true` |
-| `ollama_tags_url` | `http://172.28.160.1:11434/api/tags` |
-| model | `hf.co/unsloth/Llama-3.2-1B-Instruct-GGUF:Q4_K_M` |
-| `seed_runs` | 3 distinct executed `seed_id`s |
-| grades | `launches_but_divergent` × 3 (DifferentialOracle) |
-| `control_arm` | `llm_enabled: false`, `executed: true`, `passed: false` |
+| Subject | `test_samples/vrl_llm_micro_go` (`CGO_ENABLED=0`) |
+| Loop | broken Go → Ollama revise → `go build` → DifferentialOracle × 3 argv |
+| Control grades | `launches_but_divergent` × 3 |
+| Treatment grades | `behavior_matched` × 3 |
+| `treatment_differs_from_control` | `true` |
+| `candidate_hash_changed` | `true` |
+| `seed_runs[].llm_influenced` | `true` (LLM text applied before grade) |
+| `tokens_used` / `vrl_iterations` | >0 / 1 |
 | Gate | `verify_vrl_llm_honesty.py --evidence …/latest.json` → **exit 0** |
 
 ### WSL → Windows Ollama
 
-From WSL, `127.0.0.1:11434` is refused — Ollama listens on the Windows host.
-Set `OLLAMA_HOST` (or `REVENG_OLLAMA_HOST`) to the Hyper-V / WSL gateway, e.g.:
-
 ```bash
 export OLLAMA_HOST=http://172.28.160.1:11434
-# Discover gateway: ip route show | awk '/default/ {print $3}'
-# Or Windows: Get-NetIPAddress on vEthernet (WSL)
 /usr/bin/python3.9 scripts/verify_vrl_llm_honesty.py --probe-ollama
-# → {"ollama_reachable": true, "url": "http://172.28.160.1:11434/api/tags"}  exit 0
+# → exit 0 when reachable
 ```
 
-The honesty gate resolves tags URL from env (default remains `http://127.0.0.1:11434/api/tags`).
-`OllamaAnalyzer` / `run_vrl` honor the same env for chat.
+### Customer path residual (`scripts/run_vrl.py` hexyl)
 
-### Customer path (`scripts/run_vrl.py`)
+Hexyl/PE C refine remains **`vrl_compile_toolchain_broken`** on this WSL
+(glibc RELR / `cl` PermissionError; `tokens_used=0`, `iterations=0`). Dogfood
+records that under `run_vrl_customer_path` as infra residual — it does **not**
+substitute for the load-bearing micro loop. Phase 4 overall stays **partial**
+(M2 world-class still open; hexyl C refine not green).
 
-```text
-REVENG_AI_PROVIDER=ollama OLLAMA_HOST=http://172.28.160.1:11434 \
-  /usr/bin/python3.9 scripts/run_vrl.py --binary hexyl --max-iterations 1
-# exit 0 process-wise, status=llm_error, final_grade=unknown
-# notes: Initial compile_fn raised — WSL linker cannot build C
-#   (glibc RELR / ld incompatible); cl → PermissionError
-# Only first corpus seed marked executed in run log (by design)
-```
+## Gate load-bearing contract (TDD)
 
-Dogfood restores `corpus.yaml` hexyl `current_grade` after this probe so a
-compile-fail fallback (`unknown`) does not overwrite the prior / hermetic
-oracle grade. Hermetic measured grades remain `launches_but_divergent`.
+`runtime_status: measured` requires at least one of:
 
-### Hermetic seed × oracle × ollama path
+* `treatment_differs_from_control: true` **and** different grade lists
+* `candidate_hash_changed: true` after LLM source applied
+* any `seed_runs[].llm_influenced: true`
+* refine `tokens_used > 0` with `vrl_iterations > 0` and not compile-blocked
 
-Because full refine cannot compile on this WSL host, dogfood scores each of the
-three corpus seeds with:
+Rejects ACK-ping + identical control/treatment grades.
 
-1. Live Ollama `analyze()` (ACK prompt) → `ollama_actually_ran: true`
-2. `DifferentialOracle(original=hexyl.exe, candidate=test_samples/sample.exe)`
-   with that seed’s argv → real ValidationGrade ladder values
-
-Candidate is a divergent PE stand-in (not a hexyl recompile). Grades are oracle
-outputs, not invented. No-LLM control uses the same oracle without Ollama and
-fails the success bar (not all `behavior_matched`) → `passed: false`.
-
-## What shipped (gate honesty)
-
-| Predicate | Status |
-| --- | --- |
-| `OLLAMA_HOST` / `REVENG_OLLAMA_HOST` → `/api/tags` | shipped + unit tested |
-| `--probe-ollama` prints resolved URL | shipped |
-| Gate requires ≥3 distinct executed `seed_id`s + valid grades for `measured` | tested |
-| Measured requires control `executed: true` + `passed: false` + `llm_enabled: false` | tested + dogfood |
-| Hollow control (`passed: true`) refuses measured | coded in dogfood |
-| CNM reasons include resolved URL (not localhost-only) | shipped |
-
-Unit suite: `tests/unit/test_vrl_llm_honesty_gate.py` (`--no-cov`) — 31 passed.
-
-## Residual (honest)
-
-* Full VRL refine (compile → LLM → re-verify to `behavior_matched`) remains
-  blocked on this WSL by the C toolchain / linker. Track B **measured** proves
-  ollama round-trip + seed×oracle ValidationGrade vocabulary under
-  `min_seeds: 3` with a failing no-LLM control — not hexyl convergence.
-* Phase 4 overall stays **partial** while world-class M2 (hexyl frontier) is
-  still open; VRL-LLM-1 measured gate is satisfied.
+Unit suite: `tests/unit/test_vrl_llm_honesty_gate.py` (`--no-cov`).
