@@ -114,11 +114,55 @@ def test_seed_runs_derive_grades_and_require_three_executed():
     assert v.runtime_status == "measured"
 
 
+def test_measured_three_duplicate_seed_ids_fails():
+    """Three executed rows with the same seed_id must FAIL (Sol Round-2 CRITICAL)."""
+    seed_runs = [
+        {
+            "seed_id": "hexyl:same",
+            "grade": "analysis_only",
+            "argv": ["--help"],
+            "executed": True,
+        },
+        {
+            "seed_id": "hexyl:same",
+            "grade": "compile_only",
+            "argv": ["--version"],
+            "executed": True,
+        },
+        {
+            "seed_id": "hexyl:same",
+            "grade": "launches_but_divergent",
+            "argv": ["sample.bin"],
+            "executed": True,
+        },
+    ]
+    v = gate.evaluate_evidence(_base(grades=[], seed_runs=seed_runs))
+    assert v.exit_code == 1
+    assert any("seed_ids_not_distinct" in r for r in v.reasons)
+
+
+def test_measured_three_distinct_seed_ids_passes():
+    """≥3 executed rows with unique seed_ids + valid grades may claim measured."""
+    seed_runs = _seed_runs(
+        "analysis_only", "compile_only", "launches_but_divergent"
+    )
+    assert len({r["seed_id"] for r in seed_runs}) == 3
+    v = gate.evaluate_evidence(_base(grades=[], seed_runs=seed_runs))
+    assert v.exit_code == 0
+    assert v.runtime_status == "measured"
+    assert not any("seed_ids_not_distinct" in r for r in v.reasons)
+
+
 def test_seed_runs_with_fewer_than_three_executed_fails():
     seed_runs = _seed_runs("analysis_only", "compile_only")
     v = gate.evaluate_evidence(_base(grades=[], seed_runs=seed_runs))
     assert v.exit_code == 1
-    assert any("grades_below_min_seeds" in r or "seed_runs_below" in r for r in v.reasons)
+    assert any(
+        "grades_below_min_seeds" in r
+        or "seed_runs_below" in r
+        or "seed_ids_not_distinct" in r
+        for r in v.reasons
+    )
 
 
 def test_seed_runs_unexecuted_rows_do_not_count():
@@ -317,3 +361,21 @@ def test_build_seed_run_log_schema_helper():
     # Empty / not-yet-run path: writer exists, does not fake grades.
     empty = mod.build_seed_runs_for_log([])
     assert empty == []
+
+    # Declared corpus seeds → one row per seed; unrun stay executed=false.
+    declared = ["--help", "--version", "tests/fixtures/hexyl/sample.bin"]
+    first_id = mod._seed_identity("hexyl", 0, "--help")
+    expanded = mod.build_seed_runs_for_log(
+        declared_seeds=declared,
+        binary_name="hexyl",
+        executed_seed_ids=[first_id],
+        grade_by_seed_id={first_id: "analysis_only"},
+    )
+    assert len(expanded) == 3
+    assert len({r["seed_id"] for r in expanded}) == 3
+    assert expanded[0]["executed"] is True
+    assert expanded[0]["grade"] == "analysis_only"
+    assert expanded[1]["executed"] is False
+    assert expanded[1]["grade"] is None
+    assert expanded[2]["executed"] is False
+    assert sum(1 for r in expanded if r["executed"]) == 1

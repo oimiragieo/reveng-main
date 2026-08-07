@@ -8,6 +8,9 @@ Evaluates a tracked evidence JSON against R-VRL-1 policy:
 * measured also requires ``len(grades) >= MIN_SEEDS`` (or ≥3 executed
   ``seed_runs`` with valid ValidationGrade) — declaring ``min_seeds: 3`` with
   one grade must FAIL
+* measured via ``seed_runs`` also requires ≥3 executed rows with **distinct**
+  non-empty ``seed_id`` (or distinct seed input identity) and valid grades —
+  three identical ``seed_id`` values must FAIL
 * every scored run records a real ValidationGrade (ladder value) — missing grade
   ⇒ ``could_not_measure``, never a pass
 * no-LLM control arm must be *executed* and FAIL for measured
@@ -100,7 +103,9 @@ def derive_grades_from_evidence(evidence: Dict[str, Any]) -> Tuple[List[Any], Li
     Resolve the grade list the gate will score.
 
     Prefer ``seed_runs`` when present: only ``executed: true`` rows with a valid
-    ValidationGrade count. Otherwise fall back to the legacy ``grades`` list.
+    ValidationGrade count. Those rows must also carry distinct non-empty
+    ``seed_id`` values (duplicate ids cannot pad ``min_seeds``). Otherwise fall
+    back to the legacy ``grades`` list.
     Returns ``(grades, reasons)`` where *reasons* are schema problems found while
     deriving (caller still enforces length / validity for measured).
     """
@@ -111,6 +116,7 @@ def derive_grades_from_evidence(evidence: Dict[str, Any]) -> Tuple[List[Any], Li
             reasons.append("seed_runs_not_list")
             return [], reasons
         derived: List[Any] = []
+        seed_ids: List[str] = []
         for idx, row in enumerate(seed_runs):
             if not isinstance(row, dict):
                 reasons.append(f"seed_run_not_object_at_{idx}")
@@ -121,7 +127,17 @@ def derive_grades_from_evidence(evidence: Dict[str, Any]) -> Tuple[List[Any], Li
             if not is_valid_grade(grade):
                 reasons.append(f"invalid_grade_at_{idx}:{grade!r}")
                 continue
+            seed_id = str(row.get("seed_id") or "").strip()
+            if not seed_id:
+                reasons.append(f"seed_id_missing_at_{idx}")
+                continue
             derived.append(grade)
+            seed_ids.append(seed_id)
+        unique_ids = set(seed_ids)
+        if seed_ids and len(unique_ids) < MIN_SEEDS:
+            reasons.append(
+                f"seed_ids_not_distinct:{len(unique_ids)}<{MIN_SEEDS}"
+            )
         return derived, reasons
 
     grades = evidence.get("grades")

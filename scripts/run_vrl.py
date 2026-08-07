@@ -28,7 +28,7 @@ import json
 import logging
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 import yaml
 
@@ -241,8 +241,33 @@ def _resolve_binary_path(entry: Dict[str, Any]) -> Path:
     )
 
 
+def _seed_identity(binary_name: str, index: int, seed_text: str) -> str:
+    """Stable distinct seed_id for one declared corpus/argv seed."""
+    import hashlib
+
+    digest = hashlib.sha256(seed_text.encode("utf-8")).hexdigest()[:12]
+    prefix = binary_name.strip() or "seed"
+    return f"{prefix}:seed_{index}:{digest}"
+
+
+def _argv_for_declared_seed(seed_item: Any) -> List[str]:
+    """Split one corpus seed item into argv tokens (shlex)."""
+    import shlex
+
+    if isinstance(seed_item, bytes):
+        text = seed_item.decode("utf-8", "replace")
+    else:
+        text = str(seed_item)
+    return [str(tok) for tok in shlex.split(text)]
+
+
 def build_seed_runs_for_log(
     seed_runs: Optional[List[Dict[str, Any]]] = None,
+    *,
+    declared_seeds: Optional[Sequence[Any]] = None,
+    binary_name: str = "",
+    executed_seed_ids: Optional[Sequence[str]] = None,
+    grade_by_seed_id: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Normalize seed-run rows into the schema consumed by
@@ -252,16 +277,42 @@ def build_seed_runs_for_log(
 
         {"seed_id": str, "grade": str|None, "argv": [str, ...], "executed": bool}
 
+    When *declared_seeds* is provided (corpus ``seed_inputs`` / ``test_inputs``),
+    emit **one row per declared seed** — do not collapse multiple seeds into a
+    single row. Unrun seeds stay ``executed: false`` with ``grade: null`` so a
+    single refine() invocation cannot claim ``min_seeds`` measured coverage.
+
     Empty input yields ``[]`` — callers must not invent grades to pad
     ``min_seeds``. The writer path exists even when a PE/subject is missing
     upstream of a measured run.
     """
-    if not seed_runs:
+    rows: List[Dict[str, Any]] = []
+    if declared_seeds is not None:
+        executed_set = {str(s) for s in (executed_seed_ids or [])}
+        grades = grade_by_seed_id or {}
+        for idx, item in enumerate(list(declared_seeds)):
+            if isinstance(item, bytes):
+                seed_text = item.decode("utf-8", "replace")
+            else:
+                seed_text = str(item)
+            seed_id = _seed_identity(binary_name, idx, seed_text)
+            executed = seed_id in executed_set
+            rows.append(
+                {
+                    "seed_id": seed_id,
+                    "grade": grades.get(seed_id) if executed else None,
+                    "argv": _argv_for_declared_seed(item),
+                    "executed": executed,
+                }
+            )
+    elif seed_runs:
+        rows = [row for row in seed_runs if isinstance(row, dict)]
+
+    if not rows:
         return []
+
     normalized: List[Dict[str, Any]] = []
-    for row in seed_runs:
-        if not isinstance(row, dict):
-            continue
+    for row in rows:
         argv = row.get("argv") or []
         if not isinstance(argv, list):
             argv = [str(argv)]
@@ -498,17 +549,28 @@ def main(argv: Optional[List[str]] = None) -> int:  # noqa: C901  (complexity is
     _RUNS_DIR.mkdir(parents=True, exist_ok=True)
     today = date.today().isoformat()
     log_path = _RUNS_DIR / f"{args.binary}-{today}.json"
-    # One executed row for this refine() invocation — do NOT invent extra
-    # grades to satisfy min_seeds=3; the honesty gate rejects hollow padding.
+    # One row per declared corpus seed. This runner still performs a single
+    # refine() with combined argv — mark at most the first seed as executed
+    # so we never claim min_seeds=3 measured from one invocation.
+    declared_raw = entry.get("seed_inputs") or entry.get("test_inputs") or []
+    if not declared_raw:
+        declared_raw = ["--help"]
+    executed_ids: List[str] = []
+    grade_map: Dict[str, Any] = {}
+    if declared_raw:
+        first_text = (
+            declared_raw[0].decode("utf-8", "replace")
+            if isinstance(declared_raw[0], bytes)
+            else str(declared_raw[0])
+        )
+        first_id = _seed_identity(args.binary, 0, first_text)
+        executed_ids = [first_id]
+        grade_map = {first_id: final_grade}
     seed_runs = build_seed_runs_for_log(
-        [
-            {
-                "seed_id": f"{args.binary}:refine",
-                "argv": list(seed_argv),
-                "grade": final_grade,
-                "executed": True,
-            }
-        ]
+        declared_seeds=list(declared_raw),
+        binary_name=args.binary,
+        executed_seed_ids=executed_ids,
+        grade_by_seed_id=grade_map,
     )
     log_data: Dict[str, Any] = {
         "binary_name": args.binary,
