@@ -60,7 +60,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | R-NATIVE-1 | Linux-hermetic native CLI set for ≥5/≥3 families | **done** — `docs/architecture/research-r-native-1-linux-hermetic-candidates.md` |
 | R-RALPH-2-BASELINE | Measure current cli.js recall (or label could_not_measure) | **done** — `docs/architecture/research-r-ralph-2-baseline.md` |
 | R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | **open** — RALPH-2, Phase 6 |
-| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **blocked** — waiting Wave B Task 1–2 measured `latest.json` (hexyl as analyze **subject**); prior evidence was `tool_absent:hexyl` only — see `research-r-hex-1-hexyl-availability-block.md` |
+| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **done** (measured) — `docs/architecture/research-r-hex-1-hexyl-timed-run.md` + `reports/native_analyze_probe/latest.json` (`hexyl_subject` status=`completed`, elapsed≈4.68s); M2 stays open |
 | R-TSX-1 | Ship `tsx` probe vs keep smoke stub | **done** — optional tsx runner in behavior probe |
 | R-PIPE-1 | Merge pipeline packages vs permanent split | **done** — decision: permanent documented split; see `docs/architecture/decision-r-pipe-1-pipeline-packages.md` |
 | R-SEC-1 | Sandbox class before exploit expansion | **done** — decision: Docker-only preview; no exploit expansion; see `docs/architecture/decision-r-sec-1-sandbox-class.md` |
@@ -119,4 +119,4 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Scope C over thinktank B; honesty still first |
 | 2026-08-06 | GA floor may accept analyze-ok / recompile-failed styles when evidence is real |
 | 2026-08-06 | Public preview: CLI + app RE supported; native limited; exploits experimental |
-| 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 still **blocked** until Task 1–2 measured hexyl-subject JSON; see `docs/architecture/wave-c-exit-criteria.md` |
+| 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈4.68s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |

@@ -1,6 +1,6 @@
 # Research: R-HEX-1 — hexyl timed analyze run
 
-**Date:** 2026-08-06  
+**Date:** 2026-08-06 (probe recorded 2026-08-07T02:01:12Z)  
 **Hexyl version:** `0.17.0`  
 **Subject path:** `test_samples/native/hexyl/build/hexyl`  
 **Subject sha256:** `e2040b5deda5900a152ac28a7444ba565b2b0d46861a3efefafaf074f1a16dfc`  
@@ -31,23 +31,29 @@ analyzes native binaries successfully.
 Job file: `reports/native_analyze_probe/wave_b_job.json`  
 Result id: `hexyl_subject`  
 Analyze command: `/usr/bin/python3.9 -m reveng analyze`  
-Timeout budget: 120s
+Timeout budget: 120s  
+Evidence: `reports/native_analyze_probe/latest.json` (stamp `2026-08-07T020112Z.json`)
 
 | Field | Value |
 | --- | --- |
-| Process status | *(pending Wave B probe run — fill from `latest.json`)* |
-| Elapsed (s) | *(pending)* |
-| Return code | *(pending)* |
-| Semantic notes | *(pending)* |
+| Process status | `completed` |
+| Elapsed (s) | `4.678801783011295` |
+| Return code | `0` |
+| Measured | `true` |
+| binary_sha256 (probe) | `e2040b5deda5900a152ac28a7444ba565b2b0d46861a3efefafaf074f1a16dfc` (matches pin) |
+| Semantic | `process_status=completed`, `analysis_report_present=true`, `native_fallback_empty=null` |
 
-Companion arm `hello_go_analyze` remains the small Go fixture regression check.
+Companion arm `hello_go_analyze` (same job): `status=completed`, `elapsed_s≈8.38`, `returncode=0`,
+`analysis_report_present=true`. Process `completed` is not native GA (DF-5).
+
+Timeout semantics: a kill at the 120s budget would have been recorded as `timeout`,
+never as `completed`.
 
 ## Status
 
-R-HEX-1 status must match the probe JSON (`completed` / `timeout` /
-`could_not_measure`). M2 stays **open** unless frontier hardening beyond a
-timeout is independently proven (not claimed here). Process `completed` is not
-native GA.
+R-HEX-1 → **done** (measured) — not timeout-only on this host for this subject;
+answer is process-completed within budget. M2 stays **open** (frontier hardening
+beyond a timed probe is not proven). Process `completed` is not native GA.
 
 ## Related evidence
 

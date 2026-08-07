@@ -23,7 +23,7 @@ Policy integers and honesty docs are **not** a substitute for measured product e
 | R-RALPH-2 | Smallest engine wedge chosen + implemented (baseline already recorded) | **open** |
 | M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic; flip `required: true` only after analyze ≤120s **without** Ghidra on tracked fixtures | **open** (`required` stays false) |
 | M2 | Hexyl frontier hardening **beyond** a single timed probe (R-HEX-1 measurement alone does not close M2) | **open** |
-| R-HEX-1 | Bounded timed `reveng analyze` on hexyl **subject** ELF; status must match probe JSON (`completed` / `timeout` / `could_not_measure`) | blocked or measured per `latest.json` — never hollow `done` |
+| R-HEX-1 | Bounded timed `reveng analyze` on hexyl **subject** ELF; status must match probe JSON (`completed` / `timeout` / `could_not_measure`) | **done** (measured) — `hexyl_subject` `completed` ≈4.68s in `latest.json`; M2 still open |
 | M4 corpus residual | CI/PR/**nightly corpus** gates blocking (thin honesty workflow is **partial** only) | **partial** (honesty gate); corpus still open |
 | VRL LLM measured | `min_seeds: 3` × tracked corpus under `ollama`, no-LLM control fails, `runtime_status: measured` | decision only until measured |
 | M5-PIPE | Optional merge under criteria **or** keep permanent split | partial (split freeze) |

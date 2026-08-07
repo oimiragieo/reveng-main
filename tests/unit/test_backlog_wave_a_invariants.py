@@ -201,29 +201,39 @@ def test_m1_native_fam_remains_open_and_not_required():
         assert by_id[fid]["required"] is False
 
 
-def test_r_hex_1_not_done_without_measured_hexyl_subject():
-    """R-HEX-1 stays blocked until Task 1–2 commits measured hexyl-subject JSON.
-
-    When latest.json gains a timed hexyl-subject arm, a follow-up commit may
-    move this to done(measured)/timeout/could_not_measure — never hollow done.
-    """
-    status = _backlog_status("R-HEX-1")
-    assert status != "done"
-    assert status == "blocked"
+def test_r_hex_1_matches_measured_hexyl_subject_json():
+    """R-HEX-1 status must track the hexyl_subject probe arm (never hollow done)."""
     latest = json.loads(
         (REPO_ROOT / "reports" / "native_analyze_probe" / "latest.json").read_text(encoding="utf-8")
     )
-    hexyl_subject = [
-        r
-        for r in latest.get("results") or []
-        if "hexyl" in (r.get("id") or "").lower()
-        and "python" in " ".join(r.get("analyze_cmd") or []).lower()
-    ]
-    # Until Task 1–2 lands, no hexyl-as-subject analyze arm → backlog stays blocked.
-    assert not hexyl_subject, (
-        "hexyl subject arm present in latest.json — update R-HEX-1 from measured "
-        "status and relax this assertion in the same commit"
+    hexyl_subject = next(
+        (r for r in latest.get("results") or [] if r.get("id") == "hexyl_subject"),
+        None,
     )
+    assert hexyl_subject is not None, "missing hexyl_subject arm in latest.json"
+    analyze_cmd = hexyl_subject.get("analyze_cmd") or []
+    assert any("python" in str(part).lower() for part in analyze_cmd), analyze_cmd
+    assert "hexyl" in str(hexyl_subject.get("binary") or "")
+    proc = hexyl_subject.get("status")
+    backlog_status = _backlog_status("R-HEX-1")
+    headers, row = _row_by_exact_id(
+        _parse_md_tables(BACKLOG.read_text(encoding="utf-8")), "R-HEX-1"
+    )
+    row_text = " | ".join(row)
+    del headers  # exact-id lookup only
+    if proc == "timeout":
+        # Plan: keep open/blocked if still timeout-only; never claim hollow done.
+        assert backlog_status in ("open", "blocked")
+        assert backlog_status != "done"
+    elif proc == "completed":
+        assert backlog_status == "done"
+        assert "(measured)" in row_text
+        assert hexyl_subject.get("binary_sha256") == (
+            "e2040b5deda5900a152ac28a7444ba565b2b0d46861a3efefafaf074f1a16dfc"
+        )
+    else:
+        # could_not_measure / other — not done.
+        assert backlog_status != "done"
 
 
 def test_r_ralph_2_baseline_done_exact_id():

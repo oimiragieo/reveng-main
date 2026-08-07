@@ -20,7 +20,7 @@ Wave A decided a **permanent documented split** (`reveng.pipeline` vs `reveng.pi
 | id / theme | exit criterion (summary) | Wave A status |
 | --- | --- | --- |
 | RALPH-2 | Measured engine wedge moves tracked `cli.js` recall toward 0.8+ (baseline already recorded or `could_not_measure`) | open |
-| R-HEX-1 / M2 | Hexyl binary present + bounded timed analyze with honest process/semantic fields | **blocked** (tool absent) |
+| R-HEX-1 / M2 | Hexyl binary present + bounded timed analyze with honest process/semantic fields | R-HEX-1 **done** (measured); M2 still **open** |
 | M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic; flip `required: true` only after analyze ≤120s without Ghidra | open |
 | M4 | CI/PR/nightly corpus gates blocking | open |
 | M5-PIPE | Optional merge under criteria **or** keep permanent split with explicit contract | partial (split freeze) |
