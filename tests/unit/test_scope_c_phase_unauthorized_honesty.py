@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -13,18 +14,22 @@ POLICY = REPO / "docs" / "architecture" / "scope-c-hold-prep-policy.md"
 def test_hold_policy_forbids_substantive_prep_implementation():
     text = POLICY.read_text(encoding="utf-8")
     assert "Forbidden" in text
-    assert "Substantive implementation" in text or "substantive implementation" in text.lower()
+    assert "substantive" in text.lower()
 
 
 def test_catalog_marks_phases_5_plus_blocked_or_unauthorized():
     text = CATALOG.read_text(encoding="utf-8")
-    # Must not claim phases 5-13 done
-    for n in range(5, 14):
-        # look for table rows starting with | n |
-        assert f"| {n} |" in text
-    assert "done" not in text.lower().split("phase 5")[0] or True  # soft
     assert "unauthorized" in text.lower() or "blocked_on_phase_4" in text.lower()
-    assert "Scope C complete" not in text
+    assert "scope c complete" not in text.lower()
+
+
+def test_backlog_phase_rows_5_to_13_blocked():
+    text = BACKLOG.read_text(encoding="utf-8")
+    for n in range(5, 14):
+        m = re.search(rf"^\|\s*{n}\s\|[^\n]+$", text, re.M)
+        assert m, f"missing phase {n} row"
+        row = m.group(0).lower()
+        assert "blocked_on_phase_4" in row, f"phase {n} not blocked: {row}"
 
 
 def test_backlog_does_not_claim_scope_c_complete():
@@ -34,6 +39,10 @@ def test_backlog_does_not_claim_scope_c_complete():
     assert "phases 5-13 done" not in text
 
 
-def test_tier3_remain_parked_wording_present():
-    text = BACKLOG.read_text(encoding="utf-8").lower()
-    assert "parked" in text
+def test_tier3_rows_remain_parked():
+    text = BACKLOG.read_text(encoding="utf-8")
+    rows = re.findall(r"^\|\s*(T3-[A-Z0-9-]+)\s\|[^\n]+$", text, re.M)
+    assert rows, "expected T3-* rows in backlog"
+    for tid in rows:
+        full = re.search(rf"^\|\s*{re.escape(tid)}\s\|[^\n]+$", text, re.M)
+        assert full and "parked" in full.group(0).lower(), full.group(0) if full else tid

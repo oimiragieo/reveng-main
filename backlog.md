@@ -12,7 +12,7 @@ Ops index for the full roadmap clearance program. Update `status` when work land
 **Wave C exit criteria:** [`docs/architecture/wave-c-exit-criteria.md`](docs/architecture/wave-c-exit-criteria.md)  
 **Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (L1–L24)
 
-Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `mitigated` · `research` · `deferred` · `wontfix`
+Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `blocked_on_phase_4` · `mitigated` · `research` · `blocked_on_phase_4` · `deferred` · `wontfix`
 
 `deferred` / `wontfix` / `parked` resolve roadmap decisions only — they never equal capability `done`.
 
@@ -81,10 +81,10 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 3 | Behavior-backed JS validation | **done** (incl. optional tsx) |
 | 4 | Hexyl frontier + VRL LLM round-trip honesty | **partial** (M2 Track A honesty attribution done; world-class M2 still open; VRL CNM — ollama down) |
 | 5 | Equivalence product gates + CI corpus enforcement | blocked_on_phase_4|
-| 6 | JS close: RALPH-2 + bundler graph (P4) | open (BP-2/3/4 done) |
+| 6 | JS close: RALPH-2 + bundler graph (P4) | blocked_on_phase_4 (BP-2/3/4 done) |
 | 7 | Native depth → partial_equivalence + multi-file | blocked_on_phase_4|
 | 8 | MCP + AI ops productization | blocked_on_phase_4|
-| 9 | Orchestration + modular monolith / ports | open |
+| 9 | Orchestration + modular monolith / ports | blocked_on_phase_4 |
 | 10 | Workers + external-tool CI + SEC-1 sandbox | blocked_on_phase_4|
 | 11 | Analyst / governance / packaging (GA-P4) | blocked_on_phase_4|
 | 12 | Platform depth (IR, Ralph opt, RAG, KG start) | blocked_on_phase_4|
