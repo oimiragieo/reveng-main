@@ -79,7 +79,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 1 | Honesty + known_gaps + GA gate integrity | **done** |
 | 2 | Managed recompile + GA report honesty (preview) | **done** (preview); native corpus still open |
 | 3 | Behavior-backed JS validation | **done** (incl. optional tsx) |
-| 4 | Hexyl frontier + VRL LLM round-trip honesty | **partial** (M2 Track A honesty attribution done; world-class M2 still open; VRL CNM — ollama down) |
+| 4 | Hexyl frontier + VRL LLM round-trip honesty | **partial** (M2 Track A honesty done; world-class M2 still open; VRL-LLM-1 **measured** / gate exit 0 — full refine compile residual on WSL) |
 | 5 | Equivalence product gates + CI corpus enforcement | blocked_on_phase_4|
 | 6 | JS close: RALPH-2 + bundler graph (P4) | blocked_on_phase_4 (BP-2/3/4 done) |
 | 7 | Native depth → partial_equivalence + multi-file | blocked_on_phase_4|
@@ -126,7 +126,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | GA floor may accept analyze-ok / recompile-failed styles when evidence is real |
 | 2026-08-06 | Public preview: CLI + app RE supported; native limited; exploits experimental |
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈5.10s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
-| 2026-08-07 | Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: VRL honesty gate shipped, `runtime_status: could_not_measure` (ollama unreachable). Phase 4 **partial**. See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
+| 2026-08-07 | Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: VRL honesty gate + dogfood **measured** via WSL→Windows Ollama (`OLLAMA_HOST=http://172.28.160.1:11434`); VRL-LLM-1 **done**; Phase 4 remains **partial** (M2 world-class open; refine compile residual). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
 
 ---
 
@@ -223,7 +223,7 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 | V6-K8S | Kubernetes deployment | changelogs/v6.0.md | 13 | open | v6.1+ future |
 | V6-GHA | GitHub Actions integration | changelogs/v6.0.md | 13 | open | v6.1+ future |
 | PROF-SHIM-4 | Phase-4 shim removal + back-compat policy | 2026-06-03-reveng-professionalization-design.md | 11 | open | Shims remain; decide public API before retirement |
-| VRL-LLM-1 | Measured VRL LLM round-trip honesty gate | decision-r-vrl-1-seeds-and-provider.md | 4 | partial | Gate + tests shipped; runtime_status=could_not_measure (ollama unreachable); see evidence-vrl-llm-honesty-phase-04.md |
+| VRL-LLM-1 | Measured VRL LLM round-trip honesty gate | decision-r-vrl-1-seeds-and-provider.md | 4 | done | `runtime_status=measured` via WSL→Windows Ollama (`OLLAMA_HOST`); 3 seed×oracle grades + failing no-LLM control; gate exit 0 — see evidence-vrl-llm-honesty-phase-04.md. Full refine compile still broken on this WSL (residual, not a fake pass). |
 
 ### Source docs ingested
 
