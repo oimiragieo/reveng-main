@@ -1,7 +1,7 @@
 # REVENG Makefile
 # Build automation and development tasks
 
-.PHONY: help install install-dev test test-unit test-integration test-e2e test-performance test-poc lint format clean build docker-build docker-run docs serve provision-ga-assets benchmark-source benchmark-source-ga benchmark-bun benchmark-bun-ga app-corpus app-corpus-ga verify-ga-baseline verify-ga-target skip-inventory release-report
+.PHONY: help install install-dev test test-unit test-integration test-e2e test-performance test-poc lint format clean build docker-build docker-run docs serve provision-ga-assets benchmark-source benchmark-source-ga benchmark-bun benchmark-bun-ga app-corpus app-corpus-ga verify-ga-baseline verify-ga-target verify-equivalence-honesty skip-inventory release-report
 
 # Default target
 help:
@@ -125,6 +125,11 @@ release-report:
 
 verify-ga-baseline:
 	python scripts/verify_ga_readiness.py --profile baseline --output reports/ga_readiness_baseline.json
+
+# Phase 5 thin equivalence honesty (fail-closed; not full nightly corpus).
+verify-equivalence-honesty:
+	/usr/bin/python3.9 scripts/verify_equivalence_honesty.py --emit-report
+	/usr/bin/python3.9 scripts/verify_equivalence_honesty.py
 
 verify-ga-target:
 	python scripts/provision_ga_assets.py --output reports/ga_asset_provisioning_report.json

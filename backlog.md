@@ -56,7 +56,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | M1 | Multi-codebase corpus gate | exec | open | see R-NATIVE-1 | overlaps M1-NATIVE-FAM |
 | M2 | Hexyl frontier hardening | 4 | partial | no (R-HEX-1 measured) | Probe v1.3 semantic attribution + re-stamp done (Phase 4 Track A honesty); deeper hexyl analyze/recompile/behavior still open — world-class M2 not closed. See `phase-04-m2-hexyl-frontier.md`. No `required:true`; M1-NATIVE-FAM still open. |
 | M3 | Validation/evidence unified contract | 3 | partial | | MCP top-level validation_grade + capability_report landed |
-| M4 | CI/PR/nightly corpus gates | 5 | partial | | thin Wave B honesty workflow landed (`.github/workflows/wave-b-honesty.yml`); full corpus/nightly blocking still open |
+| M4 | CI/PR/nightly corpus gates | 5 | partial | | Wave B honesty + Phase 5 thin equivalence evidence gate (`.github/workflows/wave-c-phase5-honesty.yml` + `reports/equivalence_honesty/latest.json`); full nightly/corpus blocking still open (M4 residual) |
 | M5 | Post-gate architecture extraction | 9–10 | open | after M0–M4 | workers/ports |
 
 ## D. Research queue (do before large builds)
@@ -80,7 +80,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2 | Managed recompile + GA report honesty (preview) | **done** (preview); native corpus still open |
 | 3 | Behavior-backed JS validation | **done** (incl. optional tsx) |
 | 4 | Hexyl frontier + VRL LLM round-trip honesty | **done (honesty go)** — waiver `decision-phase-04-honesty-go-waiver.md`; world-class M2 remains **partial**/separate |
-| 5 | Equivalence product gates + CI corpus enforcement | open (await Sol stop/go)|
+| 5 | Equivalence product gates + CI corpus enforcement | **partial** — thin honesty authorized+landed (`decision-phase-05-thin-honesty-auth.md`); full nightly corpus / product equivalence service still open |
 | 6 | JS close: RALPH-2 + bundler graph (P4) | open (await Sol stop/go; BP-2/3/4 done) |
 | 7 | Native depth → partial_equivalence + multi-file | open (await Sol stop/go)|
 | 8 | MCP + AI ops productization | open (await Sol stop/go)|
@@ -127,6 +127,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Public preview: CLI + app RE supported; native limited; exploits experimental |
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈5.10s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
 | 2026-08-07 | Phase 4 **honesty go** (Sol APPROVE_WITH_NITS waiver: M2 split). Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: Sol REJECT hollow ACK-ping → forgeable `candidate_hash_changed` → corpus registration of `vrl_llm_micro_go` + gate SHA/applied-source harden; dogfood loads seeds from corpus; VRL-LLM-1 **done** (load-bearing, Sol-ready evidence); Phase 4 **honesty go** recorded (M2 world-class still open/partial; hexyl C refine `vrl_compile_toolchain_broken`). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
+| 2026-08-07 | Phase 5 **thin honesty** Sol APPROVE (`decision-phase-05-thin-honesty-auth.md`): `wave-c-phase5-honesty.yml` + `scripts/verify_equivalence_honesty.py` + `reports/equivalence_honesty/latest.json`; M4/EPIC-7/FEAT-2/REV-P1-CI-CORPUS **partial**; full nightly corpus open; M2 remains entry dep; no native `required:true`; no exploit expansion. |
 
 ---
 
@@ -143,7 +144,7 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 | M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic analyze | reveng-world-class-execution-backlog.md | 2 | open | Fixtures landed required:false; flip true only after analyze ≤120s without Ghidra |
 | M2 | Hexyl frontier hardening beyond timed probe | reveng-world-class-execution-backlog.md | 4 | partial | Probe v1.3 semantic attribution + re-stamp done; deeper hexyl analyze/recompile/behavior still open (world-class M2 acceptance unmet); see phase-04-m2-hexyl-frontier.md; M1-NATIVE-FAM still open |
 | M3 | Validation and evidence grade lift | reveng-world-class-execution-backlog.md | 3 | partial | MCP top-level validation_grade + capability_report landed; unified benchmark contract residual |
-| M4 | CI/PR/nightly corpus gate enforcement | reveng-world-class-execution-backlog.md | 5 | partial | Thin wave-b-honesty.yml landed; full corpus/nightly blocking still open |
+| M4 | CI/PR/nightly corpus gate enforcement | reveng-world-class-execution-backlog.md | 5 | partial | wave-b-honesty + wave-c-phase5-honesty thin evidence gate; full corpus/nightly blocking still open |
 | M5 | Post-gate architecture extraction | reveng-world-class-execution-backlog.md | 9 | open | After M0–M4 stable; workers/ports |
 | M5-PIPE | pipeline vs pipelines reconciliation | reveng-world-class-execution-backlog.md | 9 | partial | R-PIPE-1 permanent documented split freeze; optional merge later |
 | EPIC-0 | Establish trustworthy baseline | reveng-tdd-implementation-backlog.md | 1 | partial | M0 reporting discipline done; residual suite/characterization isolation |
@@ -153,7 +154,7 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 | EPIC-4 | Reconcile orchestration layers | reveng-tdd-implementation-backlog.md | 9 | open | Unify or permanently separate pipeline/ vs pipelines/ |
 | EPIC-5 | Stabilize MCP as product surface | reveng-tdd-implementation-backlog.md | 8 | open | Stable schemas, auth, rate, audit; overlaps REV-MCP |
 | EPIC-6 | Harden Ollama and AI routing | reveng-tdd-implementation-backlog.md | 8 | open | Model profiles, fallback routing, latency accounting |
-| EPIC-7 | Elevate reconstruction and validation | reveng-tdd-implementation-backlog.md | 5 | open | Equivalence product gates; LibAFL/angr opt-in wiring |
+| EPIC-7 | Elevate reconstruction and validation | reveng-tdd-implementation-backlog.md | 5 | partial | Thin equivalence honesty helper+report+CI landed; full product validation service + LibAFL/angr opt-in still open |
 | EPIC-8 | Extract heavy workers | reveng-tdd-implementation-backlog.md | 10 | open | Ghidra/dynamic/compile workers; retries/timeouts/retention |
 | EPIC-9 | Analyst review and governance | reveng-tdd-implementation-backlog.md | 11 | open | Review workspace, policy, case export |
 | P3-BP-1 | TS main behavior probe (tsx optional) | reveng-capability-hardening-plan.md | 3 | done | Already in section B; do not reopen |
@@ -176,7 +177,7 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 | GA-P3 | Operational hardening (external-tool CI lanes) | reveng-ga-master-plan.md | 10 | open | ilspycmd/pyi/Java/Ghidra CI where supported |
 | GA-P4 | Customer packaging (matrix, notes, checklist) | reveng-ga-master-plan.md | 11 | open | Support matrix + troubleshooting + RELEASE_CHECKLIST live |
 | FEAT-1 | Evidence graph and provenance ledger | reveng-feature-roadmap.md | 3 | open | Overlaps EPIC-2 / M3 |
-| FEAT-2 | Equivalence validation service | reveng-feature-roadmap.md | 5 | open | Overlaps EPIC-7 |
+| FEAT-2 | Equivalence validation service | reveng-feature-roadmap.md | 5 | partial | Overlaps EPIC-7; thin honesty path landed; full service open |
 | FEAT-3 | Retrieval-augmented binary context for AI | reveng-feature-roadmap.md | 12 | open | CFG/strings/signatures before LLM stages |
 | FEAT-4 | Service-level Ghidra/dynamic/validation workers | reveng-feature-roadmap.md | 10 | open | Overlaps EPIC-8 |
 | FEAT-5 | Analyst review workspace | reveng-feature-roadmap.md | 11 | open | Overlaps EPIC-9 |
@@ -190,7 +191,7 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 | REV-P0-ANALYSIS-CLEANUP | Cleanup policy for analysis_* dirs at repo root | REVOLUTION_PLAN.md | 1 | open | Policy: no untracked deletes without permission |
 | REV-P1-LLM-REFINER | Iterative LLM refiner on oracle divergence | REVOLUTION_PLAN.md | 4 | open | Phase 1.5; feeds failing I/O + source to Claude/GPT |
 | REV-P1-WHOLE-PROGRAM | Whole-program context / type propagation | REVOLUTION_PLAN.md | 12 | open | Cross-function types before LLM decomp |
-| REV-P1-CI-CORPUS | Regression-gated CI on benchmark corpus | REVOLUTION_PLAN.md | 5 | open | Overlaps M4 residual |
+| REV-P1-CI-CORPUS | Regression-gated CI on benchmark corpus | REVOLUTION_PLAN.md | 5 | partial | Thin equivalence evidence CI landed; full corpus residual overlaps M4 |
 | REV-P2-GATE-LLM-RT | Proven LLM round-trip improves grade | REVOLUTION_PLAN.md | 4 | open | Phase 2 gate: divergence→fix→recompile→grade↑ |
 | REV-P2-GATE-BM3 | 3 binaries reach behavior_matched via VRL | REVOLUTION_PLAN.md | 4 | open | Phase 2 gate; R-VRL-1 says min_seeds=3 / ollama |
 | REV-P2-GATE-SEEDS | ≥5 non-trivial seeds per binary | REVOLUTION_PLAN.md | 4 | open | No --help-only convergence; decision min_seeds=3 for honesty gate |

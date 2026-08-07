@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "runtime_status": "measured",
+  "validation_grade": "behavior_matched",
+  "subject_id": "equiv_honesty_micro",
+  "seed_results": [
+    {
+      "seed_id": "help",
+      "argv": [
+        "--help"
+      ],
+      "matched": true,
+      "expected": "equiv-honesty-micro help\n",
+      "actual": "equiv-honesty-micro help\n"
+    },
+    {
+      "seed_id": "sample",
+      "argv": [
+        "sample"
+      ],
+      "matched": true,
+      "expected": "ok\n",
+      "actual": "ok\n"
+    }
+  ],
+  "match_count": 2,
+  "seed_count": 2,
+  "policy": {
+    "empty_evidence_fails": true,
+    "native_required_true_forbidden": true,
+    "full_nightly_corpus": false,
+    "source": "docs/architecture/decision-phase-05-thin-honesty-auth.md"
+  },
+  "notes": "Phase 5 thin honesty micro subject \u2014 not full nightly corpus; not native GA; M2 remains entry dep for hexyl/native-equivalence depth."
+}
