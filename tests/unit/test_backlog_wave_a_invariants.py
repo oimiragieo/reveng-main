@@ -30,11 +30,11 @@ WAVE_A_DOCS = (RALPH_BASELINE,) + DECISION_DOCS
 # Angle-bracket template holes such as <path>, <candidate>, <n> — not comparisons.
 _PLACEHOLDER_RE = re.compile(r"<[A-Za-z_][^>\n]*>")
 _STATUS_TOKEN_RE = re.compile(
-    r"\b(open|done|partial|parked|blocked|research|mitigated|in_progress)\b",
+    r"\b(open|done|partial|parked|blocked|research|mitigated|in_progress|deferred|wontfix)\b",
     re.IGNORECASE,
 )
 _BOLD_STATUS_RE = re.compile(
-    r"\*\*\s*(open|done|partial|parked|blocked|research|mitigated|in_progress)\s*\*\*",
+    r"\*\*\s*(open|done|partial|parked|blocked|research|mitigated|in_progress|deferred|wontfix)\s*\*\*",
     re.IGNORECASE,
 )
 
@@ -70,14 +70,23 @@ def _parse_md_tables(text: str) -> List[Tuple[List[str], List[List[str]]]]:
 def _row_by_exact_id(
     tables: List[Tuple[List[str], List[List[str]]]], item_id: str
 ) -> Tuple[List[str], List[str]]:
-    """Find a table row whose first cell equals item_id exactly (no substring)."""
+    """Find a table row whose first cell equals item_id exactly (no substring).
+
+    Section J may mirror ops-table ids; duplicates are allowed when every match
+    yields the same status token (prefer the first / ops-table row).
+    """
     matches: List[Tuple[List[str], List[str]]] = []
     for headers, rows in tables:
         for row in rows:
             if row and row[0] == item_id:
                 matches.append((headers, row))
     assert matches, f"backlog row id {item_id!r} not found (exact match)"
-    assert len(matches) == 1, f"duplicate backlog rows for exact id {item_id!r}"
+    if len(matches) > 1:
+        statuses = {_status_from_row(h, r) for h, r in matches}
+        assert len(statuses) == 1, (
+            f"duplicate backlog rows for exact id {item_id!r} disagree on status: "
+            f"{sorted(statuses)}"
+        )
     return matches[0]
 
 

@@ -3,14 +3,18 @@
 Ops index for the full roadmap clearance program. Update `status` when work lands.
 
 **Scope C full index** — living ops file; phases sequential, honesty-first.
+**Execution charter:** [`docs/architecture/scope-c-execution-charter.md`](docs/architecture/scope-c-execution-charter.md)
+(not one clearance wave for phases 4–13; disposition ≠ capability `done`).
 
-**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-06-wave3.md`](docs/architecture/ceo-update-2026-08-06-wave3.md)  
-**Prior CEO:** [`docs/architecture/ceo-update-2026-08-06-wave2.md`](docs/architecture/ceo-update-2026-08-06-wave2.md) · [`docs/architecture/ceo-update-2026-08-06.md`](docs/architecture/ceo-update-2026-08-06.md)  
+**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-07-scope-c-charter.md`](docs/architecture/ceo-update-2026-08-07-scope-c-charter.md)  
+**Prior CEO:** [`docs/architecture/ceo-update-2026-08-06-wave3.md`](docs/architecture/ceo-update-2026-08-06-wave3.md) · [`docs/architecture/ceo-update-2026-08-06-wave2.md`](docs/architecture/ceo-update-2026-08-06-wave2.md) · [`docs/architecture/ceo-update-2026-08-06.md`](docs/architecture/ceo-update-2026-08-06.md)  
 **Wave B exit criteria:** [`docs/architecture/wave-b-exit-criteria.md`](docs/architecture/wave-b-exit-criteria.md)  
 **Wave C exit criteria:** [`docs/architecture/wave-c-exit-criteria.md`](docs/architecture/wave-c-exit-criteria.md)  
 **Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (L1–L24)
 
-Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `mitigated` · `research`
+Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `mitigated` · `research` · `deferred` · `wontfix`
+
+`deferred` / `wontfix` / `parked` resolve roadmap decisions only — they never equal capability `done`.
 
 ---
 
@@ -122,6 +126,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | GA floor may accept analyze-ok / recompile-failed styles when evidence is real |
 | 2026-08-06 | Public preview: CLI + app RE supported; native limited; exploits experimental |
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈4.68s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
+| 2026-08-07 | Thinktank REJECT must-fixes: execution charter + Phase 4-only plan; probe v1.3 stream semantic attribution; backlog `deferred`/`wontfix`; CEO reconciled (R-HEX-1/DF-5 done, M2 open); see `docs/architecture/ceo-update-2026-08-07-scope-c-charter.md` |
 
 ---
 
