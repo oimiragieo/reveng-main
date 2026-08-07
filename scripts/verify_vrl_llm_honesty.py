@@ -234,13 +234,12 @@ def _refine_tokens_load_bearing(evidence: Dict[str, Any]) -> bool:
 
 
 def _nonempty_sha256(value: Any) -> Optional[str]:
-    """Return stripped hex digest string, or None when absent/invalid."""
+    """Return stripped sha256 hex digest (exactly 64 chars), or None."""
     if not isinstance(value, str):
         return None
     text = value.strip().lower()
-    if len(text) < 16:
+    if len(text) != 64:
         return None
-    # Accept hex digests (sha256 is 64 chars; allow shorter for tests).
     if any(c not in "0123456789abcdef" for c in text):
         return None
     return text
@@ -278,15 +277,32 @@ def derive_candidate_hash_changed(evidence: Dict[str, Any]) -> bool:
     return control != treatment
 
 
+def _sha256_file(path: Path) -> str:
+    import hashlib
+
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
 def _applied_source_receipt_present(evidence: Dict[str, Any]) -> bool:
-    """True when evidence carries an applied-source path or digest receipt."""
-    path = evidence.get("applied_source_path")
-    digest = evidence.get("applied_source_sha256")
-    if isinstance(path, str) and path.strip():
+    """True when evidence carries a valid applied-source digest receipt."""
+    digest = _nonempty_sha256(evidence.get("applied_source_sha256"))
+    if digest is None:
+        return False
+    path_raw = evidence.get("applied_source_path")
+    if not isinstance(path_raw, str) or not path_raw.strip():
+        # Digest alone is a receipt; path optional.
         return True
-    if _nonempty_sha256(digest) is not None:
-        return True
-    return False
+    path = Path(path_raw.strip())
+    if not path.is_absolute():
+        path = _REPO_ROOT / path
+    if not path.is_file():
+        # Path claimed but missing → not a verified receipt.
+        return False
+    return _sha256_file(path) == digest
 
 
 def llm_load_bearing_reasons(evidence: Dict[str, Any]) -> List[str]:

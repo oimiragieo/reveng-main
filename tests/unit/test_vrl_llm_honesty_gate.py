@@ -67,7 +67,7 @@ def _base(**overrides):
         "candidate_hash_changed": True,
         "control_candidate_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "treatment_candidate_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        "applied_source_path": "test_samples/vrl_llm_micro_go/broken_main.go.llm_applied",
+        # Digest-only receipt (path optional). Path+digest must match when path present.
         "applied_source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
         "grades": ["analysis_only", "compile_only", "launches_but_divergent"],
         "seed_runs": _seed_runs(
@@ -750,3 +750,19 @@ def test_build_seed_run_log_schema_helper():
     assert expanded[1]["grade"] is None
     assert expanded[2]["executed"] is False
     assert sum(1 for r in expanded if r["executed"]) == 1
+
+
+def test_applied_source_path_hash_mismatch_fails(tmp_path):
+    """When path is present, file bytes must match applied_source_sha256."""
+    src = tmp_path / "applied.go"
+    src.write_text("package main\n", encoding="utf-8")
+    payload = _base(
+        applied_source_path=str(src),
+        applied_source_sha256="0"*64,
+    )
+    # ensure llm_influenced so receipt is required
+    for row in payload["seed_runs"]:
+        row["llm_influenced"] = True
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 1
+    assert "llm_influenced_missing_applied_source_receipt" in v.reasons
