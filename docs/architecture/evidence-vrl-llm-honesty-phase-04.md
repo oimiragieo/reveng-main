@@ -1,65 +1,74 @@
 # Evidence: VRL LLM honesty gate — Phase 4 (2026-08-07)
 
-**runtime_status:** `could_not_measure`  
-**provider (policy):** `ollama`  
-**min_seeds (policy):** `3`  
+**runtime_status:** `measured` (load-bearing Go micro path)  
+**provider:** `ollama`  
+**min_seeds:** `3`  
+**corpus_entry:** `vrl_llm_micro_go` (`.reveng/benchmarks/corpus.yaml`)  
 **Gate script:** `scripts/verify_vrl_llm_honesty.py`  
-**Tracked JSON:** `reports/vrl_llm_honesty/latest.json`
+**Dogfood:** `scripts/dogfood_vrl_llm_honesty.py`  
+**Tracked JSON:** `reports/vrl_llm_honesty/latest.json` (stamp `2026-08-07.json`, byte-identical)
 
-## Why measured is refused
+## Sol REJECT corrections
 
-Local Ollama at `http://127.0.0.1:11434/api/tags` → connection refused.
+1. **Hollow ACK-ping** — prior Track B stamped `measured` from Ollama ACK +
+   identical control/treatment grades without applying LLM text. Hard fail:
+   `hollow_ack_ping_identical_grades` / `llm_not_load_bearing`.
+2. **Untracked corpus subject** — `vrl_llm_micro_go` must be a tracked corpus
+   entry; dogfood loads `seed_inputs` from that entry (not hard-coded-only).
+3. **Forgeable booleans** — `candidate_hash_changed: true` alone is insufficient.
+   Gate requires `control_candidate_sha256` + `treatment_candidate_sha256` (or
+   legacy before/after) and **derives** change as present-and-unequal. Missing
+   or equal hashes with a true boolean → fail. `llm_influenced` requires
+   `applied_source_path` or `applied_source_sha256`.
 
-```text
+## Measured result (load-bearing)
+
+| Field | Value |
+| --- | --- |
+| `runtime_status` | `measured` |
+| `corpus_entry` | `vrl_llm_micro_go` |
+| Subject | `test_samples/vrl_llm_micro_go` (`CGO_ENABLED=0`; `build_recipe` → `micro.bin`) |
+| Seeds | corpus `seed_inputs`: `--help`, `--version`, `sample` |
+| Loop | broken Go → Ollama revise → `go build` → DifferentialOracle × 3 argv |
+| Control grades | `launches_but_divergent` × 3 |
+| Treatment grades | `behavior_matched` × 3 |
+| `treatment_differs_from_control` | `true` |
+| SHA pair | `control_candidate_sha256` ≠ `treatment_candidate_sha256` |
+| `candidate_hash_changed` | **derived** from SHA pair (not trusted alone) |
+| `applied_source_*` | path + sha256 receipt present |
+| `seed_runs[].llm_influenced` | `true` |
+| `tokens_used` / `tokens_used_estimated` | >0 / `true` when approximated |
+| Gate | `verify_vrl_llm_honesty.py --evidence …/latest.json` → **exit 0** |
+
+### WSL → Windows Ollama
+
+```bash
+export OLLAMA_HOST=http://172.28.160.1:11434
 /usr/bin/python3.9 scripts/verify_vrl_llm_honesty.py --probe-ollama
-# → {"ollama_reachable": false, ...}  exit 2
+# → exit 0 when reachable
 ```
 
-Per R-VRL-1 / Phase 4 kill rule: do **not** fake ValidationGrade rows; leave the
-VRL half `could_not_measure`. Phase 4 overall stays **partial** / open until a
-live ollama round-trip records **≥3 executed** seed grades under `min_seeds: 3`
-with an *executed* no-LLM control failing.
+### Customer path residual (`scripts/run_vrl.py` hexyl)
 
-## What did ship (gate honesty)
+Hexyl/PE C refine remains **`vrl_compile_toolchain_broken`** on this WSL
+(glibc RELR / `cl` PermissionError; `tokens_used=0`, `iterations=0`). Dogfood
+records that under `run_vrl_customer_path` as infra residual — it does **not**
+substitute for the load-bearing micro loop. Phase 4 overall stays **partial** /
+**HOLD** (M2 world-class still open; hexyl C refine not green; phases 5–13
+remain blocked).
 
-| Predicate | Status |
-| --- | --- |
-| Gate requires non-empty `seed_runs` with ≥3 distinct executed `seed_id`s + valid grades when claiming `measured`; legacy grades-only never unlocks exit 0 | tested (`seed_runs_required`) |
-| `min_seeds: 3` with a single grade ⇒ gate fail | tested (`test_measured_with_min_seeds_field_but_one_grade_fails`) |
-| Preferred `seed_runs[]` schema; derive grades from executed rows | tested + `run_vrl.build_seed_runs_for_log` |
-| Missing / invalid ValidationGrade never passes | tested |
-| Measured requires control `executed: true` + `passed: false` + `llm_enabled: false` | tested |
-| Unexecuted control (`executed: false`) is CNM — no phantom `passed: false` | tested + stamped |
-| `runtime_status: measured` only when `ollama_actually_ran` | tested |
-| Unreachable ollama ⇒ exit 2 + tracked CNM evidence | dogfood + tests |
-| Customer path `scripts/run_vrl.py` exercised | attempted (see below) |
+## Gate load-bearing contract (TDD)
+
+`runtime_status: measured` requires:
+
+* SHA pair present (`control_candidate_sha256` / `treatment_candidate_sha256`
+  or legacy before/after)
+* at least one of:
+  * `treatment_differs_from_control: true` **and** different grade lists
+  * **derived** hash change (SHA present and unequal)
+  * any `seed_runs[].llm_influenced: true` **with** applied-source receipt
+  * refine `tokens_used > 0` with `vrl_iterations > 0` and not compile-blocked
+* Rejects ACK-ping + identical grades
+* Rejects self-asserted `candidate_hash_changed: true` with missing/equal hashes
 
 Unit suite: `tests/unit/test_vrl_llm_honesty_gate.py` (`--no-cov`).
-
-## Customer-path dogfood (`scripts/run_vrl.py`)
-
-```text
-PYTHONPATH=src REVENG_AI_PROVIDER=ollama \
-  /usr/bin/python3.9 scripts/run_vrl.py --binary hexyl --max-iterations 1
-# exit 1 — Original binary for 'hexyl' not found
-# (corpus binary_path → external/ga_binaries/hexyl/hexyl.exe absent here)
-# Ollama also unreachable — would not have produced a measured LLM round-trip
-```
-
-`run_vrl.py` emits gate-consumable `seed_runs` / `grades` on successful run logs
-via `build_seed_runs_for_log` (does not invent grades to pad `min_seeds`). No
-corpus grade was written on this failed dogfood (correct — never invent a pass).
-
-## Control arm (bidirectional)
-
-CNM evidence stamps `control_arm.executed: false` and `passed: null` — do not
-claim a failed control that never ran. Measured pass requires `executed: true`
-and `passed: false` with `llm_enabled: false`. A fixture with `passed: true`
-(executed) fails the gate in unit tests.
-
-## Exit remaining for VRL half
-
-1. Ollama up on dogfood host.
-2. ≥3 **executed** seed runs × tracked corpus under `REVENG_AI_PROVIDER=ollama`.
-3. Real ValidationGrade(s) in evidence `seed_runs` / `grades` and corpus.yaml.
-4. No-LLM control **executed** and fails; `runtime_status: measured` in evidence.

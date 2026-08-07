@@ -20,6 +20,15 @@ Evaluates a tracked evidence JSON against R-VRL-1 policy:
   phantom ``passed: false`` that unlocks measured
 * provider identity recorded; ``runtime_status: measured`` only when ollama
   actually ran
+* **LLM must be load-bearing** for ``measured`` (Sol REJECT 2026-08-07): at
+  least one of (a) ``treatment_differs_from_control`` with different grade
+  lists, (b) **derived** ``candidate_hash_changed`` (control/treatment SHA256
+  present and unequal — never trust a lone boolean), (c) any
+  ``seed_runs[].llm_influenced: true`` **with** ``applied_source_path`` or
+  ``applied_source_sha256`` receipt, (d) refine ``tokens_used > 0`` with
+  ``vrl_iterations > 0`` and not compile-blocked. Hollow ACK-ping + identical
+  control/treatment grades ⇒ ``hollow_ack_ping_identical_grades`` / fail.
+  Self-asserted ``candidate_hash_changed: true`` with missing/equal hashes ⇒ fail.
 
 Exit codes
 ----------
@@ -39,6 +48,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -52,7 +62,42 @@ _CORPUS_YAML = _REPO_ROOT / ".reveng" / "benchmarks" / "corpus.yaml"
 
 MIN_SEEDS = 3
 REQUIRED_PROVIDER = "ollama"
-OLLAMA_TAGS_URL = "http://127.0.0.1:11434/api/tags"
+_DEFAULT_OLLAMA_BASE = "http://127.0.0.1:11434"
+OLLAMA_TAGS_URL = f"{_DEFAULT_OLLAMA_BASE}/api/tags"
+
+
+def resolve_ollama_tags_url(
+    host_override: Optional[str] = None,
+    *,
+    environ: Optional[Dict[str, str]] = None,
+) -> str:
+    """
+    Resolve the Ollama ``/api/tags`` URL from env (or an explicit override).
+
+    Precedence:
+      1. *host_override* argument
+      2. ``REVENG_OLLAMA_HOST``
+      3. ``OLLAMA_HOST`` (standard Ollama env — may be ``http://host:11434``
+         or bare ``host:11434``)
+      4. Default ``http://127.0.0.1:11434``
+
+    Appends ``/api/tags`` when the resolved base does not already end with it.
+    """
+    env = environ if environ is not None else os.environ
+    raw = (host_override or "").strip()
+    if not raw:
+        raw = (env.get("REVENG_OLLAMA_HOST") or env.get("OLLAMA_HOST") or "").strip()
+    if not raw:
+        raw = _DEFAULT_OLLAMA_BASE
+
+    # Bare host:port → assume http://
+    if "://" not in raw:
+        raw = f"http://{raw}"
+
+    raw = raw.rstrip("/")
+    if raw.endswith("/api/tags"):
+        return raw
+    return f"{raw}/api/tags"
 
 VALIDATION_GRADE_LADDER = (
     "unknown",
@@ -83,10 +128,16 @@ class GateVerdict:
         return self.exit_code == 0
 
 
-def probe_ollama(url: str = OLLAMA_TAGS_URL, timeout_s: float = 2.0) -> bool:
-    """Return True when local Ollama answers ``/api/tags``."""
+def probe_ollama(
+    url: Optional[str] = None,
+    timeout_s: float = 2.0,
+    *,
+    environ: Optional[Dict[str, str]] = None,
+) -> bool:
+    """Return True when Ollama answers ``/api/tags`` at the resolved URL."""
+    resolved = url or resolve_ollama_tags_url(environ=environ)
     try:
-        with urllib.request.urlopen(url, timeout=timeout_s) as resp:
+        with urllib.request.urlopen(resolved, timeout=timeout_s) as resp:
             return 200 <= int(getattr(resp, "status", 200)) < 300
     except (urllib.error.URLError, TimeoutError, OSError):
         return False
@@ -97,6 +148,224 @@ def is_valid_grade(grade: Any) -> bool:
     if not isinstance(grade, str):
         return False
     return grade.strip() in VALIDATION_GRADE_LADDER
+
+
+def _treatment_grades_list(evidence: Dict[str, Any]) -> List[Any]:
+    """Prefer top-level grades; else executed seed_runs grades (order preserved)."""
+    grades = evidence.get("grades")
+    if isinstance(grades, list) and grades:
+        return list(grades)
+    derived: List[Any] = []
+    for row in evidence.get("seed_runs") or []:
+        if not isinstance(row, dict) or row.get("executed") is not True:
+            continue
+        g = row.get("grade")
+        if is_valid_grade(g):
+            derived.append(g)
+    return derived
+
+
+def _control_grades_list(evidence: Dict[str, Any]) -> Optional[List[Any]]:
+    control = evidence.get("control_arm")
+    if not isinstance(control, dict):
+        return None
+    grades = control.get("grades")
+    if isinstance(grades, list):
+        return list(grades)
+    return None
+
+
+def _ack_only_ping(evidence: Dict[str, Any]) -> bool:
+    """
+    True when every executed detail/seed row looks like an Ollama ACK ping
+    with no ``llm_influenced`` application of model output to the candidate.
+    """
+    details = evidence.get("seed_runs_detail")
+    rows: Sequence[Any]
+    if isinstance(details, list) and details:
+        rows = details
+    else:
+        seed_runs = evidence.get("seed_runs")
+        if not isinstance(seed_runs, list) or not seed_runs:
+            return False
+        rows = seed_runs
+
+    previews: List[str] = []
+    any_influenced = False
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if row.get("executed") is False:
+            continue
+        if row.get("llm_influenced") is True:
+            any_influenced = True
+        preview = str(row.get("ollama_preview") or "").strip().upper()
+        previews.append(preview)
+
+    if not previews:
+        return False
+    if any_influenced:
+        return False
+    # ACK ping (or empty preview with no influence) — hollow pattern.
+    return all(p in ("ACK", "") for p in previews)
+
+
+def _refine_tokens_load_bearing(evidence: Dict[str, Any]) -> bool:
+    """True when refine/run_vrl recorded tokens with at least one iteration."""
+    tokens = evidence.get("tokens_used")
+    iterations = evidence.get("vrl_iterations")
+    run_vrl = evidence.get("run_vrl_customer_path")
+    if not isinstance(run_vrl, dict):
+        run_vrl = {}
+    if not isinstance(tokens, int):
+        tokens = run_vrl.get("tokens_used")
+    if not isinstance(iterations, int):
+        iterations = run_vrl.get("iterations")
+    if evidence.get("vrl_compile_blocked") is True:
+        return False
+    if run_vrl.get("compile_blocked") is True:
+        return False
+    return (
+        isinstance(tokens, int)
+        and tokens > 0
+        and isinstance(iterations, int)
+        and iterations > 0
+    )
+
+
+def _nonempty_sha256(value: Any) -> Optional[str]:
+    """Return stripped sha256 hex digest (exactly 64 chars), or None."""
+    if not isinstance(value, str):
+        return None
+    text = value.strip().lower()
+    if len(text) != 64:
+        return None
+    if any(c not in "0123456789abcdef" for c in text):
+        return None
+    return text
+
+
+def candidate_sha256_pair(
+    evidence: Dict[str, Any],
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Resolve control/treatment candidate digests.
+
+    Prefer ``control_candidate_sha256`` / ``treatment_candidate_sha256``;
+    accept legacy ``candidate_hash_before`` / ``candidate_hash_after``.
+    """
+    control = _nonempty_sha256(
+        evidence.get("control_candidate_sha256")
+        or evidence.get("candidate_hash_before")
+    )
+    treatment = _nonempty_sha256(
+        evidence.get("treatment_candidate_sha256")
+        or evidence.get("candidate_hash_after")
+    )
+    return control, treatment
+
+
+def derive_candidate_hash_changed(evidence: Dict[str, Any]) -> bool:
+    """
+    True only when both SHA256 fields are present and unequal.
+
+    Never trusts a lone ``candidate_hash_changed`` boolean.
+    """
+    control, treatment = candidate_sha256_pair(evidence)
+    if control is None or treatment is None:
+        return False
+    return control != treatment
+
+
+def _sha256_file(path: Path) -> str:
+    import hashlib
+
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _applied_source_receipt_present(evidence: Dict[str, Any]) -> bool:
+    """True when evidence carries a valid applied-source digest receipt."""
+    digest = _nonempty_sha256(evidence.get("applied_source_sha256"))
+    if digest is None:
+        return False
+    path_raw = evidence.get("applied_source_path")
+    if not isinstance(path_raw, str) or not path_raw.strip():
+        # Digest alone is a receipt; path optional.
+        return True
+    path = Path(path_raw.strip())
+    if not path.is_absolute():
+        path = _REPO_ROOT / path
+    if not path.is_file():
+        # Path claimed but missing → not a verified receipt.
+        return False
+    return _sha256_file(path) == digest
+
+
+def llm_load_bearing_reasons(evidence: Dict[str, Any]) -> List[str]:
+    """
+    Reasons why a ``measured`` claim fails the load-bearing LLM contract.
+
+    Empty list ⇒ load-bearing predicates satisfied (or not claiming measured).
+    """
+    reasons: List[str] = []
+    control_grades = _control_grades_list(evidence)
+    treatment_grades = _treatment_grades_list(evidence)
+    grades_identical = (
+        isinstance(control_grades, list)
+        and bool(control_grades)
+        and list(control_grades) == list(treatment_grades)
+    )
+
+    if grades_identical and _ack_only_ping(evidence):
+        reasons.append("hollow_ack_ping_identical_grades")
+
+    treatment_differs_flag = evidence.get("treatment_differs_from_control") is True
+    grades_differ = (
+        isinstance(control_grades, list)
+        and bool(control_grades)
+        and list(control_grades) != list(treatment_grades)
+    )
+
+    control_sha, treatment_sha = candidate_sha256_pair(evidence)
+    hash_changed = derive_candidate_hash_changed(evidence)
+    claimed_hash_changed = evidence.get("candidate_hash_changed") is True
+
+    # Forgeable boolean: self-asserted true with missing or equal hashes.
+    if claimed_hash_changed and not hash_changed:
+        if control_sha is None or treatment_sha is None:
+            reasons.append("candidate_hash_changed_unverified_missing_sha256")
+        else:
+            reasons.append("candidate_hash_changed_unverified_equal_sha256")
+
+    # Measured honesty requires the SHA pair present (not merely a boolean).
+    if control_sha is None or treatment_sha is None:
+        reasons.append("candidate_sha256_pair_required")
+
+    llm_influenced_any = any(
+        isinstance(row, dict) and row.get("llm_influenced") is True
+        for row in (evidence.get("seed_runs") or [])
+    )
+    if llm_influenced_any and not _applied_source_receipt_present(evidence):
+        reasons.append("llm_influenced_missing_applied_source_receipt")
+
+    load_bearing = (
+        (treatment_differs_flag and grades_differ)
+        or hash_changed
+        or (llm_influenced_any and _applied_source_receipt_present(evidence))
+        or _refine_tokens_load_bearing(evidence)
+    )
+    if not load_bearing:
+        reasons.append("llm_not_load_bearing")
+
+    if treatment_differs_flag and not grades_differ and not hash_changed:
+        # Claimed divergence without grade delta or artifact change.
+        reasons.append("treatment_differs_claim_without_evidence")
+
+    return reasons
 
 
 def derive_grades_from_evidence(evidence: Dict[str, Any]) -> Tuple[List[Any], List[str]]:
@@ -298,6 +567,9 @@ def evaluate_evidence(evidence: Dict[str, Any]) -> GateVerdict:
         if len(grades) < MIN_SEEDS:
             reasons.append(f"grades_below_min_seeds:{len(grades)}<{MIN_SEEDS}")
 
+    # LLM must be load-bearing — ACK ping + identical grades never unlock measured.
+    reasons.extend(llm_load_bearing_reasons(evidence))
+
     if reasons:
         # Claiming measured with broken evidence is a hard fail (not CNM).
         return GateVerdict(
@@ -336,6 +608,7 @@ def write_could_not_measure_evidence(
     provider: str = REQUIRED_PROVIDER,
     min_seeds: int = MIN_SEEDS,
     ollama_reachable: bool = False,
+    ollama_tags_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Write an honest could_not_measure evidence stamp.
@@ -343,12 +616,14 @@ def write_could_not_measure_evidence(
     Control arm is recorded as ``executed: false`` with ``passed: null`` —
     do not claim a failed control that never ran.
     """
+    tags_url = ollama_tags_url or resolve_ollama_tags_url()
     payload: Dict[str, Any] = {
         "provider": provider,
         "min_seeds": min_seeds,
         "runtime_status": "could_not_measure",
         "ollama_reachable": ollama_reachable,
         "ollama_actually_ran": False,
+        "ollama_tags_url": tags_url,
         "grades": [],
         "seed_runs": [],
         "control_arm": {
@@ -381,7 +656,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "--probe-ollama",
         action="store_true",
-        help="Probe local Ollama and print reachability; exit 0 if up, 2 if down",
+        help="Probe Ollama (OLLAMA_HOST / REVENG_OLLAMA_HOST) and print reachability; "
+        "exit 0 if up, 2 if down",
     )
     parser.add_argument(
         "--write-cnm",
@@ -390,11 +666,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     args = parser.parse_args(list(argv) if argv is not None else None)
 
-    reachable = probe_ollama()
+    tags_url = resolve_ollama_tags_url()
+    reachable = probe_ollama(tags_url)
 
     if args.probe_ollama and not args.write_cnm and args.evidence == _DEFAULT_EVIDENCE:
         # Probe-only mode (no evaluate) unless write-cnm requested.
-        print(json.dumps({"ollama_reachable": reachable, "url": OLLAMA_TAGS_URL}, indent=2))
+        print(json.dumps({"ollama_reachable": reachable, "url": tags_url}, indent=2))
         return 0 if reachable else 2
 
     if args.write_cnm:
@@ -403,8 +680,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             return 1
         write_could_not_measure_evidence(
             args.evidence,
-            reason="ollama_unreachable: connection refused on 127.0.0.1:11434",
+            reason=f"ollama_unreachable: connection refused at {tags_url}",
             ollama_reachable=False,
+            ollama_tags_url=tags_url,
         )
         print(f"wrote could_not_measure evidence → {args.evidence}")
 

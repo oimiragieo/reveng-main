@@ -127,12 +127,34 @@ binaries:
     target_grade: compile_only
     notes: "Apple Silicon native code RE"
 
+  - name: vrl_llm_micro_go
+    source: locally-built
+    category: go-vrl-llm-honesty-micro
+    architecture: x86_64
+    format: ELF
+    current_grade: behavior_matched
+    target_grade: behavior_matched
+    notes: >-
+      Load-bearing VRL-LLM honesty micro subject (Go CGO_ENABLED=0);
+      hexyl PE C refine separate residual (vrl_compile_toolchain_broken on WSL).
+      See docs/architecture/evidence-vrl-llm-honesty-phase-04.md.
+    last_analyzed: "2026-08-07"
+    binary_path: test_samples/vrl_llm_micro_go/micro.bin
+    build_recipe: test_samples/vrl_llm_micro_go/build.sh
+    original_source: test_samples/vrl_llm_micro_go/main.go
+    broken_source: test_samples/vrl_llm_micro_go/broken_main.go
+    seed_inputs:
+      - "--help"
+      - "--version"
+      - "sample"
+
 targets_summary:
-  total: 10
+  total: 11
   grade_distribution:
     unknown: 9
-    compile_only: 1
-  reached_target_grade: 0
+    launches_but_divergent: 1
+    behavior_matched: 1
+  reached_target_grade: 1
   remaining_to_target: 10
 
 phase_gates:
