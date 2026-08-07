@@ -105,7 +105,7 @@ phases 5–13 product work; SEC sandbox proof builds; T3-* unpark.
 - [ ] Dogfood on `main` (`python3.9` probe + VRL + verify_ga baseline **and** ga)
 - [x] Evidence integrity (stamp ≡ latest; open tracked JSON) — probe dir + VRL CNM JSON
 - [x] Backlog + CEO update — backlog updated; CEO optional until Sol
-- [ ] Phase 4 stop/go recorded — **partial / stay open** (VRL CNM)
+- [x] Phase 4 stop/go recorded (**HOLD** / partial — VRL CNM; M2 world-class open) — **partial / stay open** (VRL CNM)
 
 ## Self-check before claiming Phase 4 done
 
