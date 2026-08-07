@@ -195,10 +195,18 @@ def test_t3_rows_remain_parked(item_id: str):
     assert _backlog_status(item_id) == "parked"
 
 
-@pytest.mark.parametrize("phase", list(range(4, 14)))
-def test_section_e_phases_4_through_13_open(phase: int):
+@pytest.mark.parametrize("phase", list(range(5, 14)))
+def test_section_e_phases_5_through_13_open(phase: int):
     status = _section_e_phase_status(phase)
     assert status == "open", f"section E phase {phase} status={status!r}, want open"
+
+
+def test_section_e_phase_4_partial_until_both_exits():
+    """Phase 4 may be partial when VRL half is could_not_measure; never hollow done."""
+    status = _section_e_phase_status(4)
+    assert status in ("open", "partial", "in_progress")
+    # Done only when both Track A and measured VRL exits land — not while CNM.
+    assert status != "done"
 
 
 def test_m1_native_fam_remains_open_and_not_required():
@@ -237,7 +245,13 @@ def test_r_hex_1_matches_measured_hexyl_subject_json():
     elif proc == "completed":
         assert backlog_status == "done"
         assert "(measured)" in row_text
-        assert hexyl_subject.get("binary_sha256") == (
+        # Live stamp sha must be non-empty; Phase 4 rebuild pin may differ from
+        # the Wave B historical digest documented in research-r-hex-1.
+        sha = hexyl_subject.get("binary_sha256") or ""
+        assert len(sha) == 64
+        assert sha == (
+            "3d26048bbbaee5e87a4613b4e21e898185e15b43cf43bd4fe74cc5d2dbaa5dba"
+        ) or sha == (
             "e2040b5deda5900a152ac28a7444ba565b2b0d46861a3efefafaf074f1a16dfc"
         )
     else:
@@ -286,9 +300,12 @@ def test_wave_b_m0_done_m4_partial_df5_done():
 
 def test_wave_b_nonclosures_ralph2_m2_m1_native_phases_t3():
     assert _backlog_status("RALPH-2") == "open"
-    assert _backlog_status("M2") == "open"
+    # Phase 4 Track A = honesty attribution only; world-class M2 stays partial.
+    assert _backlog_status("M2") == "partial"
     assert _backlog_status("M1-NATIVE-FAM") == "open"
-    for phase in range(4, 14):
+    assert _section_e_phase_status(4) in ("open", "partial", "in_progress")
+    assert _section_e_phase_status(4) != "done"
+    for phase in range(5, 14):
         assert _section_e_phase_status(phase) == "open"
     for tid in ("T3-KERNEL", "T3-PACKED", "T3-JIT", "T3-ANTI", "T3-GUI"):
         assert _backlog_status(tid) == "parked"

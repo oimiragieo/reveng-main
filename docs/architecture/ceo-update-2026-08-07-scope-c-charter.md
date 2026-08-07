@@ -66,3 +66,11 @@ keep phases 5–13 gated on fresh stop/go packets.
 - Charter: [`scope-c-execution-charter.md`](scope-c-execution-charter.md)
 - Thinktank REJECT: [`thinktank-scope-c-master-verdict.md`](thinktank-scope-c-master-verdict.md)
 - Wave C exits: [`wave-c-exit-criteria.md`](wave-c-exit-criteria.md)
+
+## Status update (post Phase 4 honesty slice)
+
+- Phase 4: **partial** (Track A attribution shipped; VRL measured CNM — Ollama unreachable; world-class M2 still open)
+- M2: **partial** (probe v1.3 semantic attribution ≠ full M2 milestone)
+- VRL-LLM-1: **partial** / `could_not_measure`
+- Hexyl subject re-stamp elapsed ≈5.10s (historical R-HEX-1 note ≈4.68s)
+- Sol: APPROVE_WITH_NITS for merge of honesty slice; Phase 4 stop/go = HOLD

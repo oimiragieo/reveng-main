@@ -1,0 +1,22 @@
+{
+  "provider": "ollama",
+  "min_seeds": 3,
+  "runtime_status": "could_not_measure",
+  "ollama_reachable": false,
+  "ollama_actually_ran": false,
+  "grades": [],
+  "seed_runs": [],
+  "control_arm": {
+    "llm_enabled": false,
+    "executed": false,
+    "passed": null,
+    "notes": "control not executed; CNM \u2014 do not invent a failed control"
+  },
+  "reason": "ollama_unreachable: connection refused on 127.0.0.1:11434",
+  "corpus_path": ".reveng/benchmarks/corpus.yaml",
+  "policy": {
+    "min_seeds": 3,
+    "provider": "ollama",
+    "source": "docs/architecture/decision-r-vrl-1-seeds-and-provider.md"
+  }
+}

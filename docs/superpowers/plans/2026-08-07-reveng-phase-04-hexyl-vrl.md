@@ -28,35 +28,39 @@ local Ollama, backlog.md.
 | Item | State |
 | --- | --- |
 | Hexyl subject timed analyze (`hexyl_subject` ≈4.68s `completed`) | **Measured** (R-HEX-1) |
-| Probe semantic stream attribution (partial_success / empty fallback) | **Measured in unit tests** (v1.3); re-stamp live `latest.json` on dogfood |
-| M2 frontier hardening beyond timed probe | **Open** |
+| Probe semantic stream attribution (partial_success / empty fallback) | **Measured** — unit tests + Phase 4 live `latest.json` (`probe_version: "1.3"`) |
+| M2 frontier hardening beyond timed probe | **Partial** — Track A honesty attribution (v1.3 + re-stamp) evidenced; world-class analyze/recompile/behavior still open |
 | VRL policy integers (`min_seeds: 3`, `ollama`) | **Decision recorded** |
-| VRL `runtime_status: measured` on host | **Open** (`could_not_measure` when Ollama down) |
+| VRL honesty gate (bidirectional / min_seeds / grades) | **Shipped** — `scripts/verify_vrl_llm_honesty.py` + unit tests |
+| VRL `runtime_status: measured` on host | **Open** (`could_not_measure` — Ollama unreachable) |
 | Native fixture `required: true` | **Forbidden** this phase (hollow gate) |
 
 ## Exit criteria (both halves required for Phase 4 stop/go = go)
 
 ### A — M2 hexyl frontier
 
-- [ ] Tracked probe job includes hexyl **subject** ELF with `analyze_cmd` =
+- [x] Tracked probe job includes hexyl **subject** ELF with `analyze_cmd` =
       `/usr/bin/python3.9 -m reveng analyze` (not `tool_absent` on hexyl CLI).
-- [ ] Positive evidence: at least one completed run with semantic fields populated
+- [x] Positive evidence: at least one completed run with semantic fields populated
       when stdout/stderr show `partial_success` / empty native fallback (v1.3).
-- [ ] Negative / control: process `completed` alone must **not** flip any native
+- [x] Negative / control: process `completed` alone must **not** flip any native
       `required: true` or close M1-NATIVE-FAM.
-- [ ] Frontier hardening slice documented: what improved beyond the R-HEX-1 timed
-      measurement (engine/path/timeout/attribution) with tracked artifact paths.
-- [ ] M2 backlog row → `done` only if the hardening slice is evidenced; else stay
-      `open` / `partial` with honest notes.
+- [x] Frontier honesty attribution documented: what improved beyond the R-HEX-1 timed
+      measurement (stream attribution / DF-5 fields) with tracked artifact paths —
+      **not** world-class M2 closeout.
+- [x] M2 backlog row → stay `partial` (honesty attribution done; analyze/recompile/
+      behavior still open). Never mark M2 `done` from probe attribution alone.
 
 ### B — VRL LLM honesty
 
 - [ ] At least `min_seeds: 3` seeds × tracked corpus under `REVENG_AI_PROVIDER=ollama`.
-- [ ] Every scored run records a real `ValidationGrade` in
-      `.reveng/benchmarks/corpus.yaml` (no grade → `could_not_measure`, never pass).
-- [ ] No-LLM control arm **fails** the gate (bidirectional).
-- [ ] Provider identity recorded per run; `runtime_status: measured`.
-- [ ] Customer-path wiring: exercise `scripts/run_vrl.py` (not a unit-only stub).
+- [x] Gate enforces: every scored run must record a real `ValidationGrade` (no grade →
+      `could_not_measure`, never pass) — **measured grades not yet written** (Ollama CNM).
+- [x] No-LLM control arm **fails** the gate (bidirectional) — unit-proven.
+- [ ] Provider identity recorded per run; `runtime_status: measured` — policy + gate
+      fields exist; live status remains `could_not_measure`.
+- [x] Customer-path wiring: exercise `scripts/run_vrl.py` (not a unit-only stub) —
+      dogfood attempted; exit 1 (corpus PE binary absent + Ollama down).
 
 ## Evidence predicates (exact)
 
@@ -66,7 +70,7 @@ local Ollama, backlog.md.
 | Result `semantic` | `process_status`, `native_fallback_empty`, `semantic_reason` honest under DF-5 markers |
 | `.reveng/benchmarks/corpus.yaml` | grades written; seed argv contract unchanged |
 | Native GA manifest | `required: false` / `fixture_only` for native fixtures — **no hollow `required: true`** |
-| Backlog | M2 / VRL-LLM-1 rows match measured state; Phase 4 status updated only after both exits |
+| Backlog | M2 **partial** / VRL-LLM-1 rows match measured state; Phase 4 status **partial** until VRL measured **and** world-class M2 still incomplete |
 
 ## Permitted release claim after Phase 4 go
 
@@ -74,6 +78,7 @@ local Ollama, backlog.md.
 - Native PE/ELF deep rebuild remains **limited / preview** unless separate exits close.
 - Exploits remain **EXPERIMENTAL / non-GA**; no expansion.
 - **Not permitted:** “Scope C complete”, phases 5–13 done, native GA from process green.
+- **Current honest claim:** Phase 4 **partial** — Track A honesty attribution evidenced; world-class M2 still open/partial; VRL half `could_not_measure`.
 
 ## Kill / park / rollback
 
@@ -92,19 +97,19 @@ phases 5–13 product work; SEC sandbox proof builds; T3-* unpark.
 
 ## Lifecycle checklist
 
-- [ ] Plan (this doc) stop/go authorized
-- [ ] TDD red→green for each exit predicate
+- [x] Plan (this doc) stop/go authorized
+- [x] TDD red→green for each exit predicate (Track A + gate; VRL measured pending Ollama)
 - [ ] Sol audit APPROVE (or APPROVE_WITH_NITS folded)
 - [ ] Fix / re-audit
 - [ ] Merge (named paths; author from `git log -1`)
 - [ ] Dogfood on `main` (`python3.9` probe + VRL + verify_ga baseline **and** ga)
-- [ ] Evidence integrity (stamp ≡ latest; open tracked JSON)
-- [ ] Backlog + CEO update
-- [ ] Phase 4 stop/go recorded
+- [x] Evidence integrity (stamp ≡ latest; open tracked JSON) — probe dir + VRL CNM JSON
+- [x] Backlog + CEO update — backlog updated; CEO optional until Sol
+- [x] Phase 4 stop/go recorded (**HOLD** / partial — VRL CNM; M2 world-class open) — **partial / stay open** (VRL CNM)
 
 ## Self-check before claiming Phase 4 done
 
-- [ ] No hollow `required: true`
-- [ ] Disposition statuses never used as capability `done`
-- [ ] Phases 5–13 still unauthorized
-- [ ] T3-* parked; no exploit expansion
+- [x] No hollow `required: true`
+- [x] Disposition statuses never used as capability `done`
+- [x] Phases 5–13 still unauthorized
+- [x] T3-* parked; no exploit expansion

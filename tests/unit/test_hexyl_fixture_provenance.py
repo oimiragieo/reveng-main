@@ -13,8 +13,10 @@ HEXYL_SHA = HEXYL_BIN.with_name("hexyl.sha256")
 RESEARCH = REPO_ROOT / "docs" / "architecture" / "research-r-hex-1-hexyl-timed-run.md"
 BUILD_SCRIPT = REPO_ROOT / "scripts" / "build_hexyl_fixture.sh"
 
-# Pinned in research-r-hex-1-hexyl-timed-run.md (script regenerates the local file).
-EXPECTED_SHA256 = "e2040b5deda5900a152ac28a7444ba565b2b0d46861a3efefafaf074f1a16dfc"
+# Phase 4 rebuild pin (research-r-hex-1-hexyl-timed-run.md). Wave B historical
+# digest remains documented there; live ELF + tests track this rebuild.
+EXPECTED_SHA256 = "3d26048bbbaee5e87a4613b4e21e898185e15b43cf43bd4fe74cc5d2dbaa5dba"
+WAVE_B_HISTORICAL_SHA256 = "e2040b5deda5900a152ac28a7444ba565b2b0d46861a3efefafaf074f1a16dfc"
 EXPECTED_VERSION = "0.17.0"
 
 
@@ -36,6 +38,7 @@ def test_research_doc_pins_version_sha_and_path():
     text = RESEARCH.read_text(encoding="utf-8")
     assert EXPECTED_VERSION in text
     assert EXPECTED_SHA256 in text
+    assert WAVE_B_HISTORICAL_SHA256 in text
     assert "test_samples/native/hexyl/build/hexyl" in text
     assert "scripts/build_hexyl_fixture.sh" in text
     assert "<placeholder>" not in text
