@@ -20,6 +20,12 @@ Evaluates a tracked evidence JSON against R-VRL-1 policy:
   phantom ``passed: false`` that unlocks measured
 * provider identity recorded; ``runtime_status: measured`` only when ollama
   actually ran
+* **LLM must be load-bearing** for ``measured`` (Sol REJECT 2026-08-07): at
+  least one of (a) ``treatment_differs_from_control`` with different grade
+  lists, (b) ``candidate_hash_changed`` after LLM text applied, (c) any
+  ``seed_runs[].llm_influenced: true``, (d) refine ``tokens_used > 0`` with
+  ``vrl_iterations > 0`` and not compile-blocked. Hollow ACK-ping + identical
+  control/treatment grades ⇒ ``hollow_ack_ping_identical_grades`` / fail.
 
 Exit codes
 ----------
@@ -139,6 +145,135 @@ def is_valid_grade(grade: Any) -> bool:
     if not isinstance(grade, str):
         return False
     return grade.strip() in VALIDATION_GRADE_LADDER
+
+
+def _treatment_grades_list(evidence: Dict[str, Any]) -> List[Any]:
+    """Prefer top-level grades; else executed seed_runs grades (order preserved)."""
+    grades = evidence.get("grades")
+    if isinstance(grades, list) and grades:
+        return list(grades)
+    derived: List[Any] = []
+    for row in evidence.get("seed_runs") or []:
+        if not isinstance(row, dict) or row.get("executed") is not True:
+            continue
+        g = row.get("grade")
+        if is_valid_grade(g):
+            derived.append(g)
+    return derived
+
+
+def _control_grades_list(evidence: Dict[str, Any]) -> Optional[List[Any]]:
+    control = evidence.get("control_arm")
+    if not isinstance(control, dict):
+        return None
+    grades = control.get("grades")
+    if isinstance(grades, list):
+        return list(grades)
+    return None
+
+
+def _ack_only_ping(evidence: Dict[str, Any]) -> bool:
+    """
+    True when every executed detail/seed row looks like an Ollama ACK ping
+    with no ``llm_influenced`` application of model output to the candidate.
+    """
+    details = evidence.get("seed_runs_detail")
+    rows: Sequence[Any]
+    if isinstance(details, list) and details:
+        rows = details
+    else:
+        seed_runs = evidence.get("seed_runs")
+        if not isinstance(seed_runs, list) or not seed_runs:
+            return False
+        rows = seed_runs
+
+    previews: List[str] = []
+    any_influenced = False
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if row.get("executed") is False:
+            continue
+        if row.get("llm_influenced") is True:
+            any_influenced = True
+        preview = str(row.get("ollama_preview") or "").strip().upper()
+        previews.append(preview)
+
+    if not previews:
+        return False
+    if any_influenced:
+        return False
+    # ACK ping (or empty preview with no influence) — hollow pattern.
+    return all(p in ("ACK", "") for p in previews)
+
+
+def _refine_tokens_load_bearing(evidence: Dict[str, Any]) -> bool:
+    """True when refine/run_vrl recorded tokens with at least one iteration."""
+    tokens = evidence.get("tokens_used")
+    iterations = evidence.get("vrl_iterations")
+    run_vrl = evidence.get("run_vrl_customer_path")
+    if not isinstance(run_vrl, dict):
+        run_vrl = {}
+    if not isinstance(tokens, int):
+        tokens = run_vrl.get("tokens_used")
+    if not isinstance(iterations, int):
+        iterations = run_vrl.get("iterations")
+    if evidence.get("vrl_compile_blocked") is True:
+        return False
+    if run_vrl.get("compile_blocked") is True:
+        return False
+    return (
+        isinstance(tokens, int)
+        and tokens > 0
+        and isinstance(iterations, int)
+        and iterations > 0
+    )
+
+
+def llm_load_bearing_reasons(evidence: Dict[str, Any]) -> List[str]:
+    """
+    Reasons why a ``measured`` claim fails the load-bearing LLM contract.
+
+    Empty list ⇒ load-bearing predicates satisfied (or not claiming measured).
+    """
+    reasons: List[str] = []
+    control_grades = _control_grades_list(evidence)
+    treatment_grades = _treatment_grades_list(evidence)
+    grades_identical = (
+        isinstance(control_grades, list)
+        and bool(control_grades)
+        and list(control_grades) == list(treatment_grades)
+    )
+
+    if grades_identical and _ack_only_ping(evidence):
+        reasons.append("hollow_ack_ping_identical_grades")
+
+    treatment_differs_flag = evidence.get("treatment_differs_from_control") is True
+    grades_differ = (
+        isinstance(control_grades, list)
+        and bool(control_grades)
+        and list(control_grades) != list(treatment_grades)
+    )
+    hash_changed = evidence.get("candidate_hash_changed") is True
+    llm_influenced_any = any(
+        isinstance(row, dict) and row.get("llm_influenced") is True
+        for row in (evidence.get("seed_runs") or [])
+    )
+
+    load_bearing = (
+        (treatment_differs_flag and grades_differ)
+        or hash_changed
+        or llm_influenced_any
+        or _refine_tokens_load_bearing(evidence)
+    )
+    if not load_bearing:
+        reasons.append("llm_not_load_bearing")
+
+    if treatment_differs_flag and not grades_differ and not hash_changed:
+        # Claimed divergence without grade delta or artifact change.
+        reasons.append("treatment_differs_claim_without_evidence")
+
+    return reasons
 
 
 def derive_grades_from_evidence(evidence: Dict[str, Any]) -> Tuple[List[Any], List[str]]:
@@ -339,6 +474,9 @@ def evaluate_evidence(evidence: Dict[str, Any]) -> GateVerdict:
                 reasons.append(f"invalid_grade_at_{idx}:{grade!r}")
         if len(grades) < MIN_SEEDS:
             reasons.append(f"grades_below_min_seeds:{len(grades)}<{MIN_SEEDS}")
+
+    # LLM must be load-bearing — ACK ping + identical grades never unlock measured.
+    reasons.extend(llm_load_bearing_reasons(evidence))
 
     if reasons:
         # Claiming measured with broken evidence is a hard fail (not CNM).

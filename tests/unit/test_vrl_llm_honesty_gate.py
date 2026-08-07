@@ -7,6 +7,8 @@ Fail-first shape:
 * no-LLM control that *passes* must fail the gate (hollow)
 * measured requires ollama_actually_ran
 * measured requires seed_runs (≥3 distinct executed seed_ids); legacy grades alone never unlock exit 0
+* measured requires LLM load-bearing (grade delta / hash change / llm_influenced / refine tokens)
+* ACK-ping + identical control/treatment grades must fail
 * could_not_measure exits 2 (not a green pass)
 """
 
@@ -37,7 +39,7 @@ def _load_gate():
 gate = _load_gate()
 
 
-def _seed_runs(*grades, executed=True):
+def _seed_runs(*grades, executed=True, llm_influenced=True):
     """Build gate-consumable seed_runs rows (one per grade)."""
     rows = []
     for idx, grade in enumerate(grades):
@@ -47,18 +49,22 @@ def _seed_runs(*grades, executed=True):
                 "grade": grade,
                 "argv": [f"--seed={idx}"],
                 "executed": executed,
+                "llm_influenced": llm_influenced,
             }
         )
     return rows
 
 
 def _base(**overrides):
+    """Honest measured baseline: LLM load-bearing (grades differ + influenced)."""
     payload = {
         "provider": "ollama",
         "min_seeds": 3,
         "runtime_status": "measured",
         "ollama_reachable": True,
         "ollama_actually_ran": True,
+        "treatment_differs_from_control": True,
+        "candidate_hash_changed": True,
         "grades": ["analysis_only", "compile_only", "launches_but_divergent"],
         "seed_runs": _seed_runs(
             "analysis_only", "compile_only", "launches_but_divergent"
@@ -67,6 +73,11 @@ def _base(**overrides):
             "llm_enabled": False,
             "passed": False,
             "executed": True,
+            "grades": [
+                "launches_but_divergent",
+                "launches_but_divergent",
+                "launches_but_divergent",
+            ],
         },
     }
     payload.update(overrides)
@@ -79,6 +90,117 @@ def test_measured_happy_path_passes():
     assert v.runtime_status == "measured"
     assert v.provider == "ollama"
     assert v.min_seeds == 3
+
+
+def test_hollow_ack_ping_identical_grades_fails():
+    """Sol REJECT: ACK ping + same control/treatment grades must not unlock measured."""
+    grades = [
+        "launches_but_divergent",
+        "launches_but_divergent",
+        "launches_but_divergent",
+    ]
+    seed_runs = _seed_runs(*grades, llm_influenced=False)
+    for row in seed_runs:
+        row.pop("llm_influenced", None)
+    payload = _base(
+        grades=grades,
+        seed_runs=seed_runs,
+        seed_runs_detail=[
+            {**row, "ollama_preview": "ACK"} for row in seed_runs
+        ],
+        treatment_differs_from_control=False,
+        candidate_hash_changed=False,
+        control_arm={
+            "llm_enabled": False,
+            "passed": False,
+            "executed": True,
+            "grades": list(grades),
+        },
+    )
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 1
+    assert any(
+        r in ("hollow_ack_ping_identical_grades", "llm_not_load_bearing")
+        for r in v.reasons
+    )
+
+
+def test_measured_requires_llm_load_bearing_signal():
+    """measured fails when no influence / hash change / grade delta / refine tokens."""
+    payload = _base(
+        treatment_differs_from_control=False,
+        candidate_hash_changed=False,
+        seed_runs=_seed_runs(
+            "analysis_only", "compile_only", "launches_but_divergent",
+            llm_influenced=False,
+        ),
+        control_arm={
+            "llm_enabled": False,
+            "passed": False,
+            "executed": True,
+            "grades": ["analysis_only", "compile_only", "launches_but_divergent"],
+        },
+    )
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 1
+    assert "llm_not_load_bearing" in v.reasons
+
+
+def test_load_bearing_via_candidate_hash_change_passes():
+    """Bidirectional: hash change after LLM applied ⇒ measured may pass."""
+    payload = _base(
+        treatment_differs_from_control=False,
+        candidate_hash_changed=True,
+        seed_runs=_seed_runs(
+            "launches_but_divergent",
+            "launches_but_divergent",
+            "launches_but_divergent",
+            llm_influenced=True,
+        ),
+        grades=[
+            "launches_but_divergent",
+            "launches_but_divergent",
+            "launches_but_divergent",
+        ],
+        control_arm={
+            "llm_enabled": False,
+            "passed": False,
+            "executed": True,
+            "grades": [
+                "launches_but_divergent",
+                "launches_but_divergent",
+                "launches_but_divergent",
+            ],
+        },
+    )
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 0
+    assert v.runtime_status == "measured"
+
+
+def test_load_bearing_via_grade_delta_passes():
+    """Bidirectional: treatment grade list differs from control ⇒ measured ok."""
+    payload = _base(
+        candidate_hash_changed=False,
+        treatment_differs_from_control=True,
+        grades=["behavior_matched", "behavior_matched", "behavior_matched"],
+        seed_runs=_seed_runs(
+            "behavior_matched", "behavior_matched", "behavior_matched",
+            llm_influenced=True,
+        ),
+        control_arm={
+            "llm_enabled": False,
+            "passed": False,
+            "executed": True,
+            "grades": [
+                "launches_but_divergent",
+                "launches_but_divergent",
+                "launches_but_divergent",
+            ],
+        },
+    )
+    v = gate.evaluate_evidence(payload)
+    assert v.exit_code == 0
 
 
 def test_measured_legacy_grades_only_fails():
