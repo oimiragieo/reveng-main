@@ -24,10 +24,10 @@ Policy integers and honesty docs are **not** a substitute for measured product e
 | M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic; flip `required: true` only after analyze ≤120s **without** Ghidra on tracked fixtures | **open** (`required` stays false) |
 | M2 | Hexyl frontier hardening **beyond** a single timed probe (R-HEX-1 measurement alone does not close M2; probe v1.3 honesty attribution alone does not close world-class M2) | **partial** — Phase 4 Track A honesty attribution evidenced (`phase-04-m2-hexyl-frontier.md`); deeper analyze/recompile/behavior still open |
 | R-HEX-1 | Bounded timed `reveng analyze` on hexyl **subject** ELF; status must match probe JSON (`completed` / `timeout` / `could_not_measure`) | **done** (measured) — `hexyl_subject` `completed` ≈4.68s in `latest.json`; M2 remains **partial** (honesty attribution ≠ world-class closeout) |
-| M4 corpus residual | CI/PR/**nightly corpus** gates blocking (thin honesty workflow is **partial** only) | **partial** (honesty gate); corpus still open |
+| M4 corpus residual | CI/PR/**nightly corpus** gates blocking (thin honesty + Phase 5 equivalence evidence is **partial** only) | **partial** (wave-b + wave-c-phase5-honesty); full nightly/corpus still open |
 | VRL LLM measured | `min_seeds: 3` × tracked corpus under `ollama`, no-LLM control fails, `runtime_status: measured` | **done** (VRL-LLM-1 via `vrl_llm_micro_go`); hexyl PE C refine residual
 | M5-PIPE | Optional merge under criteria **or** keep permanent split | partial (split freeze) |
-| Scope C phases 4–13 | Per-phase product exits | **open** |
+| Scope C phases 4–13 | Per-phase product exits | Phase 4 honesty go; Phase 5 **partial** (thin); 6–13 open |
 | P4-BUNDLER / P5-NATIVE-EQ / P6-PLATFORM | Capability hardening leftovers | **open** |
 | T3-* | Kernel / packed / JIT / anti / GUI depth | **parked** — no claim |
 | SEC sandbox proofs | Docker-only preview class decided; proofs/expansion still gated | decision only; no exploit expansion |
