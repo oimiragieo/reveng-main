@@ -1,16 +1,22 @@
-# Phase 4 — M2 hexyl frontier hardening slice (2026-08-07)
+# Phase 4 — Track A hexyl honesty attribution exit (2026-08-07)
 
-**Status:** evidenced (attribution + re-stamp). Does **not** close M1-NATIVE-FAM.
-Does **not** flip any native fixture `required: true`. Process `completed` ≠ native GA (DF-5).
+**Status:** Phase 4 Track A **honesty attribution exit** evidenced (probe v1.3 +
+re-stamp). This does **not** close world-class **M2** (hexyl frontier hardening).
+M2 stays **partial** / open until analyze/recompile artifacts and behavior checks
+meet `reveng-world-class-execution-backlog.md` M2 acceptance.
 
-## What improved beyond R-HEX-1 timed measurement
+Does **not** close M1-NATIVE-FAM. Does **not** flip any native fixture
+`required: true`. Process `completed` ≠ native GA (DF-5).
+
+## What this closes (honesty only)
 
 R-HEX-1 proved a bounded `reveng analyze` on the hexyl **subject** ELF can finish
 inside the 120s budget (`status=completed`, ~4–5s). That alone did not close M2.
 
-This Phase 4 slice adds **semantic stream attribution** (probe **v1.3**) and a live
-re-stamp so DF-5 markers in stdout/stderr are recorded in evidence fields instead of
-left null:
+This Phase 4 Track A slice adds **semantic stream attribution** (probe **v1.3**)
+and a live re-stamp so DF-5 markers in stdout/stderr are recorded in evidence
+fields instead of left null — a **frontier honesty** slice, not engine
+reconstruction closeout:
 
 | Field | Wave B stamp (v1.2) | Phase 4 stamp (v1.3) |
 | --- | --- | --- |
@@ -23,6 +29,19 @@ Streams on this host still show `Pipeline status: partial_success` and
 `Native fallback analysis returned no analysis_data` while the process exits 0 —
 exactly the DF-5 shape. v1.3 attributes that into `semantic` so a green process
 status cannot be mistaken for native GA.
+
+## What remains open (world-class M2)
+
+Per `docs/architecture/reveng-world-class-execution-backlog.md` §M2, still
+required before marking M2 `done`:
+
+* tracked `run_source_binary_benchmark.py --benchmark hexyl` analyze **and**
+  recompile report artifacts (not timeout-only / analyze_failed forever)
+* original-behavior checks for hexyl remaining passing
+* behavior comparisons present when a rebuilt binary is produced
+* hardening slices from `HARDENING_PRIORITIES.md` with regression tests
+
+Probe v1.3 attribution does **not** satisfy those gates.
 
 ## Evidence paths
 
@@ -62,10 +81,12 @@ pin matches this rebuild. Fixture presence still ≠ analyze capability.
 
 * No native GA manifest entry flipped to `required: true` from process `completed`.
 * `M1-NATIVE-FAM` stays **open**.
+* World-class **M2** stays **partial** (this doc is honesty attribution only).
 * Exploits / R-SEC-1 unchanged (no expansion).
 
-## M2 disposition
+## Disposition
 
-M2 Phase 4 frontier slice (v1.3 attribution + re-stamp + this doc) is **evidenced**.
-Deeper engine hardening toward native rebuild quality remains out of scope for this
-slice; M1-NATIVE-FAM is the separate flip gate.
+Phase 4 Track A **honesty attribution exit** (v1.3 attribution + re-stamp + this
+doc) is **evidenced**. Do **not** claim M2 `done`. Deeper hexyl
+analyze/recompile/behavior hardening remains open; M1-NATIVE-FAM is the separate
+`required: true` flip gate.

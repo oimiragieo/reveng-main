@@ -24,7 +24,7 @@ with an *executed* no-LLM control failing.
 
 | Predicate | Status |
 | --- | --- |
-| Gate requires `min_seeds >= 3` **and** `len(grades) >= 3` when claiming `measured` | tested |
+| Gate requires non-empty `seed_runs` with ≥3 distinct executed `seed_id`s + valid grades when claiming `measured`; legacy grades-only never unlocks exit 0 | tested (`seed_runs_required`) |
 | `min_seeds: 3` with a single grade ⇒ gate fail | tested (`test_measured_with_min_seeds_field_but_one_grade_fails`) |
 | Preferred `seed_runs[]` schema; derive grades from executed rows | tested + `run_vrl.build_seed_runs_for_log` |
 | Missing / invalid ValidationGrade never passes | tested |

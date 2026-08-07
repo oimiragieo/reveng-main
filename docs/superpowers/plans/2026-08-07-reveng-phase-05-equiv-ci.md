@@ -1,7 +1,7 @@
 # REVENG Phase 5 — Equivalence product gates + CI corpus (2026-08-07)
 
 > **Authorization:** Phase 5 **only**. **Unauthorized** until Phase 4 stop/go = **go**.
-> Phase 4 is currently **partial** (M2 done; VRL LLM `could_not_measure`) — do not execute this plan.
+> Phase 4 is currently **partial** (M2 **partial** — Track A honesty only; VRL LLM `could_not_measure`) — do not execute this plan.
 > **Charter:** [`docs/architecture/scope-c-execution-charter.md`](../../architecture/scope-c-execution-charter.md)
 > **Catalog:** [`docs/architecture/scope-c-phase-catalog-contracts.md`](../../architecture/scope-c-phase-catalog-contracts.md)
 

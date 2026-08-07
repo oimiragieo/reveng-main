@@ -29,7 +29,7 @@ local Ollama, backlog.md.
 | --- | --- |
 | Hexyl subject timed analyze (`hexyl_subject` ≈4.68s `completed`) | **Measured** (R-HEX-1) |
 | Probe semantic stream attribution (partial_success / empty fallback) | **Measured** — unit tests + Phase 4 live `latest.json` (`probe_version: "1.3"`) |
-| M2 frontier hardening beyond timed probe | **Done** (v1.3 attribution + re-stamp + frontier doc) |
+| M2 frontier hardening beyond timed probe | **Partial** — Track A honesty attribution (v1.3 + re-stamp) evidenced; world-class analyze/recompile/behavior still open |
 | VRL policy integers (`min_seeds: 3`, `ollama`) | **Decision recorded** |
 | VRL honesty gate (bidirectional / min_seeds / grades) | **Shipped** — `scripts/verify_vrl_llm_honesty.py` + unit tests |
 | VRL `runtime_status: measured` on host | **Open** (`could_not_measure` — Ollama unreachable) |
@@ -45,10 +45,11 @@ local Ollama, backlog.md.
       when stdout/stderr show `partial_success` / empty native fallback (v1.3).
 - [x] Negative / control: process `completed` alone must **not** flip any native
       `required: true` or close M1-NATIVE-FAM.
-- [x] Frontier hardening slice documented: what improved beyond the R-HEX-1 timed
-      measurement (engine/path/timeout/attribution) with tracked artifact paths.
-- [x] M2 backlog row → `done` only if the hardening slice is evidenced; else stay
-      `open` / `partial` with honest notes.
+- [x] Frontier honesty attribution documented: what improved beyond the R-HEX-1 timed
+      measurement (stream attribution / DF-5 fields) with tracked artifact paths —
+      **not** world-class M2 closeout.
+- [x] M2 backlog row → stay `partial` (honesty attribution done; analyze/recompile/
+      behavior still open). Never mark M2 `done` from probe attribution alone.
 
 ### B — VRL LLM honesty
 
@@ -69,7 +70,7 @@ local Ollama, backlog.md.
 | Result `semantic` | `process_status`, `native_fallback_empty`, `semantic_reason` honest under DF-5 markers |
 | `.reveng/benchmarks/corpus.yaml` | grades written; seed argv contract unchanged |
 | Native GA manifest | `required: false` / `fixture_only` for native fixtures — **no hollow `required: true`** |
-| Backlog | M2 / VRL-LLM-1 rows match measured state; Phase 4 status **partial** until VRL measured |
+| Backlog | M2 **partial** / VRL-LLM-1 rows match measured state; Phase 4 status **partial** until VRL measured **and** world-class M2 still incomplete |
 
 ## Permitted release claim after Phase 4 go
 
@@ -77,7 +78,7 @@ local Ollama, backlog.md.
 - Native PE/ELF deep rebuild remains **limited / preview** unless separate exits close.
 - Exploits remain **EXPERIMENTAL / non-GA**; no expansion.
 - **Not permitted:** “Scope C complete”, phases 5–13 done, native GA from process green.
-- **Current honest claim:** Phase 4 **partial** — M2 frontier attribution evidenced; VRL half `could_not_measure`.
+- **Current honest claim:** Phase 4 **partial** — Track A honesty attribution evidenced; world-class M2 still open/partial; VRL half `could_not_measure`.
 
 ## Kill / park / rollback
 

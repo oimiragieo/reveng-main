@@ -300,8 +300,8 @@ def test_wave_b_m0_done_m4_partial_df5_done():
 
 def test_wave_b_nonclosures_ralph2_m2_m1_native_phases_t3():
     assert _backlog_status("RALPH-2") == "open"
-    # Phase 4 Track A closed M2 frontier attribution slice; M1 remains open.
-    assert _backlog_status("M2") == "done"
+    # Phase 4 Track A = honesty attribution only; world-class M2 stays partial.
+    assert _backlog_status("M2") == "partial"
     assert _backlog_status("M1-NATIVE-FAM") == "open"
     assert _section_e_phase_status(4) in ("open", "partial", "in_progress")
     assert _section_e_phase_status(4) != "done"

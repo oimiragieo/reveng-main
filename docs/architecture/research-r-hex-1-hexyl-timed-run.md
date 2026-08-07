@@ -63,13 +63,14 @@ R-HEX-1 → **done** (measured) — not timeout-only on this host for this subje
 answer is process-completed within budget. Process `completed` is not native GA.
 
 **M2 note (post-dated):** This document is the **timed measurement record** only.
-M2 frontier hardening was closed later by the Phase 4 attribution slice (probe
-v1.3) — see `docs/architecture/phase-04-m2-hexyl-frontier.md`. Do not treat the
-historical “M2 stays open” wording from the Wave B write-up as current backlog
-status; R-HEX-1 itself remains the timing receipt, not the M2 closeout.
+Phase 4 Track A later evidenced probe v1.3 **honesty attribution** (see
+`docs/architecture/phase-04-m2-hexyl-frontier.md`). That is **not** world-class
+M2 closeout — M2 stays **partial** until analyze/recompile/behavior gates land.
+Do not treat historical “M2 stays open” Wave B wording as contradicted by
+attribution alone; R-HEX-1 itself remains the timing receipt.
 
 ## Related evidence
 
 - Multi-result probe report: `reports/native_analyze_probe/latest.json`
 - Wave A availability block (tool-absent): `docs/architecture/research-r-hex-1-hexyl-availability-block.md`
-- Phase 4 M2 frontier closeout: `docs/architecture/phase-04-m2-hexyl-frontier.md`
+- Phase 4 Track A honesty attribution (not M2 done): `docs/architecture/phase-04-m2-hexyl-frontier.md`

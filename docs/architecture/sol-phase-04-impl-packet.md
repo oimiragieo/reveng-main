@@ -21,7 +21,7 @@ Prior Sol REJECT called out hollow measured predicates. Fixes landed (TDD):
 | HIGH 1 | `min_seeds: 3` with one grade could pass | Measured requires `len(grades) >= MIN_SEEDS` (`grades_below_min_seeds`) — `test_measured_with_min_seeds_field_but_one_grade_fails` |
 | HIGH 2 | Run log not gate-consumable | Evidence must carry `seed_runs[{seed_id,grade,argv,executed}]` for measured; gate derives grades from executed rows; legacy `grades` is informational only (never exit 0 alone). `run_vrl.build_seed_runs_for_log` writes **one row per declared corpus seed** (unrun → `executed:false`); a single refine() must not claim 3 measured |
 | MEDIUM | CNM stamped phantom `passed: false` | `control_arm.executed` required; unexecuted → CNM only; measured needs `executed:true` + `passed:false` + `llm_enabled:false`; CNM writer sets `executed:false`, `passed:null` |
-| LOW | R-HEX-1 still said M2 open | `wave-c-exit-criteria.md` R-HEX-1 row notes M2 closed by Phase 4 frontier; VRL/Phase4 overall remain partial. Timed-run doc is the timing receipt only |
+| LOW | R-HEX-1 / M2 overclaim | Timing receipt stays R-HEX-1; Phase 4 Track A is honesty attribution only; M2 stays **partial** in backlog + wave-c-exit (not closed) |
 
 Validation:
 
@@ -38,8 +38,9 @@ Tracked CNM stamp: `reports/vrl_llm_honesty/latest.json` →
 ## Expected Phase 4 stop/go
 
 **Must stay `partial` / open** — VRL half is `could_not_measure` (Ollama down).
-Track A (M2 frontier attribution slice) is evidenced. Do **not** authorize
-phases 5–13. Do **not** treat disposition as capability `done`.
+Track A (hexyl honesty attribution / probe v1.3) is evidenced; world-class **M2**
+stays **partial**. Do **not** authorize phases 5–13. Do **not** treat disposition
+as capability `done`. Do **not** claim M2 `done` from attribution alone.
 
 ## Files touched (impl + Sol must-fix)
 
@@ -53,7 +54,7 @@ phases 5–13. Do **not** treat disposition as capability `done`.
 | `reports/native_analyze_probe/latest.json` | Probe v1.3 re-stamp |
 | `reports/native_analyze_probe/2026-08-07T191850Z.json` | Sole stamp ≡ latest |
 | `reports/vrl_llm_honesty/latest.json` | CNM evidence (executed:false control) |
-| `docs/architecture/phase-04-m2-hexyl-frontier.md` | M2 frontier slice doc |
+| `docs/architecture/phase-04-m2-hexyl-frontier.md` | Track A honesty attribution (not M2 done) |
 | `docs/architecture/evidence-vrl-llm-honesty-phase-04.md` | VRL CNM evidence doc |
 | `docs/architecture/research-r-hex-1-hexyl-timed-run.md` | Timing record + M2 post-date note |
 | `docs/architecture/sol-phase-04-impl-packet.md` | This packet |
@@ -104,7 +105,7 @@ PYTHONPATH=src /usr/bin/python3.9 scripts/probe_native_analyze_timeout.py \
    fail; three distinct seed_ids pass; legacy grades-only fails
    (`seed_runs_required`); no-LLM control pass ⇒ gate fail;
    unexecuted control cannot unlock measured.
-8. Backlog: Phase 4 `partial`; M2 evidenced/`done` or `partial` with notes;
+8. Backlog: Phase 4 `partial`; M2 **`partial`** (honesty attribution done; analyze/recompile/behavior open);
    VRL-LLM-1 not `done`.
 
 ## Non-goals / kill checks
