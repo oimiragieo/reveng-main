@@ -1,3 +1,5 @@
+> **Stop/go (2026-08-07):** **honesty go** per [`decision-phase-04-honesty-go-waiver.md`](../../architecture/decision-phase-04-honesty-go-waiver.md). World-class M2 remains open.
+
 # REVENG Phase 4 — Hexyl frontier + VRL LLM honesty (2026-08-07)
 
 > **Authorization scope:** Phase 4 only. Not phases 5–13.

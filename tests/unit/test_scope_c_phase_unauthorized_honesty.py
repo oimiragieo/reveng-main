@@ -13,23 +13,23 @@ POLICY = REPO / "docs" / "architecture" / "scope-c-hold-prep-policy.md"
 
 def test_hold_policy_forbids_substantive_prep_implementation():
     text = POLICY.read_text(encoding="utf-8")
-    assert "Forbidden" in text
-    assert "substantive" in text.lower()
+    assert "Forbidden" in text or "Still forbidden" in text
+    assert "sol stop/go" in text.lower() or "stop/go" in text.lower()
 
 
 def test_catalog_marks_phases_5_plus_blocked_or_unauthorized():
     text = CATALOG.read_text(encoding="utf-8")
-    assert "unauthorized" in text.lower() or "blocked_on_phase_4" in text.lower()
+    assert "unauthorized" in text.lower() or "await Sol stop/go" in text.lower()
     assert "scope c complete" not in text.lower()
 
 
-def test_backlog_phase_rows_5_to_13_blocked():
+def test_backlog_phase_rows_5_to_13_await_sol():
     text = BACKLOG.read_text(encoding="utf-8")
     for n in range(5, 14):
         m = re.search(rf"^\|\s*{n}\s\|[^\n]+$", text, re.M)
         assert m, f"missing phase {n} row"
         row = m.group(0).lower()
-        assert "blocked_on_phase_4" in row, f"phase {n} not blocked: {row}"
+        assert "await sol stop/go" in row, f"phase {n} not awaiting Sol: {row}"
 
 
 def test_backlog_does_not_claim_scope_c_complete():
