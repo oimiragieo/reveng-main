@@ -28,7 +28,8 @@ REQUIRED_SEMANTIC_KEYS = (
 
 def _hello_go_completed():
     payload = json.loads(LATEST.read_text(encoding="utf-8"))
-    assert payload.get("probe_version") == "1.2"
+    # Evidence stamps may predate stream attribution (1.2); code contract is 1.3+.
+    assert payload.get("probe_version") in ("1.2", "1.3")
     results = payload.get("results") or []
     matches = [
         r for r in results if r.get("id") == "hello_go_analyze" and r.get("status") == "completed"

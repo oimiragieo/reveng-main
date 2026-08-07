@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 
-PROBE_VERSION = "1.2"
+PROBE_VERSION = "1.3"
 
 # Job result ids must be safe single path segments under runs/<id>/.
 SAFE_RESULT_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
@@ -28,6 +28,10 @@ _SECRET_LINE = re.compile(
 # Nested JSON field used for native_fallback_empty when newly created under job_output_dir.
 # Path: report["native_analysis"]["fallback_empty"] (bool). Absent → native_fallback_empty=None.
 _NATIVE_FALLBACK_KEYS: Tuple[str, ...] = ("native_analysis", "fallback_empty")
+
+# Stream markers when JSON dig misses DF-5 / partial_success honesty (probe v1.3).
+_PIPELINE_PARTIAL_SUCCESS = re.compile(r"Pipeline status:\s*partial_success")
+_NATIVE_FALLBACK_EMPTY_MSG = "Native fallback analysis returned no analysis_data"
 
 _TAIL_LIMIT = 2000
 
@@ -145,6 +149,38 @@ def _attribute_semantic_from_dir(
             native_fallback_empty = dug
             break
     return analysis_report_present, native_fallback_empty, semantic_reason
+
+
+def _attribute_semantic_from_streams(
+    stdout_tail: Optional[str],
+    stderr_tail: Optional[str],
+    *,
+    native_fallback_empty: Optional[bool],
+    semantic_reason: Optional[str],
+) -> Tuple[Optional[bool], Optional[str]]:
+    """
+    Parse stdout/stderr tails for DF-5 honesty when JSON dig is absent/null.
+
+    - ``Pipeline status: partial_success`` → ``pipeline_partial_success`` if reason still null
+    - ``Native fallback analysis returned no analysis_data`` → ``native_fallback_empty=True``
+      and reason ``native_fallback_empty`` unless a more specific JSON reason is already set
+    """
+    stdout = stdout_tail or ""
+    stderr = stderr_tail or ""
+    combined = f"{stdout}\n{stderr}"
+
+    has_partial = bool(_PIPELINE_PARTIAL_SUCCESS.search(stdout))
+    has_fallback_empty = _NATIVE_FALLBACK_EMPTY_MSG in combined
+
+    if has_fallback_empty:
+        native_fallback_empty = True
+        # Prefer stream marker; keep JSON-specific reasons (e.g. json_unreadable:…).
+        if semantic_reason is None or semantic_reason == "pipeline_partial_success":
+            semantic_reason = "native_fallback_empty"
+    elif has_partial and semantic_reason is None:
+        semantic_reason = "pipeline_partial_success"
+
+    return native_fallback_empty, semantic_reason
 
 
 def _prepare_job_output_dir(out_dir: Path, result_id: str) -> Path:
@@ -272,6 +308,17 @@ def probe_one(
         semantic["native_fallback_empty"] = fallback
         if why and semantic.get("semantic_reason") is None:
             semantic["semantic_reason"] = why
+
+    # Stream attribution (v1.3): DF-5 honesty when JSON dig misses partial_success / empty fallback.
+    if result.get("stdout_tail") is not None or result.get("stderr_tail") is not None:
+        fb, why = _attribute_semantic_from_streams(
+            result.get("stdout_tail"),
+            result.get("stderr_tail"),
+            native_fallback_empty=semantic.get("native_fallback_empty"),
+            semantic_reason=semantic.get("semantic_reason"),
+        )
+        semantic["native_fallback_empty"] = fb
+        semantic["semantic_reason"] = why
 
     return result
 
