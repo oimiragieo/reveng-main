@@ -49,9 +49,9 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | id | title | phase | status | needs research? | notes |
 | --- | --- | --- | --- | --- | --- |
 | M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic | 2 | open | see R-NATIVE-1 + fixtures | C+Go micro-CLIs landed (`test_samples/native/`); `required:false`/`fixture_only`. Close when analyze completes ≤120s on both without Ghidra + flip required true. Host C linker may skip hello_c. |
-| RALPH-1 | Source-map path alias recall | 6 | partial | blocked_on_phase_4| file overlap fixed |
+| RALPH-1 | Source-map path alias recall | 6 | partial | open (await Sol stop/go)| file overlap fixed |
 | RALPH-2 | cli.js 0.8+ recall | 6 | open | **yes R-RALPH-2** | harness done; engine long pole |
-| M5-PIPE | pipeline vs pipelines merge | 9 | partial | blocked_on_phase_4| documented split freeze; Wave B merge optional |
+| M5-PIPE | pipeline vs pipelines merge | 9 | partial | open (await Sol stop/go)| documented split freeze; Wave B merge optional |
 | M0 | Baseline reporting discipline | exec | done | | preview reporting discipline: probe v1.2 + evidence hygiene (exact one stamp≡latest) + scoped git (DF-4); CI corpus gates remain **M4 residual** |
 | M1 | Multi-codebase corpus gate | exec | open | see R-NATIVE-1 | overlaps M1-NATIVE-FAM |
 | M2 | Hexyl frontier hardening | 4 | partial | no (R-HEX-1 measured) | Probe v1.3 semantic attribution + re-stamp done (Phase 4 Track A honesty); deeper hexyl analyze/recompile/behavior still open — world-class M2 not closed. See `phase-04-m2-hexyl-frontier.md`. No `required:true`; M1-NATIVE-FAM still open. |
@@ -66,7 +66,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | R-NATIVE-1 | Linux-hermetic native CLI set for ≥5/≥3 families | **done** — `docs/architecture/research-r-native-1-linux-hermetic-candidates.md` |
 | R-RALPH-2-BASELINE | Measure current cli.js recall (or label could_not_measure) | **done** — `docs/architecture/research-r-ralph-2-baseline.md` |
 | R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | **open** — RALPH-2, Phase 6 |
-| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **done** (measured) — `docs/architecture/research-r-hex-1-hexyl-timed-run.md` + `reports/native_analyze_probe/latest.json` (`hexyl_subject` status=`completed`, elapsed≈5.10s (R-HEX-1 historical ≈4.68s)); Phase 4 Track A honesty attribution evidenced (`phase-04-m2-hexyl-frontier.md`) — **not** world-class M2 closeout; M2 stays **partial**; VRL/Phase4 overall remain partial |
+| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **done** (measured) — `docs/architecture/research-r-hex-1-hexyl-timed-run.md` + `reports/native_analyze_probe/latest.json` (`hexyl_subject` status=`completed`, elapsed≈5.10s (R-HEX-1 historical ≈4.68s)); Phase 4 Track A honesty attribution evidenced (`phase-04-m2-hexyl-frontier.md`) — **not** world-class M2 closeout; M2 stays **partial**; VRL-LLM-1 done; Phase 4 honesty go |
 | R-TSX-1 | Ship `tsx` probe vs keep smoke stub | **done** — optional tsx runner in behavior probe |
 | R-PIPE-1 | Merge pipeline packages vs permanent split | **done** — decision: permanent documented split; see `docs/architecture/decision-r-pipe-1-pipeline-packages.md` |
 | R-SEC-1 | Sandbox class before exploit expansion | **done** — decision: Docker-only preview; no exploit expansion; see `docs/architecture/decision-r-sec-1-sandbox-class.md` |
@@ -79,16 +79,16 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 1 | Honesty + known_gaps + GA gate integrity | **done** |
 | 2 | Managed recompile + GA report honesty (preview) | **done** (preview); native corpus still open |
 | 3 | Behavior-backed JS validation | **done** (incl. optional tsx) |
-| 4 | Hexyl frontier + VRL LLM round-trip honesty | **partial** / HOLD (M2 Track A honesty done; world-class M2 still open; VRL-LLM-1 corpus-registered + gate-hardened measured via Go micro — hexyl C refine still `vrl_compile_toolchain_broken`) |
-| 5 | Equivalence product gates + CI corpus enforcement | blocked_on_phase_4|
-| 6 | JS close: RALPH-2 + bundler graph (P4) | blocked_on_phase_4 (BP-2/3/4 done) |
-| 7 | Native depth → partial_equivalence + multi-file | blocked_on_phase_4|
-| 8 | MCP + AI ops productization | blocked_on_phase_4|
-| 9 | Orchestration + modular monolith / ports | blocked_on_phase_4 |
-| 10 | Workers + external-tool CI + SEC-1 sandbox | blocked_on_phase_4|
-| 11 | Analyst / governance / packaging (GA-P4) | blocked_on_phase_4|
-| 12 | Platform depth (IR, Ralph opt, RAG, KG start) | blocked_on_phase_4|
-| 13 | Blue-ocean / v6.1+ futures (post SEC-1 for exploits) | blocked_on_phase_4|
+| 4 | Hexyl frontier + VRL LLM round-trip honesty | **done (honesty go)** — waiver `decision-phase-04-honesty-go-waiver.md`; world-class M2 remains **partial**/separate |
+| 5 | Equivalence product gates + CI corpus enforcement | open (await Sol stop/go)|
+| 6 | JS close: RALPH-2 + bundler graph (P4) | open (await Sol stop/go; BP-2/3/4 done) |
+| 7 | Native depth → partial_equivalence + multi-file | open (await Sol stop/go)|
+| 8 | MCP + AI ops productization | open (await Sol stop/go)|
+| 9 | Orchestration + modular monolith / ports | open (await Sol stop/go) |
+| 10 | Workers + external-tool CI + SEC-1 sandbox | open (await Sol stop/go)|
+| 11 | Analyst / governance / packaging (GA-P4) | open (await Sol stop/go)|
+| 12 | Platform depth (IR, Ralph opt, RAG, KG start) | open (await Sol stop/go)|
+| 13 | Blue-ocean / v6.1+ futures (post SEC-1 for exploits) | open (await Sol stop/go)|
 
 ## F. Capability hardening leftovers
 
@@ -126,7 +126,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | GA floor may accept analyze-ok / recompile-failed styles when evidence is real |
 | 2026-08-06 | Public preview: CLI + app RE supported; native limited; exploits experimental |
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈5.10s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
-| 2026-08-07 | Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: Sol REJECT hollow ACK-ping → forgeable `candidate_hash_changed` → corpus registration of `vrl_llm_micro_go` + gate SHA/applied-source harden; dogfood loads seeds from corpus; VRL-LLM-1 **done** (load-bearing, Sol-ready evidence); Phase 4 remains **partial**/HOLD (M2 world-class open; hexyl C refine `vrl_compile_toolchain_broken`). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
+| 2026-08-07 | Phase 4 **honesty go** (Sol APPROVE_WITH_NITS waiver: M2 split). Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: Sol REJECT hollow ACK-ping → forgeable `candidate_hash_changed` → corpus registration of `vrl_llm_micro_go` + gate SHA/applied-source harden; dogfood loads seeds from corpus; VRL-LLM-1 **done** (load-bearing, Sol-ready evidence); Phase 4 **honesty go** recorded (M2 world-class still open/partial; hexyl C refine `vrl_compile_toolchain_broken`). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
 
 ---
 
@@ -223,7 +223,7 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 | V6-K8S | Kubernetes deployment | changelogs/v6.0.md | 13 | open | v6.1+ future |
 | V6-GHA | GitHub Actions integration | changelogs/v6.0.md | 13 | open | v6.1+ future |
 | PROF-SHIM-4 | Phase-4 shim removal + back-compat policy | 2026-06-03-reveng-professionalization-design.md | 11 | open | Shims remain; decide public API before retirement |
-| VRL-LLM-1 | Measured VRL LLM round-trip honesty gate | decision-r-vrl-1-seeds-and-provider.md | 4 | done | Corpus entry `vrl_llm_micro_go` registered (seed_inputs ×3 + build_recipe); dogfood loads seeds from corpus; gate derives `candidate_hash_changed` from control/treatment sha256 (forgeable boolean rejected) and requires applied_source receipt when `llm_influenced`. Load-bearing `measured` via Go micro (`CGO_ENABLED=0`). Hexyl/PE C `run_vrl` still `vrl_compile_toolchain_broken`. Phase 4 stays HOLD. See evidence-vrl-llm-honesty-phase-04.md. |
+| VRL-LLM-1 | Measured VRL LLM round-trip honesty gate | decision-r-vrl-1-seeds-and-provider.md | 4 | done | Corpus entry `vrl_llm_micro_go` registered (seed_inputs ×3 + build_recipe); dogfood loads seeds from corpus; gate derives `candidate_hash_changed` from control/treatment sha256 (forgeable boolean rejected) and requires applied_source receipt when `llm_influenced`. Load-bearing `measured` via Go micro (`CGO_ENABLED=0`). Hexyl/PE C `run_vrl` still `vrl_compile_toolchain_broken`. Phase 4 honesty go (M2 separate). See evidence-vrl-llm-honesty-phase-04.md + decision-phase-04-honesty-go-waiver.md. |
 
 ### Source docs ingested
 
@@ -239,6 +239,6 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 - `docs/changelogs/v6.0.md`
 
 
-## K. Phase 4 HOLD
+## K. Phase 4 honesty go
 
-Phases 5–13 product exits blocked until Phase 4 go (see `scope-c-hold-prep-policy.md`). Plans exist under `docs/superpowers/plans/`.
+Phase 4 honesty go recorded (`decision-phase-04-honesty-go-waiver.md`). Phases 5–13 are no longer `blocked_on_phase_4` for *authorization*, but still need per-phase Sol stop/go before product work. M2 world-class remains open.
