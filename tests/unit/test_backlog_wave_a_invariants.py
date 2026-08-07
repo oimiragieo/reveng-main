@@ -1,11 +1,12 @@
-"""Wave A backlog honesty gates + architecture doc placeholder scans.
+"""Wave A/B backlog honesty gates + architecture doc placeholder scans.
 
-Assertions target the FINAL post-Task-9 backlog state. They are expected RED
-against the current backlog until Task 9 reconciles rows.
+Wave A assertions cover research decisions + parked T3 + phases 4–13.
+Wave B adds M0/M4/DF-5 closures and non-closure safeguards (RALPH-2, M2, …).
 """
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import List, Tuple
@@ -14,6 +15,8 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 BACKLOG = REPO_ROOT / "backlog.md"
+MANIFEST = REPO_ROOT / ".reveng" / "source_binary_benchmarks.ga.json"
+WAVE_C_EXIT = REPO_ROOT / "docs" / "architecture" / "wave-c-exit-criteria.md"
 
 ARCH = REPO_ROOT / "docs" / "architecture"
 RALPH_BASELINE = ARCH / "research-r-ralph-2-baseline.md"
@@ -171,7 +174,7 @@ def test_sec_decision_docker_only_no_exploit_expansion():
 
 
 # ---------------------------------------------------------------------------
-# Backlog invariants — FINAL Task-9 state (expected RED until reconcile)
+# Backlog invariants — Wave A reconcile + Wave B non-closures
 # ---------------------------------------------------------------------------
 
 
@@ -189,15 +192,48 @@ def test_section_e_phases_4_through_13_open(phase: int):
     assert status == "open", f"section E phase {phase} status={status!r}, want open"
 
 
-def test_m1_native_fam_remains_open():
+def test_m1_native_fam_remains_open_and_not_required():
     assert _backlog_status("M1-NATIVE-FAM") == "open"
+    benches = json.loads(MANIFEST.read_text(encoding="utf-8"))["benchmarks"]
+    by_id = {e["id"]: e for e in benches}
+    for fid in ("native_hello_c", "native_hello_go"):
+        assert by_id[fid]["required"] is not True
+        assert by_id[fid]["required"] is False
 
 
-def test_r_hex_1_is_blocked_not_done():
-    """Final desired state after Task 9: R-HEX-1 blocked (never done without hexyl timed run)."""
-    status = _backlog_status("R-HEX-1")
-    assert status != "done"
-    assert status == "blocked"
+def test_r_hex_1_matches_measured_hexyl_subject_json():
+    """R-HEX-1 status must track the hexyl_subject probe arm (never hollow done)."""
+    latest = json.loads(
+        (REPO_ROOT / "reports" / "native_analyze_probe" / "latest.json").read_text(encoding="utf-8")
+    )
+    hexyl_subject = next(
+        (r for r in latest.get("results") or [] if r.get("id") == "hexyl_subject"),
+        None,
+    )
+    assert hexyl_subject is not None, "missing hexyl_subject arm in latest.json"
+    analyze_cmd = hexyl_subject.get("analyze_cmd") or []
+    assert any("python" in str(part).lower() for part in analyze_cmd), analyze_cmd
+    assert "hexyl" in str(hexyl_subject.get("binary") or "")
+    proc = hexyl_subject.get("status")
+    backlog_status = _backlog_status("R-HEX-1")
+    headers, row = _row_by_exact_id(
+        _parse_md_tables(BACKLOG.read_text(encoding="utf-8")), "R-HEX-1"
+    )
+    row_text = " | ".join(row)
+    del headers  # exact-id lookup only
+    if proc == "timeout":
+        # Plan: keep open/blocked if still timeout-only; never claim hollow done.
+        assert backlog_status in ("open", "blocked")
+        assert backlog_status != "done"
+    elif proc == "completed":
+        assert backlog_status == "done"
+        assert "(measured)" in row_text
+        assert hexyl_subject.get("binary_sha256") == (
+            "e2040b5deda5900a152ac28a7444ba565b2b0d46861a3efefafaf074f1a16dfc"
+        )
+    else:
+        # could_not_measure / other — not done.
+        assert backlog_status != "done"
 
 
 def test_r_ralph_2_baseline_done_exact_id():
@@ -222,3 +258,47 @@ def test_research_decision_rows_done_after_reconcile():
     assert _backlog_status("R-PIPE-1") == "done"
     assert _backlog_status("R-SEC-1") == "done"
     assert _backlog_status("R-VRL-1") == "done"
+
+
+# ---------------------------------------------------------------------------
+# Wave B closures + non-closures (executable Sol nits)
+# ---------------------------------------------------------------------------
+
+
+def test_wave_b_m0_done_m4_partial_df5_done():
+    assert _backlog_status("M0") == "done"
+    assert _backlog_status("M4") == "partial"
+    assert _backlog_status("DF-5") == "done"
+    m0_notes = " | ".join(
+        _row_by_exact_id(_parse_md_tables(BACKLOG.read_text(encoding="utf-8")), "M0")[1]
+    )
+    assert re.search(r"M4\s+residual", m0_notes, re.IGNORECASE)
+
+
+def test_wave_b_nonclosures_ralph2_m2_m1_native_phases_t3():
+    assert _backlog_status("RALPH-2") == "open"
+    assert _backlog_status("M2") == "open"
+    assert _backlog_status("M1-NATIVE-FAM") == "open"
+    for phase in range(4, 14):
+        assert _section_e_phase_status(phase) == "open"
+    for tid in ("T3-KERNEL", "T3-PACKED", "T3-JIT", "T3-ANTI", "T3-GUI"):
+        assert _backlog_status(tid) == "parked"
+
+
+def test_wave_c_exit_criteria_doc_lists_remaining_poles():
+    assert WAVE_C_EXIT.is_file()
+    text = WAVE_C_EXIT.read_text(encoding="utf-8")
+    for needle in (
+        "RALPH-2",
+        "M1-NATIVE-FAM",
+        "M2",
+        "M4 corpus",
+        "VRL",
+        "phases 4",
+        "P4-BUNDLER",
+        "T3",
+        "parked",
+    ):
+        assert needle in text, f"wave-c-exit-criteria missing {needle!r}"
+    hits = _PLACEHOLDER_RE.findall(text)
+    assert not hits, f"wave-c-exit-criteria still has placeholders: {hits}"

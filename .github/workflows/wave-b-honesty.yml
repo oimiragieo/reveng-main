@@ -1,0 +1,41 @@
+# Wave B thin honesty gate (M4 slice).
+# Runs probe / evidence / backlog invariant / native-fixture visibility tests.
+# Does NOT require Ghidra or a hexyl ELF in CI — local-ELF tests loud-skip when absent.
+# Full corpus / nightly bench gates remain an M4 residual (see wave-c-exit-criteria.md).
+
+name: Wave B Honesty
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  honesty-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+          pip install -e . --no-deps
+
+      - name: Wave B honesty pytest (no cov, no hexyl required)
+        run: |
+          pytest --no-cov \
+            tests/unit/test_probe_native_analyze_timeout.py \
+            tests/unit/test_evidence_dir_hygiene.py \
+            tests/unit/test_git_status_scoped.py \
+            tests/unit/test_backlog_wave_a_invariants.py \
+            tests/unit/test_native_fixture_ci_visibility.py \
+            tests/unit/test_df5_process_completed_honesty.py \
+            tests/unit/test_wave_b_honesty_workflow.py \
+            tests/unit/test_source_binary_benchmarks_manifest.py

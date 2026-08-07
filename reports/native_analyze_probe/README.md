@@ -11,8 +11,12 @@ Those two files must be **byte-identical**. Any extra `20*.json` stamp, a missin
 stamp, a missing `latest.json`, or a byte mismatch is a hygiene failure
 (`tests/unit/test_evidence_dir_hygiene.py`).
 
-Keep alongside them (not stamps): this README, optional `wave_a_job.json`, and
-`runs/` job output dirs. Do not treat those as corroborating stamps.
+Keep alongside them (not stamps): this README, optional job files
+(`wave_a_job.json`, `wave_b_job.json`), and `runs/` job output dirs. Do not
+treat those as corroborating stamps.
+
+Wave B job `wave_b_job.json` measures `hello_go_analyze` plus `hexyl_subject`
+(hexyl ELF as **analyze subject**, not `tool_absent` on a hexyl CLI).
 
 Synthetic/`true`-command runs and pre-v1.1 reports that mislabeled nonzero exits
 as `completed` must not be retained here.
@@ -26,8 +30,9 @@ own `status` / `measured` / `reason` / `semantic` object.
 Notable reason class:
 
 - `tool_absent:<name>` — the analyze executable was not found (`shutil.which`
-  miss and path is not an existing file). This is **not** a timed hexyl success
-  and does **not** close R-HEX-1; it only records that the tool was unavailable.
+  miss and path is not an existing file). Wave A’s `hexyl_tool_absent` arm is
+  this class only; it is **not** a timed hexyl-subject success. R-HEX-1 timed
+  evidence uses `wave_b_job.json` → `hexyl_subject`.
 
 Process `completed` is not native GA success. Semantic fields on executed runs
 attribute whether an analysis report appeared under that result's fresh

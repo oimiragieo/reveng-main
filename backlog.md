@@ -5,6 +5,7 @@ Ops index for the full roadmap clearance program. Update `status` when work land
 **CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-06-wave3.md`](docs/architecture/ceo-update-2026-08-06-wave3.md)  
 **Prior CEO:** [`docs/architecture/ceo-update-2026-08-06-wave2.md`](docs/architecture/ceo-update-2026-08-06-wave2.md) · [`docs/architecture/ceo-update-2026-08-06.md`](docs/architecture/ceo-update-2026-08-06.md)  
 **Wave B exit criteria:** [`docs/architecture/wave-b-exit-criteria.md`](docs/architecture/wave-b-exit-criteria.md)  
+**Wave C exit criteria:** [`docs/architecture/wave-c-exit-criteria.md`](docs/architecture/wave-c-exit-criteria.md)  
 **Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (L1–L24)
 
 Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `mitigated` · `research`
@@ -45,11 +46,11 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | RALPH-1 | Source-map path alias recall | 6 | partial | domain recall separate | file overlap fixed |
 | RALPH-2 | cli.js 0.8+ recall | 6 | open | **yes R-RALPH-2** | harness done; engine long pole |
 | M5-PIPE | pipeline vs pipelines merge | 9 | partial | R-PIPE-1 decision done | documented split freeze; Wave B merge optional |
-| M0 | Baseline reporting discipline | exec | partial | | + `reports/native_analyze_probe/` (timestamped + latest.json, 3-valued status); Wave A probe v1.2 + DF-4 scoped status |
+| M0 | Baseline reporting discipline | exec | done | | preview reporting discipline: probe v1.2 + evidence hygiene (exact one stamp≡latest) + scoped git (DF-4); CI corpus gates remain **M4 residual** |
 | M1 | Multi-codebase corpus gate | exec | open | see R-NATIVE-1 | overlaps M1-NATIVE-FAM |
-| M2 | Hexyl frontier hardening | 4 | open | **yes R-HEX-1** | beyond timeout; hexyl timed run still blocked |
+| M2 | Hexyl frontier hardening | 4 | open | **yes R-HEX-1** | beyond a timed probe; R-HEX-1 measurement alone does not close M2 |
 | M3 | Validation/evidence unified contract | 3 | partial | | MCP top-level validation_grade + capability_report landed |
-| M4 | CI/PR/nightly corpus gates | 5 | open | | workflows lack bench jobs |
+| M4 | CI/PR/nightly corpus gates | 5 | partial | | thin Wave B honesty workflow landed (`.github/workflows/wave-b-honesty.yml`); full corpus/nightly blocking still open |
 | M5 | Post-gate architecture extraction | 9–10 | open | after M0–M4 | workers/ports |
 
 ## D. Research queue (do before large builds)
@@ -59,7 +60,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | R-NATIVE-1 | Linux-hermetic native CLI set for ≥5/≥3 families | **done** — `docs/architecture/research-r-native-1-linux-hermetic-candidates.md` |
 | R-RALPH-2-BASELINE | Measure current cli.js recall (or label could_not_measure) | **done** — `docs/architecture/research-r-ralph-2-baseline.md` |
 | R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | **open** — RALPH-2, Phase 6 |
-| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **blocked** — `docs/architecture/research-r-hex-1-hexyl-availability-block.md` (hexyl tool absent; not done) |
+| R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **done** (measured) — `docs/architecture/research-r-hex-1-hexyl-timed-run.md` + `reports/native_analyze_probe/latest.json` (`hexyl_subject` status=`completed`, elapsed≈4.68s); M2 stays open |
 | R-TSX-1 | Ship `tsx` probe vs keep smoke stub | **done** — optional tsx runner in behavior probe |
 | R-PIPE-1 | Merge pipeline packages vs permanent split | **done** — decision: permanent documented split; see `docs/architecture/decision-r-pipe-1-pipeline-packages.md` |
 | R-SEC-1 | Sandbox class before exploit expansion | **done** — decision: Docker-only preview; no exploit expansion; see `docs/architecture/decision-r-sec-1-sandbox-class.md` |
@@ -109,7 +110,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | DF-2 | Conftest heavy imports | done |
 | DF-3 | Wrong analyze report filename in runner | done |
 | DF-4 | Full `git status` hangs on dirty `reports/` (DrvFS) | done |
-| DF-5 | hello_go analyze can process-exit 0 / probe `completed` with partial_success / empty native fallback — not native GA | open (honesty) |
+| DF-5 | hello_go analyze can process-exit 0 / probe `completed` with partial_success / empty native fallback — not native GA | done | documented+tested (`test_df5_process_completed_honesty.py`); process `completed` ≠ native GA |
 
 ## I. Decisions / waivers
 
@@ -118,4 +119,4 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Scope C over thinktank B; honesty still first |
 | 2026-08-06 | GA floor may accept analyze-ok / recompile-failed styles when evidence is real |
 | 2026-08-06 | Public preview: CLI + app RE supported; native limited; exploits experimental |
-| 2026-08-06 | Wave A backlog clearance: research decisions recorded (PIPE/SEC/VRL); R-HEX-1 blocked (hexyl absent); R-RALPH-2-BASELINE done / R-RALPH-2 open; DF-4 scoped git status; dual `verify_ga_readiness` dogfood (neither profile proves native GA); see `docs/architecture/dogfood-verify-ga-readiness-2026-08-06.md` + `docs/architecture/wave-b-exit-criteria.md` |
+| 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈4.68s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
