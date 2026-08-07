@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "results": [
+    {
+      "id": "hello_go_analyze",
+      "binary": "test_samples/native/hello_go/build/hello_go",
+      "analyze_cmd": "/usr/bin/python3.9 -m reveng analyze",
+      "timeout_s": 120
+    },
+    {
+      "id": "hexyl_subject",
+      "binary": "test_samples/native/hexyl/build/hexyl",
+      "analyze_cmd": "/usr/bin/python3.9 -m reveng analyze",
+      "timeout_s": 120
+    }
+  ]
+}
