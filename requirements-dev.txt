@@ -32,7 +32,8 @@ safety>=2.3.0,<4.0.0
 # =============================================================================
 
 # Testing framework
-pytest>=9.0.3
+# Cap <9: pytest 9+ requires Python>=3.10; project floor is 3.9
+pytest>=8.3.0,<9
 
 # Coverage plugin
 pytest-cov>=4.1.0,<5.0.0
