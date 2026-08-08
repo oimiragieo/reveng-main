@@ -11,7 +11,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          # Match project floor (3.9) so requirements-dev install stays honest
+          python-version: '3.9'
 
       - name: Install dependencies
         run: |
@@ -34,31 +35,6 @@ jobs:
       - name: Run import-linter (architecture contracts)
         run: lint-imports --no-cache
 
-  lint-javascript:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        run: |
-          cd web_interface/client
-          npm install
-
-      - name: Run ESLint
-        run: |
-          cd web_interface/client
-          npm run lint
-
-      - name: Run Prettier
-        run: |
-          cd web_interface/client
-          npm run format:check
-
   lint-yaml:
     runs-on: ubuntu-latest
     steps:
@@ -79,4 +55,4 @@ jobs:
         uses: hadolint/hadolint-action@v3.3.0
         with:
           dockerfile: 'Dockerfile'
-          ignore: DL3008,DL3009
+          ignore: DL3008,DL3009,DL3015

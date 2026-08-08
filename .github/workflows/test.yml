@@ -97,19 +97,9 @@ jobs:
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
 
-      - name: Start web interface
-        run: |
-          cd web_interface
-          docker-compose up -d
-          sleep 30
-
+      # web_interface was removed; E2E suite is CLI/API only.
       - name: Run E2E tests
         run: pytest tests/e2e/ -v --timeout=300
-
-      - name: Stop web interface
-        run: |
-          cd web_interface
-          docker-compose down
 
   performance-tests:
     runs-on: ubuntu-latest
