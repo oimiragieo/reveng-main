@@ -49,9 +49,6 @@
         "python",
         "compiled",
         "bytecode"
-      ],
-      "notes": [
-        "Optional on CI: toolchain/analysis may be environment-limited"
       ]
     },
     {
@@ -96,9 +93,6 @@
         "smoke",
         "dotnet",
         "synthetic"
-      ],
-      "notes": [
-        "Optional on CI: toolchain/analysis may be environment-limited"
       ]
     }
   ]

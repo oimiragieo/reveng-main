@@ -45,6 +45,9 @@ def load_app_corpus_config(config_path: Path = DEFAULT_CONFIG) -> dict[str, Any]
         item.setdefault("language", "auto")
         item.setdefault("required", True)
         item.setdefault("tags", [])
+        # Drop unknown keys so dataclasses stay strict across config evolutions.
+        allowed = {"name", "input_path", "language", "required", "tags"}
+        item = {k: v for k, v in item.items() if k in allowed}
         entries.append(item)
 
     return {
