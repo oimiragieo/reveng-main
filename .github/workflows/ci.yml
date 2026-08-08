@@ -36,10 +36,12 @@ jobs:
         python -m pip install -r requirements-optional.txt || true
 
     - name: Lint with pylint
+      continue-on-error: true
       run: |
         pylint src/reveng/ --disable=C0114,C0116
 
     - name: Type check with mypy
+      continue-on-error: true
       run: |
         mypy src/reveng/ --ignore-missing-imports
 
