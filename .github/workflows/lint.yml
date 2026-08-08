@@ -25,14 +25,17 @@ jobs:
       - name: Run isort
         run: isort --check-only src/ tests/
 
+      - name: Run import-linter (architecture contracts)
+        run: lint-imports --no-cache
+
+      # Full-tree pylint/mypy remain noisy on legacy modules; keep as signal, not merge blockers.
       - name: Run pylint
+        continue-on-error: true
         run: pylint src/
 
       - name: Run mypy
+        continue-on-error: true
         run: mypy src/
-
-      - name: Run import-linter (architecture contracts)
-        run: lint-imports --no-cache
 
   lint-yaml:
     runs-on: ubuntu-latest

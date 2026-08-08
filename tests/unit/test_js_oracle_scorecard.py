@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from reveng.app_reverse_engineering.js_oracle_scorecard import (
-    compute_js_project_file_scorecard,
-)
+from reveng.app_reverse_engineering.js_oracle_scorecard import compute_js_project_file_scorecard
 
 
 def test_relative_path_match_requires_recovered_root(tmp_path: Path) -> None:

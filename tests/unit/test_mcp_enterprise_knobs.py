@@ -11,8 +11,8 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_analyze_binary_quick_mode_and_find_vulns(monkeypatch, tmp_path):
-    from reveng.agent_sdk.mcp.servers import reveng_enterprise_server as ent
     import reveng.analysis.analyzer as analyzer_mod
+    from reveng.agent_sdk.mcp.servers import reveng_enterprise_server as ent
 
     captured: Dict[str, Any] = {}
 
@@ -85,8 +85,8 @@ def test_quick_mode_schema_description():
 
 @pytest.mark.asyncio
 async def test_analyze_binary_false_find_vulns_omits_key(monkeypatch, tmp_path):
-    from reveng.agent_sdk.mcp.servers import reveng_enterprise_server as ent
     import reveng.analysis.analyzer as analyzer_mod
+    from reveng.agent_sdk.mcp.servers import reveng_enterprise_server as ent
 
     captured: Dict[str, Any] = {}
 

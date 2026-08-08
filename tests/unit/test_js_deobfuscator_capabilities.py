@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from reveng.javascript.deobfuscator import (
-    DeobfuscationStage,
-    JavaScriptDeobfuscator,
-)
+from reveng.javascript.deobfuscator import DeobfuscationStage, JavaScriptDeobfuscator
 
 
 @pytest.mark.asyncio

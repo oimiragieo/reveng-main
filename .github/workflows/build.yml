@@ -51,15 +51,27 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Resolve image tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "tag=pr-${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          else
+            # sanitize ref_name (tags/branches) for docker
+            raw="${{ github.ref_name }}"
+            safe=$(echo "$raw" | tr '/:' '--')
+            echo "tag=${safe}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build CLI image
-        run: docker build -t reveng/cli:${{ github.ref_name }} .
+        run: docker build -t reveng/cli:${{ steps.tag.outputs.tag }} .
 
       - name: Push CLI image
         if: github.event_name != 'pull_request'
         run: |
-          docker push reveng/cli:${{ github.ref_name }}
+          docker push reveng/cli:${{ steps.tag.outputs.tag }}
           if [ "${{ github.ref_name }}" = "main" ]; then
-            docker tag reveng/cli:${{ github.ref_name }} reveng/cli:latest
+            docker tag reveng/cli:${{ steps.tag.outputs.tag }} reveng/cli:latest
             docker push reveng/cli:latest
           fi
 

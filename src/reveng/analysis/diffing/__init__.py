@@ -8,12 +8,7 @@ Advanced patch analysis and malware variant detection:
 - Security impact analysis
 """
 
-from .semantic_differ import (
-    DiffResult,
-    GraphAlignment,
-    SecurityImpact,
-    SemanticBinaryDiffer,
-)
+from .semantic_differ import DiffResult, GraphAlignment, SecurityImpact, SemanticBinaryDiffer
 
 __all__ = [
     "SemanticBinaryDiffer",
