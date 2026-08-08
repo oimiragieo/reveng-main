@@ -92,7 +92,7 @@ accelerate>=0.20.0
 
 # Symbolic Execution and Constraint Solving
 angr>=9.2.0,<10.0.0  # Symbolic execution framework
-z3-solver>=4.12.0,<5.0.0  # SMT solver for constraints
+z3-solver>=5.0.0.0,<6.0.0  # SMT solver for constraints
 claripy>=9.2.0,<10.0.0  # Constraint solver (installed with angr)
 
 # Type Reconstruction and Analysis
