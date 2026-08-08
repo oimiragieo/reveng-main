@@ -663,13 +663,15 @@ The identified vulnerabilities and exposures could result in:
         cards = []
         for item in evidence:
             risk_class = f"risk-{item.risk_level.value[0]}"
-            cards.append(f"""
+            cards.append(
+                f"""
             <div class="finding-card">
                 <h3 class="{risk_class}">{item.risk_level.value[2]} {item.evidence_type.replace("_", " ").title()}</h3>
                 <p>{item.description}</p>
                 {f"<p><strong>Remediation:</strong> {item.remediation}</p>" if item.remediation else ""}
             </div>
-            """)
+            """
+            )
         return "".join(cards)
 
     def _generate_technical_report(
@@ -953,13 +955,15 @@ The analysis reveals significant security risks that require immediate attention
 
         for item in evidence:
             risk_class = f"risk-{item.risk_level.value[0]}"
-            findings_html.append(f"""
+            findings_html.append(
+                f"""
             <div class="finding-item {risk_class}">
                 <h4>{item.risk_level.value[2]} {item.evidence_type.replace("_", " ").title()}</h4>
                 <p><strong>Description:</strong> {item.description}</p>
                 {f"<p><strong>Remediation:</strong> {item.remediation}</p>" if item.remediation else ""}
             </div>
-            """)
+            """
+            )
 
         return "".join(findings_html)
 
@@ -978,7 +982,8 @@ The analysis reveals significant security risks that require immediate attention
         formatted = []
         for i, item in enumerate(evidence, 1):
             risk_level = item.risk_level.value[0].upper()
-            formatted.append(f"""
+            formatted.append(
+                f"""
 ### Finding {i}: {item.evidence_type.replace("_", " ").title()}
 
 **Risk Level**: {risk_level}
@@ -994,7 +999,8 @@ The analysis reveals significant security risks that require immediate attention
 {f"**Remediation**: {item.remediation}" if item.remediation else ""}
 
 ---
-""")
+"""
+            )
         return "\n".join(formatted)
 
     def _generate_poc_examples(self, evidence: List[AnalysisEvidence]) -> str:
@@ -1002,13 +1008,15 @@ The analysis reveals significant security risks that require immediate attention
         examples = []
         for item in evidence:
             if item.proof_of_concept:
-                examples.append(f"""
+                examples.append(
+                    f"""
 ### {item.evidence_type.replace("_", " ").title()}
 
 ```
 {item.proof_of_concept}
 ```
-""")
+"""
+                )
 
         return "\n".join(examples) if examples else "No proof of concept examples available."
 

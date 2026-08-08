@@ -11,6 +11,67 @@ from typing import Any, Dict, List, Mapping, MutableMapping, Optional, Sequence,
 CAPABILITY_REPORT_SCHEMA_VERSION = "1.0"
 
 _JS_SYNTAX_SUFFIXES = {".js", ".cjs", ".mjs"}
+_TS_SYNTAX_SUFFIXES = {".ts", ".tsx", ".mts", ".cts"}
+
+# Size-scaled probe timeouts (P3-BP-4): keep small trees snappy, give large trees room.
+_JS_PROBE_TIMEOUT_BASE_SEC = 25.0
+_JS_PROBE_TIMEOUT_MID_SEC = 60.0
+_JS_PROBE_TIMEOUT_LARGE_SEC = 90.0
+_JS_PROBE_TIMEOUT_MAX_SEC = 120.0
+_JS_NPM_PROBE_TIMEOUT_BASE_SEC = 90.0
+_JS_NPM_PROBE_TIMEOUT_MAX_SEC = 180.0
+
+
+def project_tree_stats(project_dir: Path) -> Dict[str, int]:
+    """Count files and bytes under a reconstructed project (skips node_modules)."""
+    root = project_dir.expanduser().resolve()
+    file_count = 0
+    total_bytes = 0
+    if not root.is_dir():
+        return {"file_count": 0, "total_bytes": 0}
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        if "node_modules" in {p.lower() for p in path.parts}:
+            continue
+        file_count += 1
+        try:
+            total_bytes += path.stat().st_size
+        except OSError:
+            continue
+    return {"file_count": file_count, "total_bytes": total_bytes}
+
+
+def resolve_javascript_probe_timeout_sec(
+    project_dir: Path,
+    *,
+    explicit: Optional[float] = None,
+    base_sec: float = _JS_PROBE_TIMEOUT_BASE_SEC,
+    for_npm: bool = False,
+) -> float:
+    """
+    Pick a subprocess timeout from tree size unless the caller set ``explicit``.
+
+    Rough bands (file_count, excluding node_modules):
+    - ≤50 files → base (25s help / 90s npm)
+    - ≤500 files → mid (60s / 120s)
+    - larger → large (90s / 180s), hard-capped
+    """
+    if explicit is not None and explicit > 0:
+        return float(explicit)
+    stats = project_tree_stats(project_dir)
+    n = stats["file_count"]
+    if for_npm:
+        if n <= 50:
+            return _JS_NPM_PROBE_TIMEOUT_BASE_SEC
+        if n <= 500:
+            return min(_JS_NPM_PROBE_TIMEOUT_MAX_SEC, 120.0)
+        return _JS_NPM_PROBE_TIMEOUT_MAX_SEC
+    if n <= 50:
+        return base_sec
+    if n <= 500:
+        return _JS_PROBE_TIMEOUT_MID_SEC
+    return min(_JS_PROBE_TIMEOUT_LARGE_SEC, _JS_PROBE_TIMEOUT_MAX_SEC)
 
 
 def _safe_float(value: Any) -> Optional[float]:
@@ -143,19 +204,53 @@ def _resolve_package_cli_entry(project_dir: Path, package_data: Any) -> Optional
     return None
 
 
+def _resolve_typescript_cli_entry(project_dir: Path, package_data: Any) -> Optional[Path]:
+    """Pick a TypeScript entry (``bin`` / ``main``) when no JS entry resolves."""
+    if not isinstance(package_data, dict):
+        return None
+    pkg = cast(Dict[str, Any], package_data)
+    candidates: List[str] = []
+    bin_field = pkg.get("bin")
+    if isinstance(bin_field, str):
+        candidates.append(bin_field)
+    elif isinstance(bin_field, dict) and bin_field:
+        first_key = sorted(bin_field.keys())[0]
+        val = bin_field[first_key]
+        if isinstance(val, str):
+            candidates.append(val)
+    main = pkg.get("main")
+    if isinstance(main, str):
+        candidates.append(main)
+
+    root = project_dir.resolve()
+    for rel in candidates:
+        if not rel.strip():
+            continue
+        entry = (project_dir / rel).resolve()
+        try:
+            entry.relative_to(root)
+        except ValueError:
+            continue
+        if entry.suffix.lower() not in _TS_SYNTAX_SUFFIXES or not entry.is_file():
+            continue
+        return entry
+    return None
+
+
 def run_javascript_behavior_probe(
     project_dir: Path,
     *,
-    timeout_sec: float = 25.0,
+    timeout_sec: Optional[float] = None,
     run_probe: bool = True,
 ) -> Dict[str, Any]:
     """
     Run ``node <entry> --help`` from the project root (npm-style CLI smoke).
 
     Persists evidence tails and a small ``tier`` for ranking (0=none, 1=help-like output,
-    2=exit code 0).
+    2=exit code 0). When ``timeout_sec`` is omitted, scales by project tree size (P3-BP-4).
     """
     root = project_dir.expanduser().resolve()
+    effective_timeout = resolve_javascript_probe_timeout_sec(root, explicit=timeout_sec)
     section: Dict[str, Any] = {
         "project_dir": str(root),
         "skipped": True,
@@ -167,6 +262,7 @@ def run_javascript_behavior_probe(
         "stdout_tail": "",
         "stderr_tail": "",
         "summary": "skipped",
+        "timeout_sec": effective_timeout,
     }
     if not run_probe:
         section["reason"] = "disabled"
@@ -186,19 +282,29 @@ def run_javascript_behavior_probe(
         return section
 
     entry = _resolve_package_cli_entry(root, package_data)
-    if entry is None:
-        section["reason"] = "no_cli_entry"
-        return section
-
-    node_exe = which("node")
-    if not node_exe:
-        section["reason"] = "node_not_found"
-        return section
+    runner = "node"
+    runner_exe: Optional[str] = None
+    if entry is not None:
+        runner_exe = which("node")
+        if not runner_exe:
+            section["reason"] = "node_not_found"
+            return section
+    else:
+        entry = _resolve_typescript_cli_entry(root, package_data)
+        if entry is None:
+            section["reason"] = "no_cli_entry"
+            return section
+        runner = "tsx"
+        runner_exe = which("tsx")
+        if not runner_exe:
+            section["reason"] = "tsx_not_found"
+            return section
 
     rel_posix = entry.relative_to(root).as_posix()
-    cmd = [node_exe, rel_posix, "--help"]
+    cmd = [runner_exe, rel_posix, "--help"]
     section["entry_relative"] = rel_posix
     section["command"] = cmd
+    section["runner"] = runner
 
     try:
         proc = subprocess.run(
@@ -206,7 +312,7 @@ def run_javascript_behavior_probe(
             cwd=str(root),
             capture_output=True,
             text=True,
-            timeout=timeout_sec,
+            timeout=effective_timeout,
             check=False,
         )
     except subprocess.TimeoutExpired:
@@ -251,6 +357,98 @@ def run_javascript_behavior_probe(
         section["tier"] = 0
         section["reason"] = f"nonzero_exit:{ec}"
         section["summary"] = "cli_no_help_hints"
+
+    return section
+
+
+def run_javascript_npm_lifecycle_probe(
+    project_dir: Path,
+    *,
+    timeout_sec: Optional[float] = None,
+    run_probe: bool = False,
+) -> Dict[str, Any]:
+    """
+    Optional ``npm pack --dry-run`` smoke for reconstructed Node projects (P3-BP-2).
+
+    Default-off: packaging can be slow and needs ``npm`` on PATH. When enabled,
+    records whether ``npm pack --dry-run`` exits 0 (tier 2) or emits pack-like
+    output with a non-zero exit (tier 1). Timeout scales by tree size when omitted.
+    """
+    root = project_dir.expanduser().resolve()
+    effective_timeout = resolve_javascript_probe_timeout_sec(
+        root, explicit=timeout_sec, for_npm=True
+    )
+    section: Dict[str, Any] = {
+        "project_dir": str(root),
+        "skipped": True,
+        "reason": "disabled",
+        "tier": 0,
+        "command": None,
+        "exit_code": None,
+        "stdout_tail": "",
+        "stderr_tail": "",
+        "summary": "skipped",
+        "timeout_sec": effective_timeout,
+    }
+    if not run_probe:
+        return section
+    if not root.is_dir():
+        section["reason"] = "project_dir_missing"
+        return section
+    pkg = root / "package.json"
+    if not pkg.is_file():
+        section["reason"] = "no_package_json"
+        return section
+
+    npm_exe = which("npm")
+    if not npm_exe:
+        section["reason"] = "npm_not_found"
+        return section
+
+    cmd = [npm_exe, "pack", "--dry-run", "--ignore-scripts"]
+    section["command"] = cmd
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(root),
+            capture_output=True,
+            text=True,
+            timeout=effective_timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        section["skipped"] = False
+        section["reason"] = "timeout"
+        section["summary"] = "npm_pack_timeout"
+        return section
+    except OSError as exc:
+        section["skipped"] = False
+        section["reason"] = f"os_error:{exc.__class__.__name__}"
+        section["summary"] = "npm_pack_os_error"
+        return section
+
+    stdout = proc.stdout or ""
+    stderr = proc.stderr or ""
+    section["stdout_tail"] = stdout[-800:]
+    section["stderr_tail"] = stderr[-800:]
+    section["exit_code"] = proc.returncode
+    section["skipped"] = False
+
+    combined = (stdout + stderr).lower()
+    pack_hints = (".tgz", "npm notice", "package:", "filename:")
+    has_hint = any(h in combined for h in pack_hints)
+    if proc.returncode == 0:
+        section["tier"] = 2
+        section["reason"] = "exit_zero"
+        section["summary"] = "npm_pack_dry_run_ok"
+    elif has_hint:
+        section["tier"] = 1
+        section["reason"] = "pack_like_output"
+        section["summary"] = "npm_pack_like_nonzero_exit"
+    else:
+        section["tier"] = 0
+        section["reason"] = f"nonzero_exit:{proc.returncode}"
+        section["summary"] = "npm_pack_failed"
 
     return section
 
@@ -373,6 +571,7 @@ def build_capability_report(
     adapter_metadata: Mapping[str, Any],
     run_js_syntax_check: bool = True,
     run_js_behavior_probe: bool = True,
+    run_js_npm_lifecycle_probe: bool = False,
 ) -> Dict[str, Any]:
     """Assemble the `capability_report` object persisted into app analysis.json."""
     oracle = _extract_oracle_alignment(adapter_metadata)
@@ -380,6 +579,7 @@ def build_capability_report(
 
     js_smoke: Optional[Dict[str, Any]] = None
     js_behavior: Optional[Dict[str, Any]] = None
+    js_npm: Optional[Dict[str, Any]] = None
     if language == "javascript":
         recon = primary_artifacts.get("reconstructed_project")
         if recon is not None:
@@ -391,6 +591,18 @@ def build_capability_report(
                 recon,
                 run_probe=run_js_behavior_probe,
             )
+            js_npm = run_javascript_npm_lifecycle_probe(
+                recon,
+                run_probe=run_js_npm_lifecycle_probe,
+            )
+        else:
+            skipped = {
+                "status": "skipped_no_recovered_project",
+                "reason": "skipped_no_recovered_project",
+            }
+            js_smoke = dict(skipped)
+            js_behavior = dict(skipped)
+            js_npm = dict(skipped)
 
     recall = _safe_float(oracle.get("project_file_recall")) if oracle.get("present") else None
     precision = _safe_float(oracle.get("project_file_precision")) if oracle.get("present") else None
@@ -400,6 +612,8 @@ def build_capability_report(
         headline_parts.append(f"js_smoke={js_smoke.get('syntax_summary', 'unknown')}")
     if js_behavior and int(js_behavior.get("tier", 0) or 0) > 0:
         headline_parts.append(f"js_behavior={js_behavior.get('summary', 'tier')}")
+    if js_npm and int(js_npm.get("tier", 0) or 0) > 0:
+        headline_parts.append(f"js_npm={js_npm.get('summary', 'tier')}")
     if recall is not None and precision is not None:
         headline_parts.append(f"oracle_files recall={recall:.4f} precision={precision:.4f}")
     elif oracle.get("present"):
@@ -416,5 +630,6 @@ def build_capability_report(
             "oracle_alignment": oracle,
             "javascript_smoke": js_smoke,
             "javascript_behavior_probe": js_behavior,
+            "javascript_npm_lifecycle_probe": js_npm,
         },
     }

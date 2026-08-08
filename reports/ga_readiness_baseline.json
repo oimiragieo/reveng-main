@@ -1,19 +1,19 @@
 {
   "schema_version": "1.0",
   "result_type": "ga_readiness_report",
-  "generated_at": "2026-03-29T23:05:37.800309Z",
+  "generated_at": "2026-08-06T01:26:16.018939Z",
   "profile": "baseline",
   "inputs": {
-    "source_report": "C:\\dev\\projects\\reveng-main\\reports\\source_binary_benchmarks_report.json",
-    "bun_report": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix.json",
-    "app_report": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_report.json",
-    "support_matrix": "C:\\dev\\projects\\reveng-main\\docs\\support_matrix.json"
+    "source_report": "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks_report.json",
+    "bun_report": "/mnt/c/dev/projects/reveng-main/reports/bun_sample_matrix.json",
+    "app_report": "/mnt/c/dev/projects/reveng-main/reports/app_reverse_engineering_corpus_report.json",
+    "support_matrix": "/mnt/c/dev/projects/reveng-main/docs/support_matrix.json"
   },
   "summary": {
     "overall_status": "pass",
-    "gate_count": 4,
+    "gate_count": 5,
     "failed_gate_count": 0,
-    "passed_gate_count": 4
+    "passed_gate_count": 5
   },
   "gates": [
     {
@@ -21,8 +21,8 @@
       "status": "pass",
       "summary": "A machine-readable support matrix with at least one supported workflow must exist.",
       "details": {
-        "support_matrix_path": "C:\\dev\\projects\\reveng-main\\docs\\support_matrix.json",
-        "supported_workflow_count": 2
+        "support_matrix_path": "/mnt/c/dev/projects/reveng-main/docs/support_matrix.json",
+        "supported_workflow_count": 3
       }
     },
     {
@@ -39,13 +39,18 @@
       "status": "pass",
       "summary": "At least one tracked source-backed source-vs-binary benchmark report must exist.",
       "details": {
-        "benchmark_count": 5,
-        "failed_statuses": {
-          "java-helloworld-class": "recompile_failed",
-          "java-helloworld-jar": "recompile_failed",
-          "python-sample-bytecode": "recompile_failed",
-          "python-sample-zipapp": "recompile_failed"
-        }
+        "benchmark_count": 4,
+        "failed_statuses": {}
+      }
+    },
+    {
+      "id": "native-analyze-evidence",
+      "status": "pass",
+      "summary": "At least one tracked native benchmark must include analyze report evidence.",
+      "details": {
+        "analyze_evidence_count": 4,
+        "benchmark_count": 4,
+        "failed_statuses": {}
       }
     },
     {

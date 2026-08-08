@@ -1,0 +1,70 @@
+{
+  "probe_version": "1.3",
+  "recorded_at_utc": "2026-08-07T19:18:50Z",
+  "results": [
+    {
+      "binary": "test_samples/native/hello_go/build/hello_go",
+      "binary_sha256": "6a2f481046a01e93d1ff44311b234920de4d12eb760025e58f644190bbf1455c",
+      "binary_size_bytes": 2259690,
+      "analyze_cmd": [
+        "/usr/bin/python3.9",
+        "-m",
+        "reveng",
+        "--output-dir",
+        "reports/native_analyze_probe/runs/hello_go_analyze",
+        "analyze",
+        "test_samples/native/hello_go/build/hello_go"
+      ],
+      "timeout_budget_s": 120.0,
+      "elapsed_s": 7.589682774967514,
+      "status": "completed",
+      "returncode": 0,
+      "reason": null,
+      "measured": true,
+      "probe_version": "1.3",
+      "recorded_at_utc": "2026-08-07T19:18:50Z",
+      "stderr_tail": " connect to Ollama service. Is Ollama running? Start with: ollama serve\n2026-08-07 15:18:52,045 - reveng.analysis.analyzer - WARNING - [FAIL] Ollama not available - AI analysis will be skipped\n2026-08-07 15:18:52,045 - reveng.analysis.analyzer - WARNING -   - Cannot connect to Ollama service. Is Ollama running? Start with: ollama serve\n2026-08-07 15:18:52,046 - reveng.analysis.analyzer - INFO - Run 'python tools/ollama_preflight.py --setup' for installation instructions\n2026-08-07 15:18:52,376 - reveng.analysis.analyzer - WARNING - Java 11 detected - Ghidra recommends Java 17+, but will work\n2026-08-07 15:18:52,376 - reveng.analysis.analyzer - WARNING - Consider upgrading to Java 17+ for best compatibility\nConfig file not found: /home/james/.reveng/config.yaml, using defaults\n2026-08-07 15:18:52,384 - reveng.analysis.analyzer - WARNING - Ghidra not installed - native binary analysis will be limited\n2026-08-07 15:18:52,384 - reveng.analysis.analyzer - INFO - All critical tools validated successfully\npyelftools not available. Install with: pip install pyelftools\n\u26a0\ufe0f Gemini API key not found. Set GEMINI_API_KEY environment variable.\n\u274c Pipeline failed: Native fallback analysis returned no analysis_data\nTraceback (most recent call last):\n  File \"/mnt/c/dev/projects/reveng-main/.worktrees/scope-c-wave-c/src/reveng/ai/recompilation_engine.py\", line 405, in full_reconstruction_pipeline\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\n  File \"/mnt/c/dev/projects/reveng-main/.worktrees/scope-c-wave-c/src/reveng/ai/recompilation_engine.py\", line 501, in _phase1_decompilation\n    raise ValueError(\nValueError: Native fallback analysis returned no analysis_data\nFailed to prepare Docker sandbox image reveng-python:3.11-slim-strace: ERROR: failed to connect to the docker API at unix:///var/run/docker.sock; check if the path is correct and if the daemon is running: dial unix /var/run/docker.sock: connect: no such file or directory\nNo monitoring in progress\n",
+      "stdout_tail": "Running end-to-end pipeline...\nGhidra stage timeout: 900s (retries: 0)\n\n[SUCCESS] REVENG analysis completed successfully!\nPipeline status: partial_success\nResults stored in: reports/native_analyze_probe/runs/hello_go_analyze\nUnified report: reports/native_analyze_probe/runs/hello_go_analyze/reports/unified_analysis_report.json\n",
+      "semantic": {
+        "process_status": "completed",
+        "analysis_report_present": true,
+        "native_fallback_empty": true,
+        "semantic_reason": "native_fallback_empty",
+        "job_output_dir": "reports/native_analyze_probe/runs/hello_go_analyze"
+      },
+      "id": "hello_go_analyze"
+    },
+    {
+      "binary": "test_samples/native/hexyl/build/hexyl",
+      "binary_sha256": "3d26048bbbaee5e87a4613b4e21e898185e15b43cf43bd4fe74cc5d2dbaa5dba",
+      "binary_size_bytes": 1279568,
+      "analyze_cmd": [
+        "/usr/bin/python3.9",
+        "-m",
+        "reveng",
+        "--output-dir",
+        "reports/native_analyze_probe/runs/hexyl_subject",
+        "analyze",
+        "test_samples/native/hexyl/build/hexyl"
+      ],
+      "timeout_budget_s": 120.0,
+      "elapsed_s": 5.103818438015878,
+      "status": "completed",
+      "returncode": 0,
+      "reason": null,
+      "measured": true,
+      "probe_version": "1.3",
+      "recorded_at_utc": "2026-08-07T19:18:50Z",
+      "stderr_tail": " connect to Ollama service. Is Ollama running? Start with: ollama serve\n2026-08-07 15:18:59,963 - reveng.analysis.analyzer - WARNING - [FAIL] Ollama not available - AI analysis will be skipped\n2026-08-07 15:18:59,963 - reveng.analysis.analyzer - WARNING -   - Cannot connect to Ollama service. Is Ollama running? Start with: ollama serve\n2026-08-07 15:18:59,963 - reveng.analysis.analyzer - INFO - Run 'python tools/ollama_preflight.py --setup' for installation instructions\n2026-08-07 15:19:00,040 - reveng.analysis.analyzer - WARNING - Java 11 detected - Ghidra recommends Java 17+, but will work\n2026-08-07 15:19:00,041 - reveng.analysis.analyzer - WARNING - Consider upgrading to Java 17+ for best compatibility\nConfig file not found: /home/james/.reveng/config.yaml, using defaults\n2026-08-07 15:19:00,047 - reveng.analysis.analyzer - WARNING - Ghidra not installed - native binary analysis will be limited\n2026-08-07 15:19:00,048 - reveng.analysis.analyzer - INFO - All critical tools validated successfully\npyelftools not available. Install with: pip install pyelftools\n\u26a0\ufe0f Gemini API key not found. Set GEMINI_API_KEY environment variable.\n\u274c Pipeline failed: Native fallback analysis returned no analysis_data\nTraceback (most recent call last):\n  File \"/mnt/c/dev/projects/reveng-main/.worktrees/scope-c-wave-c/src/reveng/ai/recompilation_engine.py\", line 405, in full_reconstruction_pipeline\n    ghidra_data = await self._phase1_decompilation(binary_path, output_dir)\n  File \"/mnt/c/dev/projects/reveng-main/.worktrees/scope-c-wave-c/src/reveng/ai/recompilation_engine.py\", line 501, in _phase1_decompilation\n    raise ValueError(\nValueError: Native fallback analysis returned no analysis_data\nFailed to prepare Docker sandbox image reveng-python:3.11-slim-strace: ERROR: failed to connect to the docker API at unix:///var/run/docker.sock; check if the path is correct and if the daemon is running: dial unix /var/run/docker.sock: connect: no such file or directory\nNo monitoring in progress\n",
+      "stdout_tail": "Running end-to-end pipeline...\nGhidra stage timeout: 900s (retries: 0)\n\n[SUCCESS] REVENG analysis completed successfully!\nPipeline status: partial_success\nResults stored in: reports/native_analyze_probe/runs/hexyl_subject\nUnified report: reports/native_analyze_probe/runs/hexyl_subject/reports/unified_analysis_report.json\n",
+      "semantic": {
+        "process_status": "completed",
+        "analysis_report_present": true,
+        "native_fallback_empty": true,
+        "semantic_reason": "native_fallback_empty",
+        "job_output_dir": "reports/native_analyze_probe/runs/hexyl_subject"
+      },
+      "id": "hexyl_subject"
+    }
+  ]
+}

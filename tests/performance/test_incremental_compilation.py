@@ -19,7 +19,8 @@ def large_source_file():
 
     # Generate 100 simple functions
     for i in range(100):
-        code_lines.append(f"""
+        code_lines.append(
+            f"""
 int function_{i}(int x) {{
     int result = x * {i} + {i*2};
     for (int j = 0; j < 10; j++) {{
@@ -27,7 +28,8 @@ int function_{i}(int x) {{
     }}
     return result;
 }}
-""")
+"""
+        )
 
     # Add main function that calls all the others
     code_lines.append("\nint main() {\n")

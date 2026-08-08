@@ -551,21 +551,25 @@ class TechnicalReportingEngine:
 
         # Add methodology references
         for i, ref in enumerate(methodology.references, 1):
-            bib_entries.append(f"""
+            bib_entries.append(
+                f"""
 @misc{{methodology_ref_{i},
     title={{{ref}}},
     note={{Accessed: {datetime.now().strftime("%Y-%m-%d")}}}
-}}""")
+}}"""
+            )
 
         # Add finding references
         for finding in findings:
             if finding.references:
                 for i, ref in enumerate(finding.references, 1):
-                    bib_entries.append(f"""
+                    bib_entries.append(
+                        f"""
 @misc{{finding_{finding.id}_ref_{i},
     title={{{ref}}},
     note={{Accessed: {datetime.now().strftime("%Y-%m-%d")}}}
-}}""")
+}}"""
+                    )
 
         bib_content = "\n".join(bib_entries)
         bib_path = self.output_dir / "references.bib"

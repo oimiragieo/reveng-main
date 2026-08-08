@@ -5,9 +5,9 @@ Artificial intelligence and machine learning tools for enhanced analysis.
 """
 
 from . import (
-    ai_provider_registry,
-    ai_enhanced_orchestrator,
     ai_enhanced_data_models,
+    ai_enhanced_orchestrator,
+    ai_provider_registry,
     ollama_analyzer,
     ollama_preflight,
 )

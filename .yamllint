@@ -1,0 +1,43 @@
+extends: default
+
+# Repo has many generated/legacy YAML dialects; keep this gate installable
+# without forcing a full-tree reformat wave.
+ignore: |
+  reports/
+  external/
+  analysis_*/
+  .worktrees/
+  node_modules/
+  test_samples/
+  examples/
+  docs/
+
+rules:
+  line-length:
+    max: 120
+    level: warning
+
+  indentation:
+    spaces: consistent
+    level: warning
+
+  comments:
+    min-spaces-from-content: 1
+    level: warning
+
+  document-start:
+    present: false
+    level: warning
+
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off']
+    level: warning
+
+  brackets:
+    level: warning
+
+  trailing-spaces:
+    level: warning
+
+  new-line-at-end-of-file:
+    level: warning

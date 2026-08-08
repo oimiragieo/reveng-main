@@ -23,7 +23,8 @@ def _load_json(path: Path) -> dict[str, Any]:
 
 
 def _resolve_path(value: str, base_dir: Path) -> Path:
-    path = Path(value)
+    normalized = value.replace("\\", "/")
+    path = Path(normalized)
     return path if path.is_absolute() else (base_dir / path).resolve()
 
 

@@ -29,8 +29,13 @@ def enrich_app_analysis_payload(
     primary_artifacts: Mapping[str, Path],
     source_count: int,
     warnings: Sequence[str],
+    run_js_syntax_check: bool = True,
+    run_js_behavior_probe: bool = True,
+    run_js_npm_lifecycle_probe: bool = False,
 ) -> Dict[str, Any]:
     """Attach shared schema, validation, evidence, and provenance fields."""
+    from reveng.app_reverse_engineering.capability_report import build_capability_report
+
     topic_match_counts = payload.get("topic_match_counts", {})
     evidence = build_app_evidence(
         input_path=input_path,
@@ -52,12 +57,21 @@ def enrich_app_analysis_payload(
         domain_files=domain_files,
         primary_artifacts=primary_artifacts,
     )
+    capability_report = build_capability_report(
+        language=language,
+        primary_artifacts=primary_artifacts,
+        adapter_metadata=payload,
+        run_js_syntax_check=run_js_syntax_check,
+        run_js_behavior_probe=run_js_behavior_probe,
+        run_js_npm_lifecycle_probe=run_js_npm_lifecycle_probe,
+    )
     validation = build_validation_summary(
         source_count=source_count,
         warnings=warnings,
         topic_match_counts=topic_match_counts if isinstance(topic_match_counts, Mapping) else {},
         primary_artifacts=primary_artifacts,
         evidence_count=len(evidence),
+        capability_report=capability_report,
     )
 
     enriched = dict(payload)
@@ -68,9 +82,37 @@ def enrich_app_analysis_payload(
             "validation": validation,
             "evidence": evidence,
             "provenance": provenance,
+            "capability_report": capability_report,
         }
     )
     return enriched
+
+
+def promote_grade_from_capability(
+    grade: str,
+    *,
+    capability_report: Mapping[str, Any] | None,
+    source_count: int,
+) -> tuple[str, str]:
+    """
+    Promote a validation grade using JS behavior evidence without overclaiming.
+
+    Rule (P3-BP-3): tier 2 behavior + syntax all_checked_ok + recovered sources
+    may bump ``partial_recovery`` or ``structure_only`` → ``evidence_backed``.
+    Never invent a higher grade from packaging_only alone.
+    """
+    if not capability_report or source_count <= 0:
+        return grade, ""
+    if grade not in {"partial_recovery", "structure_only"}:
+        return grade, ""
+    dims = capability_report.get("dimensions") or {}
+    behavior = dims.get("javascript_behavior_probe") or {}
+    smoke = dims.get("javascript_smoke") or {}
+    tier = int(behavior.get("tier", 0) or 0)
+    syntax_ok = smoke.get("syntax_summary") == "all_checked_ok"
+    if tier >= 2 and syntax_ok:
+        return "evidence_backed", "behavior_tier_2+syntax_ok"
+    return grade, ""
 
 
 def build_validation_summary(
@@ -80,6 +122,7 @@ def build_validation_summary(
     topic_match_counts: Mapping[str, Any],
     primary_artifacts: Mapping[str, Path],
     evidence_count: int,
+    capability_report: Mapping[str, Any] | None = None,
 ) -> Dict[str, Any]:
     """Build a compact analyst-facing validation summary."""
     topic_evidence = 0
@@ -98,18 +141,34 @@ def build_validation_summary(
     else:
         grade = "packaging_only"
 
+    promoted, promotion_reason = promote_grade_from_capability(
+        grade,
+        capability_report=capability_report,
+        source_count=source_count,
+    )
+
     summary = (
         f"Recovered {source_count} source artifact(s), {topic_evidence} topic evidence snippet(s), "
         f"and {artifact_count} primary artifact(s); warnings={warning_count}."
     )
-    return {
-        "grade": grade,
+    if promotion_reason:
+        summary = f"{summary} Grade promoted via {promotion_reason}."
+
+    result: Dict[str, Any] = {
+        "grade": promoted,
         "summary": summary,
         "evidence_count": evidence_count,
         "topic_evidence_count": topic_evidence,
         "artifact_count": artifact_count,
         "warning_count": warning_count,
     }
+    if promotion_reason:
+        result["grade_promotion"] = {
+            "from": grade,
+            "to": promoted,
+            "reason": promotion_reason,
+        }
+    return result
 
 
 def build_app_provenance(

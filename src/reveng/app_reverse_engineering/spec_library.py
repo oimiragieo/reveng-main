@@ -128,7 +128,8 @@ def collect_keyword_matches(
             if should_skip_text(snippet, skip_patterns):
                 continue
 
-            normalized = f"{source_name}:{re.sub(r'\s+', ' ', snippet)}"
+            compact_snippet = re.sub(r"\s+", " ", snippet)
+            normalized = f"{source_name}:{compact_snippet}"
             if normalized in seen:
                 continue
 

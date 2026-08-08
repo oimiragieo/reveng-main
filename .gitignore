@@ -322,3 +322,6 @@ reports/**/normalized_project/
 reports/**/package.json
 reports/**/package-lock.json
 reports/**/node_modules/
+
+# Native micro-fixture build artifacts
+test_samples/native/*/build/

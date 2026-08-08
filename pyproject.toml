@@ -159,6 +159,18 @@ markers = [
     "slow: Tests that take a long time to run",
     "integration: Integration tests",
     "unit: Unit tests",
+    "e2e: End-to-end tests",
+    "performance: Performance benchmarking tests",
+    "malware: Malware analysis tests",
+    "ghidra: Ghidra integration tests",
+    "pipeline: Pipeline tests",
+    "ml: Machine learning tests",
+    "fast: Fast running tests",
+    "tracked_bundle: Tracked JS bundle artifact / oracle benchmarks",
+    "requires_external_tools: Requires external tools",
+    "requires_network: Requires network connectivity",
+    "asyncio: Async tests (pytest-asyncio)",
+    "ralph_js: Ralph JS oracle loop tests",
 ]
 
 [tool.mypy]

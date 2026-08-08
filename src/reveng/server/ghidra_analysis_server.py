@@ -366,9 +366,7 @@ def start_server(
     if health_status["status"] == "healthy":
         logger.info(f"✅ Connected to Ghidra via {health_status['method']}")
     else:
-        logger.warning(
-            f"⚠️  Ghidra connection not healthy: {health_status.get('error', 'Unknown')}"
-        )
+        logger.warning(f"⚠️  Ghidra connection not healthy: {health_status.get('error', 'Unknown')}")
         logger.warning("   Server will start but analysis may fail")
 
     logger.info("=" * 60)

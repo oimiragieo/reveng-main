@@ -10,7 +10,7 @@ Based on 2024-2025 research:
 - Humanify for LLM enhancement
 - Google CASCADE architecture
 
-Achieves 70-95% success rate depending on obfuscation complexity.
+Achieves measured success only when substantive transforms change the code.
 """
 
 import json
@@ -21,7 +21,7 @@ import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +70,9 @@ class DeobfuscationResult:
     warnings: List[str] = field(default_factory=list)
     llm_analysis: Optional[Dict] = None  # If LLM was used
     execution_time: float = 0.0
+    stages_skipped: List[Dict[str, str]] = field(default_factory=list)
+    capabilities_run: Dict[str, Any] = field(default_factory=dict)
+    effectiveness_status: str = "unknown"
 
     @property
     def reduction_ratio(self) -> float:
@@ -188,8 +191,18 @@ class JavaScriptDeobfuscator:
         start_time = time.time()
 
         original_code = code
-        stages_applied = []
+        stages_applied: List[DeobfuscationStage] = []
+        stages_skipped: List[Dict[str, str]] = []
         warnings = []
+        _SUBSTANTIVE = {
+            DeobfuscationStage.UNPACKING,
+            DeobfuscationStage.UNBUNDLING,
+            DeobfuscationStage.CFG_UNFLATTENING,
+            DeobfuscationStage.CONSTANT_FOLDING,
+            DeobfuscationStage.DEAD_CODE_REMOVAL,
+            DeobfuscationStage.ML_RENAMING,
+            DeobfuscationStage.LLM_ENHANCEMENT,
+        }
 
         logger.info(f"Starting deobfuscation pipeline for {filename}")
 
@@ -203,40 +216,78 @@ class JavaScriptDeobfuscator:
         logger.info(f"Detected: {[t.value for t in detection.obfuscation_types]}")
         stages_applied.append(DeobfuscationStage.DETECTION)
 
-        # Stage 2: Source map recovery (if URL provided or .map file exists)
-        # This would be the ideal case - perfect recovery
-        # Skipped for now as we just have code, not a URL
-
-        # Stage 3: Unpacking & Unbundling with webcrack
+        # Stage 3: Unpacking with webcrack (record UNPACKING only on verified success)
         if self.tools_available.get("webcrack"):
             logger.info("Stage 3: Running webcrack (unpack/unbundle)...")
-            code = await self._run_webcrack(code)
-            stages_applied.append(DeobfuscationStage.UNPACKING)
-            stages_applied.append(DeobfuscationStage.UNBUNDLING)
+            before = code
+            outcome = await self._run_webcrack(code)
+            if (
+                outcome.get("status") == "ok"
+                and isinstance(outcome.get("code"), str)
+                and outcome["code"] != before
+            ):
+                code = outcome["code"]
+                stages_applied.append(DeobfuscationStage.UNPACKING)
+            else:
+                stages_skipped.append(
+                    {
+                        "stage": DeobfuscationStage.UNPACKING.value,
+                        "reason": str(outcome.get("reason") or "webcrack_failed"),
+                    }
+                )
         else:
             warnings.append("webcrack not available - skipping unpacking/unbundling")
+            stages_skipped.append(
+                {
+                    "stage": DeobfuscationStage.UNPACKING.value,
+                    "reason": "webcrack_absent",
+                }
+            )
 
-        # Stage 4: Control flow unflattening
+        # Stage 4–6: placeholders — never claim applied
         if ObfuscationType.CFG_FLATTENED in detection.obfuscation_types:
             logger.info("Stage 4: Unflattening control flow...")
             code = self._unflatten_cfg(code)
-            stages_applied.append(DeobfuscationStage.CFG_UNFLATTENING)
+        stages_skipped.append(
+            {
+                "stage": DeobfuscationStage.CFG_UNFLATTENING.value,
+                "reason": "placeholder_not_implemented",
+            }
+        )
 
-        # Stage 5: Constant folding & propagation
         logger.info("Stage 5: Constant folding...")
         code = self._constant_folding(code)
-        stages_applied.append(DeobfuscationStage.CONSTANT_FOLDING)
+        stages_skipped.append(
+            {
+                "stage": DeobfuscationStage.CONSTANT_FOLDING.value,
+                "reason": "placeholder_not_implemented",
+            }
+        )
 
-        # Stage 6: Dead code removal
         logger.info("Stage 6: Removing dead code...")
         code = self._remove_dead_code(code)
-        stages_applied.append(DeobfuscationStage.DEAD_CODE_REMOVAL)
+        stages_skipped.append(
+            {
+                "stage": DeobfuscationStage.DEAD_CODE_REMOVAL.value,
+                "reason": "placeholder_not_implemented",
+            }
+        )
 
         # Stage 7: ML-based variable renaming
         if self.use_ml and self.tools_available.get("unuglifyjs"):
             logger.info("Stage 7: ML variable renaming (UnuglifyJS)...")
-            code = await self._rename_variables_ml(code)
-            stages_applied.append(DeobfuscationStage.ML_RENAMING)
+            before = code
+            outcome = await self._rename_variables_ml_outcome(code)
+            if outcome.get("status") == "ok" and outcome.get("code") != before:
+                code = outcome["code"]
+                stages_applied.append(DeobfuscationStage.ML_RENAMING)
+            else:
+                stages_skipped.append(
+                    {
+                        "stage": DeobfuscationStage.ML_RENAMING.value,
+                        "reason": str(outcome.get("reason") or "ml_rename_failed"),
+                    }
+                )
         else:
             if self.use_ml:
                 warnings.append("ML renaming skipped - unuglify-js not available")
@@ -245,8 +296,19 @@ class JavaScriptDeobfuscator:
         llm_analysis = None
         if self.use_llm:
             logger.info("Stage 8: LLM semantic enhancement...")
-            code, llm_analysis = await self._enhance_with_llm(code)
-            stages_applied.append(DeobfuscationStage.LLM_ENHANCEMENT)
+            before = code
+            outcome = await self._enhance_with_llm_outcome(code)
+            llm_analysis = outcome.get("analysis")
+            if outcome.get("status") == "ok" and outcome.get("code") != before:
+                code = outcome["code"]
+                stages_applied.append(DeobfuscationStage.LLM_ENHANCEMENT)
+            else:
+                stages_skipped.append(
+                    {
+                        "stage": DeobfuscationStage.LLM_ENHANCEMENT.value,
+                        "reason": str(outcome.get("reason") or "llm_failed"),
+                    }
+                )
 
         # Stage 9: Code formatting
         if self.tools_available.get("prettier"):
@@ -262,14 +324,26 @@ class JavaScriptDeobfuscator:
         stages_applied.append(DeobfuscationStage.VALIDATION)
 
         execution_time = time.time() - start_time
+        substantive_applied = [s for s in stages_applied if s in _SUBSTANTIVE]
+        effectiveness_status = (
+            "substantive_transform" if substantive_applied else "no_substantive_transform"
+        )
+        success = bool(substantive_applied) and confidence > 0.5
+        capabilities_run = {
+            "cfg_unflatten": False,
+            "constant_folding": False,
+            "dead_code_removal": False,
+            "reason": "placeholder",
+        }
 
         logger.info(
-            f"Deobfuscation complete: {len(stages_applied)} stages, "
+            f"Deobfuscation finished: {len(stages_applied)} applied, "
+            f"{len(stages_skipped)} skipped (placeholders/failed), "
             f"{confidence:.1%} confidence, {execution_time:.2f}s"
         )
 
         return DeobfuscationResult(
-            success=confidence > 0.5,
+            success=success,
             original_code=original_code,
             deobfuscated_code=code,
             obfuscation_types=detection.obfuscation_types,
@@ -278,58 +352,93 @@ class JavaScriptDeobfuscator:
             warnings=warnings,
             llm_analysis=llm_analysis,
             execution_time=execution_time,
+            stages_skipped=stages_skipped,
+            capabilities_run=capabilities_run,
+            effectiveness_status=effectiveness_status,
         )
 
-    async def _run_webcrack(self, code: str) -> str:
-        """
-        Run webcrack for deobfuscation
-
-        webcrack handles:
-        - Unpacking (eval-based)
-        - Unbundling (webpack/browserify)
-        - Deobfuscating obfuscator.io
-        - Transpiling to modern JS
-        """
+    async def _run_webcrack(self, code: str) -> Dict[str, Any]:
+        """Run webcrack; return structured {status, code, reason}."""
         try:
             with tempfile.TemporaryDirectory() as tmpdir:
-                # Write input
                 input_file = Path(tmpdir) / "input.js"
                 input_file.write_text(code)
-
-                # Run webcrack
                 output_dir = Path(tmpdir) / "output"
 
-                subprocess.run(
+                completed = subprocess.run(
                     [self.webcrack_path, str(input_file), "-o", str(output_dir)],
                     capture_output=True,
                     text=True,
                     timeout=60,
                 )
+                if completed.returncode != 0:
+                    return {
+                        "status": "error",
+                        "code": code,
+                        "reason": "webcrack_failed",
+                    }
 
-                # Read output
-                # webcrack creates multiple files if unbundled
-                # For now, look for main output file
                 output_files = list(output_dir.glob("*.js"))
+                if not output_files:
+                    return {
+                        "status": "error",
+                        "code": code,
+                        "reason": "webcrack_empty",
+                    }
 
-                if output_files:
-                    # If multiple files, concatenate
-                    deobfuscated = ""
-                    for f in sorted(output_files):
-                        deobfuscated += f.read_text() + "\n\n"
-
-                    logger.info(f"webcrack processed successfully ({len(output_files)} files)")
-                    return deobfuscated.strip()
-                else:
-                    logger.warning("webcrack produced no output")
-                    return code
+                deobfuscated = ""
+                for f in sorted(output_files):
+                    deobfuscated += f.read_text() + "\n\n"
+                out = deobfuscated.strip()
+                if not out or out == code:
+                    return {
+                        "status": "error",
+                        "code": code,
+                        "reason": "webcrack_unchanged",
+                    }
+                logger.info(f"webcrack processed successfully ({len(output_files)} files)")
+                return {"status": "ok", "code": out, "reason": "ok"}
 
         except subprocess.TimeoutExpired:
             logger.error("webcrack timed out")
-            return code
+            return {"status": "error", "code": code, "reason": "webcrack_timeout"}
 
         except Exception as e:
             logger.error(f"webcrack failed: {e}")
-            return code
+            return {"status": "error", "code": code, "reason": "webcrack_failed"}
+
+    async def _rename_variables_ml_outcome(self, code: str) -> Dict[str, Any]:
+        out = await self._rename_variables_ml(code)
+        if not out:
+            return {"status": "error", "code": code, "reason": "ml_rename_empty"}
+        if out == code:
+            return {"status": "error", "code": code, "reason": "ml_rename_unchanged"}
+        return {"status": "ok", "code": out, "reason": "ok"}
+
+    async def _enhance_with_llm_outcome(self, code: str) -> Dict[str, Any]:
+        out, analysis = await self._enhance_with_llm(code)
+        if analysis and analysis.get("error"):
+            return {
+                "status": "error",
+                "code": code,
+                "reason": "llm_failed",
+                "analysis": analysis,
+            }
+        if not out:
+            return {
+                "status": "error",
+                "code": code,
+                "reason": "llm_empty",
+                "analysis": analysis,
+            }
+        if out == code:
+            return {
+                "status": "error",
+                "code": code,
+                "reason": "llm_unchanged",
+                "analysis": analysis,
+            }
+        return {"status": "ok", "code": out, "reason": "ok", "analysis": analysis}
 
     def _unflatten_cfg(self, code: str) -> str:
         """

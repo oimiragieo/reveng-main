@@ -1,19 +1,19 @@
 {
   "schema_version": "1.0",
   "result_type": "ga_readiness_report",
-  "generated_at": "2026-03-29T23:12:07.030401Z",
+  "generated_at": "2026-08-06T01:26:16.481834Z",
   "profile": "ga",
   "inputs": {
-    "source_report": "C:\\dev\\projects\\reveng-main\\reports\\source_binary_benchmarks_report.json",
-    "bun_report": "C:\\dev\\projects\\reveng-main\\reports\\bun_sample_matrix.json",
-    "app_report": "C:\\dev\\projects\\reveng-main\\reports\\app_reverse_engineering_corpus_report.json",
-    "support_matrix": "C:\\dev\\projects\\reveng-main\\docs\\support_matrix.json"
+    "source_report": "/mnt/c/dev/projects/reveng-main/reports/source_binary_benchmarks_report.json",
+    "bun_report": "/mnt/c/dev/projects/reveng-main/reports/bun_sample_matrix.json",
+    "app_report": "/mnt/c/dev/projects/reveng-main/reports/app_reverse_engineering_corpus_report.json",
+    "support_matrix": "/mnt/c/dev/projects/reveng-main/docs/support_matrix.json"
   },
   "summary": {
     "overall_status": "pass",
-    "gate_count": 8,
+    "gate_count": 10,
     "failed_gate_count": 0,
-    "passed_gate_count": 8
+    "passed_gate_count": 10
   },
   "gates": [
     {
@@ -21,8 +21,8 @@
       "status": "pass",
       "summary": "A machine-readable support matrix with at least one supported workflow must exist.",
       "details": {
-        "support_matrix_path": "C:\\dev\\projects\\reveng-main\\docs\\support_matrix.json",
-        "supported_workflow_count": 2
+        "support_matrix_path": "/mnt/c/dev/projects/reveng-main/docs/support_matrix.json",
+        "supported_workflow_count": 3
       }
     },
     {
@@ -39,13 +39,18 @@
       "status": "pass",
       "summary": "At least one tracked source-backed source-vs-binary benchmark report must exist.",
       "details": {
-        "benchmark_count": 5,
-        "failed_statuses": {
-          "java-helloworld-class": "recompile_failed",
-          "java-helloworld-jar": "recompile_failed",
-          "python-sample-bytecode": "recompile_failed",
-          "python-sample-zipapp": "recompile_failed"
-        }
+        "benchmark_count": 4,
+        "failed_statuses": {}
+      }
+    },
+    {
+      "id": "native-analyze-evidence",
+      "status": "pass",
+      "summary": "At least one tracked native benchmark must include analyze report evidence.",
+      "details": {
+        "analyze_evidence_count": 4,
+        "benchmark_count": 4,
+        "failed_statuses": {}
       }
     },
     {
@@ -63,7 +68,7 @@
       "status": "pass",
       "summary": "GA requires benchmark, Bun, and app-corpus reports to be generated from the strict .ga.json inputs.",
       "details": {
-        "source_config_path": ".reveng\\source_binary_benchmarks.ga.json",
+        "source_config_path": ".reveng/source_binary_benchmarks.ga.json",
         "expected_source_config_path": ".reveng/source_binary_benchmarks.ga.json",
         "bun_config_path": ".reveng\\bun_sample_matrix.ga.json",
         "expected_bun_config_path": ".reveng/bun_sample_matrix.ga.json",
@@ -72,20 +77,26 @@
       }
     },
     {
+      "id": "native-success-floor",
+      "status": "pass",
+      "summary": "GA requires at least one native benchmark with analyze evidence and a success-class status.",
+      "details": {
+        "native_success_count": 4,
+        "analyze_evidence_count": 4,
+        "failed_statuses": {}
+      }
+    },
+    {
       "id": "multi-codebase-validation-breadth",
       "status": "pass",
       "summary": "GA requires broad source-backed validation coverage across tracked benchmark, Bun, and app corpus surfaces.",
       "details": {
-        "benchmark_count": 5,
+        "benchmark_count": 4,
+        "analyze_evidence_count": 4,
         "live_bun_sample_count": 2,
         "app_entry_count": 7,
-        "total_source_backed_rows": 14,
-        "failed_statuses": {
-          "java-helloworld-class": "recompile_failed",
-          "java-helloworld-jar": "recompile_failed",
-          "python-sample-bytecode": "recompile_failed",
-          "python-sample-zipapp": "recompile_failed"
-        }
+        "total_source_backed_rows": 13,
+        "failed_statuses": {}
       }
     },
     {

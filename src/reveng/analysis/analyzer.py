@@ -116,6 +116,7 @@ class REVENGAnalyzer:
         enhanced_features: Optional[EnhancedAnalysisFeatures] = None,
         progress_callback: Optional[Callable[[str, Dict[str, Any]], None]] = None,
         analysis_folder: Optional[str] = None,
+        enable_ai: bool = True,
     ):
         """
         Initialize the REVENG analyzer
@@ -127,6 +128,7 @@ class REVENGAnalyzer:
             progress_callback: Optional callback for structured progress reporting.
                              Signature: callback(event_type: str, data: Dict[str, Any])
             analysis_folder: Custom output directory (default: analysis_{binary_name})
+            enable_ai: When False, skip AI steps 1/3, Ollama preflight, and enhanced AI modules
         """
         self.binary_path = binary_path or self._find_binary()
         # Convert to absolute path for server compatibility
@@ -143,9 +145,17 @@ class REVENGAnalyzer:
         self.file_type = None
         self.audit_logger = None
         self.progress_callback = progress_callback
+        self.enable_ai = bool(enable_ai)
 
         # Enhanced analysis configuration
         self.enhanced_features = enhanced_features or EnhancedAnalysisFeatures()
+        if not self.enable_ai:
+            self.enhanced_features.enable_enhanced_analysis = False
+            self.enhanced_features.enable_corporate_exposure = False
+            self.enhanced_features.enable_vulnerability_discovery = False
+            self.enhanced_features.enable_threat_intelligence = False
+            self.enhanced_features.enable_enhanced_reconstruction = False
+            self.enhanced_features.enable_demonstration_generation = False
 
         # Enhanced analysis components (lazy loaded)
         self.ai_enhanced_analyzer = None
@@ -195,8 +205,9 @@ class REVENGAnalyzer:
         # Detect file type using language detector
         self._detect_file_type()
 
-        # Run Ollama preflight check if requested
-        if check_ollama:
+        # Run Ollama preflight check if requested (suppressed when enable_ai=False)
+        effective_check_ollama = bool(self.enable_ai) and bool(check_ollama)
+        if effective_check_ollama:
             self._check_ollama_availability()
 
         # Validate critical tool availability at startup
@@ -617,7 +628,10 @@ class REVENGAnalyzer:
                 {"step": 1, "name": "AI-Powered Binary Analysis", "icon": "CHART"},
             )
             logger.info("[CHART] Step 1: AI-Powered Binary Analysis...")
-            self._step1_ai_analysis()
+            if self.enable_ai:
+                self._step1_ai_analysis()
+            else:
+                self.results["step1"] = {"status": "skipped", "reason": "enable_ai_false"}
 
             # Step 2: Complete disassembly
             self._emit_progress(
@@ -637,7 +651,10 @@ class REVENGAnalyzer:
                 },
             )
             logger.info("[BRAIN] Step 3: AI Inspection with Extra Thinking...")
-            self._step3_ai_inspection()
+            if self.enable_ai:
+                self._step3_ai_inspection()
+            else:
+                self.results["step3"] = {"status": "skipped", "reason": "enable_ai_false"}
 
             # Step 4: Specification library creation
             self._emit_progress(

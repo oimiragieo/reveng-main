@@ -160,6 +160,7 @@ class _FakeAppFramework:
                     "artifact_count": 1,
                     "warning_count": 0,
                 },
+                "capability_report": {"schema_version": "1.0", "headline": "test"},
                 "evidence": [{"kind": "analysis_summary", "path": str(analysis_file)}],
                 "provenance": {
                     "inputs": [{"path": str(input_path)}],
@@ -311,6 +312,8 @@ def test_simple_mcp_reverse_engineer_app_returns_versioned_contract(monkeypatch,
     assert result["tool_name"] == "reverse_engineer_app"
     assert result["app_result"]["result_type"] == "app_reverse_engineering_result"
     assert result["app_result"]["validation"]["grade"] == "evidence_backed"
+    assert result["validation_grade"] == "evidence_backed"
+    assert result["capability_report"]["headline"] == "test"
     assert result["provenance"]["inputs"][0]["path"] == str(sample)
 
 
@@ -365,6 +368,8 @@ def test_enterprise_mcp_reverse_engineer_app_returns_contract(monkeypatch, tmp_p
     assert result["result_type"] == "mcp_tool_result"
     assert result["tool_name"] == "reverse_engineer_app"
     assert result["app_result"]["result_type"] == "app_reverse_engineering_result"
+    assert result["validation_grade"] == "evidence_backed"
+    assert result["capability_report"]["headline"] == "test"
     assert result["analysis_id"]
     assert result["provenance"]["references"][0]["relationship"] == "cached_as"
 

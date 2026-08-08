@@ -10,6 +10,9 @@ on:
 env:
   REGISTRY: docker.io
   IMAGE_NAME: reveng
+  # Prefer Docker Hub secret when set; fall back so PR builds get a valid tag
+  # (empty secrets.DOCKER_USERNAME produced docker.io//reveng — invalid).
+  IMAGE_OWNER: ${{ secrets.DOCKER_USERNAME || github.repository_owner }}
 
 jobs:
   build-and-push:
@@ -37,7 +40,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -52,17 +55,6 @@ jobs:
           target: base
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}-cli
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Web image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          target: web
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}-web
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

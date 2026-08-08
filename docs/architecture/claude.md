@@ -22,6 +22,8 @@ Documentation breadcrumb: files in this folder only (non-recursive).
 - `reveng-tdd-implementation-backlog.md` — # REVENG TDD implementation backlog
 - `reveng-tdd-microservices-plan.md` — # REVENG TDD refactor plan for an enterprise microservice platform
 - `reveng-world-class-execution-backlog.md` — # REVENG world-class execution backlog
+- `ceo-update-2026-08-06.md` — CEO plain-language briefing (Scope C Phases 1–3)
+- `lessons-learned-scope-c-2026-08.md` — hollow-gate / wiring / py3.9 lessons
 - `reveng-world-class-implementation-roadmap.md` — # REVENG world-class implementation roadmap
 - `reverse-compilation-master-roadmap.md` — # Reverse-Compilation Master Roadmap
 - `session-handoff-2026-03-29.md` — # Session Handoff 2026-03-29

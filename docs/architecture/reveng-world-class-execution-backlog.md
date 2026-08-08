@@ -13,13 +13,15 @@ It is intentionally near-term and operational. Longer-range service extraction a
 
 ## Current tracked evidence
 
-Use these as the starting anchors for planning and reporting:
+Use these as the starting anchors for planning and reporting (verified 2026-08-06):
 
-- `.reveng/source_binary_benchmarks.json` currently registers one native benchmark, `hexyl`
-- `reports/source_binary_benchmarks_report.json` is the current tracked native benchmark report; in that tracked run, `hexyl` ended at `analyze_failed`, with both analyze and recompile timing out after 1200 seconds
-- `.reveng/bun_sample_matrix.json` currently requires two live Bun samples for a clean pass and includes one live sample plus one negative control
-- `reports/bun_sample_matrix.json` is the current tracked Bun matrix report; in that tracked run, `matrix_status` is `pass_with_limitations`, `live_bun_sample_count` is `1`, and `successful_rebuild_count` is `1`
-- `HARDENING_PRIORITIES.md` documents the current three-slice hexyl hardening plan for `src/reveng/ai/recompilation_engine.py`
+- `.reveng/source_binary_benchmarks.ga.json` registers managed-language benchmarks (Java class/jar, Python bytecode/zipapp) plus optional native binaries
+- `reports/source_binary_benchmarks_report.json` currently tracks four hermetic managed-language rows at `completed_without_behavior_checks` with analyze + recompile evidence (managed recompile no longer requires Ghidra)
+- `.reveng/bun_sample_matrix.json` / `reports/bun_sample_matrix.json`: `matrix_status=pass`, `live_bun_sample_count=2`, `successful_rebuild_count=2`
+- App corpus report: `matrix_status=pass` with 7 completed required rows
+- `scripts/verify_ga_readiness.py` now enforces `native-analyze-evidence` and `native-success-floor` (hollow reports fail)
+- `HARDENING_PRIORITIES.md` still documents hexyl recompilation slices; hexyl is not in the current GA hermetic set
+- Root `backlog.md` is the Scope C ops index (Phase 1–2 preview + Phase 3 BP-2/3/4 done)
 
 ## Backlog operating rules
 

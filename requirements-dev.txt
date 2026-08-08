@@ -8,7 +8,8 @@
 # =============================================================================
 
 # Python code formatter (black)
-black>=26.3.1
+# Cap <26: black 26+ requires Python>=3.10; project floor is 3.9
+black>=25.11.0,<26
 
 # Python import sorter
 isort>=5.12.0,<6.0.0
@@ -22,6 +23,9 @@ flake8>=6.0.0,<8.0.0
 # Python type checker
 mypy>=1.4.0,<2.0.0
 
+# Architecture import contracts
+import-linter>=2.0,<3.0.0
+
 # Security tools
 bandit>=1.7.0,<2.0.0
 safety>=2.3.0,<4.0.0
@@ -31,10 +35,17 @@ safety>=2.3.0,<4.0.0
 # =============================================================================
 
 # Testing framework
-pytest>=9.0.3
+# Cap <9: pytest 9+ requires Python>=3.10; project floor is 3.9
+pytest>=8.3.0,<9
 
 # Coverage plugin
 pytest-cov>=4.1.0,<5.0.0
+
+# Per-test timeouts (used by CI --timeout=)
+pytest-timeout>=2.1.0,<3.0.0
+
+# Async test support
+pytest-asyncio>=0.23.8,<0.24.0
 
 # Parallel testing
 pytest-xdist>=3.3.0,<4.0.0

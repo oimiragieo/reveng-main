@@ -34,12 +34,24 @@
       ]
     },
     {
+      "id": "source_binary_reconstruction",
+      "name": "Source-backed binary reconstruction",
+      "status": "supported",
+      "surface": ["cli", "api"],
+      "notes": [
+        "Managed-language recompile (Java/Python/.NET-class inputs) uses app adapters and does not require Ghidra.",
+        "Native PE/ELF/Mach-O recompile still requires a healthy Ghidra Analysis Server.",
+        "Tracked GA hermetic benches currently report completed_without_behavior_checks with analyze+recompile evidence."
+      ]
+    },
+    {
       "id": "exploit_generation",
       "name": "Exploit generation",
       "status": "experimental",
       "surface": ["cli"],
       "notes": [
-        "Not a GA workflow and should not be represented as production-ready."
+        "Not a GA workflow and should not be represented as production-ready.",
+        "CLI command generate-exploit is watermarked EXPERIMENTAL/non-GA."
       ]
     },
     {

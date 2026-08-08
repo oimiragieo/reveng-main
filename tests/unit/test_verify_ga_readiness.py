@@ -31,7 +31,13 @@ def test_baseline_profile_passes_with_current_minimum_shapes(tmp_path: Path):
         tmp_path / "source.json",
         {
             "benchmark_count": 1,
-            "benchmarks": [{"id": "hexyl", "status": "analyze_failed"}],
+            "benchmarks": [
+                {
+                    "id": "hexyl",
+                    "status": "completed",
+                    "analyze_report_exists": True,
+                }
+            ],
         },
     )
     bun_report = _write_json(
@@ -135,7 +141,13 @@ def test_ga_profile_fails_when_reports_are_not_generated_from_strict_ga_configs(
         {
             "config_path": ".reveng/source_binary_benchmarks.json",
             "benchmark_count": 5,
-            "benchmarks": [{"id": "hexyl", "status": "completed"}],
+            "benchmarks": [
+                {
+                    "id": "hexyl",
+                    "status": "completed",
+                    "analyze_report_exists": True,
+                }
+            ],
         },
     )
     bun_report = _write_json(
@@ -184,7 +196,19 @@ def test_ga_profile_fails_when_reports_are_not_generated_from_strict_ga_configs(
 
 def test_main_writes_readiness_report_and_returns_zero_for_baseline(tmp_path: Path):
     runner = _load_module("test_verify_ga_readiness_main", RUNNER_PATH)
-    source_report = _write_json(tmp_path / "source.json", {"benchmark_count": 1, "benchmarks": []})
+    source_report = _write_json(
+        tmp_path / "source.json",
+        {
+            "benchmark_count": 1,
+            "benchmarks": [
+                {
+                    "id": "hexyl",
+                    "status": "completed",
+                    "analyze_report_exists": True,
+                }
+            ],
+        },
+    )
     bun_report = _write_json(
         tmp_path / "bun.json",
         {
@@ -228,7 +252,19 @@ def test_main_writes_readiness_report_and_returns_zero_for_baseline(tmp_path: Pa
 
 def test_baseline_profile_fails_without_supported_workflows(tmp_path: Path):
     runner = _load_module("test_verify_ga_readiness_support_gate", RUNNER_PATH)
-    source_report = _write_json(tmp_path / "source.json", {"benchmark_count": 1, "benchmarks": []})
+    source_report = _write_json(
+        tmp_path / "source.json",
+        {
+            "benchmark_count": 1,
+            "benchmarks": [
+                {
+                    "id": "hexyl",
+                    "status": "completed",
+                    "analyze_report_exists": True,
+                }
+            ],
+        },
+    )
     bun_report = _write_json(
         tmp_path / "bun.json",
         {
@@ -254,3 +290,177 @@ def test_baseline_profile_fails_without_supported_workflows(tmp_path: Path):
     assert readiness["summary"]["overall_status"] == "fail"
     failing_gate_ids = {gate["id"] for gate in readiness["gates"] if gate["status"] == "fail"}
     assert "documented-support-surface" in failing_gate_ids
+
+
+def test_baseline_fails_when_native_benchmarks_lack_analyze_evidence(tmp_path: Path):
+    """Hollow native reports must not pass baseline honesty."""
+    runner = _load_module("test_verify_ga_readiness_hollow_baseline", RUNNER_PATH)
+    source_report = _write_json(
+        tmp_path / "source.json",
+        {
+            "benchmark_count": 2,
+            "benchmarks": [
+                {"id": "a", "status": "recompile_failed", "analyze_report_exists": False},
+                {"id": "b", "status": "analyze_failed", "analyze_report_exists": False},
+            ],
+        },
+    )
+    bun_report = _write_json(
+        tmp_path / "bun.json",
+        {
+            "matrix_status": "pass_with_limitations",
+            "live_bun_sample_count": 1,
+            "hard_failure_count": 0,
+            "rows": [{"id": "sample-control", "required": True}],
+        },
+    )
+    app_report = _write_json(
+        tmp_path / "app.json",
+        {
+            "summary": {"matrix_status": "pass", "total_entries": 7},
+            "rows": [{"name": "python-sample-app", "tags": ["smoke"]}],
+        },
+    )
+    support_matrix = _write_json(
+        tmp_path / "support_matrix.json",
+        {"workflows": [{"id": "cli_triage", "status": "supported"}]},
+    )
+
+    readiness = runner.build_readiness_report(
+        profile="baseline",
+        source_report_path=source_report,
+        bun_report_path=bun_report,
+        app_report_path=app_report,
+        support_matrix_path=support_matrix,
+    )
+
+    assert readiness["summary"]["overall_status"] == "fail"
+    failing_gate_ids = {gate["id"] for gate in readiness["gates"] if gate["status"] == "fail"}
+    assert "native-analyze-evidence" in failing_gate_ids
+
+
+def test_ga_fails_without_native_success_floor(tmp_path: Path):
+    """GA requires at least one success-class native benchmark with analyze evidence."""
+    runner = _load_module("test_verify_ga_readiness_native_success_floor", RUNNER_PATH)
+    source_report = _write_json(
+        tmp_path / "source.json",
+        {
+            "config_path": ".reveng/source_binary_benchmarks.ga.json",
+            "benchmark_count": 2,
+            "benchmarks": [
+                {
+                    "id": "hollow",
+                    "status": "recompile_failed",
+                    "analyze_report_exists": True,
+                },
+                {
+                    "id": "also-hollow",
+                    "status": "analyze_failed",
+                    "analyze_report_exists": True,
+                },
+            ],
+        },
+    )
+    bun_report = _write_json(
+        tmp_path / "bun.json",
+        {
+            "config_path": ".reveng/bun_sample_matrix.ga.json",
+            "matrix_status": "pass",
+            "live_bun_sample_count": 2,
+            "hard_failure_count": 0,
+            "rows": [{"id": "droid", "required": True}],
+        },
+    )
+    app_report = _write_json(
+        tmp_path / "app.json",
+        {
+            "config_path": ".reveng/app_reverse_engineering_corpus.ga.json",
+            "summary": {"matrix_status": "pass", "total_entries": 7},
+            "rows": [{"name": "python-sample-app", "tags": ["smoke", "python"]}],
+        },
+    )
+    support_matrix = _write_json(
+        tmp_path / "support_matrix.json",
+        {
+            "workflows": [
+                {"id": "app_reverse_engineering", "status": "supported"},
+                {"id": "cli_triage", "status": "supported"},
+            ]
+        },
+    )
+
+    readiness = runner.build_readiness_report(
+        profile="ga",
+        source_report_path=source_report,
+        bun_report_path=bun_report,
+        app_report_path=app_report,
+        support_matrix_path=support_matrix,
+    )
+
+    assert readiness["summary"]["overall_status"] == "fail"
+    failing_gate_ids = {gate["id"] for gate in readiness["gates"] if gate["status"] == "fail"}
+    assert "native-success-floor" in failing_gate_ids
+
+
+def test_ga_passes_with_honest_native_success_and_breadth(tmp_path: Path):
+    """Positive control: real analyze evidence + success status can pass GA."""
+    runner = _load_module("test_verify_ga_readiness_ga_honest_pass", RUNNER_PATH)
+    source_report = _write_json(
+        tmp_path / "source.json",
+        {
+            "config_path": ".reveng/source_binary_benchmarks.ga.json",
+            "benchmark_count": 2,
+            "benchmarks": [
+                {
+                    "id": "hexyl",
+                    "status": "behavior_matched",
+                    "analyze_report_exists": True,
+                },
+                {
+                    "id": "demo",
+                    "status": "partial_equivalence",
+                    "analyze_report_exists": True,
+                },
+            ],
+        },
+    )
+    bun_report = _write_json(
+        tmp_path / "bun.json",
+        {
+            "config_path": ".reveng/bun_sample_matrix.ga.json",
+            "matrix_status": "pass",
+            "live_bun_sample_count": 2,
+            "hard_failure_count": 0,
+            "rows": [{"id": "droid", "required": True}],
+        },
+    )
+    app_report = _write_json(
+        tmp_path / "app.json",
+        {
+            "config_path": ".reveng/app_reverse_engineering_corpus.ga.json",
+            "summary": {"matrix_status": "pass", "total_entries": 10},
+            "rows": [{"name": "python-sample-app", "tags": ["smoke", "python"]}],
+        },
+    )
+    support_matrix = _write_json(
+        tmp_path / "support_matrix.json",
+        {
+            "workflows": [
+                {"id": "app_reverse_engineering", "status": "supported"},
+                {"id": "cli_triage", "status": "supported"},
+            ]
+        },
+    )
+
+    readiness = runner.build_readiness_report(
+        profile="ga",
+        source_report_path=source_report,
+        bun_report_path=bun_report,
+        app_report_path=app_report,
+        support_matrix_path=support_matrix,
+    )
+
+    assert readiness["summary"]["overall_status"] == "pass"
+    gate_ids = {gate["id"] for gate in readiness["gates"]}
+    assert "native-analyze-evidence" in gate_ids
+    assert "native-success-floor" in gate_ids

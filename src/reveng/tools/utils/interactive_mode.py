@@ -465,7 +465,8 @@ class REVENGShell(cmd.Cmd):
 
     def do_tutorial(self, arg):
         """Show interactive mode tutorial."""
-        print("""
+        print(
+            """
 ╔═══════════════════════════════════════════════════════════════════════╗
 ║                        REVENG TUTORIAL                                ║
 ╚═══════════════════════════════════════════════════════════════════════╝
@@ -496,7 +497,8 @@ class REVENGShell(cmd.Cmd):
 
 7. Exit:
    reveng> exit
-        """)
+        """
+        )
 
     def do_clear(self, arg):
         """Clear the screen."""

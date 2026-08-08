@@ -148,10 +148,6 @@ def test_malware_classifier():
 
     except ModuleNotFoundError as e:
         pytest.skip(f"ML malware classifier dependencies not available: {e}")
-    except TypeError as e:
-        if "unexpected keyword argument 'is_malware'" in str(e):
-            pytest.skip(f"Legacy malware classifier API mismatch: {e}")
-        raise
     except Exception as e:
         pytest.fail(f"Error testing malware classifier: {e}")
 

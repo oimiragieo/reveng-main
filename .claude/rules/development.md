@@ -1,5 +1,15 @@
 # Development Rules for REVENG
 
+## Release honesty (Scope C lessons — 2026-08, L1–L24)
+
+See `.claude/MEMORY.md`, `docs/architecture/lessons-learned-scope-c-2026-08.md`, skill `.cursor/skills/reveng-release-honesty/SKILL.md`, and CEO `docs/architecture/ceo-update-2026-08-06-wave3.md`.
+
+- Green `verify_ga_readiness` ≠ proof — open tracked JSON (baseline and ga).
+- Fixture ≠ capability; process `completed` ≠ native GA; `tool_absent` ≠ research done.
+- Evidence hygiene: one stamp ≡ `latest.json` (re-check after merge).
+- Wave-scope plans; Wave B exit criteria for engine work; no exploit expansion without SEC proofs.
+- Dogfood python3.9; `git_status_scoped.sh`; Fable/Sol CLI + inline Sol packets; `git -c user.name/email` for merges.
+
 ## Code Quality Standards
 
 ### Python Code Style
@@ -49,6 +59,7 @@ Hooks include:
 - Include comprehensive overview, file listings, and usage
 - Update when directory structure or purpose changes
 - Maintain consistency with root claude.md format
+- When release/GA status changes, update `backlog.md` + tracked-evidence prose in the same change (docs rot is a defect)
 
 ### Code Comments
 - Use inline comments for complex logic only

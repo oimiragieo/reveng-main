@@ -16,19 +16,9 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from reveng.analysis.analyzers.business_logic_extractor import BusinessLogicExtractor  # noqa: E402
-from reveng.analysis.analyzers.dotnet_analyzer import DotNetAnalyzer  # noqa: E402
-from reveng.analysis.pe.import_analyzer import ImportAnalyzer  # noqa: E402
-from reveng.analysis.pe.resource_extractor import PEResourceExtractor  # noqa: E402
-from reveng.core.dependency_manager import DependencyManager  # noqa: E402
+# Heavy analysis/malware/ml imports are deferred into fixtures (DF-2) so focused
+# unit collection does not require volatility3/sklearn at conftest import time.
 from reveng.core.logger import setup_logging  # noqa: E402
-from reveng.ghidra.scripting_engine import GhidraScriptingEngine  # noqa: E402
-from reveng.malware.behavioral_monitor import BehavioralMonitor  # noqa: E402
-from reveng.malware.memory_forensics import MemoryForensics  # noqa: E402
-from reveng.ml import MLIntegration  # noqa: E402
-from reveng.pipelines.automated_analysis import AutomatedAnalysisPipeline  # noqa: E402
-from reveng.plugins.manager import PluginManager  # noqa: E402
-from reveng.tools.hex_editor import HexEditor  # noqa: E402
 
 
 class PerformanceBenchmark:
@@ -150,6 +140,8 @@ def sample_binaries_dir(temp_dir):
 @pytest.fixture
 def mock_dependency_manager():
     """Mock dependency manager for testing"""
+    from reveng.core.dependency_manager import DependencyManager
+
     manager = Mock(spec=DependencyManager)
     manager.check_all_dependencies.return_value = {
         "ghidra": True,
@@ -169,6 +161,8 @@ def mock_dependency_manager():
 @pytest.fixture
 def mock_dotnet_analyzer():
     """Mock .NET analyzer for testing"""
+    from reveng.analysis.analyzers.dotnet_analyzer import DotNetAnalyzer
+
     analyzer = Mock(spec=DotNetAnalyzer)
     analyzer.analyze_assembly.return_value = {
         "framework_version": "4.8",
@@ -196,6 +190,8 @@ def mock_dotnet_analyzer():
 @pytest.fixture
 def mock_pe_resource_extractor():
     """Mock PE resource extractor for testing"""
+    from reveng.analysis.pe.resource_extractor import PEResourceExtractor
+
     extractor = Mock(spec=PEResourceExtractor)
     extractor.extract_all_resources.return_value = {
         "icons": ["app.ico", "icon1.ico"],
@@ -217,6 +213,8 @@ def mock_pe_resource_extractor():
 @pytest.fixture
 def mock_import_analyzer():
     """Mock import analyzer for testing"""
+    from reveng.analysis.pe.import_analyzer import ImportAnalyzer
+
     analyzer = Mock(spec=ImportAnalyzer)
     analyzer.analyze_imports.return_value = {
         "imported_dlls": ["kernel32.dll", "user32.dll", "ole32.dll"],
@@ -241,6 +239,8 @@ def mock_import_analyzer():
 @pytest.fixture
 def mock_business_logic_extractor():
     """Mock business logic extractor for testing"""
+    from reveng.analysis.analyzers.business_logic_extractor import BusinessLogicExtractor
+
     extractor = Mock(spec=BusinessLogicExtractor)
     extractor.extract_logic.return_value = {
         "application_domain": "Security Reporting",
@@ -272,6 +272,8 @@ def mock_business_logic_extractor():
 @pytest.fixture
 def mock_ghidra_scripting_engine():
     """Mock Ghidra scripting engine for testing"""
+    from reveng.ghidra.scripting_engine import GhidraScriptingEngine
+
     engine = Mock(spec=GhidraScriptingEngine)
     engine.run_script.return_value = "Ghidra script execution completed successfully"
     engine.batch_analyze_directory.return_value = {
@@ -284,6 +286,8 @@ def mock_ghidra_scripting_engine():
 @pytest.fixture
 def mock_hex_editor():
     """Mock hex editor for testing"""
+    from reveng.tools.hex_editor import HexEditor
+
     editor = Mock(spec=HexEditor)
     editor.read_bytes.return_value = b"\x4d\x5a\x90\x00"
     editor.search_pattern.return_value = [0, 100, 200]
@@ -298,6 +302,8 @@ def mock_hex_editor():
 @pytest.fixture
 def mock_automated_pipeline():
     """Mock automated analysis pipeline for testing"""
+    from reveng.pipelines.automated_analysis import AutomatedAnalysisPipeline
+
     pipeline = Mock(spec=AutomatedAnalysisPipeline)
     pipeline.run_pipeline.return_value = {
         "binary_path": "test.exe",
@@ -314,6 +320,8 @@ def mock_automated_pipeline():
 @pytest.fixture
 def mock_plugin_manager():
     """Mock plugin manager for testing"""
+    from reveng.plugins.manager import PluginManager
+
     manager = Mock(spec=PluginManager)
     manager.discover_plugins.return_value = None
     manager.initialize_plugins.return_value = None
@@ -345,6 +353,8 @@ def mock_plugin_manager():
 @pytest.fixture
 def mock_behavioral_monitor():
     """Mock behavioral monitor for testing"""
+    from reveng.malware.behavioral_monitor import BehavioralMonitor
+
     monitor = Mock(spec=BehavioralMonitor)
     monitor.monitor_execution.return_value = {
         "binary_path": "test.exe",
@@ -378,6 +388,8 @@ def mock_behavioral_monitor():
 @pytest.fixture
 def mock_memory_forensics():
     """Mock memory forensics for testing"""
+    from reveng.malware.memory_forensics import MemoryForensics
+
     forensics = Mock(spec=MemoryForensics)
     forensics.analyze_process_memory.return_value = {
         "process_id": 1234,
@@ -405,6 +417,8 @@ def mock_memory_forensics():
 @pytest.fixture
 def mock_ml_integration():
     """Mock ML integration for testing"""
+    from reveng.ml import MLIntegration
+
     integration = Mock(spec=MLIntegration)
     integration.analyze_binary.return_value = {
         "binary_path": "test.exe",
@@ -485,7 +499,8 @@ def test_sample_files(temp_dir):
     # Create mock .nessus file
     nessus_file = sample_dir / "test_scan.nessus"
     with open(nessus_file, "w") as f:
-        f.write("""<?xml version="1.0"?>
+        f.write(
+            """<?xml version="1.0"?>
 <report>
     <host>
         <name>test-host</name>
@@ -497,7 +512,8 @@ def test_sample_files(temp_dir):
             </item>
         </vulnerabilities>
     </host>
-</report>""")
+</report>"""
+        )
 
     return {"test_exe": test_exe, "nessus_file": nessus_file, "sample_dir": sample_dir}
 
@@ -515,11 +531,13 @@ def test_scripts_dir(temp_dir):
     # Create test Ghidra script
     test_script = ghidra_dir / "test_script.py"
     with open(test_script, "w") as f:
-        f.write("""# Test Ghidra script
+        f.write(
+            """# Test Ghidra script
 def main():
     print("Test Ghidra script executed")
     return "SUCCESS"
-""")
+"""
+        )
 
     return {"scripts_dir": scripts_dir, "ghidra_dir": ghidra_dir, "test_script": test_script}
 
