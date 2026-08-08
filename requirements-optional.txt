@@ -95,7 +95,7 @@ pycparser>=2.22,<3.0.0
 #   pylint src/                    # Lint code
 # Cap <26: black 26+ requires Python>=3.10; project floor is 3.9
 black>=25.11.0,<26
-pylint>=3.0.0,<4.0.0
+pylint>=3.0.0,<5.0.0
 
 # =============================================================================
 # INSTALLATION INSTRUCTIONS
