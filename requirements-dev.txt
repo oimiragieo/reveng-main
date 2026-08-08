@@ -48,7 +48,7 @@ pytest-timeout>=2.1.0,<3.0.0
 pytest-asyncio>=0.23.8,<0.24.0
 
 # Parallel testing
-pytest-xdist>=3.3.0,<4.0.0
+pytest-xdist>=3.8.0,<4.0.0
 
 # Property-based testing
 hypothesis>=6.82.0,<7.0.0
