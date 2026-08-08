@@ -41,15 +41,25 @@ def test_enable_ai_false_skips_preflight_and_ai_steps(tmp_path, monkeypatch):
 
     monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_validate_environment", lambda self: None)
     monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_detect_file_type", lambda self: None)
-    monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_check_ollama_availability", lambda self: constructed.__setitem__("preflight", constructed["preflight"] + 1))
-    monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_step2_disassembly", lambda self: self.results.__setitem__("step2", {"status": "ok"}))
+    monkeypatch.setattr(
+        analyzer_mod.REVENGAnalyzer,
+        "_check_ollama_availability",
+        lambda self: constructed.__setitem__("preflight", constructed["preflight"] + 1),
+    )
+    monkeypatch.setattr(
+        analyzer_mod.REVENGAnalyzer,
+        "_step2_disassembly",
+        lambda self: self.results.__setitem__("step2", {"status": "ok"}),
+    )
     monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_step4_specifications", lambda self: None)
     monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_step5_human_readable", lambda self: None)
     monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_step6_deobfuscation", lambda self: None)
     monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_step7_implementation", lambda self: None)
     monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_step8_validation", lambda self: None)
     monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_generate_final_report", lambda self: None)
-    monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_calculate_pipeline_status", lambda self: "ok")
+    monkeypatch.setattr(
+        analyzer_mod.REVENGAnalyzer, "_calculate_pipeline_status", lambda self: "ok"
+    )
     monkeypatch.setattr(
         analyzer_mod.REVENGAnalyzer,
         "_count_step_statuses",
@@ -123,7 +133,9 @@ def test_enable_ai_true_attempts_step1(tmp_path, monkeypatch):
 
     monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_validate_environment", lambda self: None)
     monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_detect_file_type", lambda self: None)
-    monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_check_ollama_availability", lambda self: None)
+    monkeypatch.setattr(
+        analyzer_mod.REVENGAnalyzer, "_check_ollama_availability", lambda self: None
+    )
     monkeypatch.setattr(
         analyzer_mod.REVENGAnalyzer,
         "_step2_disassembly",
@@ -139,10 +151,10 @@ def test_enable_ai_true_attempts_step1(tmp_path, monkeypatch):
         "_generate_final_report",
     ):
         monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, name, lambda self: None)
-    monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_calculate_pipeline_status", lambda self: "ok")
     monkeypatch.setattr(
-        analyzer_mod.REVENGAnalyzer, "_count_step_statuses", lambda self: (0, 0, 0)
+        analyzer_mod.REVENGAnalyzer, "_calculate_pipeline_status", lambda self: "ok"
     )
+    monkeypatch.setattr(analyzer_mod.REVENGAnalyzer, "_count_step_statuses", lambda self: (0, 0, 0))
 
     def fake_step1(self):
         from reveng.tools.core.ai_recompiler_converter import AIRecompilerConverter

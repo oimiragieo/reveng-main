@@ -8,7 +8,8 @@ from reveng.tools.config.config_manager import ConfigManager
 
 
 def _write_config(path: Path) -> None:
-    path.write_text("""
+    path.write_text(
+        """
 ai:
   provider: ollama
   ollama:
@@ -23,7 +24,8 @@ analysis:
   max_ai_functions: 8
   batch_size: 4
   show_progress: true
-""")
+"""
+    )
 
 
 def test_config_manager_returns_expected_ai_settings(tmp_path: Path):

@@ -251,9 +251,7 @@ def test_r_hex_1_matches_measured_hexyl_subject_json():
         assert len(sha) == 64
         assert sha == (
             "3d26048bbbaee5e87a4613b4e21e898185e15b43cf43bd4fe74cc5d2dbaa5dba"
-        ) or sha == (
-            "e2040b5deda5900a152ac28a7444ba565b2b0d46861a3efefafaf074f1a16dfc"
-        )
+        ) or sha == ("e2040b5deda5900a152ac28a7444ba565b2b0d46861a3efefafaf074f1a16dfc")
     else:
         # could_not_measure / other — not done.
         assert backlog_status != "done"

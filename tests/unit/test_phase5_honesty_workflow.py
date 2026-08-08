@@ -25,6 +25,10 @@ def test_phase5_honesty_workflow_fail_closed_and_python39():
     assert "pytest --no-cov" in text
     # Must not flip native required or claim full nightly corpus.
     assert "required: true" not in text.lower()
-    assert "nightly corpus" in text.lower() or "M4 residual" in text or "corpus residual" in text.lower()
+    assert (
+        "nightly corpus" in text.lower()
+        or "M4 residual" in text
+        or "corpus residual" in text.lower()
+    )
     for needle in EXPECTED:
         assert needle in text, f"workflow missing {needle}"

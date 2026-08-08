@@ -70,9 +70,7 @@ def _base(**overrides):
         # Digest-only receipt (path optional). Path+digest must match when path present.
         "applied_source_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
         "grades": ["analysis_only", "compile_only", "launches_but_divergent"],
-        "seed_runs": _seed_runs(
-            "analysis_only", "compile_only", "launches_but_divergent"
-        ),
+        "seed_runs": _seed_runs("analysis_only", "compile_only", "launches_but_divergent"),
         "control_arm": {
             "llm_enabled": False,
             "passed": False,
@@ -213,9 +211,7 @@ def test_hollow_ack_ping_identical_grades_fails():
     payload = _base(
         grades=grades,
         seed_runs=seed_runs,
-        seed_runs_detail=[
-            {**row, "ollama_preview": "ACK"} for row in seed_runs
-        ],
+        seed_runs_detail=[{**row, "ollama_preview": "ACK"} for row in seed_runs],
         treatment_differs_from_control=False,
         candidate_hash_changed=False,
         control_candidate_sha256=same,
@@ -232,10 +228,7 @@ def test_hollow_ack_ping_identical_grades_fails():
     payload.pop("applied_source_sha256", None)
     v = gate.evaluate_evidence(payload)
     assert v.exit_code == 1
-    assert any(
-        r in ("hollow_ack_ping_identical_grades", "llm_not_load_bearing")
-        for r in v.reasons
-    )
+    assert any(r in ("hollow_ack_ping_identical_grades", "llm_not_load_bearing") for r in v.reasons)
 
 
 def test_measured_requires_llm_load_bearing_signal():
@@ -247,7 +240,9 @@ def test_measured_requires_llm_load_bearing_signal():
         control_candidate_sha256=same,
         treatment_candidate_sha256=same,
         seed_runs=_seed_runs(
-            "analysis_only", "compile_only", "launches_but_divergent",
+            "analysis_only",
+            "compile_only",
+            "launches_but_divergent",
             llm_influenced=False,
         ),
         control_arm={
@@ -308,7 +303,9 @@ def test_load_bearing_via_grade_delta_passes():
         treatment_differs_from_control=True,
         grades=["behavior_matched", "behavior_matched", "behavior_matched"],
         seed_runs=_seed_runs(
-            "behavior_matched", "behavior_matched", "behavior_matched",
+            "behavior_matched",
+            "behavior_matched",
+            "behavior_matched",
             llm_influenced=True,
         ),
         control_arm={
@@ -328,9 +325,7 @@ def test_load_bearing_via_grade_delta_passes():
 
 def test_measured_legacy_grades_only_fails():
     """Bare grades list alone must never unlock measured exit 0 (Sol Round-3)."""
-    payload = _base(
-        grades=["analysis_only", "compile_only", "launches_but_divergent"]
-    )
+    payload = _base(grades=["analysis_only", "compile_only", "launches_but_divergent"])
     del payload["seed_runs"]
     v = gate.evaluate_evidence(payload)
     assert v.exit_code == 1
@@ -381,9 +376,7 @@ def test_invalid_grade_never_pass():
 
 def test_seed_runs_derive_grades_and_require_three_executed():
     """When seed_runs present, gate derives grades from executed runs (Sol HIGH 2)."""
-    seed_runs = _seed_runs(
-        "analysis_only", "compile_only", "launches_but_divergent"
-    )
+    seed_runs = _seed_runs("analysis_only", "compile_only", "launches_but_divergent")
     v = gate.evaluate_evidence(_base(grades=[], seed_runs=seed_runs))
     assert v.exit_code == 0
     assert v.runtime_status == "measured"
@@ -418,9 +411,7 @@ def test_measured_three_duplicate_seed_ids_fails():
 
 def test_measured_three_distinct_seed_ids_passes():
     """≥3 executed rows with unique seed_ids + valid grades may claim measured."""
-    seed_runs = _seed_runs(
-        "analysis_only", "compile_only", "launches_but_divergent"
-    )
+    seed_runs = _seed_runs("analysis_only", "compile_only", "launches_but_divergent")
     assert len({r["seed_id"] for r in seed_runs}) == 3
     v = gate.evaluate_evidence(_base(grades=[], seed_runs=seed_runs))
     assert v.exit_code == 0
@@ -433,9 +424,7 @@ def test_seed_runs_with_fewer_than_three_executed_fails():
     v = gate.evaluate_evidence(_base(grades=[], seed_runs=seed_runs))
     assert v.exit_code == 1
     assert any(
-        "grades_below_min_seeds" in r
-        or "seed_runs_below" in r
-        or "seed_ids_not_distinct" in r
+        "grades_below_min_seeds" in r or "seed_runs_below" in r or "seed_ids_not_distinct" in r
         for r in v.reasons
     )
 
@@ -605,26 +594,18 @@ def test_invalid_runtime_status_rejected():
 
 
 def test_resolve_ollama_tags_url_default():
-    assert (
-        gate.resolve_ollama_tags_url(environ={})
-        == "http://127.0.0.1:11434/api/tags"
-    )
+    assert gate.resolve_ollama_tags_url(environ={}) == "http://127.0.0.1:11434/api/tags"
 
 
 def test_resolve_ollama_tags_url_from_ollama_host(monkeypatch):
     monkeypatch.delenv("REVENG_OLLAMA_HOST", raising=False)
     monkeypatch.setenv("OLLAMA_HOST", "http://172.28.160.1:11434")
-    assert (
-        gate.resolve_ollama_tags_url()
-        == "http://172.28.160.1:11434/api/tags"
-    )
+    assert gate.resolve_ollama_tags_url() == "http://172.28.160.1:11434/api/tags"
 
 
 def test_resolve_ollama_tags_url_bare_host_and_reveng_override():
     assert (
-        gate.resolve_ollama_tags_url(
-            environ={"OLLAMA_HOST": "10.0.0.1:11434"}
-        )
+        gate.resolve_ollama_tags_url(environ={"OLLAMA_HOST": "10.0.0.1:11434"})
         == "http://10.0.0.1:11434/api/tags"
     )
     assert (
@@ -675,9 +656,7 @@ def test_cli_probe_ollama_prints_resolved_url(monkeypatch, capsys):
         def __exit__(self, *args):
             return False
 
-    monkeypatch.setattr(
-        gate.urllib.request, "urlopen", lambda url, timeout=None: _Resp()
-    )
+    monkeypatch.setattr(gate.urllib.request, "urlopen", lambda url, timeout=None: _Resp())
     rc = gate.main(["--probe-ollama"])
     assert rc == 0
     payload = json.loads(capsys.readouterr().out)
@@ -758,7 +737,7 @@ def test_applied_source_path_hash_mismatch_fails(tmp_path):
     src.write_text("package main\n", encoding="utf-8")
     payload = _base(
         applied_source_path=str(src),
-        applied_source_sha256="0"*64,
+        applied_source_sha256="0" * 64,
     )
     # ensure llm_influenced so receipt is required
     for row in payload["seed_runs"]:

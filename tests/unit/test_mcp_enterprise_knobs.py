@@ -24,7 +24,9 @@ async def test_analyze_binary_quick_mode_and_find_vulns(monkeypatch, tmp_path):
             return {"binary": {"type": "pe", "architecture": "x86"}}
 
     monkeypatch.setattr(analyzer_mod, "REVENGAnalyzer", FakeAnalyzer)
-    monkeypatch.setattr(analyzer_mod, "EnhancedAnalysisFeatures", analyzer_mod.EnhancedAnalysisFeatures)
+    monkeypatch.setattr(
+        analyzer_mod, "EnhancedAnalysisFeatures", analyzer_mod.EnhancedAnalysisFeatures
+    )
 
     stub = object.__new__(ent.REVENGEnterpriseServer)
     stub.results_cache = {}
@@ -133,9 +135,7 @@ async def test_decompile_omitted_knobs_no_unsupported_warning(monkeypatch):
         "decompiled_source": "// code",
     }
 
-    resp = await ent.REVENGEnterpriseServer.decompile_binary(
-        stub, {"binary_path": "/tmp/x.bin"}
-    )
+    resp = await ent.REVENGEnterpriseServer.decompile_binary(stub, {"binary_path": "/tmp/x.bin"})
     text = str(resp)
     assert "use_ai_enhancement requested but unsupported" not in text
     assert "reconstruct_types requested but unsupported" not in text

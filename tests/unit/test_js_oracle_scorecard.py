@@ -16,9 +16,7 @@ def test_relative_path_match_requires_recovered_root(tmp_path: Path) -> None:
     root = tmp_path / "recovered"
     (root / "src").mkdir(parents=True)
     (root / "src" / "a.js").write_text("x", encoding="utf-8")
-    sc = compute_js_project_file_scorecard(
-        oracle, [root / "src" / "a.js"], recovered_root=root
-    )
+    sc = compute_js_project_file_scorecard(oracle, [root / "src" / "a.js"], recovered_root=root)
     assert sc["match_mode"] == "relative_path"
     assert sc["project_file_recall"] == 1.0
     assert sc["reconstruction_mode"] == "filename_set"

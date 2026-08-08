@@ -71,9 +71,9 @@ def test_hexyl_provenance_when_binary_present_or_loud_skip():
     )
     sha_text = HEXYL_SHA.read_text(encoding="utf-8").strip()
     file_digest = sha_text.split()[0]
-    assert file_digest == digest, (
-        f"hexyl.sha256 records {file_digest} but binary hashes to {digest}"
-    )
+    assert (
+        file_digest == digest
+    ), f"hexyl.sha256 records {file_digest} but binary hashes to {digest}"
     # Research doc must stay aligned with the local provenance file.
     research = RESEARCH.read_text(encoding="utf-8")
     assert digest in research

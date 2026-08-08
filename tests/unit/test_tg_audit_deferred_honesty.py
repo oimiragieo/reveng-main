@@ -33,4 +33,4 @@ def test_enterprise_no_silent_f841_knobs():
         "_quick_mode = args.get" not in src and "_enable_ai = args.get" not in src
     )
     assert "_quick_mode = args.get" not in src
-    assert "_use_ai = args.get(\"use_ai_enhancement\", True)  # noqa: F841" not in src
+    assert '_use_ai = args.get("use_ai_enhancement", True)  # noqa: F841' not in src

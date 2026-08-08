@@ -71,11 +71,7 @@ def _resolve_ollama_host(ollama_host: Optional[str] = None) -> str:
 
     raw = (ollama_host or "").strip()
     if not raw:
-        raw = (
-            os.environ.get("REVENG_OLLAMA_HOST")
-            or os.environ.get("OLLAMA_HOST")
-            or ""
-        ).strip()
+        raw = (os.environ.get("REVENG_OLLAMA_HOST") or os.environ.get("OLLAMA_HOST") or "").strip()
     if not raw:
         raw = "http://localhost:11434"
     if "://" not in raw:
