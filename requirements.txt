@@ -81,7 +81,7 @@ ollama>=0.6.1
 # PyTorch for GPU acceleration and LLM4Decompile
 torch>=2.0.0
 transformers>=4.30.0
-accelerate>=0.20.0
+accelerate>=1.14.0
 
 # v4.0 NEW: LLM4Decompile specialized models
 # Note: Models will be downloaded on first use (~18GB for 9B model)
