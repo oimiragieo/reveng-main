@@ -132,7 +132,7 @@ openai>=1.0.0  # OpenAI GPT-4 API client
 anthropic>=0.7.0  # Anthropic Claude API client
 
 # Agent SDK Dependencies
-aiohttp>=3.9.0  # Async HTTP client/server for MCP transports
+aiohttp>=3.14.3  # Async HTTP client/server for MCP transports
 
 # Deep Learning Binary Classification
 # torch>=2.0.0  # Already listed above
