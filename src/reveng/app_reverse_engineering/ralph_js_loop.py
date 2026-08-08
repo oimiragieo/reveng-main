@@ -340,6 +340,7 @@ async def run_ralph_js_oracle_loop(
                 "validation_grade": validation_grade,
                 "analysis_file": analysis_file,
                 "improved": improved,
+                "ralph_knobs": (metadata or {}).get("ralph_knobs"),
             }
         )
 

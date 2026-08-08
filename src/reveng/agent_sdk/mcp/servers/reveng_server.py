@@ -362,12 +362,19 @@ class REVENGMCPServer(MCPServer):
                 )
 
             else:
-                # Binary malware detection
-                # TODO: Implement binary malware detection
+                # Binary malware detection — explicit unsupported (honesty)
                 return build_mcp_tool_response(
                     tool_name="detect_malware",
-                    text="Binary malware detection not yet implemented",
-                    payload={},
+                    text=(
+                        "Binary malware detection unsupported in this MCP path; "
+                        "use JavaScript detect or security classifier CLI"
+                    ),
+                    payload={
+                        "supported": False,
+                        "reason": "binary_malware_mcp_unsupported",
+                    },
+                    status="unsupported",
+                    error="binary_malware_mcp_unsupported",
                 )
 
         except Exception as e:

@@ -112,6 +112,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 
 | id | finding | status |
 | --- | --- | --- |
+| TG-AUDIT-2026-08-08 | tg-audit P0/P1 honesty fixups (plan+impl Sol APPROVE_WITH_NITS; `feat/tg-audit-fixups`; D1–D6 deferred) | done |
 | DF-1 | Host python3.13 stdlib broken — use 3.9 | mitigated |
 | DF-2 | Conftest heavy imports | done |
 | DF-3 | Wrong analyze report filename in runner | done |

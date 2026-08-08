@@ -595,6 +595,14 @@ def build_capability_report(
                 recon,
                 run_probe=run_js_npm_lifecycle_probe,
             )
+        else:
+            skipped = {
+                "status": "skipped_no_recovered_project",
+                "reason": "skipped_no_recovered_project",
+            }
+            js_smoke = dict(skipped)
+            js_behavior = dict(skipped)
+            js_npm = dict(skipped)
 
     recall = _safe_float(oracle.get("project_file_recall")) if oracle.get("present") else None
     precision = _safe_float(oracle.get("project_file_precision")) if oracle.get("present") else None

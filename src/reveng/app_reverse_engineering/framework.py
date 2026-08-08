@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, Optional, Protocol, Sequence
+from typing import Any, Dict, Optional, Protocol, Sequence, cast
 
 from .contracts import enrich_app_analysis_payload, rewrite_analysis_file
 from .models import AppReverseEngineeringResult
@@ -67,6 +67,14 @@ class AppReverseEngineeringFramework:
         max_snippets: int = 12,
         snippet_context: int = 2,
         run_deobfuscator: bool = False,
+        oracle_dir: Optional[str] = None,
+        run_js_syntax_check: bool = True,
+        run_js_behavior_probe: bool = True,
+        run_js_npm_lifecycle_probe: bool = False,
+        run_webcrack: bool = False,
+        run_restringer: bool = False,
+        run_wakaru: bool = False,
+        run_js_deobfuscator: bool = False,
     ) -> AppReverseEngineeringResult:
         """Run the selected adapter and return a normalized result."""
         selected_language = self.infer_language(input_path) if language == "auto" else language
@@ -78,15 +86,28 @@ class AppReverseEngineeringFramework:
                 f"Unknown language adapter '{selected_language}'. Available: {available}"
             ) from exc
 
-        result = await adapter.reverse_engineer(
-            input_path,
-            output_dir,
-            input_root=input_root,
-            skip_patterns=skip_patterns,
-            max_snippets=max_snippets,
-            snippet_context=snippet_context,
-            run_deobfuscator=run_deobfuscator,
-        )
+        base_kwargs = {
+            "input_root": input_root,
+            "skip_patterns": skip_patterns,
+            "max_snippets": max_snippets,
+            "snippet_context": snippet_context,
+            "run_deobfuscator": run_deobfuscator,
+        }
+        if selected_language == "javascript":
+            js_adapter = cast(Any, adapter)
+            result = await js_adapter.reverse_engineer(
+                input_path,
+                output_dir,
+                oracle_dir=oracle_dir,
+                run_webcrack=run_webcrack,
+                run_restringer=run_restringer,
+                run_wakaru=run_wakaru,
+                run_js_deobfuscator=run_js_deobfuscator,
+                **base_kwargs,
+            )
+        else:
+            result = await adapter.reverse_engineer(input_path, output_dir, **base_kwargs)
+
         enriched_metadata = enrich_app_analysis_payload(
             result.metadata,
             language=result.language,
@@ -100,6 +121,9 @@ class AppReverseEngineeringFramework:
             primary_artifacts=result.primary_artifacts,
             source_count=result.source_count,
             warnings=result.warnings,
+            run_js_syntax_check=run_js_syntax_check,
+            run_js_behavior_probe=run_js_behavior_probe,
+            run_js_npm_lifecycle_probe=run_js_npm_lifecycle_probe,
         )
         rewrite_analysis_file(result.analysis_file, enriched_metadata)
         validation = enriched_metadata["validation"]

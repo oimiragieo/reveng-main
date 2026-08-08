@@ -195,17 +195,10 @@ def test_t3_rows_remain_parked(item_id: str):
     assert _backlog_status(item_id) == "parked"
 
 
-@pytest.mark.parametrize("phase", list(range(6, 14)))
-def test_section_e_phases_6_through_13_open(phase: int):
+@pytest.mark.parametrize("phase", list(range(5, 14)))
+def test_section_e_phases_5_through_13_open(phase: int):
     status = _section_e_phase_status(phase)
     assert status == "open", f"section E phase {phase} status={status!r}, want open"
-
-
-def test_section_e_phase_5_partial_thin_honesty():
-    """Phase 5 thin honesty may be partial; full exit (nightly corpus) remains open."""
-    status = _section_e_phase_status(5)
-    assert status in ("open", "partial", "in_progress")
-    assert status != "done"
 
 
 def test_section_e_phase_4_partial_until_both_exits():
@@ -312,9 +305,7 @@ def test_wave_b_nonclosures_ralph2_m2_m1_native_phases_t3():
     assert _backlog_status("M1-NATIVE-FAM") == "open"
     assert _section_e_phase_status(4) in ("open", "partial", "in_progress")
     assert _section_e_phase_status(4) != "done"
-    assert _section_e_phase_status(5) in ("open", "partial", "in_progress")
-    assert _section_e_phase_status(5) != "done"
-    for phase in range(6, 14):
+    for phase in range(5, 14):
         assert _section_e_phase_status(phase) == "open"
     for tid in ("T3-KERNEL", "T3-PACKED", "T3-JIT", "T3-ANTI", "T3-GUI"):
         assert _backlog_status(tid) == "parked"

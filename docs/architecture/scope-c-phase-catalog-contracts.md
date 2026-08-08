@@ -24,7 +24,7 @@ Ops: root [`backlog.md`](../../backlog.md) §E. Governance:
 | 2 | Managed recompile + GA report honesty (preview) | **done** (preview; native corpus residuals open) | (shipped; see backlog §A / M1) |
 | 3 | Behavior-backed JS validation | **done** | (shipped; see backlog §B) |
 | 4 | Hexyl frontier + VRL LLM round-trip honesty | **done (honesty go)**| [`2026-08-07-reveng-phase-04-hexyl-vrl.md`](../superpowers/plans/2026-08-07-reveng-phase-04-hexyl-vrl.md) |
-| 5 | Equivalence product gates + CI corpus enforcement | **partial** (thin honesty landed) | [`2026-08-07-reveng-phase-05-equiv-ci.md`](../superpowers/plans/2026-08-07-reveng-phase-05-equiv-ci.md) |
+| 5 | Equivalence product gates + CI corpus enforcement | open / await Sol stop/go | [`2026-08-07-reveng-phase-05-equiv-ci.md`](../superpowers/plans/2026-08-07-reveng-phase-05-equiv-ci.md) |
 | 6 | JS close: RALPH-2 + bundler graph (P4) | open / await Sol stop/go | [`2026-08-07-reveng-phase-06-js.md`](../superpowers/plans/2026-08-07-reveng-phase-06-js.md) |
 | 7 | Native depth → partial_equivalence + multi-file | open / await Sol stop/go | [`2026-08-07-reveng-phase-07-native-depth.md`](../superpowers/plans/2026-08-07-reveng-phase-07-native-depth.md) |
 | 8 | MCP + AI ops productization | open / await Sol stop/go | [`2026-08-07-reveng-phase-08-mcp-ai.md`](../superpowers/plans/2026-08-07-reveng-phase-08-mcp-ai.md) |

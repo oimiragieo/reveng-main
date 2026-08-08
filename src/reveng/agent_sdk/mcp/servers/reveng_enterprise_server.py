@@ -454,7 +454,7 @@ class REVENGEnterpriseServer(MCPServer):
                         },
                         "quick_mode": {
                             "type": "boolean",
-                            "description": "Enable quick analysis mode (faster, less detailed)",
+                            "description": "Skip Ollama preflight check (faster startup; analysis steps unchanged)",
                         },
                         "enable_ai": {
                             "type": "boolean",
@@ -474,7 +474,7 @@ class REVENGEnterpriseServer(MCPServer):
         self.register_tool(
             MCPTool(
                 name="decompile_binary",
-                description="Decompile binary to high-quality source code using Ghidra + AI enhancement",
+                description="Decompile binary to source using Ghidra (AI enhancement unsupported in this MCP path)",
                 input_schema={
                     "type": "object",
                     "properties": {
@@ -488,11 +488,11 @@ class REVENGEnterpriseServer(MCPServer):
                         },
                         "use_ai_enhancement": {
                             "type": "boolean",
-                            "description": "Apply AI-powered code enhancement",
+                            "description": "Requested AI enhancement — unsupported in this MCP path (ghidra-only)",
                         },
                         "reconstruct_types": {
                             "type": "boolean",
-                            "description": "Reconstruct type information (90%+ accuracy)",
+                            "description": "Requested type reconstruction — unsupported in this MCP path",
                         },
                     },
                     "required": ["binary_path"],
@@ -1026,16 +1026,29 @@ class REVENGEnterpriseServer(MCPServer):
     async def analyze_binary(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Comprehensive binary analysis"""
         try:
-            from reveng.analysis.analyzer import REVENGAnalyzer
+            from reveng.analysis.analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
 
             path = args["path"]
-            # TODO: Pass these parameters to REVENGAnalyzer when supported
-            _quick_mode = args.get("quick_mode", False)  # noqa: F841
-            _enable_ai = args.get("enable_ai", True)  # noqa: F841
-            _find_vulns = args.get("find_vulnerabilities", False)  # noqa: F841
+            quick_mode = bool(args.get("quick_mode", False))
+            enable_ai = bool(args.get("enable_ai", True))
+            find_vulns = bool(args.get("find_vulnerabilities", False))
 
-            # Run analysis
-            analyzer = REVENGAnalyzer(binary_path=path)
+            features = EnhancedAnalysisFeatures()
+            features.enable_vulnerability_discovery = False
+            if not enable_ai:
+                features.enable_enhanced_analysis = False
+                features.enable_corporate_exposure = False
+                features.enable_threat_intelligence = False
+                features.enable_enhanced_reconstruction = False
+                features.enable_demonstration_generation = False
+
+            effective_check_ollama = enable_ai and not quick_mode
+            analyzer = REVENGAnalyzer(
+                binary_path=path,
+                check_ollama=effective_check_ollama,
+                enable_ai=enable_ai,
+                enhanced_features=features,
+            )
             loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(None, analyzer.analyze_binary)
 
@@ -1045,19 +1058,33 @@ class REVENGEnterpriseServer(MCPServer):
 
             # Format response
             text = self._format_analysis_results(result, path, analysis_id)
+            knobs_applied = {
+                "quick_mode": quick_mode,
+                "enable_ai": enable_ai,
+                "check_ollama": effective_check_ollama,
+            }
+            payload = {
+                "analysis_id": analysis_id,
+                "file_type": (result if isinstance(result, dict) else {})
+                .get("binary", {})
+                .get("type", "unknown"),
+                "architecture": (result if isinstance(result, dict) else {})
+                .get("binary", {})
+                .get("architecture", "unknown"),
+                "analysis_result": result if isinstance(result, dict) else {},
+                "knobs_applied": knobs_applied,
+            }
+            if find_vulns:
+                payload["find_vulnerabilities"] = "not_run_use_find_vulnerabilities_tool"
+                text = (
+                    f"{text}\n\nWarning: find_vulnerabilities requested but "
+                    "not_run_use_find_vulnerabilities_tool"
+                )
 
-            analysis_payload = result if isinstance(result, dict) else {}
             return build_mcp_tool_response(
                 tool_name="analyze_binary",
                 text=text,
-                payload={
-                    "analysis_id": analysis_id,
-                    "file_type": analysis_payload.get("binary", {}).get("type", "unknown"),
-                    "architecture": analysis_payload.get("binary", {}).get(
-                        "architecture", "unknown"
-                    ),
-                    "analysis_result": analysis_payload,
-                },
+                payload=payload,
                 provenance={
                     "inputs": [
                         make_evidence_item(
@@ -1103,8 +1130,8 @@ class REVENGEnterpriseServer(MCPServer):
             path = self._resolve_binary_argument(args, field_name="binary_path")
             output_path = args.get("output_path")
             ghidra_timeout = self._coerce_optional_int(args.get("_ghidra_timeout"))
-            # TODO: Implement AI enhancement when supported
-            _use_ai = args.get("use_ai_enhancement", True)  # noqa: F841
+            use_ai = bool(args.get("use_ai_enhancement", False))
+            reconstruct_types = bool(args.get("reconstruct_types", False))
             ghidra_engine = self._get_ghidra_engine(timeout_override=ghidra_timeout)
 
             # Decompile with Ghidra
@@ -1120,12 +1147,29 @@ class REVENGEnterpriseServer(MCPServer):
                 output_file.write_text(structured_result["decompiled_source"], encoding="utf-8")
                 structured_result["output_path"] = str(output_file)
 
+            text = structured_result["content"][0]["text"]
+            payload = {key: value for key, value in structured_result.items() if key != "content"}
+            knobs_applied = {}
+            if use_ai:
+                knobs_applied["use_ai_enhancement"] = "unsupported"
+                text = (
+                    f"{text}\n\nWarning: use_ai_enhancement requested but unsupported; "
+                    "ghidra-only decompile"
+                )
+            if reconstruct_types:
+                knobs_applied["reconstruct_types"] = "unsupported"
+                payload["reconstruct_types"] = "unsupported"
+                text = (
+                    f"{text}\n\nWarning: reconstruct_types requested but unsupported "
+                    "in this MCP decompile path"
+                )
+            if knobs_applied:
+                payload["knobs_applied"] = knobs_applied
+
             return build_mcp_tool_response(
                 tool_name="decompile_binary",
-                text=structured_result["content"][0]["text"],
-                payload={
-                    key: value for key, value in structured_result.items() if key != "content"
-                },
+                text=text,
+                payload=payload,
                 provenance={
                     "inputs": [
                         make_evidence_item(
