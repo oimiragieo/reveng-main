@@ -9,7 +9,7 @@
 # =============================================================================
 
 # HTTP client for API calls (security updates)
-requests>=2.31.0,<3.0.0
+requests>=2.34.2,<3.0.0
 
 # Web server for Ghidra HTTP API
 flask>=2.3.0,<4.0.0
