@@ -23,6 +23,9 @@ flake8>=6.0.0,<8.0.0
 # Python type checker
 mypy>=1.4.0,<2.0.0
 
+# Architecture import contracts
+import-linter>=2.0,<3.0.0
+
 # Security tools
 bandit>=1.7.0,<2.0.0
 safety>=2.3.0,<4.0.0

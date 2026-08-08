@@ -61,7 +61,8 @@ def _slug(path: Path) -> str:
 
 
 def _resolve_config_path(value: str, base_dir: Path) -> Path:
-    path = Path(value)
+    normalized = value.replace("\\", "/")
+    path = Path(normalized)
     return path if path.is_absolute() else (base_dir / path)
 
 

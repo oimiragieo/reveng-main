@@ -26,7 +26,9 @@ def _load_json(path: Path) -> dict[str, Any] | None:
 
 
 def _resolve_config_path(value: str, base_dir: Path) -> Path:
-    path = Path(value)
+    # Configs may carry Windows-style separators from cross-platform checkouts.
+    normalized = value.replace("\\", "/")
+    path = Path(normalized)
     return path if path.is_absolute() else (base_dir / path).resolve()
 
 
