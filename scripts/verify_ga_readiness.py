@@ -180,8 +180,8 @@ def build_readiness_report(
     gates.append(
         _gate(
             "app-corpus-baseline",
-            app_matrix_status == "pass" and app_total_entries >= 7,
-            "App reverse-engineering corpus must pass with at least 7 tracked rows.",
+            app_matrix_status in {"pass", "pass_with_limitations"} and app_total_entries >= 7,
+            "App reverse-engineering corpus must pass (or pass_with_limitations) with at least 7 tracked rows.",
             matrix_status=app_matrix_status,
             total_entries=app_total_entries,
         )

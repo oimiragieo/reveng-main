@@ -41,6 +41,7 @@ jobs:
         run: python scripts/verify_ga_readiness.py --profile baseline --output reports/ga_readiness_baseline.json
 
       - name: Upload readiness artifacts
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: ga-readiness-baseline
