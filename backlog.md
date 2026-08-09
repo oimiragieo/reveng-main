@@ -262,7 +262,7 @@ Thinktank: Round 1 `APPROVE_WITH_NITS` → Round 2 Sol **`APPROVE Wave 0`** (`do
 | WIRING-2026-08-09 | MCP/CLI Top-8 wiring honesty (W-01..W-07,W-04,W-06,W-09) | done | tests in `tests/unit/test_world_class_wiring_honesty_2026_08_09.py` |
 | DOCS-DUALDOOR-2026-08-09 | Diátaxis dual-door junior docs ecosystem | done | `docs/support|tutorials|how-to|explanation|reference|ops` |
 | ISSUE-101 | Rich local Capstone pseudocode renderer | blocked | Wave 0 path (2): disposition table below; issue stays **open**; do not claim closed |
-| CLOSEOUT-W0 | Land honesty+docs; #101 disposition; dogfood | in_progress | branch `feat/backlog-closeout-wave0` |
+| CLOSEOUT-W0 | Land honesty+docs; #101 disposition; dogfood | in_progress | branch `feat/backlog-closeout-wave0`; Sol verdict `docs/architecture/sol-wave0-impl-verdict.md`; dogfood 22 honesty pass / 1+43 xfail disasm / app RE evidence_backed |
 
 ### ISSUE-101 xfail disposition (Wave 0 acceptance path 2)
 
