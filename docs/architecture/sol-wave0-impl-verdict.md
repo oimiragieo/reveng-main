@@ -47,9 +47,16 @@ No all-85-done claim. No phases 6–13 / RALPH-2 done claim. No exploit expansio
 ## Second-pass verdict
 
 **Verdict:** `PASS_WITH_NITS` (Codex gpt-5.6-sol)  
-**Reviewed SHA:** `3bfa99decdfe06a06b538564304f1a39773407b4`
+**Reviewed SHA:** `3bfa99decdfe06a06b538564304f1a39773407b4` (later tip `fa40cfbc` before merge)
 
 - W0-1..W0-5 PASS; W0-6/W0-7 nits were: blank second-pass (this section) and merge not yet done.
 - This file update addresses the blank second-pass nit.
 - Remaining intentional next step: PR-only merge to `main`.
 - `lint-imports` remains `could_not_measure` on this host (importlinter absent); black/isort clean on Wave 0 Python.
+
+## Merge
+
+- **PR:** https://github.com/oimiragieo/reveng-main/pull/131  
+- **Merge commit:** `047cb81f73e530f58642bea115f561a7cb110159`  
+- Wave B `honesty-unit` + Wave C `equivalence-honesty` green before merge.
+- Pre-existing CI noise still open in backlog: `CI-DOCS-LINK-1`, `CI-UNICORN-BUILD-1`.

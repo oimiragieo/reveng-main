@@ -140,7 +140,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈5.10s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
 | 2026-08-07 | Phase 4 **honesty go** (Sol APPROVE_WITH_NITS waiver: M2 split). Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: Sol REJECT hollow ACK-ping → forgeable `candidate_hash_changed` → corpus registration of `vrl_llm_micro_go` + gate SHA/applied-source harden; dogfood loads seeds from corpus; VRL-LLM-1 **done** (load-bearing, Sol-ready evidence); Phase 4 **honesty go** recorded (M2 world-class still open/partial; hexyl C refine `vrl_compile_toolchain_broken`). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
 | 2026-08-08 | PR #119 merge (tg-audit + Scope C history). Follow-up: honesty slim install + drop ghidramcp PyPI fiction; CEO `ceo-update-2026-08-08-tg-audit-merge.md`; lessons L25–L32. |
-| 2026-08-09 | Thinktank **APPROVE Wave 0** backlog closeout (not all-85-done). Land wiring honesty + dual-door docs; #101 dispositioned blocked with per-xfail table (section L); later waves Sol-gated. |
+| 2026-08-09 | Thinktank **APPROVE Wave 0** backlog closeout (not all-85-done). Land wiring honesty + dual-door docs; #101 dispositioned blocked with per-xfail table (section L); later waves Sol-gated. PR **#131** merged (`047cb81f`). |
 
 ---
 
@@ -267,7 +267,7 @@ Thinktank: Round 1 `APPROVE_WITH_NITS` → Round 2 Sol **`APPROVE Wave 0`** (`do
 | WIRING-2026-08-09 | MCP/CLI Top-8 wiring honesty (W-01..W-07,W-04,W-06,W-09) | done | tests in `tests/unit/test_world_class_wiring_honesty_2026_08_09.py` |
 | DOCS-DUALDOOR-2026-08-09 | Diátaxis dual-door junior docs ecosystem | done | `docs/support|tutorials|how-to|explanation|reference|ops` |
 | ISSUE-101 | Rich local Capstone pseudocode renderer | blocked | Wave 0 path (2): disposition table below; issue stays **open**; do not claim closed |
-| CLOSEOUT-W0 | Land honesty+docs; #101 disposition; dogfood | in_progress | branch `feat/backlog-closeout-wave0`; Sol verdict `docs/architecture/sol-wave0-impl-verdict.md`; dogfood 22 honesty pass / 1+43 xfail disasm / app RE evidence_backed |
+| CLOSEOUT-W0 | Land honesty+docs; #101 disposition; dogfood | done | Merged PR #131 → `047cb81f`. Thinktank APPROVE Wave 0; Sol PASS_WITH_NITS then merge. Dogfood: 22 honesty / 1+43 xfail disasm / app RE evidence_backed. #101 remains open (section L). |
 
 ### ISSUE-101 xfail disposition (Wave 0 acceptance path 2)
 
