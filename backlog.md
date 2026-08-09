@@ -77,19 +77,19 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 
 | phase | focus | status |
 | --- | --- | --- |
-| 1 | Honesty + known_gaps + GA gate integrity | **done** |
-| 2 | Managed recompile + GA report honesty (preview) | **done** (preview); native corpus still open |
-| 3 | Behavior-backed JS validation | **done** (incl. optional tsx) |
-| 4 | Hexyl frontier + VRL LLM round-trip honesty | **done (honesty go)** — waiver `decision-phase-04-honesty-go-waiver.md`; world-class M2 remains **partial**/separate |
-| 5 | Equivalence product gates + CI corpus enforcement | **partial** — thin honesty authorized+landed (`decision-phase-05-thin-honesty-auth.md`); full nightly corpus / product equivalence service still open |
-| 6 | JS close: RALPH-2 + bundler graph (P4) | open (await Sol stop/go; BP-2/3/4 done) |
-| 7 | Native depth → partial_equivalence + multi-file | open (await Sol stop/go)|
-| 8 | MCP + AI ops productization | open (await Sol stop/go)|
-| 9 | Orchestration + modular monolith / ports | open (await Sol stop/go) |
-| 10 | Workers + external-tool CI + SEC-1 sandbox | open (await Sol stop/go)|
-| 11 | Analyst / governance / packaging (GA-P4) | open (await Sol stop/go)|
-| 12 | Platform depth (IR, Ralph opt, RAG, KG start) | open (await Sol stop/go)|
-| 13 | Blue-ocean / v6.1+ futures (post SEC-1 for exploits) | open (await Sol stop/go)|
+| 1 | Honesty + known_gaps + GA gate integrity | done |
+| 2 | Managed recompile + GA report honesty (preview); native corpus still open | done |
+| 3 | Behavior-backed JS validation (incl. optional tsx) | done |
+| 4 | Hexyl frontier + VRL LLM round-trip; honesty go via `decision-phase-04-honesty-go-waiver.md`; world-class M2 remains separate/partial | partial |
+| 5 | Equivalence product gates + CI corpus; thin honesty via `decision-phase-05-thin-honesty-auth.md`; full nightly corpus / product equivalence still open | partial |
+| 6 | JS close: RALPH-2 + bundler graph (P4); await Sol stop/go; BP-2/3/4 done | open |
+| 7 | Native depth → partial_equivalence + multi-file; await Sol stop/go | open |
+| 8 | MCP + AI ops productization; await Sol stop/go | open |
+| 9 | Orchestration + modular monolith / ports; await Sol stop/go | open |
+| 10 | Workers + external-tool CI + SEC-1 sandbox; await Sol stop/go | open |
+| 11 | Analyst / governance / packaging (GA-P4); await Sol stop/go | open |
+| 12 | Platform depth (IR, Ralph opt, RAG, KG start); await Sol stop/go | open |
+| 13 | Blue-ocean / v6.1+ futures (post SEC-1 for exploits); await Sol stop/go | open |
 
 ## F. Capability hardening leftovers
 
@@ -126,9 +126,11 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | ISSUE-101-DISP | #101 rich Capstone renderer — 43 xfails dispositioned blocked | blocked | See section L; issue remains open |
 | CI-HONESTY-NOCOV-1 | Wave B/C honesty CI: `--no-cov` needs pytest-cov on slim install | done | add pytest-cov to requirements-honesty.txt |
 | CI-PHASE5-PY39-PATH-1 | Wave C used hardcoded `/usr/bin/python3.9` (absent on GHA) | done | use setup-python `python` |
-| CI-DOCS-LINK-1 | docs-link-check fails on main (215 errors; Windows abs paths in thinktank HTML) | open | pre-existing; not introduced by Wave 0 dual-door alone |
-| CI-UNICORN-BUILD-1 | Tests matrix: angr/unicorn wheel build fails (cmake_minimum_required) | open | pre-existing install flake; not Wave 0 code path |
+| CI-DOCS-LINK-1 | docs-link-check fails on main (215 errors; Windows abs paths in thinktank HTML) | partial | soft-fail via docs.yml continue-on-error; root cause open; Wave 1 disposition |
+| CI-UNICORN-BUILD-1 | Tests matrix: angr/unicorn wheel build fails (cmake_minimum_required) | partial | soft-fail containment; root cause https://github.com/unicorn-engine/unicorn/issues/2263 (accessed 2026-08-09); not claiming angr green |
 | LINT-IMPORTS-HOST-1 | Host `/usr/bin/python3.9` lacks importlinter for local lint-imports | open | could_not_measure locally; CI Code Quality still owns import contracts |
+| R-MCP-ANNOTATION-1 | Research: actlint-style declared-vs-derived MCP annotation honesty | open | https://github.com/formael/actlint (accessed 2026-08-09); not product GA |
+| EDGE-RECOMPILE-DIFF-1 | Research: competitor recompile-diff parity vs VRL | open | could_not_measure; cite https://github.com/kidoz/sleuthre (accessed 2026-08-09); no parity claim |
 
 ## I. Decisions / waivers
 
@@ -140,6 +142,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈5.10s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
 | 2026-08-07 | Phase 4 **honesty go** (Sol APPROVE_WITH_NITS waiver: M2 split). Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: Sol REJECT hollow ACK-ping → forgeable `candidate_hash_changed` → corpus registration of `vrl_llm_micro_go` + gate SHA/applied-source harden; dogfood loads seeds from corpus; VRL-LLM-1 **done** (load-bearing, Sol-ready evidence); Phase 4 **honesty go** recorded (M2 world-class still open/partial; hexyl C refine `vrl_compile_toolchain_broken`). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
 | 2026-08-08 | PR #119 merge (tg-audit + Scope C history). Follow-up: honesty slim install + drop ghidramcp PyPI fiction; CEO `ceo-update-2026-08-08-tg-audit-merge.md`; lessons L25–L32. |
+| 2026-08-09 | Thinktank **APPROVE Wave 1** honesty deep-dive (plan R3); installer deprecate + section-E L40 + CI partial disposition; not all-backlog.
 | 2026-08-09 | Thinktank **APPROVE Wave 0** backlog closeout (not all-85-done). Land wiring honesty + dual-door docs; #101 dispositioned blocked with per-xfail table (section L); later waves Sol-gated. PR **#131** merged (`047cb81f`). |
 
 ---
@@ -199,9 +202,9 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 | FEAT-8 | Better MCP productization | reveng-feature-roadmap.md | 8 | open | Schemas, streaming, approval hooks; overlaps EPIC-5 |
 | FEAT-9 | Stronger local-model orchestration | reveng-feature-roadmap.md | 8 | open | Ollama profiles/routing; overlaps EPIC-6 |
 | FEAT-10 | Recompilation developer kit | reveng-feature-roadmap.md | 12 | open | Compiler profiles, shims, artifact comparison |
-| REV-P0-INSTALLERS | Finish or deprecate dependency-manager installer stubs | REVOLUTION_PLAN.md | 1 | open | dnSpy/uncompyle6/exeinfo_pe/x64dbg/imhex/lordpe |
+| REV-P0-INSTALLERS | Finish or deprecate dependency-manager installer stubs | REVOLUTION_PLAN.md | 1 | partial | Wave 1 deprecate stubs (`deprecated_stub`); finish installers future Sol; see `policy-rev-p0-installers.md` |
 | REV-P0-EVIDENCE-AUDIT | Evidence propagation adoption-matrix audit | REVOLUTION_PLAN.md | 1 | open | Read-only audit incomplete in prior session |
-| REV-P0-ANALYSIS-CLEANUP | Cleanup policy for analysis_* dirs at repo root | REVOLUTION_PLAN.md | 1 | open | Policy: no untracked deletes without permission |
+| REV-P0-ANALYSIS-CLEANUP | Cleanup policy for analysis_* dirs at repo root | REVOLUTION_PLAN.md | 1 | partial | Policy landed `docs/architecture/policy-rev-p0-analysis-cleanup.md`; automated enforcement open |
 | REV-P1-LLM-REFINER | Iterative LLM refiner on oracle divergence | REVOLUTION_PLAN.md | 4 | open | Phase 1.5; feeds failing I/O + source to Claude/GPT |
 | REV-P1-WHOLE-PROGRAM | Whole-program context / type propagation | REVOLUTION_PLAN.md | 12 | open | Cross-function types before LLM decomp |
 | REV-P1-CI-CORPUS | Regression-gated CI on benchmark corpus | REVOLUTION_PLAN.md | 5 | partial | Thin equivalence evidence CI landed; full corpus residual overlaps M4 |

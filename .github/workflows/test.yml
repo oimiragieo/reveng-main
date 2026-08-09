@@ -7,6 +7,9 @@ on:
     branches: [main, develop]
 
 jobs:
+  # Wave 1 (CI-UNICORN-BUILD-1): matrix soft-red possible when angr/unicorn
+  # builds from source (cmake_minimum_required <3.5; see unicorn#2263).
+  # fail-fast:false / soft jobs contain noise; root cause not fixed — backlog=partial.
   unit-tests:
     strategy:
       fail-fast: false
