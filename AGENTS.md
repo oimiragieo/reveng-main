@@ -2,16 +2,16 @@
 
 ## Release honesty (read first for GA / ship claims)
 
-- Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO: `docs/architecture/ceo-update-2026-08-09-waves1-2.md` (priors: `ceo-update-2026-08-09-wave0.md`, `ceo-update-2026-08-08-tg-audit-merge.md`, charter, wave3/2/1).
-- Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L48**). Wave B: `docs/architecture/wave-b-exit-criteria.md`.
-- Cursor skill: `.cursor/skills/reveng-release-honesty/SKILL.md`. Agent memory: `.claude/MEMORY.md`.
+- Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO: `docs/architecture/ceo-update-2026-08-09-waves1-2.md` (Waves 0–2 **merged** — #131 / #132→`41add7d1` / #133→`1eff22f8`; priors: `ceo-update-2026-08-09-wave0.md`, `ceo-update-2026-08-08-tg-audit-merge.md`, charter).
+- Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L50**). Wave B: `docs/architecture/wave-b-exit-criteria.md`.
+- **Project skills** (`.cursor/skills/`): `reveng-release-honesty`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`. Personal skill index: `~/.claude/skills/INDEX.md`. Wave closeout workflow: `~/.claude/workflows/reveng-wave-honesty-closeout.md`. Agent memory: `.claude/MEMORY.md`.
 - **Junior docs:** start at `docs/README.md` (Analyst + Engineer Diátaxis tracks). Customer boundary: `docs/support/support-matrix.md` + `docs/support_matrix.json`. Ops/CEO packets are not product tutorials (`docs/ops/README.md`).
 - **Never trust a green GA verifier alone** — open tracked JSON and confirm evidence fields (baseline **and** ga profiles).
 - **Fixture ≠ capability**; process `completed` ≠ native GA (DF-5). Probe: `tool_absent` ≠ research done. #101 disposition ≠ renderer shipped (L34).
-- **Honesty CI:** `requirements-honesty.txt` (**include pytest-cov** if using `--no-cov`, L35) + `pip install -e . --no-deps` (L28). Workflows use `python`, not hardcoded `/usr/bin/python3.9` (L36). Soft-fail ≠ mitigated/done (L42).
+- **Honesty CI / merge bar:** `requirements-honesty.txt` (**include pytest-cov** if using `--no-cov`, L35) + `pip install -e . --no-deps` (L28). Wave closeout merges on **honesty-unit + lint-python** (+ Sol PASS), not the whole matrix — docs-link/unit fixture soft-reds stay L42 unless wave-scoped (L50). Workflows use `python`, not hardcoded `/usr/bin/python3.9` (L36). Soft-fail ≠ mitigated/done (L42).
 - **Do not pin `ghidramcp>=0.1.0`** — not on PyPI (L29). Prefer Ghidra fallback.
-- Prefer `/usr/bin/python3.9` locally. Use `scripts/git_status_scoped.sh` / named-path commits (DF-4 / L38). No `git stash` across worktrees; merges need `git -c user.name/email` from `git log -1`. Temp `GIT_INDEX_FILE` if DrvFS status hangs.
-- Plan/validate: Fable = `claude -p --model claude-fable-5`; Sol = `codex exec --model gpt-5.6-sol` (inline packets if sandbox greps hang). Wave-scope only — “close all backlog” is REJECT (L33). Sol verdict must pin **tip** SHA (L37/L47); early CI FAIL is a snapshot (L39); MCP hints = denylist not all-high (L45).
+- Prefer `/usr/bin/python3.9` locally. Use `scripts/git_status_scoped.sh` / named-path commits (DF-4 / L38). **Always** print `git diff --cached --name-status` before commit on dirty DrvFS and refuse unexpected deletes/adds (L49). No `git stash` across worktrees; merges need `git -c user.name/email` from `git log -1`. Temp `GIT_INDEX_FILE` if DrvFS status hangs. WSL→Windows **pwsh** git when hooks need `/c/Users/...` python — see `~/.claude/skills/wsl-windows-git-hooks/SKILL.md` (do not sudo-mount `/c`).
+- Plan/validate: Fable = `claude -p --model claude-fable-5`; Sol = `codex exec --model gpt-5.6-sol` (inline packets if sandbox greps hang). Wave-scope only — “close all backlog” is REJECT (L33). **Frozen tip2 Sol (L47):** tip1 content → tip2 pins tip1 SHA → Sol audits tip2 → PR comment → no post-Sol commit → merge. Early CI FAIL is a snapshot (L39); MCP hints = denylist not all-high (L45).
 
 ## Code navigation (tensor-grep / `tg`)
 

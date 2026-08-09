@@ -197,3 +197,11 @@ A bare `FAIL` with no file:line, or a verdict pinned to parent while HEAD is a d
 
 Linux CI failing `endswith("root\\droid.exe")` is fixed with `Path.as_posix()` helpers — not a claim that bun recovery improved. Cursor Pro Task quota kills can abort research seats; parent must finish with tg/codex/web and not treat empty agent output as a clean bill.
 
+## L49 — Dirty-index named-path commits: verify staged paths before commit
+
+On a dirty DrvFS tip, always print `git diff --cached --name-status` after staging and **refuse** if unexpected deletes/adds appear. Wave 0–2 closeout tip1 nearly wiped Wave 2 artifacts (`macos-slim`, MCP tests) — restored from `dfd31dc1`. Named-path intent is not enough; the index can still carry collateral. Prefer Windows `pwsh` git when WSL hooks need `/c/Users` python.
+
+## L50 — Honesty merge bar vs matrix soft-red
+
+Wave closeout merges on **honesty-unit + lint-python** green (+ Sol PASS / PASS_WITH_NITS), not a fully green matrix. Docs-link / unit-fixture soft-reds stay **L42 dispositioned** unless the wave scoped them. Treating whole-matrix red as a merge blocker re-opens already-dispositioned debt and stalls Thinktank-approved closeouts.
+

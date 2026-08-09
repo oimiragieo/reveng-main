@@ -717,6 +717,16 @@ def write_master_claude() -> Path:
         "**Generated/vendored, do not edit or lint:** `analysis_*/`, `reports/`, `external/ghidra*/`. "
         "Regenerate these breadcrumbs after refactors: `python scripts/generate_claude_md_index.py`.",
         "",
+        "## Agent skills & honesty",
+        "",
+        "Contributor conventions and release honesty: **`AGENTS.md`**. Durable cross-session facts: "
+        "**`.claude/MEMORY.md`**. Project Cursor skills live under **`.cursor/skills/`** "
+        "(`reveng-release-honesty`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`); personal "
+        "index: `~/.claude/skills/INDEX.md`. Wave closeout workflow: "
+        "`~/.claude/workflows/reveng-wave-honesty-closeout.md`. Lessons **L1–L50** in "
+        "`docs/architecture/lessons-learned-scope-c-2026-08.md`. Waves 0–2 closed 2026-08-09 "
+        "(CEO: `docs/architecture/ceo-update-2026-08-09-waves1-2.md`).",
+        "",
         "## Navigation index",
         "",
         "Each major folder also contains a `claude.md` listing its files and (for Python) top-level "

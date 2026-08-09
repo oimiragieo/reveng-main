@@ -1,11 +1,11 @@
 ---
 name: reveng-release-honesty
 description: >-
-  REVENG GA/release honesty rules from Scope C 2026-08 (waves 1–3 / Wave A).
-  Use when verifying GA readiness, editing verify_ga_readiness, support matrix
-  claims, capability reports, managed recompile, JS behavior grades, native
-  fixtures / analyze probes, Sol/Fable plan-validate loops, backlog clearance
-  waves, or writing CEO/release status.
+  REVENG GA/release honesty rules from Scope C 2026-08 (Waves 0–2 honesty
+  closeout merged). Use when verifying GA readiness, editing
+  verify_ga_readiness, support matrix claims, capability reports, managed
+  recompile, JS behavior grades, native fixtures / analyze probes, Sol/Fable
+  plan-validate loops, backlog clearance waves, or writing CEO/release status.
 ---
 
 # REVENG release honesty
@@ -33,7 +33,7 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 - **Fable** = `claude -p --model claude-fable-5` (not Cursor Pro quota).
 - **Sol** = `codex exec --model gpt-5.6-sol`. Prefer **inlined** audit packets when sandbox greps hang; put question files in the worktree (Windows-reachable), not only `/tmp`.
 - Background seats: **alive ≠ working** — CPU + log growth.
-- Git: `git -c user.name/email` from `git log -1`; named paths only; no stash across worktrees.
+- Git: `git -c user.name/email` from `git log -1`; named paths only; no stash across worktrees. On WSL vs Windows Git Bash hooks, prefer Windows `pwsh` git (`wsl-windows-git-hooks`).
 
 ## Local dogfood
 
@@ -41,16 +41,28 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 - GA: `python3.9 scripts/verify_ga_readiness.py --profile baseline` **and** `--profile ga` (open referenced JSON).
 - Probe: `python3.9 scripts/probe_native_analyze_timeout.py --job reports/native_analyze_probe/wave_a_job.json` (or `--binary` legacy).
 - Scoped status: `bash scripts/git_status_scoped.sh`.
-- Ops index: root **`backlog.md`**.
+- Ops index: root **`backlog.md`** (not `docs/BACKLOG.md`).
+- Research: Exa MCP is **often unavailable** — use WebSearch / pinned URLs + access dates (L44); never assume Exa is up.
 
 ## Canonical docs
 
-- `docs/architecture/ceo-update-2026-08-09-waves1-2.md` (latest CEO)
+- `docs/architecture/ceo-update-2026-08-09-waves1-2.md` (latest CEO; Waves 0–2 **merged**)
 - `docs/architecture/ceo-update-2026-08-09-wave0.md` / `ceo-update-2026-08-08-tg-audit-merge.md` (priors)
-- `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L48**)
+- `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L50**)
 - `docs/architecture/wave-b-exit-criteria.md` / `wave-c-exit-criteria.md`
-- Root `backlog.md` (ALL ids; §L = #101 dispositions)
+- Root `backlog.md` (ALL ids; §L = #101 dispositions — issue **#101** still OPEN)
 - Junior docs home: `docs/README.md` (Analyst + Engineer tracks); support badges: `docs/support/`
+- Related project skills: `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty` (same `.cursor/skills/` tree); workflow `~/.claude/workflows/reveng-wave-honesty-closeout.md`
+
+## Wave status (do not regress)
+
+| Wave | PR | Merge / tip |
+|------|-----|-------------|
+| 0 | #131 | merged |
+| 1 | #132 → `41add7d1` | merged |
+| 2 | #133 → `1eff22f8` | **MERGED** (not OPEN); Sol PASS_WITH_NITS on tip `34d5b99d`; post-merge note `00e9f65b` |
+
+Roadmap / RALPH-2 / phases 6–13 remain open — Waves 0–2 are honesty/CI hygiene, **not** “all backlog closed”.
 
 ## CI honesty install (L28 + L35 + L36)
 
@@ -63,14 +75,15 @@ Call `python` from setup-python — never hardcode `/usr/bin/python3.9` on GHA (
 
 Never restore `ghidramcp>=0.1.0` in requirements-java/security without a real PyPI package.
 
-## Wave closeout (L33–L48)
+## Wave closeout (L33–L50)
 
 - Reject “close all backlog” PRs; implement only Thinktank-approved waves (L33).
 - Issue disposition tables leave the issue **open** until acceptance (zero xfails) — #101 (L34).
 - Fail-first TDD must assert a token that is red on main today (L41); soft-fail ≠ mitigated/done (L42).
 - Section E: Phase 4 honesty-go stays `partial`; waiver in notes (L40/L43).
 - Research cites need pinned URLs + access dates (L44). MCP hints = explicit denylist, not all `high` (L45).
-- macOS slim: keep matrix legs; pin deps for oldest Python (L46).
-- Sol verdict must cite **tip** HEAD SHA; bare FAIL / parent-SHA pin is process debt — don’t merge on self-PASS (L37/L47).
-- Named-path git only on dirty DrvFS (L38); CI FAIL is a snapshot (L39); path-sep = assert hygiene (L48).
-- Cursor Task quota death ≠ research clean — parent finishes with tg/codex/web (L48).
+- macOS slim: keep matrix legs; no angr/unicorn on slim; pin for oldest Python — `black>=24.8,<25` on macos-3.9 (L46).
+- Sol verdict must cite **tip** HEAD SHA; bare FAIL / parent-SHA pin is process debt — don’t merge on self-PASS (L37/L47). Frozen tip2 flow: see `reveng-sol-frozen-tip`.
+- Named-path git only on dirty DrvFS (L38); always verify `git diff --cached --name-status` before commit (L49).
+- CI FAIL is a snapshot (L39); path-sep = assert hygiene; Cursor Task quota death ≠ research clean — parent finishes with tg/codex/web (L48).
+- Merge bar = **honesty-unit + lint-python** (+ Sol PASS / PASS_WITH_NITS), not whole-matrix green (L50); soft-red docs-link/unit fixtures stay L42 unless wave-scoped.
