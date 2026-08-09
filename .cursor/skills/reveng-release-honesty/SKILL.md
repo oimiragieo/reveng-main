@@ -26,7 +26,7 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 8. **Research honesty** — `tool_absent` / `input_absent` ≠ research done (do not close the question). Split BASELINE rows from engine rows (exact id match).
 9. **Exploits stay experimental** — R-SEC-1 decision is Docker-only preview; no expansion without sandbox proofs; keep watermarks.
 10. **Match claims to `support_matrix`** — preview vs GA language.
-11. **Wave-scope plans** — do not plan “close all Scope C” in one PR; use Wave B exit criteria for engine work.
+11. **Wave-scope plans** — do not plan “close all Scope C” in one PR (L33); use Wave B exit criteria for engine work. Disposition ≠ shipped (L34).
 
 ## Agent seating
 
@@ -45,18 +45,27 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 
 ## Canonical docs
 
-- `docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md` (latest CEO)
-- `docs/architecture/ceo-update-2026-08-07-scope-c-charter.md` / `ceo-update-2026-08-06-wave3.md` (priors)
-- `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L32**)
+- `docs/architecture/ceo-update-2026-08-09-wave0.md` (latest CEO)
+- `docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md` / charter / wave3 (priors)
+- `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L40**)
 - `docs/architecture/wave-b-exit-criteria.md` / `wave-c-exit-criteria.md`
-- Root `backlog.md`
+- Root `backlog.md` (ALL ids; §L = Wave 0 / #101 dispositions)
 - Junior docs home: `docs/README.md` (Analyst + Engineer tracks); support badges: `docs/support/`
 
-## CI honesty install (L28)
+## CI honesty install (L28 + L35 + L36)
 
 Wave B / Phase 5 workflows must use `requirements-honesty.txt` + `pip install -e . --no-deps`.
 Do **not** `pip install -r requirements.txt` in those jobs — py3.9 hits `resolution-too-deep`.
+If the job passes `--no-cov`, **pytest-cov must be in** `requirements-honesty.txt` (L35).
+Call `python` from setup-python — never hardcode `/usr/bin/python3.9` on GHA (L36).
 
 ## Fake pins (L29)
 
 Never restore `ghidramcp>=0.1.0` in requirements-java/security without a real PyPI package.
+
+## Wave closeout (L33–L34, L37–L39)
+
+- Reject “close all backlog” PRs; implement only Thinktank-approved waves.
+- Issue disposition tables leave the issue **open** until acceptance (zero xfails) — #101.
+- Sol impl verdict must cite **HEAD SHA**; re-run after tip moves (L37).
+- Named-path git only on dirty DrvFS (L38). CI FAIL is a snapshot — re-poll after fix (L39).

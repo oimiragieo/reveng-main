@@ -132,3 +132,35 @@ Closing stale Dependabot PRs before a large main sync is temporary. The next Dep
 ## L32 — Backlog invariants must track authorized partials
 
 When Phase 5 is deliberately **`partial`** (thin honesty authorized), tests that require phases 5–13 all `open` and “await Sol” on phase 5 will fail forever. Allow `partial` for authorized thin slices; keep 6–13 on Sol stop/go.
+
+## L33 — “Close all backlog” is a REJECT; Wave-scoped is an APPROVE
+
+Thinktank correctly rejects plans that claim ~85 rows / phases 6–13 / RALPH-2 in one PR. Wave 0 (land honesty + dispose issues honestly) is the approvable shape. Disposition rows ≠ capability `done`. Receipt: `docs/superpowers/plans/2026-08-09-backlog-closeout-program.md` Round 2 **APPROVE Wave 0**.
+
+## L34 — Disposition table + open issue ≠ shipped feature
+
+GitHub **#101** (rich Capstone renderer): Wave 0 acceptance path (2) publishes per-xfail dispositions in `backlog.md` §L and **leaves the issue open**. Closing the issue or claiming the renderer shipped without zero xfails is a lie. Fixture/xfail green ≠ product.
+
+## L35 — Slim install must include plugins the CLI flags need
+
+`requirements-honesty.txt` without `pytest-cov` makes `pytest --no-cov` fail with `unrecognized arguments: --no-cov` — a false honesty red. Thin gates still need every plugin referenced by workflow flags. Add `pytest-cov` (or drop `--no-cov`).
+
+## L36 — Hardcoded `/usr/bin/python3.9` breaks GitHub Actions
+
+GHA `setup-python` does not guarantee `/usr/bin/python3.9`. Wave C Phase 5 failed with exit 127 until the workflow used `python` from PATH. Local WSL `/usr/bin/python3.9` preference ≠ CI workflow hardcode.
+
+## L37 — Sol FAIL for missing audit artifacts is process debt
+
+Codex can FAIL Wave 0 mid-loop when `sol-*-impl-verdict.md` / SHA / dogfood tables are absent even if product code is fine. Write the verdict file with **reviewed SHA**, re-audit, then merge. Do not treat process FAIL as a product regression.
+
+## L38 — Named-path git only on dirty DrvFS trees
+
+`git reset HEAD` / broad status against a tree with `external/ghidra` and dirty `reports/` hangs, floods “Unstaged changes,” and leaves `index.lock`. Kill hung git, remove stale lock only if no live PID, stage/commit **named paths only**. No stash across worktrees.
+
+## L39 — CI watcher FAIL is a snapshot, not final authority
+
+An early honesty FAIL (missing cov / bad python path) is actionable, not a permanent merge veto. Fix, push, re-poll the **new** run IDs. Pre-existing soft-red (docs-link, unicorn wheels) belongs in backlog as known noise, not as Wave 0 blockers when honesty gates are green.
+
+## L40 — Section E status cells vs prose “done (honesty go)”
+
+Backlog invariant parsers may return `partial` for a phase whose notes say “done (honesty go)” if the status column is parsed from a different token shape. When updating section E, keep the **status column** machine-readable (`done` / `partial` / `open`) and put waiver prose in notes — or update the parser and tests together.

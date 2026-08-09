@@ -6,12 +6,12 @@ Ops index for the full roadmap clearance program. Update `status` when work land
 **Execution charter:** [`docs/architecture/scope-c-execution-charter.md`](docs/architecture/scope-c-execution-charter.md)
 (not one clearance wave for phases 4–13; disposition ≠ capability `done`).
 
-**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md`](docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md)  
-**Wave 0 closeout plan:** [`docs/superpowers/plans/2026-08-09-backlog-closeout-program.md`](docs/superpowers/plans/2026-08-09-backlog-closeout-program.md) (Thinktank **APPROVE Wave 0**)  
-**Prior CEO:** [`ceo-update-2026-08-07-scope-c-charter.md`](docs/architecture/ceo-update-2026-08-07-scope-c-charter.md) · [`ceo-update-2026-08-06-wave3.md`](docs/architecture/ceo-update-2026-08-06-wave3.md) · wave2 · wave1  
+**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-09-wave0.md`](docs/architecture/ceo-update-2026-08-09-wave0.md)  
+**Prior CEO:** [`ceo-update-2026-08-08-tg-audit-merge.md`](docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md) · charter · wave3 · wave2 · wave1  
+**Wave 0 closeout plan:** [`docs/superpowers/plans/2026-08-09-backlog-closeout-program.md`](docs/superpowers/plans/2026-08-09-backlog-closeout-program.md) (Thinktank **APPROVE Wave 0**; PR #131 merged)  
 **Wave B exit criteria:** [`docs/architecture/wave-b-exit-criteria.md`](docs/architecture/wave-b-exit-criteria.md)  
 **Wave C exit criteria:** [`docs/architecture/wave-c-exit-criteria.md`](docs/architecture/wave-c-exit-criteria.md)  
-**Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (**L1–L32**)
+**Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (**L1–L40**)
 
 Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `blocked_on_phase_4` · `mitigated` · `research` · `blocked_on_phase_4` · `deferred` · `wontfix`
 
