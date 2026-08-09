@@ -6,7 +6,8 @@
 
 ## Reviewed commit SHA
 
-`919eb9959d8db5f8572bbe25943c34a5bc01caaa` (initial Wave 0 land)
+**Current (second-pass):** `3bfa99decdfe06a06b538564304f1a39773407b4`  
+**Initial land:** `919eb9959d8db5f8572bbe25943c34a5bc01caaa`
 
 > If HEAD moves after this file, re-run Codex and update this SHA before merge.
 
@@ -45,4 +46,10 @@ No all-85-done claim. No phases 6–13 / RALPH-2 done claim. No exploit expansio
 
 ## Second-pass verdict
 
-_(filled after re-audit of follow-up SHA)_
+**Verdict:** `PASS_WITH_NITS` (Codex gpt-5.6-sol)  
+**Reviewed SHA:** `3bfa99decdfe06a06b538564304f1a39773407b4`
+
+- W0-1..W0-5 PASS; W0-6/W0-7 nits were: blank second-pass (this section) and merge not yet done.
+- This file update addresses the blank second-pass nit.
+- Remaining intentional next step: PR-only merge to `main`.
+- `lint-imports` remains `could_not_measure` on this host (importlinter absent); black/isort clean on Wave 0 Python.
