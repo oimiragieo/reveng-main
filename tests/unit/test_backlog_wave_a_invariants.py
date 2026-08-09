@@ -216,6 +216,21 @@ def test_section_e_phase_4_partial_until_both_exits():
     assert status != "done"
 
 
+def test_section_e_phase_4_waiver_backed_partial_not_done():
+    """L40: status cell is exact partial; honesty-go waiver lives in focus text; M2 partial."""
+    assert _section_e_phase_status(4) == "partial"
+    assert _section_e_phase_status(4) != "done"
+    assert _backlog_status("M2") == "partial"
+    text = BACKLOG.read_text(encoding="utf-8")
+    m = re.search(r"^## E\..*?(?=^## |\Z)", text, flags=re.MULTILINE | re.DOTALL)
+    assert m, "section E not found"
+    tables = _parse_md_tables(m.group(0))
+    _headers, row = _row_by_exact_id(tables, "4")
+    row_text = " | ".join(row)
+    assert "decision-phase-04-honesty-go-waiver.md" in row_text
+    assert re.search(r"honesty\s+go", row_text, re.IGNORECASE)
+
+
 def test_m1_native_fam_remains_open_and_not_required():
     assert _backlog_status("M1-NATIVE-FAM") == "open"
     benches = json.loads(MANIFEST.read_text(encoding="utf-8"))["benchmarks"]

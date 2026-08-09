@@ -58,6 +58,8 @@ jobs:
           publish_dir: ./site
           cname: docs.reveng-toolkit.org
 
+  # Wave 1 (CI-DOCS-LINK-1): soft-fail contains link noise; root cause still open.
+  # continue-on-error ≠ mitigated/done.
   docs-link-check:
     runs-on: ubuntu-latest
     continue-on-error: true

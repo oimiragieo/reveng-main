@@ -1185,7 +1185,10 @@ class DependencyManager:
         for tool_name in tools:
             if tool_name not in self.tools or self.tools[tool_name] is None:
                 results[tool_name] = InstallationResult(
-                    False, tool_name, "", f"Tool {tool_name} not supported"
+                    False,
+                    tool_name,
+                    "",
+                    f"Tool {tool_name} not supported (deprecated_stub)",
                 )
                 continue
 
@@ -1249,7 +1252,7 @@ class DependencyManager:
                     path="",
                     executable="",
                     is_installed=False,
-                    install_method="not_supported",
+                    install_method="deprecated_stub",
                     dependencies=[],
                     fallback_available=tool_name in self.fallback_analyzers,
                 )
