@@ -16,6 +16,12 @@ Most ops artifacts still live under `docs/architecture/` and `docs/superpowers/`
 | Implementation plans | [`../superpowers/plans/`](../superpowers/plans/) |
 | This docs-ecosystem design | [`../superpowers/specs/2026-08-09-junior-docs-ecosystem-design.md`](../superpowers/specs/2026-08-09-junior-docs-ecosystem-design.md) |
 
+## Skills / workflow
+
+- Project skills: [`.cursor/skills/`](../../.cursor/skills/) — `reveng-release-honesty`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`
+- Closeout workflow: `~/.claude/workflows/reveng-wave-honesty-closeout.md`
+- Lessons: [`../architecture/lessons-learned-scope-c-2026-08.md`](../architecture/lessons-learned-scope-c-2026-08.md) (**L1–L50**)
+
 ## Rule
 
 Do **not** cite CEO/thinktank docs as proof that a customer feature is GA. Use the [Support matrix](../support/support-matrix.md).

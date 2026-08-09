@@ -10,3 +10,5 @@ Exa MCP was unavailable in the Cursor session; pins collected via WebSearch and 
 | actlint declared-vs-derived | https://github.com/formael/actlint | Deferred full CI; disposition only |
 
 **Not claimed done by this pin bank:** annotate-every-tool, EDGE-RECOMPILE-DIFF measurement, RALPH-2, docs-link root cause.
+
+Project skills under `.cursor/skills/` now encode the L44 / L45 / L47 methods (pin URLs, MCP denylist dual-labels, Sol frozen-tip).
