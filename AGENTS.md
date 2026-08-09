@@ -2,16 +2,16 @@
 
 ## Release honesty (read first for GA / ship claims)
 
-- Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO: `docs/architecture/ceo-update-2026-08-09-wave0.md` (priors: `ceo-update-2026-08-08-tg-audit-merge.md`, charter, wave3/2/1).
-- Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L40**). Wave B: `docs/architecture/wave-b-exit-criteria.md`.
+- Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO: `docs/architecture/ceo-update-2026-08-09-waves1-2.md` (priors: `ceo-update-2026-08-09-wave0.md`, `ceo-update-2026-08-08-tg-audit-merge.md`, charter, wave3/2/1).
+- Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L48**). Wave B: `docs/architecture/wave-b-exit-criteria.md`.
 - Cursor skill: `.cursor/skills/reveng-release-honesty/SKILL.md`. Agent memory: `.claude/MEMORY.md`.
 - **Junior docs:** start at `docs/README.md` (Analyst + Engineer Diátaxis tracks). Customer boundary: `docs/support/support-matrix.md` + `docs/support_matrix.json`. Ops/CEO packets are not product tutorials (`docs/ops/README.md`).
 - **Never trust a green GA verifier alone** — open tracked JSON and confirm evidence fields (baseline **and** ga profiles).
 - **Fixture ≠ capability**; process `completed` ≠ native GA (DF-5). Probe: `tool_absent` ≠ research done. #101 disposition ≠ renderer shipped (L34).
-- **Honesty CI:** `requirements-honesty.txt` (**include pytest-cov** if using `--no-cov`, L35) + `pip install -e . --no-deps` (L28). Workflows use `python`, not hardcoded `/usr/bin/python3.9` (L36).
+- **Honesty CI:** `requirements-honesty.txt` (**include pytest-cov** if using `--no-cov`, L35) + `pip install -e . --no-deps` (L28). Workflows use `python`, not hardcoded `/usr/bin/python3.9` (L36). Soft-fail ≠ mitigated/done (L42).
 - **Do not pin `ghidramcp>=0.1.0`** — not on PyPI (L29). Prefer Ghidra fallback.
-- Prefer `/usr/bin/python3.9` locally. Use `scripts/git_status_scoped.sh` / named-path commits (DF-4 / L38). No `git stash` across worktrees; merges need `git -c user.name/email` from `git log -1`.
-- Plan/validate: Fable = `claude -p --model claude-fable-5`; Sol = `codex exec --model gpt-5.6-sol` (inline packets if sandbox greps hang). Wave-scope only — “close all backlog” is REJECT (L33). Sol verdict must pin SHA (L37); early CI FAIL is a snapshot (L39).
+- Prefer `/usr/bin/python3.9` locally. Use `scripts/git_status_scoped.sh` / named-path commits (DF-4 / L38). No `git stash` across worktrees; merges need `git -c user.name/email` from `git log -1`. Temp `GIT_INDEX_FILE` if DrvFS status hangs.
+- Plan/validate: Fable = `claude -p --model claude-fable-5`; Sol = `codex exec --model gpt-5.6-sol` (inline packets if sandbox greps hang). Wave-scope only — “close all backlog” is REJECT (L33). Sol verdict must pin **tip** SHA (L37/L47); early CI FAIL is a snapshot (L39); MCP hints = denylist not all-high (L45).
 
 ## Code navigation (tensor-grep / `tg`)
 

@@ -26,7 +26,7 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 8. **Research honesty** — `tool_absent` / `input_absent` ≠ research done (do not close the question). Split BASELINE rows from engine rows (exact id match).
 9. **Exploits stay experimental** — R-SEC-1 decision is Docker-only preview; no expansion without sandbox proofs; keep watermarks.
 10. **Match claims to `support_matrix`** — preview vs GA language.
-11. **Wave-scope plans** — do not plan “close all Scope C” in one PR (L33); use Wave B exit criteria for engine work. Disposition ≠ shipped (L34).
+11. **Wave-scope plans** — do not plan “close all Scope C” in one PR (L33); use Wave B exit criteria for engine work. Disposition ≠ shipped (L34). Soft-fail ≠ done (L42). MCP hints = explicit denylist (L45).
 
 ## Agent seating
 
@@ -45,11 +45,11 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 
 ## Canonical docs
 
-- `docs/architecture/ceo-update-2026-08-09-wave0.md` (latest CEO)
-- `docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md` / charter / wave3 (priors)
-- `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L40**)
+- `docs/architecture/ceo-update-2026-08-09-waves1-2.md` (latest CEO)
+- `docs/architecture/ceo-update-2026-08-09-wave0.md` / `ceo-update-2026-08-08-tg-audit-merge.md` (priors)
+- `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L48**)
 - `docs/architecture/wave-b-exit-criteria.md` / `wave-c-exit-criteria.md`
-- Root `backlog.md` (ALL ids; §L = Wave 0 / #101 dispositions)
+- Root `backlog.md` (ALL ids; §L = #101 dispositions)
 - Junior docs home: `docs/README.md` (Analyst + Engineer tracks); support badges: `docs/support/`
 
 ## CI honesty install (L28 + L35 + L36)
@@ -63,9 +63,14 @@ Call `python` from setup-python — never hardcode `/usr/bin/python3.9` on GHA (
 
 Never restore `ghidramcp>=0.1.0` in requirements-java/security without a real PyPI package.
 
-## Wave closeout (L33–L34, L37–L39)
+## Wave closeout (L33–L48)
 
-- Reject “close all backlog” PRs; implement only Thinktank-approved waves.
-- Issue disposition tables leave the issue **open** until acceptance (zero xfails) — #101.
-- Sol impl verdict must cite **HEAD SHA**; re-run after tip moves (L37).
-- Named-path git only on dirty DrvFS (L38). CI FAIL is a snapshot — re-poll after fix (L39).
+- Reject “close all backlog” PRs; implement only Thinktank-approved waves (L33).
+- Issue disposition tables leave the issue **open** until acceptance (zero xfails) — #101 (L34).
+- Fail-first TDD must assert a token that is red on main today (L41); soft-fail ≠ mitigated/done (L42).
+- Section E: Phase 4 honesty-go stays `partial`; waiver in notes (L40/L43).
+- Research cites need pinned URLs + access dates (L44). MCP hints = explicit denylist, not all `high` (L45).
+- macOS slim: keep matrix legs; pin deps for oldest Python (L46).
+- Sol verdict must cite **tip** HEAD SHA; bare FAIL / parent-SHA pin is process debt — don’t merge on self-PASS (L37/L47).
+- Named-path git only on dirty DrvFS (L38); CI FAIL is a snapshot (L39); path-sep = assert hygiene (L48).
+- Cursor Task quota death ≠ research clean — parent finishes with tg/codex/web (L48).

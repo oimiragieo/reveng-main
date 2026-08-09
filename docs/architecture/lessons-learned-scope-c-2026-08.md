@@ -164,3 +164,36 @@ An early honesty FAIL (missing cov / bad python path) is actionable, not a perma
 ## L40 — Section E status cells vs prose “done (honesty go)”
 
 Backlog invariant parsers may return `partial` for a phase whose notes say “done (honesty go)” if the status column is parsed from a different token shape. When updating section E, keep the **status column** machine-readable (`done` / `partial` / `open`) and put waiver prose in notes — or update the parser and tests together.
+
+## L41 — Fail-first TDD must be red for the *new* honesty token
+
+Asserting a property already true on main (`InstallationResult.success is False` / `"not supported"`) is a green-by-construction test. Wave 1 required a new stable token (`deprecated_stub`) so the first run fails, then production changes, then green. Use the real field name (`error_message`, not `.error`).
+
+## L42 — Soft-fail containment ≠ mitigated ≠ done
+
+`continue-on-error: true` and “matrix fail-fast false” contain noise; they do not fix root cause. Backlog may stay `partial` until a measured mitigation (e.g. macos slim install without angr). Never mark unicorn/angr **done** until a matrix leg installs green.
+
+## L43 — Honesty-go waiver does not make Phase 4 status `done`
+
+World-class M2 / hexyl still open ⇒ section E phase 4 stays **`partial`**. Put `decision-phase-04-honesty-go-waiver.md` in the focus/notes cell; keep a positive waiver-backed invariant; do not weaken `!= done` guards.
+
+## L44 — Research rows need pinned URLs and access dates
+
+Exa MCP may be down; WebSearch/WebFetch still counts if every competitive/CI claim carries an exact URL and `accessed YYYY-MM-DD`. Vague “GitHub / community” cites are not enough for Sol.
+
+## L45 — MCP annotation honesty: explicit denylist, not risk_level==high
+
+Auto-mapping every `high` tool to `destructiveHint` would mis-label tools like `analyze_memory_dump` / `ai_code_reconstruction`. Wave 2 dual-labels only a named denylist and preserves proprietary keys. Full actlint CI remains out of scope until measured.
+
+## L46 — Keep macos matrix legs; slim requirements; pin for oldest Python
+
+Do not `matrix.exclude` macos to “fix” unicorn. Retain legs and install deterministic slim files without angr/unicorn. Slim-dev must install on the oldest matrix Python (e.g. black 25.11 needs ≥3.10 → pin `black>=24.8,<25` on macos-3.9).
+
+## L47 — Sol FAIL without blockers + SHA on parent tip is process debt
+
+A bare `FAIL` with no file:line, or a verdict pinned to parent while HEAD is a docs-only tip, is not a product defect. Re-run Sol with tip SHA in the packet, or leave the PR open — never merge on a self-attested PASS while Sol still says FAIL.
+
+## L48 — Path-sep CI is assert hygiene; dead Task seats are not research
+
+Linux CI failing `endswith("root\\droid.exe")` is fixed with `Path.as_posix()` helpers — not a claim that bun recovery improved. Cursor Pro Task quota kills can abort research seats; parent must finish with tg/codex/web and not treat empty agent output as a clean bill.
+

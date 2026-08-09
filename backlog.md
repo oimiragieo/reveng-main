@@ -6,12 +6,15 @@ Ops index for the full roadmap clearance program. Update `status` when work land
 **Execution charter:** [`docs/architecture/scope-c-execution-charter.md`](docs/architecture/scope-c-execution-charter.md)
 (not one clearance wave for phases 4–13; disposition ≠ capability `done`).
 
-**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-09-wave0.md`](docs/architecture/ceo-update-2026-08-09-wave0.md)  
-**Prior CEO:** [`ceo-update-2026-08-08-tg-audit-merge.md`](docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md) · charter · wave3 · wave2 · wave1  
+**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-09-waves1-2.md`](docs/architecture/ceo-update-2026-08-09-waves1-2.md)  
+**Prior CEO:** [`ceo-update-2026-08-09-wave0.md`](docs/architecture/ceo-update-2026-08-09-wave0.md) · [`ceo-update-2026-08-08-tg-audit-merge.md`](docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md) · charter · wave3 · wave2 · wave1  
 **Wave 0 closeout plan:** [`docs/superpowers/plans/2026-08-09-backlog-closeout-program.md`](docs/superpowers/plans/2026-08-09-backlog-closeout-program.md) (Thinktank **APPROVE Wave 0**; PR #131 merged)  
+**Wave 1 plan:** [`docs/superpowers/plans/2026-08-09-wave1-honesty-deep-dive.md`](docs/superpowers/plans/2026-08-09-wave1-honesty-deep-dive.md) (PR **#132** merged)  
+**Wave 2 plan:** [`docs/superpowers/plans/2026-08-09-wave2-honesty-deep-dive.md`](docs/superpowers/plans/2026-08-09-wave2-honesty-deep-dive.md) (PR **#133** open — Sol gate)  
+**Wave 2 closeout plan:** [`docs/superpowers/plans/2026-08-09-wave2-closeout.md`](docs/superpowers/plans/2026-08-09-wave2-closeout.md) (Thinktank **APPROVE_WITH_NITS**; candidate tip — merge pending Sol)  
 **Wave B exit criteria:** [`docs/architecture/wave-b-exit-criteria.md`](docs/architecture/wave-b-exit-criteria.md)  
 **Wave C exit criteria:** [`docs/architecture/wave-c-exit-criteria.md`](docs/architecture/wave-c-exit-criteria.md)  
-**Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (**L1–L40**)
+**Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (**L1–L48**)
 
 Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `blocked_on_phase_4` · `mitigated` · `research` · `blocked_on_phase_4` · `deferred` · `wontfix`
 
@@ -127,9 +130,9 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | CI-HONESTY-NOCOV-1 | Wave B/C honesty CI: `--no-cov` needs pytest-cov on slim install | done | add pytest-cov to requirements-honesty.txt |
 | CI-PHASE5-PY39-PATH-1 | Wave C used hardcoded `/usr/bin/python3.9` (absent on GHA) | done | use setup-python `python` |
 | CI-DOCS-LINK-1 | docs-link-check fails on main (215 errors; Windows abs paths in thinktank HTML) | partial | soft-fail via docs.yml continue-on-error; root cause open; Wave 1 disposition |
-| CI-UNICORN-BUILD-1 | Tests matrix: angr/unicorn wheel build fails (cmake_minimum_required) | partial | soft-fail containment; root cause https://github.com/unicorn-engine/unicorn/issues/2263 (accessed 2026-08-09); not claiming angr green |
+| CI-UNICORN-BUILD-1 | Tests matrix: angr/unicorn wheel build fails (cmake_minimum_required) | mitigated | macos slim install (`requirements-ci-macos-slim*.txt`) in test.yml+tests.yml; unicorn#2263; angr capability still not green |
 | LINT-IMPORTS-HOST-1 | Host `/usr/bin/python3.9` lacks importlinter for local lint-imports | open | could_not_measure locally; CI Code Quality still owns import contracts |
-| R-MCP-ANNOTATION-1 | Research: actlint-style declared-vs-derived MCP annotation honesty | open | https://github.com/formael/actlint + DEV writeup https://dev.to/formael/are-your-mcp-servers-safety-labels-honest-a-one-command-check-and-what-it-found-on-31-popular-1ml3 (accessed 2026-08-09); not product GA |
+| R-MCP-ANNOTATION-1 | Research: actlint-style declared-vs-derived MCP annotation honesty | partial | Wave 2 denylist dual-label (`generate_exploit`/`recompile_binary`); [policy-mcp-annotation-honesty-wave2.md](docs/architecture/policy-mcp-annotation-honesty-wave2.md); not actlint CI / not GA |
 | EDGE-RECOMPILE-DIFF-1 | Research: competitor recompile-diff parity vs VRL | open | could_not_measure; cite https://github.com/kidoz/sleuthre (accessed 2026-08-09); no parity claim |
 
 ## I. Decisions / waivers
@@ -142,6 +145,8 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈5.10s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
 | 2026-08-07 | Phase 4 **honesty go** (Sol APPROVE_WITH_NITS waiver: M2 split). Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: Sol REJECT hollow ACK-ping → forgeable `candidate_hash_changed` → corpus registration of `vrl_llm_micro_go` + gate SHA/applied-source harden; dogfood loads seeds from corpus; VRL-LLM-1 **done** (load-bearing, Sol-ready evidence); Phase 4 **honesty go** recorded (M2 world-class still open/partial; hexyl C refine `vrl_compile_toolchain_broken`). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
 | 2026-08-08 | PR #119 merge (tg-audit + Scope C history). Follow-up: honesty slim install + drop ghidramcp PyPI fiction; CEO `ceo-update-2026-08-08-tg-audit-merge.md`; lessons L25–L32. |
+| 2026-08-09 | Wave 2 closeout candidate (PR #133); merge pending Sol PASS on frozen tip2. Not all-backlog. |
+| 2026-08-09 | Thinktank **APPROVE_WITH_NITS Wave 2** honesty (MCP denylist + path-sep + macos slim); not all-backlog. |
 | 2026-08-09 | Thinktank **APPROVE Wave 1** honesty deep-dive (plan R3); installer deprecate + section-E L40 + CI partial disposition; not all-backlog.
 | 2026-08-09 | Thinktank **APPROVE Wave 0** backlog closeout (not all-85-done). Land wiring honesty + dual-door docs; #101 dispositioned blocked with per-xfail table (section L); later waves Sol-gated. PR **#131** merged (`047cb81f`). |
 
