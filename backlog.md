@@ -10,8 +10,8 @@ Ops index for the full roadmap clearance program. Update `status` when work land
 **Prior CEO:** [`ceo-update-2026-08-09-wave0.md`](docs/architecture/ceo-update-2026-08-09-wave0.md) · [`ceo-update-2026-08-08-tg-audit-merge.md`](docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md) · charter · wave3 · wave2 · wave1  
 **Wave 0 closeout plan:** [`docs/superpowers/plans/2026-08-09-backlog-closeout-program.md`](docs/superpowers/plans/2026-08-09-backlog-closeout-program.md) (Thinktank **APPROVE Wave 0**; PR #131 merged)  
 **Wave 1 plan:** [`docs/superpowers/plans/2026-08-09-wave1-honesty-deep-dive.md`](docs/superpowers/plans/2026-08-09-wave1-honesty-deep-dive.md) (PR **#132** merged)  
-**Wave 2 plan:** [`docs/superpowers/plans/2026-08-09-wave2-honesty-deep-dive.md`](docs/superpowers/plans/2026-08-09-wave2-honesty-deep-dive.md) (PR **#133** open — Sol gate)  
-**Wave 2 closeout plan:** [`docs/superpowers/plans/2026-08-09-wave2-closeout.md`](docs/superpowers/plans/2026-08-09-wave2-closeout.md) (Thinktank **APPROVE_WITH_NITS**; candidate tip — merge pending Sol)  
+**Wave 2 plan:** [`docs/superpowers/plans/2026-08-09-wave2-honesty-deep-dive.md`](docs/superpowers/plans/2026-08-09-wave2-honesty-deep-dive.md) (PR **#133** merged `1eff22f8`)  
+**Wave 2 closeout plan:** [`docs/superpowers/plans/2026-08-09-wave2-closeout.md`](docs/superpowers/plans/2026-08-09-wave2-closeout.md) (Thinktank **APPROVE_WITH_NITS**; Sol **PASS_WITH_NITS** tip `34d5b99d`)  
 **Wave B exit criteria:** [`docs/architecture/wave-b-exit-criteria.md`](docs/architecture/wave-b-exit-criteria.md)  
 **Wave C exit criteria:** [`docs/architecture/wave-c-exit-criteria.md`](docs/architecture/wave-c-exit-criteria.md)  
 **Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (**L1–L48**)
@@ -145,7 +145,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈5.10s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
 | 2026-08-07 | Phase 4 **honesty go** (Sol APPROVE_WITH_NITS waiver: M2 split). Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: Sol REJECT hollow ACK-ping → forgeable `candidate_hash_changed` → corpus registration of `vrl_llm_micro_go` + gate SHA/applied-source harden; dogfood loads seeds from corpus; VRL-LLM-1 **done** (load-bearing, Sol-ready evidence); Phase 4 **honesty go** recorded (M2 world-class still open/partial; hexyl C refine `vrl_compile_toolchain_broken`). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
 | 2026-08-08 | PR #119 merge (tg-audit + Scope C history). Follow-up: honesty slim install + drop ghidramcp PyPI fiction; CEO `ceo-update-2026-08-08-tg-audit-merge.md`; lessons L25–L32. |
-| 2026-08-09 | Wave 2 closeout candidate (PR #133); merge pending Sol PASS on frozen tip2. Not all-backlog. |
+| 2026-08-09 | Wave 2 closeout **merged** PR #133 (`1eff22f8`); Sol PASS_WITH_NITS on tip `34d5b99d`; honesty-unit+lint-python green; matrix soft-red L42. Not all-backlog. |
 | 2026-08-09 | Thinktank **APPROVE_WITH_NITS Wave 2** honesty (MCP denylist + path-sep + macos slim); not all-backlog. |
 | 2026-08-09 | Thinktank **APPROVE Wave 1** honesty deep-dive (plan R3); installer deprecate + section-E L40 + CI partial disposition; not all-backlog.
 | 2026-08-09 | Thinktank **APPROVE Wave 0** backlog closeout (not all-85-done). Land wiring honesty + dual-door docs; #101 dispositioned blocked with per-xfail table (section L); later waves Sol-gated. PR **#131** merged (`047cb81f`). |

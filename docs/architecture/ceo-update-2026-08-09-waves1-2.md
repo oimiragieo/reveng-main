@@ -4,7 +4,7 @@ Plain English. Prior CEO: [`ceo-update-2026-08-09-wave0.md`](ceo-update-2026-08-
 
 ## One sentence
 
-We still **did not** finish the roadmap. After Wave 0, we shipped **Wave 1** (merged) and opened **Wave 2** (PR #133 — **not merged yet**). Product phases 6–13 and RALPH-2 still wait for Sol stop/go.
+We still **did not** finish the roadmap. After Wave 0, we shipped **Wave 1** (merged) and **Wave 2 closeout** (PR #133 merged `1eff22f8`). Product phases 6–13 and RALPH-2 still wait for Sol stop/go.
 
 ## What worked
 
@@ -13,19 +13,20 @@ We still **did not** finish the roadmap. After Wave 0, we shipped **Wave 1** (me
   - Section E statuses are machine-readable (Phase 4 stays **`partial`**; honesty-go lives in notes)
   - CI unicorn/docs labeled honestly (then Wave 2 tightened unicorn)
   - Competitive research banked (actlint / Sleuthre) with pinned URLs
-- **Wave 2 built** — branch `feat/wave2-honesty-deep-dive` / PR [#133](https://github.com/oimiragieo/reveng-main/pull/133) (**OPEN**):
+- **Wave 2 merged** — PR [#133](https://github.com/oimiragieo/reveng-main/pull/133) → `1eff22f8` (Sol **PASS_WITH_NITS** on tip `34d5b99d`):
   - MCP denylist dual-labels (`generate_exploit`, `recompile_binary`) — spec hints + proprietary risk
   - Path-separator test hygiene (Linux CI no longer fails on `\\` asserts)
   - macOS CI slim install (no angr/unicorn) — matrix **kept**; unicorn noise → **mitigated** (not “angr green”)
+  - Closeout: CEO/L41–L48 retention, black bun tests, research URL pins
 - **Thinktank discipline held** — Wave-scoped APPROVE only; “close all backlog” still REJECT (L33).
-- **Honesty CI gates** stayed the merge bar for Wave 1 (broad matrix soft-red ≠ Wave blockers).
+- **Honesty CI gates** stayed the merge bar (honesty-unit + lint-python green; broad matrix soft-red ≠ Wave blockers).
 
 ## What did *not* fully work
 
-- **Wave 2 not on main yet** — Sol impl re-audit still **FAIL** (after remediations; R2 cited little). Don’t merge on a self-written “PASS” alone.
-- **Exa MCP unavailable** this session — research used WebSearch/WebFetch; re-verify when Exa is up.
+- **Exa MCP unavailable** this session — research used WebSearch; pins in `research-wave2-closeout-2026-08-09.md`.
 - **Cursor Pro Task seats** hit usage limits mid-audit — parent continued with tg/codex (don’t wait forever on dead seats).
 - **Broad CI** still noisy (docs-link, some unit fixtures) — honesty lanes ≠ whole matrix green.
+- Tip1 dirty-index nearly deleted Wave 2 artifacts — caught and restored before Sol (named-path only).
 
 ## Research still needed
 
