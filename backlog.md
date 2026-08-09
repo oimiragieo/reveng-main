@@ -124,6 +124,11 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | WIRING-2026-08-09 | World-class MCP/CLI wiring honesty Top-8 | done | Wave 0 land |
 | DOCS-DUALDOOR-2026-08-09 | Junior Diátaxis dual-door docs | done | Wave 0 land |
 | ISSUE-101-DISP | #101 rich Capstone renderer — 43 xfails dispositioned blocked | blocked | See section L; issue remains open |
+| CI-HONESTY-NOCOV-1 | Wave B/C honesty CI: `--no-cov` needs pytest-cov on slim install | done | add pytest-cov to requirements-honesty.txt |
+| CI-PHASE5-PY39-PATH-1 | Wave C used hardcoded `/usr/bin/python3.9` (absent on GHA) | done | use setup-python `python` |
+| CI-DOCS-LINK-1 | docs-link-check fails on main (215 errors; Windows abs paths in thinktank HTML) | open | pre-existing; not introduced by Wave 0 dual-door alone |
+| CI-UNICORN-BUILD-1 | Tests matrix: angr/unicorn wheel build fails (cmake_minimum_required) | open | pre-existing install flake; not Wave 0 code path |
+| LINT-IMPORTS-HOST-1 | Host `/usr/bin/python3.9` lacks importlinter for local lint-imports | open | could_not_measure locally; CI Code Quality still owns import contracts |
 
 ## I. Decisions / waivers
 
