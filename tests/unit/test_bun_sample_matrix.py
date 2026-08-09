@@ -38,7 +38,7 @@ def test_load_matrix_config_resolves_relative_paths(tmp_path: Path):
     config = runner.load_matrix_config(config_path)
 
     assert config["min_live_bun_samples_for_pass"] == 3
-    assert config["samples"][0]["path"].endswith("test_samples\\sample.exe")
+    assert Path(config["samples"][0]["path"]).as_posix().endswith("test_samples/sample.exe")
     assert Path(config["samples"][0]["path"]).is_absolute()
 
 

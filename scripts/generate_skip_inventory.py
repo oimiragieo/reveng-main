@@ -88,7 +88,7 @@ def _scan_file(path: Path, repo_root: Path) -> list[dict[str, Any]]:
             reason = _extract_reason(match.group("args"))
             entries.append(
                 {
-                    "path": str(path.relative_to(repo_root)),
+                    "path": path.relative_to(repo_root).as_posix(),
                     "line": lineno,
                     "kind": kind,
                     "reason": reason,
