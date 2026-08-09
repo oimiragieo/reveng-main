@@ -1,38 +1,37 @@
 # REVENG Developer Guide
 
-This guide merges the useful material from the old developer, development, pipeline, and plugin docs into one current reference.
+> Prefer Diátaxis tracks for day-to-day work: [Engineer tutorials](../tutorials/engineer/01-dev-setup.md), [how-to/engineer](../how-to/engineer/extend-cli.md), [explanation](../explanation/architecture-overview.md), [reference](../reference/cli.md).
 
-## Development Setup
+This page is a short contributor map. Dead paths from older docs are corrected below.
+
+## Development setup
 
 ```bash
 git clone https://github.com/oimiragieo/reveng-main.git
 cd reveng-main
-python -m pip install -r requirements.txt
-python -m pip install -e .
+make install-dev
+python -m pip install -e . --no-deps
 ```
 
-Optional extras:
+Alternates: `pip install -r requirements.txt -r requirements-dev.txt -r requirements-java.txt` then editable `--no-deps`. See [Dev setup tutorial](../tutorials/engineer/01-dev-setup.md).
 
-- install Ghidra if you need native decompilation or reconstruction
-- start Ollama if you want local AI assistance
-- install dev-only tooling from `requirements-dev.txt` when working on the package itself
+Optional: Ghidra for native decompile/recompile; Ollama or API keys for AI paths.
 
-## Repository Layout
+## Repository layout (current)
 
-Most day-to-day work happens in:
+| Path | Role |
+| --- | --- |
+| `src/reveng/analysis/analyzer.py` | `REVENGAnalyzer` — **not** `src/reveng/analyzer.py` |
+| `src/reveng/cli/` | CLI package — **not** `src/reveng/cli.py` |
+| `src/reveng/api.py` / `src/reveng/ai_api.py` | Programmatic APIs |
+| `src/reveng/app_reverse_engineering/` | App RE framework + adapters |
+| `src/reveng/integrations/ghidra/` | Ghidra connectors |
+| `src/reveng/pipeline/` and `src/reveng/pipelines/` | Permanent split — see [explanation](../explanation/pipeline-vs-pipelines.md) |
+| `src/reveng/verification/` | VRL |
+| `src/reveng/agent_sdk/` | MCP / skills |
+| `tests/` | unit / integration / e2e / … |
 
-- `src/reveng/analyzer.py` — analysis orchestrator
-- `src/reveng/cli.py` — CLI parser and command handlers
-- `src/reveng/api.py` / `src/reveng/ai_api.py` — programmatic APIs
-- `src/reveng/integrations/ghidra/` — Ghidra connectors
-- `src/reveng/pipeline/` and `src/reveng/pipelines/` — orchestration logic
-- `src/reveng/security/`, `src/reveng/malware/`, `src/reveng/ml/` — analysis engines
-- `src/reveng/plugins/` — plugin-facing abstractions
-- `tests/` — unit and integration coverage
-
-## Current Entry Points
-
-Use one of these supported entry points:
+## Entry points
 
 ```bash
 reveng --help
@@ -40,84 +39,43 @@ python -m reveng --help
 python src/reveng/cli/reveng.py --help
 ```
 
-Do not build new workflows around removed legacy entry points.
+Do not build workflows around removed legacy launchers (no repo-root `reveng.py`).
 
-## Extending the Analyzer
+## Architecture and lint
 
-When adding a new analysis capability:
+- Living overview: [explanation/architecture-overview.md](../explanation/architecture-overview.md)
+- Contracts: `.importlinter` — `reveng.core` must not import higher domains; `reveng.security` must not import AI packages
+- Run: `lint-imports --no-cache` and `make lint` (black/isort/pylint/mypy + import-linter + hadolint)
 
-1. implement it in the appropriate subsystem package
-2. keep inputs/outputs structured and serializable
-3. wire the feature into `REVENGAnalyzer` or `REVENGAPI`
-4. add CLI exposure only if the feature is user-facing
-5. add tests before documenting the behavior
+## Extending the product
 
-Keep new functionality local to one subsystem instead of adding more cross-package shims.
+1. Implement in the closest domain package (see import-linter).
+2. Keep outputs contract-shaped (`reveng.core.result_contracts`).
+3. Wire CLI / API / MCP only when user-facing; document maturity honestly.
+4. Add tests before documenting behavior.
 
-## Pipeline Development
+How-tos: [Extend CLI](../how-to/engineer/extend-cli.md) · [Add adapter](../how-to/engineer/add-adapter.md) · [Wire MCP tool](../how-to/engineer/wire-mcp-tool.md).
 
-REVENG has dedicated pipeline modules, but the durable design rules are simple:
-
-- make stage dependencies explicit
-- keep stage outputs as plain dictionaries or dataclasses
-- fail clearly when a dependency is required
-- degrade gracefully when a capability is optional
-- write intermediate artifacts into the analysis output directory
-
-If you add a pipeline stage, verify both its success path and its failure path.
-
-## Plugin Development
-
-REVENG still exposes plugin-oriented code under `src/reveng/plugins/` and `src/reveng/tools/enterprise/plugin_system.py`.
-
-Good plugin patterns:
-
-- one clear responsibility per plugin
-- configuration-driven behavior
-- explicit lifecycle hooks
-- isolated side effects
-- tests that exercise both success and cleanup behavior
-
-If a plugin depends on external tools, validate the dependency during initialization and return a structured failure rather than crashing in the middle of analysis.
-
-## Testing and Validation
-
-Use the repository validators defined in `.factory/services.yaml`:
+## Testing and honesty gates
 
 ```bash
-python -m pytest tests/unit/ tests/integration/ tests/performance -n 4 --ignore=tests/poc
-flake8 src/reveng/ --extend-ignore=E501,F811,E203
-python -m mypy src/reveng/ --ignore-missing-imports
+make test-unit
+python -m pytest -m "not requires_external_tools and not slow and not requires_network"
+make lint
+python3.9 scripts/verify_ga_readiness.py --profile baseline
+python3.9 scripts/verify_ga_readiness.py --profile ga
 ```
 
-Windows contributors should prefer `python -m pytest` over invoking `pytest` directly.
+Never trust verifier green alone — open tracked JSON. Details: [Unit & honesty gates](../tutorials/engineer/02-run-unit-and-honesty-gates.md) · [Corpus & GA scripts](../reference/corpus-and-ga-scripts.md).
 
-The remaining `tests/poc/` coverage is intentionally optional. Those files are now explicitly marked with `poc`, `requires_external_tools`, and `slow` because they depend on local compiler/model/runtime availability such as angr, GCC, and LLM4Decompile weights.
+POC suite remains optional (`tests/poc/`, markers `poc` / `requires_external_tools` / `slow`).
 
-```bash
-# Run the optional environment-heavy POC suite
-python -m pytest tests/poc/ -m "poc and requires_external_tools" -v
+## Code style
 
-# Or use the repo helper target
-make test-poc
-```
-
-## Release Checklist
-
-Before shipping a change:
-
-1. run tests, lint, and type checks
-2. verify `reveng --version`
-3. update the relevant changelog entry
-4. confirm docs still point to real commands and files
-
-## Code Style
-
-- follow the existing package structure instead of adding duplicate wrappers
-- prefer typed public interfaces
-- log important state transitions and external-tool failures
-- keep new docs and examples aligned with real commands from `src/reveng/cli.py`
+- Black + isort at 100 columns; snake_case / PascalCase / UPPER_SNAKE_CASE
+- Keep docs aligned with real commands from `src/reveng/cli/` and `docs/support_matrix.json`
+- No invented success percentages; watermark experimental surfaces
 
 ## Contributing
 
-The repository-wide contribution process lives in [CONTRIBUTING.md](../../CONTRIBUTING.md). Use that as the canonical policy; this page focuses only on the engineering workflow.
+Repository-wide process: [CONTRIBUTING.md](../../CONTRIBUTING.md). Release honesty: `.cursor/skills/reveng-release-honesty/SKILL.md` and [support/honesty-rules.md](../support/honesty-rules.md).

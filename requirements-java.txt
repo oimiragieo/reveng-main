@@ -10,8 +10,9 @@
 # HTTP client for API calls
 requests>=2.28.1
 
-# Ghidra MCP integration
-ghidramcp>=0.1.0
+# Ghidra MCP integration — NOT on PyPI (only 0.0.dev0). Do not pin here;
+# integration CI must not fail closed on a missing wheel. Use Ghidra fallback.
+# ghidramcp>=0.1.0
 
 # Binary manipulation
 lief>=0.13.0

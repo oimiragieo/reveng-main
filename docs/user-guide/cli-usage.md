@@ -1,110 +1,113 @@
 # CLI Usage Guide
 
-This page reflects the current commands exposed by `src/reveng/cli.py`.
+> **Maturity:** mixed — see [CLI reference](../reference/cli.md) and [support matrix](../support/support-matrix.md)
 
-## Basic Usage
+This page is a short narrative guide. The command table and maturity notes live in the [CLI reference](../reference/cli.md). Implementation: **`src/reveng/cli/`** package (`create_parser` in `cli/__init__.py`) — not `src/reveng/cli.py`.
+
+## Basic usage
 
 ```bash
 reveng --help
-reveng analyze sample.exe
 reveng triage sample.exe --format markdown
+reveng reverse-engineer-app app.jar --language jvm
+reveng analyze sample.exe
 ```
 
-If the console script is unavailable, use `python -m reveng ...`.
+If the console script is unavailable, use `python -m reveng ...` or `python src/reveng/cli/reveng.py ...`.
 
-## Command Reference
+## Command overview
 
-| Command | Purpose |
-| --- | --- |
-| `analyze [binary]` | run the main analysis flow |
-| `serve` | start the local web interface |
-| `ask <question> [binary]` | ask natural-language questions about a target |
-| `ai <binary>` | launch the interactive AI assistant workflow |
-| `triage <binary>` | fast threat assessment |
-| `vt-lookup <binary-or-hash>` | enrich with VirusTotal data |
-| `vt-submit <binary>` | submit a file to VirusTotal |
-| `generate-yara <binary>` | emit a YARA rule |
-| `scan-yara <binary>` | scan with YARA rules |
-| `diff <old> <new>` | compare two binaries |
-| `patch-analysis <old> <new>` | inspect a security patch |
-| `detect-packer <binary>` | identify packing / obfuscation |
-| `unpack <binary>` | attempt unpacking |
-| `enhance-code <file>` | improve raw decompiled code |
-| `recompile <binary>` | run the binary → source → binary flow |
-| `decompile <binary>` | extract source-like output |
-| `generate-exploit <binary>` | generate a proof-of-concept exploit |
+| Command | Purpose | Note |
+| --- | --- | --- |
+| `analyze [binary]` | Main analysis flow | preview; native may need Ghidra |
+| `reverse-engineer-app <input>` | App RE (JS/JVM/Python/.NET) | **supported** |
+| `serve` | Local web interface | preview |
+| `ask` / `ai` | AI Q&A / assistant | preview |
+| `triage <binary>` | Fast threat assessment | **supported** |
+| `vt-lookup` / `vt-submit` | VirusTotal | preview; API key |
+| `generate-yara` / `scan-yara` | YARA helpers | preview |
+| `diff` / `patch-analysis` | Compare / patch study | preview |
+| `detect-packer` / `unpack` | Packer flows | preview |
+| `enhance-code` | Improve decompiled code | preview |
+| `recompile` | Binary → source → binary | managed supported; native limited |
+| `build-bun-sea` | Bun → Node SEA | preview |
+| `decompile` | Decompile / Bun JS extract | limited when Ghidra-backed |
+| `generate-exploit` | PoC exploit assist | **EXPERIMENTAL / non-GA** |
 
-## Common Workflows
+## Common workflows
 
-### 1. First-pass triage
+### 1. First-pass triage (supported)
 
 ```bash
 reveng triage suspicious.exe --format markdown
 reveng ask "What does this binary do?" suspicious.exe
 ```
 
-### 2. Deep analysis
+### 2. App reverse engineering (supported)
+
+```bash
+reveng reverse-engineer-app ./my-app --language auto
+reveng reverse-engineer-app package.json --language javascript
+```
+
+See [App reverse-engineer tutorial](../tutorials/analyst/02-app-reverse-engineer.md).
+
+### 3. Deep / native analysis (often limited)
 
 ```bash
 reveng analyze suspicious.exe
 reveng decompile suspicious.exe --enhance
 ```
 
-### 3. Reconstruction workflow
+Requires a healthy Ghidra Analysis Server for many native paths (`http://127.0.0.1:13370`).
+
+### 4. Reconstruction
 
 ```bash
 reveng recompile suspicious.exe --output-dir analysis_suspicious
-reveng enhance-code analysis_suspicious/decompiled/main.c --function-name main
 ```
 
-### 4. Detection content
+Managed-language inputs use app adapters (no Ghidra). Native PE/ELF/Mach-O still need Ghidra.
+
+### 5. Detection content
 
 ```bash
 reveng generate-yara suspicious.exe --output suspicious.yar
 reveng scan-yara suspicious.exe --rule-file suspicious.yar
 ```
 
-### 5. Diffing and patch review
+### 6. Diffing and patch review
 
 ```bash
 reveng diff old.exe new.exe --format markdown
 reveng patch-analysis old.exe new.exe --format markdown
 ```
 
-## Windows-focused Notes
+### 7. Exploit assist (experimental)
 
-The old Windows-specific guide was condensed into this section:
+```bash
+reveng generate-exploit suspicious.exe
+```
 
-- start with `triage`, `detect-packer`, and `analyze` for PE files
-- use `decompile` for source-oriented review
-- use `ask` to summarize imports, persistence, network behavior, or crypto behavior
-- use `recompile` only after Ghidra is available locally
+Watermarked **EXPERIMENTAL / non-GA**. Not part of the supported customer surface. See `exploit_generation` in [`docs/support_matrix.json`](../support_matrix.json).
 
-## Useful Options
+## Windows-focused notes
 
-Selected command-specific options from the current parser:
-
-- `serve --host --port --reload`
-- `ask --analysis-results --conversational`
-- `ai --analysis-type --goals --interactive`
-- `triage --bulk --format`
-- `diff --deep --format`
-- `patch-analysis --cve --format`
-- `unpack --output --method`
-- `enhance-code --function-name --output`
-- `recompile --output-dir --ghidra-url --no-gemini --no-exploits`
-- `decompile --output --language --enhance`
-- `generate-exploit --vulnerability --output --language --analysis-results`
+- Start with `triage`, `detect-packer`, and `analyze` for PE files
+- Prefer `reverse-engineer-app` for managed-language packages
+- Use `decompile` / `recompile` for native only after Ghidra is available locally
 
 ## Troubleshooting
 
 - If `reveng` is not found, use `python -m reveng`.
-- If Ghidra-dependent commands fail, start `external/ghidra-server/ghidra_http_server.py`.
-- If AI features are unavailable, start Ollama or configure the provider you want.
+- If Ghidra-dependent commands fail, start the local Ghidra HTTP server.
+- If AI features are unavailable, start Ollama or configure `REVENG_AI_PROVIDER` / API keys.
 
-## Related Docs
+## Related docs
 
-- [Getting Started](../getting-started/installation.md)
-- [Bun Executable Reversing](bun-reversing.md)
-- [API Reference](../api/API_REFERENCE.md)
-- [MCP Guide](../mcp/README.md)
+- [CLI reference](../reference/cli.md)
+- [Install and triage tutorial](../tutorials/analyst/01-install-and-triage.md)
+- [Getting started](../getting-started/installation.md)
+- [Bun reversing](bun-reversing.md)
+- [Python API reference](../reference/python-api.md)
+- [MCP tools](../reference/mcp-tools.md)

@@ -1,4 +1,10 @@
-"""Native adapter for the shared app reverse-engineering framework."""
+"""Native adapter for the shared app reverse-engineering framework.
+
+Honesty: ``NativeAppAdapter`` is **not** registered in
+``create_default_framework()`` and is **not** a supported app-RE CUJ.
+Do not document or market it as GA; keep ``required: false`` / fixture-only
+until hermetic native analyze is measured and Sol-authorized.
+"""
 
 from __future__ import annotations
 

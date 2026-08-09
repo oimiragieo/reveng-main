@@ -6,11 +6,12 @@ Ops index for the full roadmap clearance program. Update `status` when work land
 **Execution charter:** [`docs/architecture/scope-c-execution-charter.md`](docs/architecture/scope-c-execution-charter.md)
 (not one clearance wave for phases 4–13; disposition ≠ capability `done`).
 
-**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-07-scope-c-charter.md`](docs/architecture/ceo-update-2026-08-07-scope-c-charter.md)  
-**Prior CEO:** [`docs/architecture/ceo-update-2026-08-06-wave3.md`](docs/architecture/ceo-update-2026-08-06-wave3.md) · [`docs/architecture/ceo-update-2026-08-06-wave2.md`](docs/architecture/ceo-update-2026-08-06-wave2.md) · [`docs/architecture/ceo-update-2026-08-06.md`](docs/architecture/ceo-update-2026-08-06.md)  
+**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md`](docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md)  
+**Wave 0 closeout plan:** [`docs/superpowers/plans/2026-08-09-backlog-closeout-program.md`](docs/superpowers/plans/2026-08-09-backlog-closeout-program.md) (Thinktank **APPROVE Wave 0**)  
+**Prior CEO:** [`ceo-update-2026-08-07-scope-c-charter.md`](docs/architecture/ceo-update-2026-08-07-scope-c-charter.md) · [`ceo-update-2026-08-06-wave3.md`](docs/architecture/ceo-update-2026-08-06-wave3.md) · wave2 · wave1  
 **Wave B exit criteria:** [`docs/architecture/wave-b-exit-criteria.md`](docs/architecture/wave-b-exit-criteria.md)  
 **Wave C exit criteria:** [`docs/architecture/wave-c-exit-criteria.md`](docs/architecture/wave-c-exit-criteria.md)  
-**Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (L1–L24)
+**Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (**L1–L32**)
 
 Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked` · `blocked_on_phase_4` · `mitigated` · `research` · `blocked_on_phase_4` · `deferred` · `wontfix`
 
@@ -113,11 +114,21 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | id | finding | status |
 | --- | --- | --- |
 | TG-AUDIT-2026-08-08 | tg-audit P0/P1 honesty fixups (plan+impl Sol APPROVE_WITH_NITS; `feat/tg-audit-fixups`; D1–D6 deferred) | done |
+| CI-HONESTY-SLIM-1 | Wave B/C honesty CI: slim `requirements-honesty.txt` (avoid resolution-too-deep) | done |
+| GHIDRAMCP-PIN-1 | Remove fictional `ghidramcp>=0.1.0` from java/security requirements | done |
 | DF-1 | Host python3.13 stdlib broken — use 3.9 | mitigated |
 | DF-2 | Conftest heavy imports | done |
 | DF-3 | Wrong analyze report filename in runner | done |
 | DF-4 | Full `git status` hangs on dirty `reports/` (DrvFS) | done |
 | DF-5 | hello_go analyze can process-exit 0 / probe `completed` with partial_success / empty native fallback — not native GA | done | documented+tested (`test_df5_process_completed_honesty.py`); process `completed` ≠ native GA |
+| WIRING-2026-08-09 | World-class MCP/CLI wiring honesty Top-8 | done | Wave 0 land |
+| DOCS-DUALDOOR-2026-08-09 | Junior Diátaxis dual-door docs | done | Wave 0 land |
+| ISSUE-101-DISP | #101 rich Capstone renderer — 43 xfails dispositioned blocked | blocked | See section L; issue remains open |
+| CI-HONESTY-NOCOV-1 | Wave B/C honesty CI: `--no-cov` needs pytest-cov on slim install | done | add pytest-cov to requirements-honesty.txt |
+| CI-PHASE5-PY39-PATH-1 | Wave C used hardcoded `/usr/bin/python3.9` (absent on GHA) | done | use setup-python `python` |
+| CI-DOCS-LINK-1 | docs-link-check fails on main (215 errors; Windows abs paths in thinktank HTML) | open | pre-existing; not introduced by Wave 0 dual-door alone |
+| CI-UNICORN-BUILD-1 | Tests matrix: angr/unicorn wheel build fails (cmake_minimum_required) | open | pre-existing install flake; not Wave 0 code path |
+| LINT-IMPORTS-HOST-1 | Host `/usr/bin/python3.9` lacks importlinter for local lint-imports | open | could_not_measure locally; CI Code Quality still owns import contracts |
 
 ## I. Decisions / waivers
 
@@ -128,7 +139,8 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Public preview: CLI + app RE supported; native limited; exploits experimental |
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈5.10s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
 | 2026-08-07 | Phase 4 **honesty go** (Sol APPROVE_WITH_NITS waiver: M2 split). Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: Sol REJECT hollow ACK-ping → forgeable `candidate_hash_changed` → corpus registration of `vrl_llm_micro_go` + gate SHA/applied-source harden; dogfood loads seeds from corpus; VRL-LLM-1 **done** (load-bearing, Sol-ready evidence); Phase 4 **honesty go** recorded (M2 world-class still open/partial; hexyl C refine `vrl_compile_toolchain_broken`). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
-| 2026-08-07 | Phase 5 **thin honesty** Sol APPROVE (`decision-phase-05-thin-honesty-auth.md`): `wave-c-phase5-honesty.yml` + `scripts/verify_equivalence_honesty.py` + `reports/equivalence_honesty/latest.json`; M4/EPIC-7/FEAT-2/REV-P1-CI-CORPUS **partial**; full nightly corpus open; M2 remains entry dep; no native `required:true`; no exploit expansion. |
+| 2026-08-08 | PR #119 merge (tg-audit + Scope C history). Follow-up: honesty slim install + drop ghidramcp PyPI fiction; CEO `ceo-update-2026-08-08-tg-audit-merge.md`; lessons L25–L32. |
+| 2026-08-09 | Thinktank **APPROVE Wave 0** backlog closeout (not all-85-done). Land wiring honesty + dual-door docs; #101 dispositioned blocked with per-xfail table (section L); later waves Sol-gated. |
 
 ---
 
@@ -244,3 +256,68 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 ## K. Phase 4 honesty go
 
 Phase 4 honesty go recorded (`decision-phase-04-honesty-go-waiver.md`). Phases 5–13 are no longer `blocked_on_phase_4` for *authorization*, but still need per-phase Sol stop/go before product work. M2 world-class remains open.
+
+## L. Wave 0 closeout (2026-08-09)
+
+Program plan: [`docs/superpowers/plans/2026-08-09-backlog-closeout-program.md`](docs/superpowers/plans/2026-08-09-backlog-closeout-program.md)  
+Thinktank: Round 1 `APPROVE_WITH_NITS` → Round 2 Sol **`APPROVE Wave 0`** (`docs/architecture/thinktank-backlog-closeout-wave0-r2.txt`).
+
+| id | finding | status | notes |
+| --- | --- | --- | --- |
+| WIRING-2026-08-09 | MCP/CLI Top-8 wiring honesty (W-01..W-07,W-04,W-06,W-09) | done | tests in `tests/unit/test_world_class_wiring_honesty_2026_08_09.py` |
+| DOCS-DUALDOOR-2026-08-09 | Diátaxis dual-door junior docs ecosystem | done | `docs/support|tutorials|how-to|explanation|reference|ops` |
+| ISSUE-101 | Rich local Capstone pseudocode renderer | blocked | Wave 0 path (2): disposition table below; issue stays **open**; do not claim closed |
+| CLOSEOUT-W0 | Land honesty+docs; #101 disposition; dogfood | in_progress | branch `feat/backlog-closeout-wave0`; Sol verdict `docs/architecture/sol-wave0-impl-verdict.md`; dogfood 22 honesty pass / 1+43 xfail disasm / app RE evidence_backed |
+
+### ISSUE-101 xfail disposition (Wave 0 acceptance path 2)
+
+Source: `tests/unit/test_local_disassembler.py` — all `test_*` except `_PASSING_AGAINST_MINIMAL_FALLBACK`. Count: **43** blocked / **1** pass unmarked.
+
+| test | disposition | reason |
+| --- | --- | --- |
+| `test_to_ghidra_format_only_emits_continuations_for_generated_functions` | pass | passes against shipped minimal fallback |
+| `test_to_ghidra_format_includes_local_pseudocode_functions` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_resolve_call_target_uses_sub_prefix_for_local_targets` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_resolve_call_target_prefers_indirect_local_code_targets` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_to_ghidra_format_prioritizes_direct_call_targets_from_entry_point` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_to_ghidra_format_prioritizes_indirect_local_targets_from_entry_point` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_bounded_section_data_uses_wider_but_still_bounded_window` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_instruction_to_pseudocode_resolves_rip_relative_import_calls` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_instruction_to_pseudocode_resolves_rip_relative_local_code_calls` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_resolves_register_loaded_import_calls` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_preserves_windows_x64_register_args_for_import_calls` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_emits_local_cmp_jump_labels_and_gotos` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_emits_local_test_jump_labels_and_gotos` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_emits_setcc_assignments_from_cmp_state` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_materializes_rbp_relative_local_buffers` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_materializes_indexed_frame_pointers_for_lea` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_materializes_indexed_frame_reads` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_materializes_register_relative_reads_and_stores` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_materializes_register_relative_lea` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_materializes_scaled_register_relative_lea` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_preserves_arithmetic_state_updates` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_does_not_double_add_rbp_to_frame_pointers` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_preserves_multibytetowidechar_arguments` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_uses_live_register_vars_for_overwritten_args` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_preserves_register_aliases_as_live_runtime_vars` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_materializes_rip_relative_addressed_strings` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_preserves_shadow_space_args_for_windows_x64_calls` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_clears_volatile_arg_state_after_call` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_render_pseudocode_function_resolves_register_loaded_local_code_calls` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_to_ghidra_format_stitches_bounded_fallthrough_continuations` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_to_ghidra_format_uses_on_demand_window_for_out_of_slice_local_targets` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_collect_behavioral_seed_targets_prefers_import_referencing_regions` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_collect_behavioral_seed_targets_prioritizes_output_regions_over_handle_setup` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_collect_behavioral_seed_targets_includes_local_callers_of_behavior_regions` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_collect_behavioral_seed_targets_includes_pe_wide_callers_of_behavior_regions` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_expand_behavioral_predecessor_targets_walks_multiple_local_hops` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_collect_behavioral_seed_targets_includes_multi_hop_pe_wide_callers` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_collect_behavioral_seed_targets_includes_neighbor_windows_for_behavior_regions` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_find_pe_behavioral_call_targets_promotes_direct_thunk_calls_to_enclosing_start` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_to_ghidra_format_prioritizes_behavioral_import_regions_over_chunk_sweep` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_to_ghidra_format_records_orphan_behavioral_seed_reachability_metadata` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_collect_behavioral_seed_targets_uses_pe_scan_for_out_of_slice_import_calls` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_collect_behavioral_seed_targets_prioritizes_pe_scan_output_imports_when_scan_order_is_noisy` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+| `test_collect_register_behavioral_call_targets_finds_register_loaded_import_calls` | blocked | rich Capstone pseudocode renderer not implemented; shipped module is minimal fallback (#101) |
+
+**Close #101 only when every `blocked` row above is `pass` (zero renderer xfails).**

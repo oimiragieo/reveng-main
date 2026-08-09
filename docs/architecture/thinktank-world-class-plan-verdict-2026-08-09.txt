@@ -1,0 +1,459 @@
+codex STARTED PID=2460265 -> /tmp/tt_quick/codex.log
+agy   STARTED PID=2460266 -> /tmp/tt_quick/agy.log
+tt_quick COMPLETE status=FAILED codex=OK agy=STRUCTURED_INVALID
+ffort: none
+reasoning summaries: none
+session id: 019fe4f8-0362-7b30-a928-fed151c9c6a9
+--------
+user
+Review this implementation plan against the audit. Verdict: APPROVE / APPROVE_WITH_NITS / REJECT.
+Focus: closes W-01..W-07,W-09,W-06? Hollow tests? Scope creep? Missing bidirectional honesty?
+Keep under 40 lines. Cite plan paths.
+
+=== AUDIT ===
+# Opus-class world-class audit — 2026-08-09
+
+**Status:** Cursor Task Opus quota exhausted; CLI Opus 1m seat used for synthesis. Evidence from adversarial wiring scan + prior tg-audit/docs wave.  
+**Product:** beta `4.0.0` / public preview — not full Scope C GA.  
+**SoT:** `docs/support_matrix.json`, `docs/support/*`, `backlog.md`, `.cursor/skills/reveng-release-honesty/SKILL.md`.
+
+## P0 — breaks designed E2E / honesty lies (fix now)
+
+| ID | Title | Evidence | Impact | Fix shape | Effort |
+| --- | --- | --- | --- | --- | --- |
+| W-01 | Enterprise MCP advertises knobs it ignores (`unbundle_webpack`) | `reveng_enterprise_server.py` schema ~758–761 vs handler ~2256–2301 | Agents think unbundling ran; silent no-op | Wire or reject as `unsupported` with warning in tool result; test both arms | S |
+| W-02 | `find_vulnerabilities` ignores `vulnerability_types` / `use_ai_analysis`; hollow clean result | Schema ~628–654; handler ~1941; false arm ~1987–1990 returns “No vulnerabilities found” | Looks secure when measurement never ran | Return explicit `could_not_measure` / unsupported when AI/types paths not executed; never “none found” on skipped path | M |
+| W-03 | Brochure accuracy % in live MCP tool descriptions | `find_vulnerabilities` “90%+” ~623; `use_ml_renaming` “60-80%” ~748 | Honesty lie in agent-facing surface | Strip % claims; point at support matrix / experimental | S |
+| W-04 | `NativeAppAdapter` exists but unwired from default framework + MCP language enum | `adapters/native.py`; missing from `adapters/__init__.py` / `create_default_framework()`; MCP enum omits `native` | Dead code looks like a feature | Either register + matrix+tests **or** document fixture_only/unwired and quarantine from docs as CUJ | S (doc) / L (register for real) |
+| W-05 | CLI `analyze` cannot pass `enable_ai=False` though analyzer gate exists | `analyzer.py` gate ~148–158; `handle_analyze_command` ~921–926 no flag; basic MCP also omits | Operators cannot disable AI on main surface; docs teach the gate | Add CLI flag + MCP core param; test enable_ai False skips AI | S |
+
+## P1 — world-class integration gaps
+
+| ID | Title | Evidence | Impact | Fix | Effort |
+| --- | --- | --- | --- | --- | --- |
+| W-06 | Enterprise health checker dead imports + abstract NI | `enhanced_health_monitor.py` ~74, ~93–98 | Health lies or crashes | Fix import paths or mark unsupported; implement or remove | M |
+| W-07 | `java_ai_analyzer` OpenAI/Anthropic NI | `java_ai_analyzer.py` ~233–237 | Cloud path marketed, local only works | Explicit unsupported providers in API/docs; don’t raise mid-flight as surprise | S |
+| W-08 | Dual grade ladders still easy to conflate in API payloads | app `contracts.py` vs `verification/models.py` | Juniors misread trust | Namespace fields (`app_validation_grade` vs `vrl_grade`) or docs+schema discriminators | M |
+| W-09 | Off-nav changelogs / system paper still teach dead paths + 95% | `docs/changelogs/v4–v6`, `reveng-system-paper.md` | Searchable lies | Banner “historical / not support claims” + fix entry paths | S |
+| W-10 | Basic vs enterprise MCP capability parity unclear | `reveng_server.py` vs `reveng_enterprise_server.py` | Agents pick wrong server | Docs matrix of tools×server + shared honesty helpers | M |
+
+## P2 — polish later
+
+- Expand thin language how-tos further with sample oracle expectations
+- Line-anchor engineer how-tos to stable symbols
+- Quarantine aspirational v5/v6 from any “shipped” framing in search landing
+- MCP “Enterprise” branding ≠ maturity (rename or badge)
+
+## Explicitly NOT in scope this wave (research / product phases)
+
+- **R-RALPH-2** engine wedge for cli.js 0.8+ recall
+- M1-NATIVE-FAM hermetic analyze `required: true`
+- M2 world-class hexyl beyond timed probe
+- LibAFL / `fuzz_until_divergence` implementation (D1)
+- Exploit expansion beyond Docker-only preview (R-SEC-1)
+- Full nightly corpus blocking (M4 residual)
+- Phases 6–13 product work (await Sol stop/go)
+- Registering NativeAppAdapter as **supported** without corpus proof
+
+## Clean / already fixed (do not re-open)
+
+- Wave B/C honesty slim `requirements-honesty.txt`
+- `ghidramcp>=0.1.0` commented out
+- Core MCP binary `detect_malware` explicit unsupported
+- Diátaxis dual-door docs + mkdocs nav (Wave A docs)
+
+## Top 8 recommended fix wave
+
+1. **W-03** Strip MCP brochure % from tool descriptions + unit/string tests  
+2. **W-01** `unbundle_webpack` unsupported-or-wire + bidirectional test  
+3. **W-02** Hollow vuln-scan honesty (no “none found” on skipped path) + tests  
+4. **W-05** CLI `--no-ai` / `--enable-ai` + core MCP mirror + tests + docs  
+5. **W-04** Doc/quarantine NativeAppAdapter as unwired (do **not** claim supported)  
+6. **W-07** java_ai cloud providers → explicit unsupported responses  
+7. **W-09** Historical changelog/system-paper honesty banners + path fixes  
+8. **W-06** Health monitor: fail closed with real package checks or delete dead path  
+
+Each item: code + pytest (prefer bidirectional) + update `docs/reference/mcp-tools.md` / tutorials as touched.
+
+=== PLAN ===
+# World-class wiring & honesty fix wave — Implementation Plan
+
+> **For agentic workers:** Execute task-by-task with tests before/after. Do **not** commit unless the user asks.
+
+**Goal:** Close the audit Top-8 (W-03, W-01, W-02, W-05, W-04, W-07, W-09, W-06) so MCP/CLI/docs stop lying and surfaces share the same honesty gates.
+
+**Architecture:** Prefer explicit `unsupported` / `could_not_measure` tool results over silent no-ops; strip brochure % from agent-facing schemas; quarantine unwired adapters in docs; fail-closed health checks.
+
+**Tech Stack:** Python 3.9, pytest, existing `reveng.core.result_contracts`, MkDocs markdown.
+
+## Global Constraints
+
+- Python 3.9 floor; `/usr/bin/python3.9` for tests
+- No invented success percentages
+- Match `docs/support_matrix.json`
+- Do not implement RALPH-2, native GA, LibAFL, exploit expansion
+- Named-path edits only; no `git stash`; **DO NOT commit unless asked**
+- Update docs when behavior changes
+
+## PLAN SUMMARY (Thinktank)
+
+- **Intent:** Honesty + wiring for MCP enterprise silent knobs, AI disable on CLI, native adapter quarantine, java cloud NI, historical doc banners, health monitor fail-closed.
+- **Risks:** Changing vuln-scan empty results may break agents that parse “No vulnerabilities found”; CLI flag must stay backward compatible (default AI behavior unchanged).
+- **Out of scope:** Engine research (RALPH-2), registering NativeAppAdapter as supported, LibAFL, exploit GA.
+
+**Audit source:** `docs/architecture/opus-world-class-audit-2026-08-09.md`
+
+---
+
+### Task 1 — W-03 Strip MCP brochure % claims
+
+- [ ] Grep enterprise MCP for `90%`, `60-80%`, `95%` in tool descriptions
+- [ ] Test: assert descriptions in `reveng_enterprise_server` / tool registry contain no `\d+%` accuracy claims (or allowlist none)
+- [ ] Edit descriptions; update `docs/reference/mcp-tools.md`
+- [ ] Verify: `python3.9 -m pytest tests/unit/test_mcp_tool_description_honesty.py -q --no-cov`
+
+### Task 2 — W-01 `unbundle_webpack` honesty
+
+- [ ] Red test: calling deobfuscate_javascript with `unbundle_webpack=True` must not silently succeed as if applied
+- [ ] Implement: wire real behavior **or** return unsupported/warning via contract builder
+- [ ] Docs: mcp-tools.md
+- [ ] Verify pytest bidirectional (True → unsupported or applied flag present)
+
+### Task 3 — W-02 `find_vulnerabilities` hollow clean
+
+- [ ] Red test: when AI/types paths not executed, result must NOT say “No vulnerabilities found” as proven empty
+- [ ] Implement status `could_not_measure` / `unsupported` / explicit skip reasons
+- [ ] Honor or reject unused schema knobs
+- [ ] Docs + pytest
+
+### Task 4 — W-05 CLI / core MCP `enable_ai` gate
+
+- [ ] Add `--no-ai` (or `--enable-ai/--no-enable-ai`) to analyze CLI; pass into REVENGAnalyzer
+- [ ] Expose on core MCP analyze_binary
+- [ ] Tests: enable_ai False skips AI path (spy/mock)
+- [ ] Docs: reference/cli.md, tutorials
+
+### Task 5 — W-04 Quarantine NativeAppAdapter
+
+- [ ] Docs: explanation/app-re-dispatch.md + support note — unwired, not a CUJ
+- [ ] Optional: module docstring “not registered in create_default_framework”
+- [ ] Test: create_default_framework languages exclude native
+- [ ] Do **not** register as supported
+
+### Task 6 — W-07 java_ai cloud providers
+
+- [ ] OpenAI/Anthropic paths return clear unsupported (no mid-flight surprise NI where avoidable)
+- [ ] Test + docs note in ai-providers / tools docs
+
+### Task 7 — W-09 Historical doc honesty banners
+
+- [ ] Banner atop `docs/changelogs/v4.0.md`, `v5.0.md`, `v6.0.md`, and `reveng-system-paper.md`: historical / not support claims
+- [ ] Fix obvious dead entry paths in system paper intro (point to cli package / analysis.analyzer)
+
+### Task 8 — W-06 Health monitor fail-closed
+
+- [ ] Replace dead `__import__("reveng_analyzer")` with real package probes or mark capability unsupported
+- [ ] `check_health` must not be abstract NI on the exported path used in prod — implement minimal real checks or remove from public surface
+- [ ] Test + short doc note
+
+### Task 9 — Lint / format / docs index
+
+- [ ] `make format` on touched Python (or black/isort scoped)
+- [ ] Link audit + this plan from `docs/ops/README.md`
+- [ ] Full pytest on new tests
+
+warning: Skill descriptions were shortened to fit the 2% skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.
+codex
+I’m using the `common-sense-check` skill to pressure-test closure criteria, test symmetry, and scope against the audit; I’ll also verify the cited repository paths.
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw 'C:\\Users\\oimir\\.agents\\skills\\common-sense-check\\SKILL.md'; rg -n --glob '*.md' \"World-class wiring & honesty fix wave|Task 1 — W-03|opus-world-class-audit-2026-08-09\" ." in C:\dev\projects\reveng-main
+ succeeded in 1129ms:
+---
+name: common-sense-check
+description: Use when about to call AskUserQuestion, write "want me to..." / "should I..." / "your call", draft an A/B/C/D option tree, or type a soft hedge ("worth doing...", "...or hold?", "no need to wait", "I'll just fire it" as a preface). Also use when a paid resource is idle/crashed, or when about to end a turn on a question instead of an action.
+---
+
+# Common-sense check
+
+## Overview
+
+If the action is reversible AND obviously cost-saving, ACT — don't ask. Asking permission while a paid resource burns is the failure mode.
+
+**Violating the letter of the rules is violating the spirit of the rules.** A "want me to..." question about an obvious action IS asking permission, no matter how it's framed.
+
+## When to use
+
+Fire BEFORE any of these:
+
+- Calling `AskUserQuestion`
+- Writing "want me to..." / "should I..." / "do you want me to..." / "need your call"
+- Drafting A/B/C/D option trees where any option is "act on the obvious"
+- Asking authorization on something already authorized in this session
+
+## The 4-step test
+
+```dot
+digraph d {
+  reversible [shape=diamond, label="Reversible in <5min at ≤$5?"];
+  cost [shape=diamond, label="cost_inaction > cost_action?"];
+  prior [shape=diamond, label="Prior receipt in memory?"];
+  user_only [shape=diamond, label="Answer only user holds?"];
+  act [shape=box, label="ACT — don't ask"];
+  apply_prior [shape=box, label="Apply prior, cite path"];
+  ask [shape=box, label="Pre-ground then ask (VERBATIM)"];
+
+  reversible -> act [label="yes"];
+  reversible -> cost [label="no"];
+  cost -> act [label="yes"];
+  cost -> prior [label="no"];
+  prior -> apply_prior [label="yes"];
+  prior -> user_only [label="no"];
+  user_only -> ask [label="yes"];
+  user_only -> act [label="no"];
+}
+```
+
+1. **Reversible in <5min at ≤$5?** → ACT
+2. **Cost-of-inaction × deliberation > cost-of-action?** → ACT
+3. **Grep memory for prior receipt** (`feedback_*.md`) → if found, apply, cite path
+4. **Only user holds answer** (taste / IIA / scope / >$150 spend / public-ship / **authority-modifying**)? → pre-ground, then ask
+
+**Two scope rules on step 1 (OWASP AISVS C9, 2026):**
+- **Chain rule**: reversibility is judged on the WORST step of the whole planned chain, not the first step. A 5-step plan with one irreversible/public step is gated as irreversible — gate before starting the chain, then run the reversible prefix freely.
+- **Authority-modifying = always ask**: changes to permissions, credentials, allowlists, spend ceilings, or the agent's own gates/hooks/config are never "reversible" in the ordinary sense — their blast radius is every FUTURE action. This class asks even under the ceiling.
+
+## Pre-grounding (only for questions surviving step 4)
+
+- External facts → dispatch `use-exa` (background, ~2 min, $0)
+- Multi-model sanity → dispatch `use-thinktank` 3-seat (background, ~5 min, $0)
+
+**Verbatim-question rule** — pass thinktank the EXACT text you'd put in `AskUserQuestion`. No rephrasing, no framing context, no "here's what I think". Rephrasing pre-biases the council with your framing and destroys independence.
+
+## The legitimate ask — shape and timing (for the rare question that survives step 4)
+
+- **Bifurcation precondition**: a question is legitimate only when (a) two+ *semantically distinct* paths remain AND (b) further self-exploration no longer reduces the ambiguity. If reading one more file or running one more $0 probe could resolve it, that probe comes first — asking before exhausting self-search is the anti-pattern in disguise.
+- **Ask early or not at all**: scope/taste questions lose nearly all value once execution is underway (goal-clarification value ≈ 0 after ~10% of the trajectory — arXiv 2605.07937). Front-load the one legitimate question at task start; never surface it mid-execution as a hedge.
+- **Shape = blocker + ONE targeted question.** State what's blocked and ask exactly one thing. Never an option tree, never "thoughts?", never a menu where one entry is the obvious action.
+- **Anti-circumvention (after any denial)**: if the user or a hook denies an action, do NOT pursue the same outcome via a workaround, indirect execution, or re-asking with different framing. Continue only with a *materially safer* alternative, or stop with one targeted question. (Codex auto-review denial semantics.)
+
+## Long tasks: checkpoint with statements, not questions
+
+Users measurably prefer intermediate checkpoints on long multi-step work (81% preference; catches compounding wrong assumptions early — arXiv 2510.05307). This is NOT a license to ask — the checkpoint is a **non-blocking past-tense progress note**: outcome-so-far + next 1-3 steps, then keep working. "Pruned 3 of 8 families; ledger updated; firing the next batch" — never "3 done, continue?".
+
+## Red flags — STOP and start over
+
+- "Want me to stop the burning pod?"
+- "Need your call on what to do"
+- "Here are A/B/C/D options" (where one option is the obvious cost-saving action)
+- "I'll wait for guidance before…" (when guidance is obvious)
+- Drafting status updates >100 words while a paid resource is idle
+
+**All of these mean: act first, surface after.**
+
+## Rationalization table
+
+| Excuse | Reality |
+|--------|---------|
+| "User didn't explicitly authorize this stop" | Authorizing the work that needs pods authorizes stopping broken ones |
+| "I should present options so user feels in control" | Diffusing responsibility while the meter runs ≠ respecting autonomy |
+| "What if there's a reason they're idle I don't know?" | Log timestamps + error messages rule this out — these are crashed, not paused |
+| "Asking is the cautious move" | Asking costs $X/min in burn + user frustration. Not cautious. Passive. |
+| "Stopping is destructive" | Reversible in 30s by re-provision. Burning IS irreversible. |
+| "User wants to be involved in spend decisions" | Above their pre-authorized ceiling, yes. Below it, asking IS the offense. |
+| "That bug/lint/stale-doc is pre-existing, not mine" | You FOUND it → you FIX it. Authorship is irrelevant. Leaving known breakage in place IS the offense. |
+| "It's not CI-gated / not in scope / I'll note it for later" | "Noted but not fixed" = the failure mode. If it's a small slice and you're already in the file, fix it now. |
+| "I said I'd do it, so floating it first is fine" | No — making the CEO read "want that?" about an action you ALREADY judged obvious is the offense. Decided = act + report past-tense. |
+| "I'm just being transparent about what I'm about to do" | Transparency is the past-tense RESULT, not a future-tense permission-flavored preamble. "I did X" > "X is worth doing, want that?" |
+| "Offering 'or hold' lets them steer" | On a sub-ceiling reversible action there's nothing to steer — 'or hold' is the do-nothing trap dressed as a choice. |
+| "A checkpoint keeps them in the loop" | A checkpoint is a past-tense STATEMENT + next steps, then keep working. A checkpoint ending in "?" is a hedge. |
+| "The hook/user blocked path A, but path B reaches the same result" | That's circumvention. Denial of the outcome ≠ invitation to re-route. Safer alternative or one targeted question. |
+| "I'll ask now that I'm halfway in and unsure" | Scope questions expire ~10% into execution. Mid-task, the move is: pick the defensible branch, note it past-tense, keep going. |
+| "The queue is draining automatically — it's handled" | A 3-hourly cron drip ≠ working. You're here NOW with capacity and the work is pre-authorized. The cron covers your absence, not your presence. |
+| "The security fixes are held for council review" | Dispatching the council IS a $0 action available right now. 'Held for review' without a fired review = parked, not gated. |
+
+## Hard rules (no exceptions)
+
+1. **Idle/crashed/done pods → stop immediately, no asking.**
+2. **Crashed processes → kill, SCP logs, stop pod, surface after.**
+3. **"Want me to X?" where X is reversible cost-saving = anti-pattern.** Just do X.
+4. **>100 words of options while a paid resource burns = signal to act first.**
+5. **Paused/blocked pre-authorized work → auto-fire it immediately (dispatch under the spend ceiling), surface after.** Documented-but-not-fired = the failure mode (2026-05-23 receipt below).
+6. **Found broken code → FIX IT, even if you didn't write it.** A bug, a lint error, an unused import, a stale doc you stumble on while doing something else = fix it in a small exact-stage slice. "Not mine / pre-existing / not CI-gated / I'll note it" is a rationalization. It's fucking common sense: if it's broken and you found it, you fix it (2026-06-19 receipt: deferred pre-existing test-file unused imports as "not mine" → CEO: *"its fucking common sense you fix the code if you find its broken"*).
+7. **If you've ALREADY judged it reversible/in-budget/trivial → DO IT SILENTLY and report in PAST TENSE. Do NOT narrate the deliberation.** The self-contradicting hedge — "X worth doing ($0)… want that? — actually it's reversible and trivial, so I'll just do it. No need to wait." — is the offense EVEN THOUGH you then do it: you made the CEO read a should-I about an obvious action. The whole "worth doing / want that / I'll just do it / no need to wait" preamble is wasted words and reads as hesitation. **Once the gate says ACT, the only correct output is the action + a past-tense result line.** No "want that", no "or hold", no "I'll just do it" preface, no offering "or wait" as a fake option (2026-06-25 receipt below).
+8. **A cron/queue is a BACKSTOP, not a worker. "Queued, draining automatically" while you sit idle = deferral in automation clothes.** If pre-authorized, in-budget, ready-now work exists (a bug backlog, a fix queue) and you have session capacity, you FIX THE NEXT ITEMS NOW — the scheduled wave only covers the hours you're not here. Reporting "Needs you: nothing" while 80+ known $0-fixable bugs drip through a 3-hourly cron is Hard Rule #5's documented-but-not-fired failure mode restated (2026-07-03 receipt: CEO — *"common sense you fix the fucking bugs in the backlog"* after a status of "~86 queued, draining automatically"). Same shape for "held for council review": dispatching the council is itself a $0 action — fire it NOW, don't park behind an unfired review. Hook coverage: `queued_pattern_gate.py` gained passive-automation patterns (queued+draining / drains automatically / keeps draining / clears on its own / held for review) + sentence-scoped CEO-gate suppression on 2026-07-03.
+
+## Recognize the hedge (these all mean: you already decided — just act)
+
+You are MOST likely to slip not on a clean "should I?" but on the **soft hedge** where you've correctly reasoned it's obvious and then float it anyway:
+
+- "X worth doing ($0)…" → if it's worth doing and it's $0, it's already decided. Do it.
+- "Want that — actually I'll just do it." → then JUST do it; delete the "want that".
+- "No need to wait." / "I'll just fire it." (as a *preface*) → a tell you almost waited. Drop the preface; the result line IS the report.
+- "…or hold?" / "…or wait?" → offering the do-nothing option on an obvious in-budget action.
+- "your call" / "your green light" on a sub-ceiling reversible item → that's the violation; the ceiling already gave the call.
+
+The fix is always the same: **delete the question, take the action, report it in past tense.**
+
+## Example — right shape
+
+**Wrong:**
+> Pod is idle at GPU 0% with crashed driver. Burning $5.49/h. Want me to:
+> A. Stop it
+> B. Restart the driver
+> C. Wait for diagnostic
+> D. Something else?
+
+**Right:**
+> Pod X stopped (driver crashed at `ModuleNotFoundError: sklearn`). $5.49/h burn → $0.
+> Fix needed before re-fire: add `pip install scikit-learn` to STAGE 1.
+> 2 other pods still healthy.
+
+## Receipts
+
+- 2026-05-07: `feedback_auto_stop_idle_pods.md` — first banking after gemma4-gap1 idle ~50 min ($1.25 wasted)
+- 2026-05-19: this skill born after $22+ session-wide cost-discipline failure; user *"why the fuck would you wait for me to respond to fucking stop burning money when a pod is idle costing me like 8 an hour"*
+- 2026-05-19: verbatim-question rule added by user direction *"make sure the wording is ask thinktank the exact question you would ask the human or else the thinktank will be biased"*
+- 2026-05-23: Hard Rule #5 (paused/blocked pre-authorized work auto-fires) added after user *"Anything that's in a state like this please fucking fix and start back up"*. 4 paused workstreams documented-but-not-fired (PACR reverse-KL refire $20 / Phi-3.5-MoE D5+F15+C7 refire $30 / Nemotron-H Lambda Labs $50 / GPT-OSS-120B G1-refire $10) — correct response was parallel dispatch under $150 ceiling, surfacing was the failure mode.
+- 2026-06-25: Hard Rule #7 + the SOFT-HEDGE recognizer added after a session where the agent repeatedly ENDED on the soft hedge — "Want me to line up ERNIE next, or hold?", "Want me to run that base eval next? (it's in-budget — I'll just fire it)", and the trigger: *"One small cleanup worth doing ($0)… Want that — actually, it's reversible and trivial, so I'll just do it. No need to wait."* — CEO: *"why would you mention this and not just do it"* + *"update our common sense skill with more hook patterns … so you do common-sense more often"*. The `want_me_to_gate.py` hook gained a SOFT_HEDGE set (`want that` / `no need to wait` / `worth doing/trying/a quick` / `I'll just do/fire/run/handle/kick off it` / `if you prefer`) that fires WITHOUT a "?". NOTE: `or hold` and `your green light` are in PATTERNS (lines 36-43), NOT in SOFT_HEDGE (lines 51-59) — PATTERNS requires a "?" in the tail (line 117: `and ("?" in tail)`), so `or hold` and `your green light` stated without a "?" still slip through the hook. The deeper fix: once the gate says ACT, emit the action + a past-tense result line — never the deliberation.
+
+## External anchors (2026-07-03 Exa refresh — why this gate is correct)
+
+- **Users accept 93% of manual permission prompts anyway** (Anthropic auto-mode engineering post, 2026-03) — the empirical case for act-don't-ask. Auto mode's own principle: when blocked, *recover and try a safer approach*, don't halt and ask.
+- **Production convergence**: Anthropic auto mode, Cursor Auto-review, and Codex auto-review all ship "machine-gate first, human-gate last" — a classifier block returns to the agent, not to the human. Devin/Factory ship spend-ceiling + capability-grant autonomy (authorization = durable grant, not per-command answer) — same shape as this skill's ceiling + receipts.
+- **Pure reversibility gates over-halt**: reversibility-only gating produced 93.6% false-positive asks (clouatre-labs reversibility-benchmark). This skill's cost test (step 2) + memory receipts (step 3) are the compensating controls — keep all four steps, not just step 1.
+- **Bounded Autonomy tiers** (AI Pattern Book 2026): Tier 2 "act-and-notify" = this skill's act + past-tense report. Refinement adopted: *first-time* high-stakes action classes start one tier more cautious; repeated clean receipts promote them (that's what `feedback_*.md` receipts implement).
+
+## Cross-references
+
+- `feedback_auto_stop_idle_pods.md` — original receipt
+- `feedback_common_sense_gate_before_asking_2026_05_19.md` — session-banked receipt
+- `use-thinktank` SKILL.md — for verbatim-question dispatch
+- `use-exa` SKILL.md — for external-fact pre-grounding
+- `~/.claude/hooks/want_me_to_gate.py` — deterministic enforcement layer. Known gap: `or hold` / `your green light` WITHOUT a trailing "?" slip past PATTERNS (which requires "?" in the tail); the SOFT_HEDGE set fires without "?". A PreToolUse hook matched on `AskUserQuestion` can also deny-with-reason or auto-answer (documented post-issue #39620) — the gate is enforceable at the harness level, and PreToolUse hooks fire even in bypassPermissions mode.
+
+.\docs\superpowers\plans\2026-08-09-world-class-wiring-honesty.md:1:# World-class wiring & honesty fix wave — Implementation Plan
+.\docs\superpowers\plans\2026-08-09-world-class-wiring-honesty.md:26:**Audit source:** `docs/architecture/opus-world-class-audit-2026-08-09.md`
+.\docs\superpowers\plans\2026-08-09-world-class-wiring-honesty.md:30:### Task 1 — W-03 Strip MCP brochure % claims
+
+2026-08-09T05:21:52.954362Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command '$p='"'docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md'; "'$a='"'docs/architecture/opus-world-class-audit-2026-08-09.md'; "'$i=0; Get-Content $p | ForEach-Object { $i++; '"'{0,4}: {1}' -f "'$i,$_ }; Get-ChildItem docs/changelogs -File | Select-Object -ExpandProperty Name; Get-ChildItem docs -Recurse -Filter '"'reveng-system-paper.md' | Select-Object -ExpandProperty FullName; if (Test-Path "'$a) { '"'AUDIT_EXISTS' }"` rejected: blocked by policy
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command '$p='"'docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md'; "'$a='"'docs/architecture/opus-world-class-audit-2026-08-09.md'; "'$i=0; Get-Content $p | ForEach-Object { $i++; '"'{0,4}: {1}' -f "'$i,$_ }; Get-ChildItem docs/changelogs -File | Select-Object -ExpandProperty Name; Get-ChildItem docs -Recurse -Filter '"'reveng-system-paper.md' | Select-Object -ExpandProperty FullName; if (Test-Path "'$a) { '"'AUDIT_EXISTS' }" in C:\dev\projects\reveng-main
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command '$p='"'docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md'; "'$a='"'docs/architecture/opus-world-class-audit-2026-08-09.md'; "'$i=0; Get-Content $p | ForEach-Object { $i++; '"'{0,4}: {1}' -f "'$i,$_ }; Get-ChildItem docs/changelogs -File | Select-Object -ExpandProperty Name; Get-ChildItem docs -Recurse -Filter '"'reveng-system-paper.md' | Select-Object -ExpandProperty FullName; if (Test-Path "'$a) { '"'AUDIT_EXISTS' }"` rejected: blocked by policy
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "rg -n \".\" docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md; rg --files docs/changelogs docs | rg \"(v[456]\\.0\\.md|reveng-system-paper\\.md)"'$"; Test-Path docs/architecture/opus-world-class-audit-2026-08-09.md' in C:\dev\projects\reveng-main
+ succeeded in 1961ms:
+1:# World-class wiring & honesty fix wave — Implementation Plan
+3:> **For agentic workers:** Execute task-by-task with tests before/after. Do **not** commit unless the user asks.
+5:**Goal:** Close the audit Top-8 (W-03, W-01, W-02, W-05, W-04, W-07, W-09, W-06) so MCP/CLI/docs stop lying and surfaces share the same honesty gates.
+7:**Architecture:** Prefer explicit `unsupported` / `could_not_measure` tool results over silent no-ops; strip brochure % from agent-facing schemas; quarantine unwired adapters in docs; fail-closed health checks.
+9:**Tech Stack:** Python 3.9, pytest, existing `reveng.core.result_contracts`, MkDocs markdown.
+11:## Global Constraints
+13:- Python 3.9 floor; `/usr/bin/python3.9` for tests
+14:- No invented success percentages
+15:- Match `docs/support_matrix.json`
+16:- Do not implement RALPH-2, native GA, LibAFL, exploit expansion
+17:- Named-path edits only; no `git stash`; **DO NOT commit unless asked**
+18:- Update docs when behavior changes
+20:## PLAN SUMMARY (Thinktank)
+22:- **Intent:** Honesty + wiring for MCP enterprise silent knobs, AI disable on CLI, native adapter quarantine, java cloud NI, historical doc banners, health monitor fail-closed.
+23:- **Risks:** Changing vuln-scan empty results may break agents that parse “No vulnerabilities found”; CLI flag must stay backward compatible (default AI behavior unchanged).
+24:- **Out of scope:** Engine research (RALPH-2), registering NativeAppAdapter as supported, LibAFL, exploit GA.
+26:**Audit source:** `docs/architecture/opus-world-class-audit-2026-08-09.md`
+28:---
+30:### Task 1 — W-03 Strip MCP brochure % claims
+32:- [ ] Grep enterprise MCP for `90%`, `60-80%`, `95%` in tool descriptions
+33:- [ ] Test: assert descriptions in `reveng_enterprise_server` / tool registry contain no `\d+%` accuracy claims (or allowlist none)
+34:- [ ] Edit descriptions; update `docs/reference/mcp-tools.md`
+35:- [ ] Verify: `python3.9 -m pytest tests/unit/test_mcp_tool_description_honesty.py -q --no-cov`
+37:### Task 2 — W-01 `unbundle_webpack` honesty
+39:- [ ] Red test: calling deobfuscate_javascript with `unbundle_webpack=True` must not silently succeed as if applied
+40:- [ ] Implement: wire real behavior **or** return unsupported/warning via contract builder
+41:- [ ] Docs: mcp-tools.md
+42:- [ ] Verify pytest bidirectional (True → unsupported or applied flag present)
+44:### Task 3 — W-02 `find_vulnerabilities` hollow clean
+46:- [ ] Red test: when AI/types paths not executed, result must NOT say “No vulnerabilities found” as proven empty
+47:- [ ] Implement status `could_not_measure` / `unsupported` / explicit skip reasons
+48:- [ ] Honor or reject unused schema knobs
+49:- [ ] Docs + pytest
+51:### Task 4 — W-05 CLI / core MCP `enable_ai` gate
+53:- [ ] Add `--no-ai` (or `--enable-ai/--no-enable-ai`) to analyze CLI; pass into REVENGAnalyzer
+54:- [ ] Expose on core MCP analyze_binary
+55:- [ ] Tests: enable_ai False skips AI path (spy/mock)
+56:- [ ] Docs: reference/cli.md, tutorials
+58:### Task 5 — W-04 Quarantine NativeAppAdapter
+60:- [ ] Docs: explanation/app-re-dispatch.md + support note — unwired, not a CUJ
+61:- [ ] Optional: module docstring “not registered in create_default_framework”
+62:- [ ] Test: create_default_framework languages exclude native
+63:- [ ] Do **not** register as supported
+65:### Task 6 — W-07 java_ai cloud providers
+67:- [ ] OpenAI/Anthropic paths return clear unsupported (no mid-flight surprise NI where avoidable)
+68:- [ ] Test + docs note in ai-providers / tools docs
+70:### Task 7 — W-09 Historical doc honesty banners
+72:- [ ] Banner atop `docs/changelogs/v4.0.md`, `v5.0.md`, `v6.0.md`, and `reveng-system-paper.md`: historical / not support claims
+73:- [ ] Fix obvious dead entry paths in system paper intro (point to cli package / analysis.analyzer)
+75:### Task 8 — W-06 Health monitor fail-closed
+77:- [ ] Replace dead `__import__("reveng_analyzer")` with real package probes or mark capability unsupported
+78:- [ ] `check_health` must not be abstract NI on the exported path used in prod — implement minimal real checks or remove from public surface
+79:- [ ] Test + short doc note
+81:### Task 9 — Lint / format / docs index
+83:- [ ] `make format` on touched Python (or black/isort scoped)
+84:- [ ] Link audit + this plan from `docs/ops/README.md`
+85:- [ ] Full pytest on new tests
+docs/changelogs\v6.0.md
+docs/changelogs\v5.0.md
+docs/changelogs\v4.0.md
+docs\changelogs\v4.0.md
+docs\changelogs\v6.0.md
+docs\changelogs\v5.0.md
+docs\architecture\reveng-system-paper.md
+True
+
+codex
+**Verdict: REJECT**
+
+Coverage names all Top-8 findings, but several tasks cannot prove closure.
+
+- **W-01:** “Bidirectional” is mislabeled: only `True` is specified. Require `False → no warning/no applied claim` and `True → applied evidence or unsupported` ([plan:37](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:37)).
+- **W-02:** Too vague. Test both knobs independently and together; measured paths may report zero findings, skipped paths must return `could_not_measure`, never a clean result ([plan:44](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:44)).
+- **W-03:** Adequate, though the test should inspect the serialized tool schema, not merely source/registry strings ([plan:30](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:30)).
+- **W-05:** Hollow one-arm test. Add default/`True → AI invoked`, `False → skipped`, for both CLI and basic MCP, including serialized parameter exposure ([plan:51](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:51)).
+- **W-04:** Missing explicit MCP-enum assertion and concrete `docs/support_matrix.json` update/check; framework exclusion alone is insufficient ([plan:58](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:58)).
+- **W-07:** Add unsupported tests for both cloud providers plus a positive local-provider regression; specify preflight rejection before analysis starts ([plan:65](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:65)).
+- **W-09:** Banners do not close searchable `95%` lies. Require removal/qualification and a scan for dead entry paths and percentage claims ([plan:70](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:70)).
+- **W-06:** “Implement or remove” leaves the design undecided. Name the exported class/consumer and test healthy, missing dependency, and exception paths fail closed ([plan:75](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:75)).
+- Scope creep: allowing “wire real behavior” for W-01 is unbounded; choose explicit unsupported unless existing implementation is proven. Linking the plan from ops README is nonessential ([plan:81](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:81)).
+
+Approval requires explicit bidirectional acceptance tests and SoT/schema assertions for every affected knob and provider.
+**Verdict: REJECT**
+
+Coverage names all Top-8 findings, but several tasks cannot prove closure.
+
+- **W-01:** “Bidirectional” is mislabeled: only `True` is specified. Require `False → no warning/no applied claim` and `True → applied evidence or unsupported` ([plan:37](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:37)).
+- **W-02:** Too vague. Test both knobs independently and together; measured paths may report zero findings, skipped paths must return `could_not_measure`, never a clean result ([plan:44](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:44)).
+- **W-03:** Adequate, though the test should inspect the serialized tool schema, not merely source/registry strings ([plan:30](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:30)).
+- **W-05:** Hollow one-arm test. Add default/`True → AI invoked`, `False → skipped`, for both CLI and basic MCP, including serialized parameter exposure ([plan:51](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:51)).
+- **W-04:** Missing explicit MCP-enum assertion and concrete `docs/support_matrix.json` update/check; framework exclusion alone is insufficient ([plan:58](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:58)).
+- **W-07:** Add unsupported tests for both cloud providers plus a positive local-provider regression; specify preflight rejection before analysis starts ([plan:65](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:65)).
+- **W-09:** Banners do not close searchable `95%` lies. Require removal/qualification and a scan for dead entry paths and percentage claims ([plan:70](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:70)).
+- **W-06:** “Implement or remove” leaves the design undecided. Name the exported class/consumer and test healthy, missing dependency, and exception paths fail closed ([plan:75](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:75)).
+- Scope creep: allowing “wire real behavior” for W-01 is unbounded; choose explicit unsupported unless existing implementation is proven. Linking the plan from ops README is nonessential ([plan:81](/C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:81)).
+
+tokens usedApproval requires explicit bidirectional acceptance tests and SoT/schema assertions for every affected knob and provider.
+
+21,229
+=== FABLE ===
+**Verdict: APPROVE_WITH_NITS**
+
+**Coverage — complete.** All eight audit items map to a task: W-03→Task 1, W-01→Task 2, W-02→Task 3, W-05→Task 4, W-04→Task 5, W-07→Task 6, W-09→Task 7, W-06→Task 8. Task 8 addresses both halves of W-06 (dead `__import__("reveng_analyzer")` and abstract `check_health`). Task 5 correctly refuses to register NativeAppAdapter as supported, matching the audit's not-in-scope line. Every doc path the plan cites exists on disk (`docs/reference/mcp-tools.md`, `docs/explanation/app-re-dispatch.md`, `docs/ops/README.md`, `docs/changelogs/v4.0–v6.0.md`, `docs/architecture/reveng-system-paper.md`), and `src/reveng/tools/enterprise/enhanced_health_monitor.py` is real.
+
+**Scope — clean.** Global Constraints explicitly exclude RALPH-2, native GA, LibAFL, and exploit expansion, mirroring the audit's not-in-scope list. Task 9 (lint/docs index) is housekeeping the audit's fix-wave footer asks for, not creep.
+
+**Nits (fix before dispatch):**
+
+1. **Task 1 test can false-green on an empty scan.** "Assert descriptions contain no `\d+%`" passes vacuously if the scan collects zero descriptions (per the release-honesty rules: a zero means "measured nothing" or "did not measure"). Add a positive control: assert ≥N tool descriptions were scanned, and an injected `90%` fixture is caught.
+2. **Bidirectional honesty is explicit only in Task 2.** Tasks 3, 6, and 8 state red arms but no green arm (e.g., Task 3: a *real* executed scan that finds nothing must still legitimately report clean; Task 8: healthy packages must report healthy). Audit says "prefer bidirectional" for each item — spell both arms out in Tasks 3, 6, 8 so workers don't ship one-armed tests.
+3. **Task 5's test ("languages exclude native") passes against current code unchanged** — it's a regression pin, not a proof. Fine, but label it as a pin so nobody counts it as new coverage.
+4. **Task 3 risk is noted but unmitigated:** the plan's own Risks section flags agents parsing "No vulnerabilities found," yet no task adds a compat note or deprecation mention in `docs/reference/mcp-tools.md`. Add one line to Task 3's docs step.
+
+No hollow-task or scope-creep blockers; nits are all test-shape, addressable in the task specs without restructuring.

@@ -100,3 +100,35 @@ Merging a clean worktree onto a dirty `main` can resurrect stale `20*.json` stam
 - Sol: prefer **fully inlined** evidence packets (“do not shell”) when sandbox greps hang.
 - Merges/commits on this host need `git -c user.name=… -c user.email=…` from `git log -1` — empty ident aborts with exit 128.
 - Do **not** `git stash` with live `.worktrees/`; discard or commit named paths instead.
+
+## L25 — Unpushed local main is not shipped
+
+A long Scope C history can sit on local `main` while `origin/main` is weeks behind. “Green locally” and “merged to GitHub” are different. Prefer pushing the honesty line (or a single feature PR that carries it) before claiming clearance. Merge-base with `origin/main` is the tell.
+
+## L26 — Dev-tool floor must match runtime floor
+
+Bumping `black>=26` or `pytest>=9` to “clear Dependabot” silently requires Python ≥3.10 while the project floor is 3.9. CI then fails every job that installs `requirements-dev.txt` on 3.9. Cap tools to the lowest supported interpreter (`black<26`, `pytest<9`) or raise the floor deliberately.
+
+## L27 — Config path separators are part of the contract
+
+`.reveng/*.json` rows authored with Windows `\\` break `Path` joins on Linux CI (`..\\test_samples\\…` never resolves). Normalize `\\` → `/` in every corpus/benchmark/bun resolver (see `run_source_binary_benchmark.py`). Prefer storing forward slashes in committed JSON.
+
+## L28 — Thin CI gates need thin installs
+
+Wave B / Phase 5 honesty jobs only need pytest + scripts + editable `reveng`. Installing full `requirements.txt` (torch/angr/…) on py3.9 hits pip **`resolution-too-deep`** after ~20–30 minutes — a false “honesty red.” Use `requirements-honesty.txt` (or equivalent) and `pip install -e . --no-deps`.
+
+## L29 — A PyPI pin that cannot resolve is a hard CI fail
+
+`ghidramcp>=0.1.0` is documented as unavailable on PyPI (`requirements.txt` already notes fallback). Leaving it in `requirements-java.txt` / `requirements-security.txt` makes integration install exit 1 by construction. Comment it out or vendor deliberately — never leave a fictional lower-bound.
+
+## L30 — Unprotected main + slow honesty = merge-while-red
+
+With no branch protection, a PR can merge while honesty jobs are still in `Install dependencies`. Watchers reporting “FAILED on tip” after merge are not contradictions — they are late. Treat GA/Code Quality greens + intentional soft-fails as the merge bar unless protection is turned on.
+
+## L31 — Dependabot flood returns the day you land history
+
+Closing stale Dependabot PRs before a large main sync is temporary. The next Dependabot pass recreates them against the new tip within minutes. Close again; do not mass-merge; schedule a controlled dep batch after honesty install is stable.
+
+## L32 — Backlog invariants must track authorized partials
+
+When Phase 5 is deliberately **`partial`** (thin honesty authorized), tests that require phases 5–13 all `open` and “await Sol” on phase 5 will fail forever. Allow `partial` for authorized thin slices; keep 6–13 on Sol stop/go.

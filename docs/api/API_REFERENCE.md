@@ -1,23 +1,26 @@
 # REVENG API Reference
 
-This page keeps the stable Python-facing APIs in one place. It replaces the older split between the generic API doc and the AI API doc.
+> **Maturity:** preview · prefer [Python API reference](../reference/python-api.md) for the maintained index
+>
+> Match method claims to [support matrix](../support/support-matrix.md). No invented success %.
 
-## Core API
+This page keeps stable Python-facing APIs in one place. Correct analyzer import: **`reveng.analysis.analyzer`** (not `reveng.analyzer`).
 
-## Public Imports
+## Public imports
 
 ```python
 from reveng import REVENGAnalyzer, analyze_binary, detect_malware, reconstruct_binary
 from reveng.api import REVENGAPI
+from reveng.analysis.analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
 from reveng.ai_api import REVENG_AI_API
 ```
 
 ## `REVENGAnalyzer`
 
-`REVENGAnalyzer` is the low-level orchestrator used by the CLI and higher-level APIs.
+Low-level orchestrator used by the CLI and higher-level APIs.
 
 ```python
-from reveng.analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
+from reveng.analysis.analyzer import EnhancedAnalysisFeatures, REVENGAnalyzer
 
 features = EnhancedAnalysisFeatures()
 features.enable_vulnerability_discovery = True
@@ -45,12 +48,12 @@ REVENGAnalyzer(
 
 ### Useful methods
 
-- `analyze_binary()` -> run the main analysis flow
-- `get_capabilities()` -> return agent-friendly capability metadata
+- `analyze_binary()` — main analysis flow (preview; native often Ghidra-limited)
+- `get_capabilities()` — agent-friendly capability metadata
 
 ### Feature flags
 
-`EnhancedAnalysisFeatures` exposes these toggles:
+`EnhancedAnalysisFeatures` toggles:
 
 - `enable_enhanced_analysis`
 - `enable_corporate_exposure`
@@ -61,35 +64,31 @@ REVENGAnalyzer(
 
 ## `REVENGAPI`
 
-`REVENGAPI` is the main structured Python API for scripts and integrations.
+Structured API for scripts and integrations (`src/reveng/api.py`).
 
 ```python
 from reveng.api import REVENGAPI
 
 api = REVENGAPI(config={"max_file_size_mb": 500})
 result = api.analyze_binary("sample.exe", enhanced=True)
+# result is a contract-shaped dict — read status / provenance fields
 ```
 
 ### Methods
 
-- `analyze_binary(binary_path, enhanced=False, modules=None)`
-- `reconstruct_binary(binary_path, output_format="c")`
-- `detect_malware(binary_path)`
-- `reverse_engineer_app(input_path, language="auto", output_dir=None, **options)`
+| Method | Maturity note |
+| --- | --- |
+| `analyze_binary(...)` | preview; native limited without Ghidra |
+| `reconstruct_binary(...)` | managed vs native — see matrix |
+| `detect_malware(...)` | preview; **not** the same as core MCP binary detect (unsupported there) |
+| `reverse_engineer_app(...)` | **supported** for JS/JVM/Python/.NET |
+| `run_app_reverse_engineering_corpus(...)` | honesty / corpus tooling |
 
-### Convenience functions
-
-The package also exposes script-friendly helpers with the same names:
-
-```python
-from reveng import analyze_binary, detect_malware, reconstruct_binary
-```
-
-## Tool APIs
+Convenience helpers: `from reveng import analyze_binary, detect_malware, reconstruct_binary`.
 
 ## `REVENG_AI_API`
 
-`REVENG_AI_API` is the agent-oriented facade that returns structured dataclasses for triage and natural-language workflows.
+Agent-oriented façade (`src/reveng/ai_api.py`). Preview; needs Ollama or cloud keys.
 
 ```python
 from reveng.ai_api import REVENG_AI_API
@@ -99,23 +98,7 @@ triage = ai.triage_binary("sample.exe")
 answer = ai.ask("What does this binary do?", "sample.exe")
 ```
 
-### Methods
-
-- `triage_binary(binary_path, include_reasoning=True)`
-- `ask(question, binary_path=None, analysis_results=None, conversational=False)`
-- `get_crypto_details(binary_path)`
-- `get_network_details(binary_path)`
-- `get_translation_hints(source_path)`
-- `analyze_binary(binary_path, mode=...)`
-- `explain_binary(binary_path, detail_level="standard")`
-- `find_vulnerabilities(binary_path, vulnerability_types=None)`
-
-### Common dataclasses
-
-- `TriageResponse`
-- `AskResponse`
-- `AnalysisSummary`
-- `CapabilityReport`
+Methods include `triage_binary`, `ask`, `get_crypto_details`, `get_network_details`, `analyze_binary`, `explain_binary`, `find_vulnerabilities` (symbolic/vuln paths remain **experimental** where matrix says so).
 
 ## Example: script-friendly analysis
 
@@ -123,33 +106,30 @@ answer = ai.ask("What does this binary do?", "sample.exe")
 from reveng.api import REVENGAPI
 
 api = REVENGAPI()
-result = api.analyze_binary("sample.exe", enhanced=True)
+result = api.analyze_binary("sample.exe", enhanced=False)
 
-print(result.summary["file_type"])
-print(result.summary["imports_count"])
+print(result.get("binary"))
+print(result.get("classification"))
+print(result.get("confidence"))  # schema field — not a marketed accuracy rate
 ```
 
-## Example: AI-first workflow
+## Example: app reverse engineering (supported)
 
 ```python
-from reveng.ai_api import REVENG_AI_API
+from reveng.api import REVENGAPI
 
-ai = REVENG_AI_API(use_ollama=True, ollama_model="auto")
-triage = ai.triage_binary("sample.exe")
-
-if triage.is_malicious:
-    print(triage.threat_level, triage.threat_score)
-
-response = ai.ask("Summarize the network behavior", "sample.exe")
-print(response)
+api = REVENGAPI()
+meta = api.reverse_engineer_app("app.jar", language="jvm")
 ```
 
-## Web Interface API
+## Web / MCP
 
-The CLI exposes a `serve` command for the local web interface. Internal server and MCP entry points live under `src/reveng/server/` and `src/reveng/agent_sdk/`. Treat those modules as implementation details unless you are working directly inside the repository.
+- CLI `serve` starts the local web UI when web extras are installed.
+- MCP tools: [reference/mcp-tools.md](../reference/mcp-tools.md) — preview, not production-ready.
+- Exploit generation remains **experimental** on CLI; do not document as GA API.
 
 ## Notes
 
-- The Python APIs are the most stable integration surface in this repository.
-- CLI workflows are documented in [CLI Usage](../user-guide/cli-usage.md).
-- Internal server endpoints and experimental modules change more often; inspect the current source before building against them directly.
+- Prefer [reference/python-api.md](../reference/python-api.md) when linking from new docs.
+- CLI: [reference/cli.md](../reference/cli.md).
+- Inspect current source before building against internal server modules.

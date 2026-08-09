@@ -54,6 +54,13 @@ class REVENGMCPServer(MCPServer):
                     "properties": {
                         "path": {"type": "string", "description": "Path to binary file"},
                         "quick_mode": {"type": "boolean", "description": "Use quick analysis mode"},
+                        "enable_ai": {
+                            "type": "boolean",
+                            "description": (
+                                "When false, skip AI steps / Ollama preflight on REVENGAnalyzer "
+                                "(default true)"
+                            ),
+                        },
                     },
                     "required": ["path"],
                 },
@@ -157,8 +164,15 @@ class REVENGMCPServer(MCPServer):
 
             path = args["path"]
             quick_mode = args.get("quick_mode", False)
+            enable_ai = args.get("enable_ai", True)
+            if enable_ai is None:
+                enable_ai = True
 
-            analyzer = REVENGAnalyzer(binary_path=path, check_ollama=not quick_mode)
+            analyzer = REVENGAnalyzer(
+                binary_path=path,
+                check_ollama=not quick_mode,
+                enable_ai=bool(enable_ai),
+            )
 
             # Run analysis in executor to avoid blocking
             loop = asyncio.get_event_loop()

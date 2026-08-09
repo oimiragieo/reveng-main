@@ -25,8 +25,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt -r requirements-dev.txt
+          # Slim install — full requirements.txt hits resolution-too-deep on py3.9.
+          pip install -r requirements-honesty.txt
           pip install -e . --no-deps
+          # PYTHONPATH fallback if editable does not expose package on runner
+          echo "PYTHONPATH=${{ github.workspace }}/src" >> "$GITHUB_ENV"
 
       - name: Wave B honesty pytest (no cov, no hexyl required)
         run: |

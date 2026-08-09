@@ -71,6 +71,9 @@ class JavaAIAnalyzer:
             else:
                 logger.warning(f"Unknown AI provider: {self.ai_provider}")
 
+        except NotImplementedError:
+            self.ai_available = False
+            raise
         except ImportError as e:
             logger.warning(f"AI client not available: {e}")
             self.ai_available = False
@@ -106,14 +109,30 @@ class JavaAIAnalyzer:
             logger.warning(f"Ollama initialization failed: {e}")
 
     def _init_openai(self):
-        """Initialize OpenAI client"""
-        # Placeholder for OpenAI implementation
-        logger.warning("OpenAI support not yet implemented")
+        """Initialize OpenAI client — unsupported (preflight)."""
+        self.ai_available = False
+        raise NotImplementedError(
+            "OpenAI provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
+        )
 
     def _init_anthropic(self):
-        """Initialize Anthropic client"""
-        # Placeholder for Anthropic implementation
-        logger.warning("Anthropic support not yet implemented")
+        """Initialize Anthropic client — unsupported (preflight)."""
+        self.ai_available = False
+        raise NotImplementedError(
+            "Anthropic provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
+        )
+
+    def _query_openai(self, prompt: str) -> str:
+        """Query OpenAI — unsupported."""
+        raise NotImplementedError(
+            "OpenAI provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
+        )
+
+    def _query_anthropic(self, prompt: str) -> str:
+        """Query Anthropic — unsupported."""
+        raise NotImplementedError(
+            "Anthropic provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
+        )
 
     def analyze_java_class(
         self, class_name: str, java_source: str
@@ -227,14 +246,6 @@ Return ONLY valid JSON, no additional text.
 
         result = response.json()
         return result.get("response", "")
-
-    def _query_openai(self, prompt: str) -> str:
-        """Query OpenAI (placeholder)"""
-        raise NotImplementedError("OpenAI support not yet implemented")
-
-    def _query_anthropic(self, prompt: str) -> str:
-        """Query Anthropic (placeholder)"""
-        raise NotImplementedError("Anthropic support not yet implemented")
 
     def _parse_ai_response(self, class_name: str, response: str) -> JavaAIAnalysisResult:
         """Parse AI response into structured result"""

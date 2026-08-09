@@ -2,13 +2,29 @@
 
 ## Release honesty (read first for GA / ship claims)
 
-- Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO: `docs/architecture/ceo-update-2026-08-06-wave3.md` (wave 2/1: `ceo-update-2026-08-06-wave2.md`, `ceo-update-2026-08-06.md`).
-- Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (L1–L24). Wave B: `docs/architecture/wave-b-exit-criteria.md`.
+- Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO: `docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md` (priors: `ceo-update-2026-08-07-scope-c-charter.md`, `ceo-update-2026-08-06-wave3.md` / wave2 / wave1).
+- Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L32**). Wave B: `docs/architecture/wave-b-exit-criteria.md`.
 - Cursor skill: `.cursor/skills/reveng-release-honesty/SKILL.md`. Agent memory: `.claude/MEMORY.md`.
+- **Junior docs:** start at `docs/README.md` (Analyst + Engineer Diátaxis tracks). Customer boundary: `docs/support/support-matrix.md` + `docs/support_matrix.json`. Ops/CEO packets are not product tutorials (`docs/ops/README.md`).
 - **Never trust a green GA verifier alone** — open tracked JSON and confirm evidence fields (baseline **and** ga profiles).
-- **Fixture ≠ capability**; process `completed` ≠ native GA (DF-5). Probe v1.2: `tool_absent` ≠ research done (R-HEX-1 stays blocked). Exactly one evidence stamp matching `latest.json`.
+- **Fixture ≠ capability**; process `completed` ≠ native GA (DF-5). Probe: `tool_absent` ≠ research done.
+- **Honesty CI:** install `requirements-honesty.txt` + `pip install -e . --no-deps` — full `requirements.txt` causes `resolution-too-deep` on py3.9 (L28).
+- **Do not pin `ghidramcp>=0.1.0`** — not on PyPI (L29). Prefer Ghidra fallback.
 - Prefer `/usr/bin/python3.9`. Use `scripts/git_status_scoped.sh` / named-path commits (DF-4). No `git stash` across worktrees; merges need `git -c user.name/email` from `git log -1`.
 - Plan/validate: Fable = `claude -p --model claude-fable-5`; Sol = `codex exec --model gpt-5.6-sol` (inline packets if sandbox greps hang).
+
+## Code navigation (tensor-grep / `tg`)
+
+Prefer **tensor-grep (`tg`)** over ad hoc ripgrep loops when editing this repo — especially shared honesty/grade/CLI/MCP surfaces (`result_contracts`, VRL gates, `verify_ga_readiness`, adapters).
+
+- Orient / edit readiness: `tg prepare src/ "task" --json` (or scoped `src/reveng/<pkg>`)
+- Impact before change: `tg callers src/ SYMBOL --json`, `tg blast-radius src/ SYMBOL --json`
+- Vocabulary search: `tg find "intent" src/ --deadline 20 --json`
+- Multi-agent: `tg ledger claim|list|release` (one store per git repo / worktree-aware)
+- LSP: `tg lsp --provider hybrid` (or `native` / `lsp`); `tg doctor --with-lsp` for provider health — availability ≠ navigation proof
+- Path-first args: `tg <cmd> <PATH> <SYMBOL_OR_QUERY>`; always pass an explicit PATH (bare multi-project root search is refused)
+
+`tg` is for navigating/evolving the REVENG **source tree**, not a substitute for binary analysis / VRL / Ghidra on subject binaries.
 
 ## Project Structure & Module Organization
 Primary code lives in `src/reveng/`. Add new runtime code to the closest domain package instead of creating new root scripts (there is **no** repo-root `reveng.py` — it was removed because it shadowed the package; use the `reveng` / `python -m reveng` entry points or `src/reveng/cli/reveng.py`). Key packages:

@@ -2,19 +2,17 @@
 REVENG Enterprise MCP Server
 ============================
 
-Production-ready MCP server exposing comprehensive REVENG capabilities to AI agents.
+Preview MCP server exposing REVENG capabilities to AI agents.
 
-This server provides world-class reverse engineering tools via the Model Context Protocol,
-enabling AI agents to perform sophisticated binary analysis, vulnerability detection,
-exploit generation, and JavaScript deobfuscation.
+Maturity follows docs/support_matrix.json — exploit generation is experimental;
+native Ghidra paths are limited. Do not treat this surface as GA.
 
 Features:
-- 15+ specialized reverse engineering tools
+- Specialized reverse engineering tools (capability-graded)
 - Resource providers for analysis results
 - Prompt templates for common workflows
-- Enterprise security (rate limiting, audit logging)
-- Comprehensive error handling
-- Production-grade monitoring and metrics
+- Enterprise controls (rate limiting, audit logging) when configured
+- Explicit unsupported/could_not_measure responses for unwired knobs
 
 Example:
     ```python
@@ -620,7 +618,10 @@ class REVENGEnterpriseServer(MCPServer):
         self.register_tool(
             MCPTool(
                 name="find_vulnerabilities",
-                description="Find vulnerabilities using symbolic execution and AI analysis (90%+ accuracy)",
+                description=(
+                    "Find vulnerabilities via symbolic execution when enabled "
+                    "(experimental depth; AI-typed filters unsupported in this path)"
+                ),
                 input_schema={
                     "type": "object",
                     "properties": {
@@ -745,7 +746,7 @@ class REVENGEnterpriseServer(MCPServer):
                         "file_path": {"type": "string", "description": "Or path to .js file"},
                         "use_ml_renaming": {
                             "type": "boolean",
-                            "description": "Use ML for intelligent variable renaming (60-80% accuracy)",
+                            "description": "Use ML for intelligent variable renaming when available",
                         },
                         "use_llm_analysis": {
                             "type": "boolean",
@@ -1935,59 +1936,96 @@ class REVENGEnterpriseServer(MCPServer):
     async def find_vulnerabilities(self, args: Dict[str, Any]) -> Dict[str, Any]:
         """Find vulnerabilities in binary"""
         try:
-            from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
-
             path = self._require_existing_file(args, "path")
             use_symbolic = args.get("use_symbolic_execution", True)
+            vulnerability_types = args.get("vulnerability_types")
+            use_ai_analysis = args.get("use_ai_analysis")
 
-            if use_symbolic:
-                engine = SymbolicExecutionEngine(path)
-                loop = asyncio.get_running_loop()
-                vulnerabilities = await loop.run_in_executor(None, engine.find_vulnerabilities)
+            unsupported_knobs: List[str] = []
+            if vulnerability_types:
+                unsupported_knobs.append("vulnerability_types")
+            if use_ai_analysis is True:
+                unsupported_knobs.append("use_ai_analysis")
 
-                text = f"Vulnerability Analysis: {path}\n"
-                text += "=" * 70 + "\n\n"
-                text += f"Found {len(vulnerabilities)} vulnerabilities\n\n"
-
-                for vuln in vulnerabilities[:10]:
-                    text += f"• {vuln.type}: {vuln.description}\n"
-                    text += f"  Location: {vuln.address}\n"
-                    text += f"  Severity: {vuln.severity}\n\n"
-
-                serialized = [
-                    self._serialize_vulnerability(vulnerability)
-                    for vulnerability in vulnerabilities
-                ]
+            if unsupported_knobs:
+                knobs = ", ".join(unsupported_knobs)
                 return build_mcp_tool_response(
                     tool_name="find_vulnerabilities",
-                    text=text,
-                    payload={"vulnerabilities": serialized},
-                    provenance={
-                        "inputs": [
-                            make_evidence_item(
-                                "binary_input",
-                                path=path,
-                                trace_id=f"enterprise:mcp:vulns:{Path(path).name}",
-                                evidence_kind="input_binary",
-                                confidence=1.0,
-                                source_result_type="mcp_tool_result",
-                            )
-                        ],
-                        "artifacts": [],
-                        "stages": [
-                            "mcp_tool_execution",
-                            "symbolic_vulnerability_analysis",
-                            "result_contract_serialization",
-                        ],
-                        "references": [],
-                        "tools": ["find_vulnerabilities", "symbolic_execution_engine"],
+                    text=(
+                        f"Requested knobs unsupported in this MCP path: {knobs}. "
+                        "Omit them or use symbolic-only mode without AI/type filters."
+                    ),
+                    payload={
+                        "vulnerabilities": [],
+                        "supported": False,
+                        "unsupported_knobs": unsupported_knobs,
+                        "reason": "find_vulnerabilities_knobs_unsupported",
                     },
+                    status="unsupported",
+                    error="find_vulnerabilities_knobs_unsupported",
                 )
 
+            if not use_symbolic:
+                return build_mcp_tool_response(
+                    tool_name="find_vulnerabilities",
+                    text=(
+                        "Vulnerability scan not measured: use_symbolic_execution=false "
+                        "and no alternate analyzer ran."
+                    ),
+                    payload={
+                        "vulnerabilities": [],
+                        "measurement": "could_not_measure",
+                        "reason": "symbolic_execution_disabled",
+                    },
+                    status="could_not_measure",
+                    error="symbolic_execution_disabled",
+                )
+
+            from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
+
+            engine = SymbolicExecutionEngine(path)
+            loop = asyncio.get_running_loop()
+            vulnerabilities = await loop.run_in_executor(None, engine.find_vulnerabilities)
+
+            text = f"Vulnerability Analysis: {path}\n"
+            text += "=" * 70 + "\n\n"
+            text += f"Found {len(vulnerabilities)} vulnerabilities\n\n"
+
+            for vuln in vulnerabilities[:10]:
+                text += f"• {vuln.type}: {vuln.description}\n"
+                text += f"  Location: {vuln.address}\n"
+                text += f"  Severity: {vuln.severity}\n\n"
+
+            serialized = [
+                self._serialize_vulnerability(vulnerability) for vulnerability in vulnerabilities
+            ]
             return build_mcp_tool_response(
                 tool_name="find_vulnerabilities",
-                text="No vulnerabilities found",
-                payload={"vulnerabilities": []},
+                text=text,
+                payload={
+                    "vulnerabilities": serialized,
+                    "measurement": "measured",
+                },
+                provenance={
+                    "inputs": [
+                        make_evidence_item(
+                            "binary_input",
+                            path=path,
+                            trace_id=f"enterprise:mcp:vulns:{Path(path).name}",
+                            evidence_kind="input_binary",
+                            confidence=1.0,
+                            source_result_type="mcp_tool_result",
+                        )
+                    ],
+                    "artifacts": [],
+                    "stages": [
+                        "mcp_tool_execution",
+                        "symbolic_vulnerability_analysis",
+                        "result_contract_serialization",
+                    ],
+                    "references": [],
+                    "tools": ["find_vulnerabilities", "symbolic_execution_engine"],
+                },
             )
 
         except Exception as e:
@@ -2256,6 +2294,7 @@ class REVENGEnterpriseServer(MCPServer):
             use_ml = args.get("use_ml_renaming", True)
             use_llm = args.get("use_llm_analysis", False)
             detect_malware = args.get("detect_malware", True)
+            unbundle_webpack = bool(args.get("unbundle_webpack", False))
 
             # Read from file if provided
             if file_path and not code:
@@ -2292,10 +2331,19 @@ class REVENGEnterpriseServer(MCPServer):
             text += "-" * 70 + "\n"
             text += result.deobfuscated_code[:2000]
 
-            response = {
+            response: Dict[str, Any] = {
                 "deobfuscated_code": result.deobfuscated_code,
                 "confidence": result.confidence,
+                "unbundle_webpack_applied": False,
             }
+            warnings: List[str] = []
+            if unbundle_webpack:
+                warnings.append("unbundle_webpack_unsupported")
+                response["unsupported_knobs"] = ["unbundle_webpack"]
+                text += (
+                    "\n\nNote: unbundle_webpack requested but unsupported in this MCP path "
+                    "(not applied).\n"
+                )
 
             # Malware detection
             if detect_malware:
@@ -2309,6 +2357,9 @@ class REVENGEnterpriseServer(MCPServer):
 
                 if malware_result.is_malicious:
                     text += f"\n\n⚠️  MALWARE DETECTED (score: {malware_result.threat_score}/100)\n"
+
+            if warnings:
+                response["warnings"] = warnings
 
             return build_mcp_tool_response(
                 tool_name="deobfuscate_javascript",

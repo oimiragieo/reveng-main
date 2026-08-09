@@ -1,3 +1,5 @@
+> **Historical document — not a support claim.** Product maturity is beta/preview; see `docs/support/support-matrix.md` and `docs/support_matrix.json`. Invented success rates in this file are **not** validated GA evidence.
+
 # REVENG: Toward an AI-Assisted Reverse-Engineering and Binary Reconstruction Platform
 
 ## Abstract
@@ -19,8 +21,8 @@ This paper focuses on the present repository state and answers two practical que
 
 This paper is based on direct inspection of the repository, especially the following files:
 
-- `reveng.py`
-- `src/reveng/analyzer.py`
+- `python -m reveng` / `src/reveng/cli/reveng.py`
+- `src/reveng/analysis/analyzer.py`
 - `src/reveng/api.py`
 - `src/reveng/ai_api.py`
 - `src/reveng/cli/reveng.py`
@@ -45,7 +47,7 @@ At a product level, REVENG is designed to do three things:
 2. reconstruct higher-level understanding and, in some cases, source-like outputs
 3. expose those capabilities to both humans and AI agents
 
-The main entry wrapper in `reveng.py` delegates to the production CLI in `src/reveng/cli/`. The repository documentation and package metadata describe support for PE, ELF, Mach-O, JAR, and .NET analysis, plus JavaScript deobfuscation and malware-oriented workflows. The packaging metadata also shows explicit optional dependencies for AI, web, Java, and Ghidra integration in `pyproject.toml`.
+The main entry wrapper in `python -m reveng` / `src/reveng/cli/reveng.py` delegates to the production CLI in `src/reveng/cli/`. The repository documentation and package metadata describe support for PE, ELF, Mach-O, JAR, and .NET analysis, plus JavaScript deobfuscation and malware-oriented workflows. The packaging metadata also shows explicit optional dependencies for AI, web, Java, and Ghidra integration in `pyproject.toml`.
 
 ### 3.2 Public integration surfaces
 
@@ -62,7 +64,7 @@ This is a good architectural pattern. It separates the orchestration core from h
 
 ### 4.1 Core orchestrator
 
-The central class is `REVENGAnalyzer` in `src/reveng/analyzer.py`. Its responsibilities include:
+The central class is `REVENGAnalyzer` in `src/reveng/analysis/analyzer.py`. Its responsibilities include:
 
 - locating and validating the target binary
 - creating an `analysis_<binary-name>` output directory

@@ -84,6 +84,11 @@ def create_parser() -> argparse.ArgumentParser:
         default=0,
         help="Number of retries for the Ghidra analysis stage (default: 0)",
     )
+    analyze_parser.add_argument(
+        "--no-ai",
+        action="store_true",
+        help="Disable AI-assisted analysis steps (enable_ai=False on REVENGAnalyzer)",
+    )
 
     # App reverse-engineering command
     reverse_app_parser = subparsers.add_parser(
@@ -923,6 +928,7 @@ def handle_analyze_command(args):
         check_ollama=not args.no_ollama_check,
         enhanced_features=enhanced_features,
         analysis_folder=args.output_dir,
+        enable_ai=not bool(getattr(args, "no_ai", False)),
     )
 
     # Check if binary exists

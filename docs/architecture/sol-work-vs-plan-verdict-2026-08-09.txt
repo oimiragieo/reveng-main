@@ -1,0 +1,1799 @@
+OpenAI Codex v0.146.1
+--------
+workdir: C:\dev\projects\reveng-main
+model: gpt-5.6-sol
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: none
+reasoning summaries: none
+session id: 019fe4fd-485b-7a83-a5fc-82ad74cf0f56
+--------
+user
+Audit implementation against plan docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md and audit docs/architecture/opus-world-class-audit-2026-08-09.md.
+
+Claimed done:
+- W-03 stripped 90%+/60-80% from enterprise MCP tool schemas; module docstring no longer Production-ready
+- W-01 unbundle_webpack True → warnings/unsupported_knobs, False clean; applied=false
+- W-02 knobs unsupported before angr import; symbolic false → could_not_measure; measured empty OK
+- W-05 CLI --no-ai + core MCP enable_ai
+- W-04 native docstring + docs; framework/MCP enum pins
+- W-07 java openai/anthropic NI at construction
+- W-09 changelog/system-paper banners + path fixes
+- W-06 health monitor real reveng.* imports
+- tests/unit/test_world_class_wiring_honesty_2026_08_09.py 18 passed
+
+Verdict: PASS / PASS_WITH_NITS / FAIL. List any gaps vs plan bidirectional requirements. Max 30 lines.
+
+=== greps ===
+src/reveng/cli/__init__.py:88:        "--no-ai",
+src/reveng/cli/__init__.py:90:        help="Disable AI-assisted analysis steps (enable_ai=False on REVENGAnalyzer)",
+src/reveng/cli/__init__.py:931:        enable_ai=not bool(getattr(args, "no_ai", False)),
+src/reveng/agent_sdk/mcp/servers/reveng_server.py:57:                        "enable_ai": {
+src/reveng/agent_sdk/mcp/servers/reveng_server.py:167:            enable_ai = args.get("enable_ai", True)
+src/reveng/agent_sdk/mcp/servers/reveng_server.py:168:            if enable_ai is None:
+src/reveng/agent_sdk/mcp/servers/reveng_server.py:169:                enable_ai = True
+src/reveng/agent_sdk/mcp/servers/reveng_server.py:174:                enable_ai=bool(enable_ai),
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:15:- Explicit unsupported/could_not_measure responses for unwired knobs
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:457:                        "enable_ai": {
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:759:                        "unbundle_webpack": {
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:1034:            enable_ai = bool(args.get("enable_ai", True))
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:1039:            if not enable_ai:
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:1046:            effective_check_ollama = enable_ai and not quick_mode
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:1050:                enable_ai=enable_ai,
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:1064:                "enable_ai": enable_ai,
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:1977:                        "measurement": "could_not_measure",
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:1980:                    status="could_not_measure",
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:2297:            unbundle_webpack = bool(args.get("unbundle_webpack", False))
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:2337:                "unbundle_webpack_applied": False,
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:2340:            if unbundle_webpack:
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:2341:                warnings.append("unbundle_webpack_unsupported")
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:2342:                response["unsupported_knobs"] = ["unbundle_webpack"]
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py:2344:                    "\n\nNote: unbundle_webpack requested but unsupported in this MCP path "
+
+warning: Skill descriptions were shortened to fit the 2% skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.
+codex
+I’m using the `codebase-audit` skill to trace each claimed wiring change against both documents and the implementation, including the reverse direction: every plan requirement must have code/tests, and every shipped behavior must match the documented contract.
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw 'C:\\Users\\oimir\\.agents\\skills\\codebase-audit\\SKILL.md'" in C:\dev\projects\reveng-main
+ succeeded in 1193ms:
+---
+name: codebase-audit
+description: "Use when asked to investigate, deep-dive, audit, review, or assess a codebase/repo/project for bugs, issues, security gaps, infrastructure risks, optimization opportunities, or unwired/dead/partially-implemented code. Triggers on \"investigate the X codebase\", \"audit/review the repo\", \"find bugs/security issues\", \"what's broken/risky in X\", \"dead code\", \"infra risks\", \"deep-dive the code\". READ-ONLY: produces a structured report, makes NO edits. This is the code/security/infra analog of frontend-audit (which is visual-only)."
+---
+
+# Codebase Audit Skill
+
+Run a **read-only**, token-disciplined deep-dive of a codebase and produce ONE structured
+report — bugs, security gaps, infrastructure risks, unwired/dead/partial code, and
+optimizations — each finding ranked by severity and cited to `file:line` or the grep
+pattern that surfaced it. **Security and infrastructure are the highest-priority areas
+unless the caller says otherwise.**
+
+The goal is **maximum insight per token**, not a file-by-file recital. The efficiency rules
+below are load-bearing — applied ruthlessly, they let one pass cover a large repo without
+blowing the budget. (Phase-2 claude-code hooks enforce rules 1 & 3 mechanically; until then
+they are a hard discipline you self-enforce.)
+
+## When to use
+- "investigate / deep-dive / audit / review the <project> codebase"
+- "find bugs / security issues / infra risks / dead code in <repo>"
+- "what's broken, risky, or half-finished here?"
+- Pre-merge or pre-handoff assessment of an unfamiliar repo.
+
+## When NOT to use
+- **Making the fixes** — this skill only REPORTS. Hand findings to an implement loop after.
+- **Visual/UX/CRO review** — use `frontend-audit`.
+- **A single known bug** — just debug it; don't audit the whole repo.
+
+## Inputs / parameters
+- **repo** (required): the working directory to audit (the agent runs IN this cwd).
+- **focus** (optional): risk areas to emphasize (default: all five categories).
+- **priority** (optional): which categories rank highest (default: Security, Infrastructure).
+- Always **read-only**. Never edit, never run mutating commands.
+
+## RULE 1 — Token discipline (HIGHEST priority)
+- **Never read the same file twice.** Track what you've read; if you feel the urge to
+  re-open a file, STOP and synthesize from what you already have.
+- **Never read build/generated dirs:** node_modules, .next, dist, build, __pycache__,
+  .pytest_cache, .venv, vendor, target, coverage, lockfile internals.
+- **Prefer Grep (with head_limit) and Glob over listing a directory + reading files.**
+- When you do read a file, use offset + limit — read the relevant span, not the whole file,
+  unless it is genuinely small or you genuinely need all of it.
+- **Read CLAUDE.md / SKILLS-INDEX.md / README.md for a directory FIRST** — they often
+  replace opening a dozen source files.
+
+## RULE 2 — Strategy (follow this order)
+1. **Root config + governance only, first:** the deploy/runtime/dependency manifests for the
+   stack (Dockerfile, docker-compose.yml, fly.toml, vercel.json, requirements.txt /
+   pyproject.toml, package.json, CI workflows) + every CLAUDE.md. These define the attack
+   surface, the infra, and the conventions in a handful of reads.
+2. **Broad Grep sweeps for the risk areas** (see RULE 4's pattern bank) — security, infra,
+   TODO/FIXME/HACK, unwired features, silent-failure patterns, auth/rate-limit/webhook gaps.
+   Let the grep hits point you to high-signal files.
+3. **Drill into a specific file ONLY when grep or a CLAUDE.md flags it** as high-signal.
+4. **Any directory with >20 files -> Grep/Glob first.** Never list-and-read-everything.
+
+## RULE 3 — Anti-waste hard constraints
+- Do **not** list or walk generated/build dirs (RULE 1's list).
+- Do **not** re-read a file you have already read, even when a "different" angle tempts you.
+- Do **not** run the full test suite, builds, installs, or anything mutating — read-only.
+- If grep already answered the question, do **not** open the file to "confirm."
+
+## RULE 4 — Risk pattern bank (grep starting points; adapt to the stack)
+- **Security:** code-eval / dynamic-exec calls, pickle/deserialization, subprocess or
+  child_process with shell enabled, dangerouslySetInnerHTML, raw SQL string concatenation,
+  TLS verification disabled, hardcoded secret|token|api[_-]?key|password, non-constant-time
+  token compares, permissive CORS `*`, routes missing auth/middleware, JWT alg:none.
+- **Infrastructure:** unpinned deps / `latest` tags, 0.0.0.0 binds, missing healthchecks, no
+  resource limits, secrets committed in env files, single-replica stateful services, missing
+  retries/timeouts on outbound calls, unbounded queues/caches (OOM), missing rate limits.
+- **Unwired / dead / partial:** TODO|FIXME|HACK|XXX|WIP|"not implemented"|stub|placeholder,
+  exported symbols with zero importers, routes defined but never registered, feature flags
+  that gate nothing, env vars read-but-never-set (or set-but-never-read).
+- **Silent failures:** bare except / except Exception: pass, empty catch blocks, swallowed
+  promise rejections, ignored return codes, blanket lint-disable, error logged-not-raised.
+- **Bugs:** off-by-one, missing await, mutable default args, races on shared state,
+  unhandled None/undefined, resource leaks (unclosed files/connections).
+
+## RULE 5 — Output contract
+Produce **ONE final structured report** at the end. **No running commentary, no file-by-file
+narration, no "reading X..." play-by-play.** Organize by category, severity-ranked within:
+
+    # Codebase Audit — <repo>   (read-only; no edits made)
+
+    ## Security            [highest priority]
+    - [CRITICAL] <finding> — path/file.py:120-134   (or: surfaced by grep <pattern>)
+    - [HIGH] ...
+    ## Infrastructure      [highest priority]
+    ## Bugs & Issues
+    ## Unwired / Dead / Partial Code
+    ## Optimizations
+
+    ## Summary
+    - N findings: X critical, Y high, Z medium. Top 3 to fix first: ...
+    - Coverage note: what was sampled vs exhaustively read (be honest about gaps).
+
+Severities: **CRITICAL** (exploitable / data-loss / outage), **HIGH**, **MEDIUM**, **LOW**.
+Every finding MUST cite file:line-range OR the grep pattern that surfaced it. No finding
+without evidence — if you cannot cite it, you did not verify it; drop it or mark it
+UNVERIFIED and say which read would confirm it.
+
+## Ultrathink, but ruthlessly efficient
+Think hard about systemic risk and what the code is *not* doing — but obey RULES 1 & 3
+without exception. A re-read or a node_modules walk is a budget leak; the discipline IS the
+skill. Maximum insight per token.
+
+
+2026-08-09T05:27:30.989041Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command '$files = @('"'docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md','docs/architecture/opus-world-class-audit-2026-08-09.md'); foreach ("'$f in $files) { Write-Output ('"'@@FILE ' + "'$f); $n=0; Get-Content $f | ForEach-Object { $n++; '"'{0,5}: {1}' -f "'$n, $_ } }'` rejected: blocked by policy
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command '$files = @('"'docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md','docs/architecture/opus-world-class-audit-2026-08-09.md'); foreach ("'$f in $files) { Write-Output ('"'@@FILE ' + "'$f); $n=0; Get-Content $f | ForEach-Object { $n++; '"'{0,5}: {1}' -f "'$n, $_ } }' in C:\dev\projects\reveng-main
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command '$files = @('"'docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md','docs/architecture/opus-world-class-audit-2026-08-09.md'); foreach ("'$f in $files) { Write-Output ('"'@@FILE ' + "'$f); $n=0; Get-Content $f | ForEach-Object { $n++; '"'{0,5}: {1}' -f "'$n, $_ } }'` rejected: blocked by policy
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'rg -n "''^" docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md docs/architecture/opus-world-class-audit-2026-08-09.md' in C:\dev\projects\reveng-main
+ succeeded in 963ms:
+docs/architecture/opus-world-class-audit-2026-08-09.md:1:# Opus-class world-class audit — 2026-08-09
+docs/architecture/opus-world-class-audit-2026-08-09.md:2:
+docs/architecture/opus-world-class-audit-2026-08-09.md:3:**Status:** Cursor Task Opus quota exhausted; CLI Opus 1m seat used for synthesis. Evidence from adversarial wiring scan + prior tg-audit/docs wave.  
+docs/architecture/opus-world-class-audit-2026-08-09.md:4:**Product:** beta `4.0.0` / public preview — not full Scope C GA.  
+docs/architecture/opus-world-class-audit-2026-08-09.md:5:**SoT:** `docs/support_matrix.json`, `docs/support/*`, `backlog.md`, `.cursor/skills/reveng-release-honesty/SKILL.md`.
+docs/architecture/opus-world-class-audit-2026-08-09.md:6:
+docs/architecture/opus-world-class-audit-2026-08-09.md:7:## P0 — breaks designed E2E / honesty lies (fix now)
+docs/architecture/opus-world-class-audit-2026-08-09.md:8:
+docs/architecture/opus-world-class-audit-2026-08-09.md:9:| ID | Title | Evidence | Impact | Fix shape | Effort |
+docs/architecture/opus-world-class-audit-2026-08-09.md:10:| --- | --- | --- | --- | --- | --- |
+docs/architecture/opus-world-class-audit-2026-08-09.md:11:| W-01 | Enterprise MCP advertises knobs it ignores (`unbundle_webpack`) | `reveng_enterprise_server.py` schema ~758–761 vs handler ~2256–2301 | Agents think unbundling ran; silent no-op | Wire or reject as `unsupported` with warning in tool result; test both arms | S |
+docs/architecture/opus-world-class-audit-2026-08-09.md:12:| W-02 | `find_vulnerabilities` ignores `vulnerability_types` / `use_ai_analysis`; hollow clean result | Schema ~628–654; handler ~1941; false arm ~1987–1990 returns “No vulnerabilities found” | Looks secure when measurement never ran | Return explicit `could_not_measure` / unsupported when AI/types paths not executed; never “none found” on skipped path | M |
+docs/architecture/opus-world-class-audit-2026-08-09.md:13:| W-03 | Brochure accuracy % in live MCP tool descriptions | `find_vulnerabilities` “90%+” ~623; `use_ml_renaming` “60-80%” ~748 | Honesty lie in agent-facing surface | Strip % claims; point at support matrix / experimental | S |
+docs/architecture/opus-world-class-audit-2026-08-09.md:14:| W-04 | `NativeAppAdapter` exists but unwired from default framework + MCP language enum | `adapters/native.py`; missing from `adapters/__init__.py` / `create_default_framework()`; MCP enum omits `native` | Dead code looks like a feature | Either register + matrix+tests **or** document fixture_only/unwired and quarantine from docs as CUJ | S (doc) / L (register for real) |
+docs/architecture/opus-world-class-audit-2026-08-09.md:15:| W-05 | CLI `analyze` cannot pass `enable_ai=False` though analyzer gate exists | `analyzer.py` gate ~148–158; `handle_analyze_command` ~921–926 no flag; basic MCP also omits | Operators cannot disable AI on main surface; docs teach the gate | Add CLI flag + MCP core param; test enable_ai False skips AI | S |
+docs/architecture/opus-world-class-audit-2026-08-09.md:16:
+docs/architecture/opus-world-class-audit-2026-08-09.md:17:## P1 — world-class integration gaps
+docs/architecture/opus-world-class-audit-2026-08-09.md:18:
+docs/architecture/opus-world-class-audit-2026-08-09.md:19:| ID | Title | Evidence | Impact | Fix | Effort |
+docs/architecture/opus-world-class-audit-2026-08-09.md:20:| --- | --- | --- | --- | --- | --- |
+docs/architecture/opus-world-class-audit-2026-08-09.md:21:| W-06 | Enterprise health checker dead imports + abstract NI | `enhanced_health_monitor.py` ~74, ~93–98 | Health lies or crashes | Fix import paths or mark unsupported; implement or remove | M |
+docs/architecture/opus-world-class-audit-2026-08-09.md:22:| W-07 | `java_ai_analyzer` OpenAI/Anthropic NI | `java_ai_analyzer.py` ~233–237 | Cloud path marketed, local only works | Explicit unsupported providers in API/docs; don’t raise mid-flight as surprise | S |
+docs/architecture/opus-world-class-audit-2026-08-09.md:23:| W-08 | Dual grade ladders still easy to conflate in API payloads | app `contracts.py` vs `verification/models.py` | Juniors misread trust | Namespace fields (`app_validation_grade` vs `vrl_grade`) or docs+schema discriminators | M |
+docs/architecture/opus-world-class-audit-2026-08-09.md:24:| W-09 | Off-nav changelogs / system paper still teach dead paths + 95% | `docs/changelogs/v4–v6`, `reveng-system-paper.md` | Searchable lies | Banner “historical / not support claims” + fix entry paths | S |
+docs/architecture/opus-world-class-audit-2026-08-09.md:25:| W-10 | Basic vs enterprise MCP capability parity unclear | `reveng_server.py` vs `reveng_enterprise_server.py` | Agents pick wrong server | Docs matrix of tools×server + shared honesty helpers | M |
+docs/architecture/opus-world-class-audit-2026-08-09.md:26:
+docs/architecture/opus-world-class-audit-2026-08-09.md:27:## P2 — polish later
+docs/architecture/opus-world-class-audit-2026-08-09.md:28:
+docs/architecture/opus-world-class-audit-2026-08-09.md:29:- Expand thin language how-tos further with sample oracle expectations
+docs/architecture/opus-world-class-audit-2026-08-09.md:30:- Line-anchor engineer how-tos to stable symbols
+docs/architecture/opus-world-class-audit-2026-08-09.md:31:- Quarantine aspirational v5/v6 from any “shipped” framing in search landing
+docs/architecture/opus-world-class-audit-2026-08-09.md:32:- MCP “Enterprise” branding ≠ maturity (rename or badge)
+docs/architecture/opus-world-class-audit-2026-08-09.md:33:
+docs/architecture/opus-world-class-audit-2026-08-09.md:34:## Explicitly NOT in scope this wave (research / product phases)
+docs/architecture/opus-world-class-audit-2026-08-09.md:35:
+docs/architecture/opus-world-class-audit-2026-08-09.md:36:- **R-RALPH-2** engine wedge for cli.js 0.8+ recall
+docs/architecture/opus-world-class-audit-2026-08-09.md:37:- M1-NATIVE-FAM hermetic analyze `required: true`
+docs/architecture/opus-world-class-audit-2026-08-09.md:38:- M2 world-class hexyl beyond timed probe
+docs/architecture/opus-world-class-audit-2026-08-09.md:39:- LibAFL / `fuzz_until_divergence` implementation (D1)
+docs/architecture/opus-world-class-audit-2026-08-09.md:40:- Exploit expansion beyond Docker-only preview (R-SEC-1)
+docs/architecture/opus-world-class-audit-2026-08-09.md:41:- Full nightly corpus blocking (M4 residual)
+docs/architecture/opus-world-class-audit-2026-08-09.md:42:- Phases 6–13 product work (await Sol stop/go)
+docs/architecture/opus-world-class-audit-2026-08-09.md:43:- Registering NativeAppAdapter as **supported** without corpus proof
+docs/architecture/opus-world-class-audit-2026-08-09.md:44:
+docs/architecture/opus-world-class-audit-2026-08-09.md:45:## Clean / already fixed (do not re-open)
+docs/architecture/opus-world-class-audit-2026-08-09.md:46:
+docs/architecture/opus-world-class-audit-2026-08-09.md:47:- Wave B/C honesty slim `requirements-honesty.txt`
+docs/architecture/opus-world-class-audit-2026-08-09.md:48:- `ghidramcp>=0.1.0` commented out
+docs/architecture/opus-world-class-audit-2026-08-09.md:49:- Core MCP binary `detect_malware` explicit unsupported
+docs/architecture/opus-world-class-audit-2026-08-09.md:50:- Diátaxis dual-door docs + mkdocs nav (Wave A docs)
+docs/architecture/opus-world-class-audit-2026-08-09.md:51:
+docs/architecture/opus-world-class-audit-2026-08-09.md:52:## Top 8 recommended fix wave
+docs/architecture/opus-world-class-audit-2026-08-09.md:53:
+docs/architecture/opus-world-class-audit-2026-08-09.md:54:1. **W-03** Strip MCP brochure % from tool descriptions + unit/string tests  
+docs/architecture/opus-world-class-audit-2026-08-09.md:55:2. **W-01** `unbundle_webpack` unsupported-or-wire + bidirectional test  
+docs/architecture/opus-world-class-audit-2026-08-09.md:56:3. **W-02** Hollow vuln-scan honesty (no “none found” on skipped path) + tests  
+docs/architecture/opus-world-class-audit-2026-08-09.md:57:4. **W-05** CLI `--no-ai` / `--enable-ai` + core MCP mirror + tests + docs  
+docs/architecture/opus-world-class-audit-2026-08-09.md:58:5. **W-04** Doc/quarantine NativeAppAdapter as unwired (do **not** claim supported)  
+docs/architecture/opus-world-class-audit-2026-08-09.md:59:6. **W-07** java_ai cloud providers → explicit unsupported responses  
+docs/architecture/opus-world-class-audit-2026-08-09.md:60:7. **W-09** Historical changelog/system-paper honesty banners + path fixes  
+docs/architecture/opus-world-class-audit-2026-08-09.md:61:8. **W-06** Health monitor: fail closed with real package checks or delete dead path  
+docs/architecture/opus-world-class-audit-2026-08-09.md:62:
+docs/architecture/opus-world-class-audit-2026-08-09.md:63:Each item: code + pytest (prefer bidirectional) + update `docs/reference/mcp-tools.md` / tutorials as touched.
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:1:# World-class wiring & honesty fix wave — Implementation Plan
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:2:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:3:> **For agentic workers:** Execute task-by-task with tests before/after. Do **not** commit unless the user asks.
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:4:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:5:**Goal:** Close the audit Top-8 (W-03, W-01, W-02, W-05, W-04, W-07, W-09, W-06) so MCP/CLI/docs stop lying and surfaces share the same honesty gates.
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:6:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:7:**Architecture:** Prefer explicit `unsupported` / `could_not_measure` tool results over silent no-ops; strip brochure % from agent-facing schemas; quarantine unwired adapters in docs; fail-closed health checks.
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:8:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:9:**Tech Stack:** Python 3.9, pytest, existing `reveng.core.result_contracts`, MkDocs markdown.
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:10:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:11:## Global Constraints
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:12:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:13:- Python 3.9 floor; `/usr/bin/python3.9` for tests
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:14:- No invented success percentages
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:15:- Match `docs/support_matrix.json`
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:16:- Do not implement RALPH-2, native GA, LibAFL, exploit expansion
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:17:- Named-path edits only; no `git stash`; **DO NOT commit unless asked**
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:18:- Update docs when behavior changes
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:19:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:20:## PLAN SUMMARY (Thinktank)
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:21:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:22:- **Intent:** Honesty + wiring for MCP enterprise silent knobs, AI disable on CLI, native adapter quarantine, java cloud NI, historical doc banners, health monitor fail-closed.
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:23:- **Risks:** Changing vuln-scan empty results may break agents that parse “No vulnerabilities found”; CLI flag must stay backward compatible (default AI behavior unchanged).
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:24:- **Out of scope:** Engine research (RALPH-2), registering NativeAppAdapter as supported, LibAFL, exploit GA.
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:25:- **Thinktank 2026-08-09:** Sol **REJECT** (hollow/one-arm tests) · Fable **APPROVE_WITH_NITS**. **Resolved:** revise tasks for bidirectional arms + schema/SoT assertions; W-01 = explicit **unsupported** (no unbounded “wire real behavior”); then execute.
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:26:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:27:**Audit source:** `docs/architecture/opus-world-class-audit-2026-08-09.md`
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:28:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:29:---
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:30:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:31:### Task 1 — W-03 Strip MCP brochure % claims
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:32:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:33:- [ ] Grep enterprise MCP for accuracy `%` in tool descriptions
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:34:- [ ] Test scans **serialized tool schemas** (not only source text); assert ≥N tools scanned; inject `90%` fixture → red; clean → green
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:35:- [ ] Edit descriptions; update `docs/reference/mcp-tools.md`
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:36:- [ ] Verify: `python3.9 -m pytest tests/unit/test_mcp_tool_description_honesty.py -q --no-cov`
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:37:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:38:### Task 2 — W-01 `unbundle_webpack` → explicit unsupported
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:39:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:40:- [ ] Choose **unsupported** (do not invent webpack unbundle impl this wave)
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:41:- [ ] Bidirectional: `False` → no unsupported warning / no applied claim; `True` → unsupported warning in result (not silent success-as-applied)
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:42:- [ ] Docs: mcp-tools.md
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:43:- [ ] Pytest both arms
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:44:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:45:### Task 3 — W-02 `find_vulnerabilities` hollow clean
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:46:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:47:- [ ] Unused knobs (`vulnerability_types`, `use_ai_analysis`) → explicit unsupported or executed
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:48:- [ ] Skipped measurement path → `could_not_measure` / skip reasons — **never** “No vulnerabilities found” as proven empty
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:49:- [ ] Bidirectional: real executed path with zero findings may still report clean **measured**; skipped path must not
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:50:- [ ] Docs: mcp-tools.md compat note for agents parsing old empty string
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:51:- [ ] Pytest knob combos
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:52:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:53:### Task 4 — W-05 CLI / core MCP `enable_ai` gate
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:54:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:55:- [ ] Add `--no-ai` to analyze CLI; pass into REVENGAnalyzer; expose on core MCP
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:56:- [ ] Bidirectional: default/`True` → AI path invoked (spy); `False` → skipped; assert MCP schema exposes param
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:57:- [ ] Docs: reference/cli.md
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:58:- [ ] Pytest CLI + MCP
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:59:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:60:### Task 5 — W-04 Quarantine NativeAppAdapter
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:61:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:62:- [ ] Docs + module docstring: unwired / not CUJ
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:63:- [ ] Regression pin: `create_default_framework` languages exclude `native`; MCP language enum excludes `native`
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:64:- [ ] Do **not** claim supported in support_matrix.json
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:65:- [ ] Label test as pin
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:66:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:67:### Task 6 — W-07 java_ai cloud providers
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:68:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:69:- [ ] OpenAI + Anthropic → clear unsupported **preflight** (both providers tested)
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:70:- [ ] Positive control: local/ollama path still callable (or skip if tool absent with explicit skip)
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:71:- [ ] Docs: explanation/ai-providers.md
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:72:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:73:### Task 7 — W-09 Historical doc honesty
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:74:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:75:- [ ] Banner on changelogs v4–v6 + system paper
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:76:- [ ] Qualify/remove searchable `95%` brochure lines in those files OR wrap as “historical claim, not validated”
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:77:- [ ] Fix dead entry paths in system paper intro
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:78:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:79:### Task 8 — W-06 Health monitor fail-closed
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:80:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:81:- [ ] Target: `CoreREVENGHealthChecker` / `enhanced_health_monitor.py` consumers
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:82:- [ ] Replace dead imports with real `reveng.*` probes
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:83:- [ ] Bidirectional: healthy imports → ok; missing → fail-closed status; exception → fail-closed (not NI crash)
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:84:- [ ] Decide: implement minimal checks (chosen) — not leave “or remove” ambiguous
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:85:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:86:### Task 9 — Lint / format / docs index
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:87:
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:88:- [ ] black/isort on touched Python
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:89:- [ ] Link audit + plan from `docs/ops/README.md`
+docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:90:- [ ] Run new unit tests
+
+codex
+The plan is stricter than the claim summary in several places: it requires serialized-schema injection coverage, positive controls, explicit documentation updates, three health-monitor arms, and an ops index link. I’m checking those requirements directly rather than treating “18 passed” as sufficient evidence.
+2026-08-09T05:27:40.166246Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'tg prepare src/ "audit world class wiring honesty W-01 W-02 W-03 W-04 W-05 W-06 W-07 W-09" --json'` rejected: blocked by policy
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'tg prepare src/ "audit world class wiring honesty W-01 W-02 W-03 W-04 W-05 W-06 W-07 W-09" --json' in C:\dev\projects\reveng-main
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'tg prepare src/ "audit world class wiring honesty W-01 W-02 W-03 W-04 W-05 W-06 W-07 W-09" --json'` rejected: blocked by policy
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git status --short; git diff --stat; git diff --name-only' in C:\dev\projects\reveng-main
+ succeeded in 4732ms:
+ M .claude/MEMORY.md
+ M .cursor/skills/reveng-release-honesty/SKILL.md
+ M .github/workflows/wave-b-honesty.yml
+ M .github/workflows/wave-c-phase5-honesty.yml
+ M AGENTS.md
+ M README.md
+ M backlog.md
+ M docs/README.md
+ M docs/api/API_REFERENCE.md
+ M docs/architecture/lessons-learned-scope-c-2026-08.md
+ M docs/architecture/overview.md
+ M docs/architecture/reveng-system-paper.md
+ M docs/changelogs/v4.0.md
+ M docs/changelogs/v5.0.md
+ M docs/changelogs/v6.0.md
+ M docs/developer-guide/DEVELOPER_GUIDE.md
+ M docs/getting-started/installation.md
+ M docs/mcp/README.md
+ M docs/user-guide/cli-usage.md
+ M docs/user-guide/support-matrix.md
+ M mkdocs.yml
+ M reports/app_reverse_engineering_corpus/app_corpus_report.json
+ M reports/app_reverse_engineering_corpus/dotnet-sample-app/analysis.json
+ M reports/app_reverse_engineering_corpus/dotnet-sample-app/artifacts/dotnet_analysis/sample_dotnet/analysis_report.json
+ M reports/app_reverse_engineering_corpus/dotnet-sample-app/artifacts/recovered_sources/sample_dotnet_assembly_summary.cs
+ M reports/app_reverse_engineering_corpus/java-helloworld-jar/analysis.json
+ M reports/app_reverse_engineering_corpus/java-helloworld-jar/artifacts/java_bytecode_analysis/HelloWorld_analysis.json
+ M reports/app_reverse_engineering_corpus/java-helloworld-jar/artifacts/reconstructed_project/pom.xml
+ M reports/app_reverse_engineering_corpus/java-helloworld-jar/artifacts/recovered_sources/HelloWorld.java
+ M reports/app_reverse_engineering_corpus/java-helloworld/analysis.json
+ M reports/app_reverse_engineering_corpus/javascript-sample-app/analysis.json
+ M reports/app_reverse_engineering_corpus/python-sample-app/analysis.json
+ M reports/app_reverse_engineering_corpus/python-sample-bytecode/analysis.json
+ M reports/app_reverse_engineering_corpus/python-sample-zipapp/analysis.json
+ M reports/ga_readiness_report.json
+ M reports/source_binary_benchmarks/java-helloworld-class/analyze/e2e_pipeline_execution.json
+ M reports/source_binary_benchmarks/java-helloworld-class/analyze/recompilation/reconstruction_results.json
+ M reports/source_binary_benchmarks/java-helloworld-class/analyze/reports/unified_analysis_report.json
+ M reports/source_binary_benchmarks/java-helloworld-jar/analyze/e2e_pipeline_execution.json
+ M reports/source_binary_benchmarks/java-helloworld-jar/analyze/recompilation/reconstruction_results.json
+ M reports/source_binary_benchmarks/java-helloworld-jar/analyze/reports/unified_analysis_report.json
+ M reports/source_binary_benchmarks/python-sample-bytecode/analyze/behavioral_forensics/behavioral_profile.json
+ M reports/source_binary_benchmarks/python-sample-bytecode/analyze/e2e_pipeline_execution.json
+ M reports/source_binary_benchmarks/python-sample-bytecode/analyze/recompilation/reconstruction_results.json
+ M reports/source_binary_benchmarks/python-sample-bytecode/analyze/reports/unified_analysis_report.json
+ M reports/source_binary_benchmarks/python-sample-zipapp/analyze/e2e_pipeline_execution.json
+ M reports/source_binary_benchmarks/python-sample-zipapp/analyze/recompilation/reconstruction_results.json
+ M reports/source_binary_benchmarks/python-sample-zipapp/analyze/reports/unified_analysis_report.json
+ M requirements-java.txt
+ M requirements-security.txt
+ M src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py
+ M src/reveng/agent_sdk/mcp/servers/reveng_server.py
+ M src/reveng/app_reverse_engineering/adapters/native.py
+ M src/reveng/cli/__init__.py
+ M src/reveng/tools/enterprise/enhanced_health_monitor.py
+ M src/reveng/tools/utils/java_ai_analyzer.py
+ M tests/unit/test_backlog_wave_a_invariants.py
+ M tests/unit/test_scope_c_phase_unauthorized_honesty.py
+?? .worktrees/
+?? docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md
+?? docs/architecture/opus-world-class-audit-2026-08-09.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-r2-out/
+?? docs/architecture/thinktank-tg-audit-fixups-plan-r2.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-r3.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-r4.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-r5.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-r6.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-r7.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-r8.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-r9.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-verdict-codex.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-verdict-r3-codex.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-verdict-r4-codex.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-verdict-r5-codex.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-verdict-r6-codex.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-verdict-r7-codex.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan-verdict-r8-codex.md
+?? docs/architecture/thinktank-tg-audit-fixups-plan.md
+?? docs/architecture/thinktank-tg-audit-impl-r1.md
+?? docs/explanation/
+?? docs/how-to/
+?? docs/ops/
+?? docs/reference/
+?? docs/superpowers/plans/2026-08-07-reveng-wave-c-multi-track.md
+?? docs/superpowers/plans/2026-08-09-junior-docs-ecosystem.md
+?? docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md
+?? docs/support/
+?? docs/tutorials/
+?? reports/app_reverse_engineering_corpus/javascript-sample-app/artifacts/project.re_project_ir.json
+?? reports/app_reverse_engineering_corpus/javascript-tracked-bundle/
+?? reports/ga_readiness_tg_audit_baseline.json
+?? reports/ga_readiness_tg_audit_ga.json
+?? requirements-honesty.txt
+?? src/.tensor-grep/
+?? src/reveng/.tensor-grep/
+?? tests/unit/test_world_class_wiring_honesty_2026_08_09.py
+ .claude/MEMORY.md                                  |   37 +-
+ .cursor/skills/reveng-release-honesty/SKILL.md     |   20 +-
+ .github/workflows/wave-b-honesty.yml               |    5 +-
+ .github/workflows/wave-c-phase5-honesty.yml        |    4 +-
+ AGENTS.md                                          |   22 +-
+ README.md                                          |   40 +-
+ backlog.md                                         |   10 +-
+ docs/README.md                                     |  100 +-
+ docs/api/API_REFERENCE.md                          |   96 +-
+ .../lessons-learned-scope-c-2026-08.md             |   32 +
+ docs/architecture/overview.md                      |   95 +-
+ docs/architecture/reveng-system-paper.md           |   10 +-
+ docs/changelogs/v4.0.md                            |    2 +
+ docs/changelogs/v5.0.md                            |    2 +
+ docs/changelogs/v6.0.md                            |    2 +
+ docs/developer-guide/DEVELOPER_GUIDE.md            |  132 +--
+ docs/getting-started/installation.md               |  106 +-
+ docs/mcp/README.md                                 |  645 +----------
+ docs/user-guide/cli-usage.md                       |  127 +--
+ docs/user-guide/support-matrix.md                  |   58 +-
+ mkdocs.yml                                         |   95 +-
+ .../app_corpus_report.json                         |  157 ++-
+ .../dotnet-sample-app/analysis.json                |   75 +-
+ .../sample_dotnet/analysis_report.json             |    2 +-
+ .../java-helloworld-jar/analysis.json              |   82 +-
+ .../HelloWorld_analysis.json                       |   40 +-
+ .../java-helloworld/analysis.json                  |   77 +-
+ .../javascript-sample-app/analysis.json            |  111 +-
+ .../python-sample-app/analysis.json                |   77 +-
+ .../python-sample-bytecode/analysis.json           |  180 ++--
+ .../python-sample-zipapp/analysis.json             |   77 +-
+ reports/ga_readiness_report.json                   |   32 +-
+ .../analyze/e2e_pipeline_execution.json            | 1122 ++------------------
+ .../recompilation/reconstruction_results.json      |  122 +--
+ .../analyze/reports/unified_analysis_report.json   | 1022 +-----------------
+ .../analyze/e2e_pipeline_execution.json            |  112 +-
+ .../recompilation/reconstruction_results.json      |    3 +-
+ .../analyze/reports/unified_analysis_report.json   |   55 +-
+ .../behavioral_forensics/behavioral_profile.json   |    4 +-
+ .../analyze/e2e_pipeline_execution.json            |  112 +-
+ .../recompilation/reconstruction_results.json      |    3 +-
+ .../analyze/reports/unified_analysis_report.json   |   55 +-
+ .../analyze/e2e_pipeline_execution.json            |  112 +-
+ .../recompilation/reconstruction_results.json      |    3 +-
+ .../analyze/reports/unified_analysis_report.json   |   55 +-
+ requirements-java.txt                              |    5 +-
+ requirements-security.txt                          |    3 +-
+ .../mcp/servers/reveng_enterprise_server.py        |  155 ++-
+ src/reveng/agent_sdk/mcp/servers/reveng_server.py  |   18 +-
+ .../app_reverse_engineering/adapters/native.py     |    8 +-
+ src/reveng/cli/__init__.py                         |    6 +
+ .../tools/enterprise/enhanced_health_monitor.py    |    8 +-
+ src/reveng/tools/utils/java_ai_analyzer.py         |   39 +-
+ tests/unit/test_backlog_wave_a_invariants.py       |   15 +-
+ .../test_scope_c_phase_unauthorized_honesty.py     |    8 +-
+ 55 files changed, 1588 insertions(+), 4007 deletions(-)
+.claude/MEMORY.md
+.cursor/skills/reveng-release-honesty/SKILL.md
+.github/workflows/wave-b-honesty.yml
+.github/workflows/wave-c-phase5-honesty.yml
+AGENTS.md
+README.md
+backlog.md
+docs/README.md
+docs/api/API_REFERENCE.md
+docs/architecture/lessons-learned-scope-c-2026-08.md
+docs/architecture/overview.md
+docs/architecture/reveng-system-paper.md
+docs/changelogs/v4.0.md
+docs/changelogs/v5.0.md
+docs/changelogs/v6.0.md
+docs/developer-guide/DEVELOPER_GUIDE.md
+docs/getting-started/installation.md
+docs/mcp/README.md
+docs/user-guide/cli-usage.md
+docs/user-guide/support-matrix.md
+mkdocs.yml
+reports/app_reverse_engineering_corpus/app_corpus_report.json
+reports/app_reverse_engineering_corpus/dotnet-sample-app/analysis.json
+reports/app_reverse_engineering_corpus/dotnet-sample-app/artifacts/dotnet_analysis/sample_dotnet/analysis_report.json
+reports/app_reverse_engineering_corpus/java-helloworld-jar/analysis.json
+reports/app_reverse_engineering_corpus/java-helloworld-jar/artifacts/java_bytecode_analysis/HelloWorld_analysis.json
+reports/app_reverse_engineering_corpus/java-helloworld/analysis.json
+reports/app_reverse_engineering_corpus/javascript-sample-app/analysis.json
+reports/app_reverse_engineering_corpus/python-sample-app/analysis.json
+reports/app_reverse_engineering_corpus/python-sample-bytecode/analysis.json
+reports/app_reverse_engineering_corpus/python-sample-zipapp/analysis.json
+reports/ga_readiness_report.json
+reports/source_binary_benchmarks/java-helloworld-class/analyze/e2e_pipeline_execution.json
+reports/source_binary_benchmarks/java-helloworld-class/analyze/recompilation/reconstruction_results.json
+reports/source_binary_benchmarks/java-helloworld-class/analyze/reports/unified_analysis_report.json
+reports/source_binary_benchmarks/java-helloworld-jar/analyze/e2e_pipeline_execution.json
+reports/source_binary_benchmarks/java-helloworld-jar/analyze/recompilation/reconstruction_results.json
+reports/source_binary_benchmarks/java-helloworld-jar/analyze/reports/unified_analysis_report.json
+reports/source_binary_benchmarks/python-sample-bytecode/analyze/behavioral_forensics/behavioral_profile.json
+reports/source_binary_benchmarks/python-sample-bytecode/analyze/e2e_pipeline_execution.json
+reports/source_binary_benchmarks/python-sample-bytecode/analyze/recompilation/reconstruction_results.json
+reports/source_binary_benchmarks/python-sample-bytecode/analyze/reports/unified_analysis_report.json
+reports/source_binary_benchmarks/python-sample-zipapp/analyze/e2e_pipeline_execution.json
+reports/source_binary_benchmarks/python-sample-zipapp/analyze/recompilation/reconstruction_results.json
+reports/source_binary_benchmarks/python-sample-zipapp/analyze/reports/unified_analysis_report.json
+requirements-java.txt
+requirements-security.txt
+src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py
+src/reveng/agent_sdk/mcp/servers/reveng_server.py
+src/reveng/app_reverse_engineering/adapters/native.py
+src/reveng/cli/__init__.py
+src/reveng/tools/enterprise/enhanced_health_monitor.py
+src/reveng/tools/utils/java_ai_analyzer.py
+tests/unit/test_backlog_wave_a_invariants.py
+tests/unit/test_scope_c_phase_unauthorized_honesty.py
+warning: in the working copy of 'reports/app_reverse_engineering_corpus/dotnet-sample-app/artifacts/recovered_sources/sample_dotnet_assembly_summary.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'reports/app_reverse_engineering_corpus/java-helloworld-jar/artifacts/reconstructed_project/pom.xml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'reports/app_reverse_engineering_corpus/java-helloworld-jar/artifacts/recovered_sources/HelloWorld.java', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'reports/app_reverse_engineering_corpus/dotnet-sample-app/artifacts/recovered_sources/sample_dotnet_assembly_summary.cs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'reports/app_reverse_engineering_corpus/java-helloworld-jar/artifacts/reconstructed_project/pom.xml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'reports/app_reverse_engineering_corpus/java-helloworld-jar/artifacts/recovered_sources/HelloWorld.java', LF will be replaced by CRLF the next time Git touches it
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'rg -n "''^" tests/unit/test_world_class_wiring_honesty_2026_08_09.py' in C:\dev\projects\reveng-main
+ succeeded in 1284ms:
+1:"""Honesty/wiring tests for 2026-08-09 world-class fix wave (W-01..W-07, W-04, W-06)."""
+2:
+3:from __future__ import annotations
+4:
+5:import asyncio
+6:import re
+7:from pathlib import Path
+8:from unittest.mock import MagicMock, patch
+9:
+10:import pytest
+11:
+12:from reveng.app_reverse_engineering import create_default_framework
+13:from reveng.cli import create_parser
+14:from reveng.tools.enterprise.enhanced_health_monitor import CoreREVENGHealthChecker
+15:from reveng.tools.utils.java_ai_analyzer import JavaAIAnalyzer
+16:
+17:
+18:def _enterprise_server():
+19:    from reveng.agent_sdk.mcp.servers.reveng_enterprise_server import REVENGEnterpriseServer
+20:
+21:    return REVENGEnterpriseServer()
+22:
+23:
+24:def _core_server():
+25:    from reveng.agent_sdk.mcp.servers.reveng_server import REVENGMCPServer
+26:
+27:    return REVENGMCPServer()
+28:
+29:
+30:class TestMcpDescriptionHonesty:
+31:    def test_serialized_tool_schemas_have_no_accuracy_percent_claims(self):
+32:        server = _enterprise_server()
+33:        tools = [t.to_dict() for t in server.tools.values()]
+34:        assert len(tools) >= 8, "positive control: schemas must be non-empty"
+35:
+36:        # Injected fixture must be detectable by the same scan
+37:        injected = {"name": "fake", "description": "90%+ accuracy tool", "inputSchema": {}}
+38:        bad = [injected]
+39:        assert any(re.search(r"\d+%\+?", (t.get("description") or "")) for t in bad)
+40:
+41:        offenders = []
+42:        for tool in tools:
+43:            desc = tool.get("description") or ""
+44:            if re.search(r"\d+%\+?", desc):
+45:                offenders.append((tool["name"], desc))
+46:            props = (tool.get("inputSchema") or {}).get("properties") or {}
+47:            for pname, pschema in props.items():
+48:                pdesc = (pschema or {}).get("description") or ""
+49:                if re.search(r"\d+%\+?", pdesc) and "confidence" not in pdesc.lower():
+50:                    # allow result confidence wording; block accuracy marketing
+51:                    if "accuracy" in pdesc.lower() or "60-80" in pdesc or "90%" in pdesc:
+52:                        offenders.append((f"{tool['name']}.{pname}", pdesc))
+53:        assert offenders == [], f"brochure % claims in schemas: {offenders}"
+54:
+55:
+56:class TestUnbundleWebpackHonesty:
+57:    def test_false_does_not_warn(self):
+58:        server = _enterprise_server()
+59:
+60:        async def _run():
+61:            with patch("reveng.javascript.deobfuscator.JavaScriptDeobfuscator") as deob_cls:
+62:                inst = MagicMock()
+63:                result = MagicMock()
+64:                result.confidence = 10
+65:                result.obfuscation_types = []
+66:                result.deobfuscated_code = "var a=1;"
+67:                inst.deobfuscate = MagicMock(return_value=asyncio.coroutine(lambda: result)())
+68:
+69:                async def _deob(_code):
+70:                    return result
+71:
+72:                inst.deobfuscate = _deob
+73:                deob_cls.return_value = inst
+74:                return await server.deobfuscate_javascript(
+75:                    {"code": "var a=1;", "unbundle_webpack": False, "detect_malware": False}
+76:                )
+77:
+78:        out = asyncio.run(_run())
+79:        assert out.get("unbundle_webpack_applied") is False
+80:        assert "unbundle_webpack_unsupported" not in (out.get("warnings") or [])
+81:
+82:    def test_true_marks_unsupported_not_applied(self):
+83:        server = _enterprise_server()
+84:
+85:        async def _run():
+86:            with patch("reveng.javascript.deobfuscator.JavaScriptDeobfuscator") as deob_cls:
+87:                result = MagicMock()
+88:                result.confidence = 10
+89:                result.obfuscation_types = []
+90:                result.deobfuscated_code = "var a=1;"
+91:
+92:                async def _deob(_code):
+93:                    return result
+94:
+95:                deob_cls.return_value.deobfuscate = _deob
+96:                return await server.deobfuscate_javascript(
+97:                    {"code": "var a=1;", "unbundle_webpack": True, "detect_malware": False}
+98:                )
+99:
+100:        out = asyncio.run(_run())
+101:        assert out.get("unbundle_webpack_applied") is False
+102:        assert "unbundle_webpack" in (out.get("unsupported_knobs") or [])
+103:        assert "unbundle_webpack_unsupported" in (out.get("warnings") or [])
+104:        assert "not applied" in out["content"][0]["text"].lower()
+105:
+106:
+107:class TestFindVulnerabilitiesHonesty:
+108:    def test_symbolic_false_is_could_not_measure_not_clean(self, tmp_path):
+109:        server = _enterprise_server()
+110:        binary = tmp_path / "sample.bin"
+111:        binary.write_bytes(b"MZ")
+112:
+113:        async def _run():
+114:            return await server.find_vulnerabilities(
+115:                {"path": str(binary), "use_symbolic_execution": False}
+116:            )
+117:
+118:        out = asyncio.run(_run())
+119:        assert out["status"] == "could_not_measure"
+120:        assert "No vulnerabilities found" not in out["content"][0]["text"]
+121:        assert out.get("measurement") == "could_not_measure"
+122:
+123:    def test_ai_knob_unsupported(self, tmp_path):
+124:        server = _enterprise_server()
+125:        binary = tmp_path / "sample.bin"
+126:        binary.write_bytes(b"MZ")
+127:
+128:        out = asyncio.run(
+129:            server.find_vulnerabilities(
+130:                {"path": str(binary), "use_ai_analysis": True, "use_symbolic_execution": True}
+131:            )
+132:        )
+133:        assert out["status"] == "unsupported"
+134:        assert "use_ai_analysis" in out.get("unsupported_knobs", [])
+135:
+136:    def test_types_knob_unsupported(self, tmp_path):
+137:        server = _enterprise_server()
+138:        binary = tmp_path / "sample.bin"
+139:        binary.write_bytes(b"MZ")
+140:
+141:        out = asyncio.run(
+142:            server.find_vulnerabilities(
+143:                {
+144:                    "path": str(binary),
+145:                    "vulnerability_types": ["buffer_overflow"],
+146:                    "use_symbolic_execution": True,
+147:                }
+148:            )
+149:        )
+150:        assert out["status"] == "unsupported"
+151:        assert "vulnerability_types" in out.get("unsupported_knobs", [])
+152:
+153:    def test_measured_zero_findings_ok(self, tmp_path):
+154:        server = _enterprise_server()
+155:        binary = tmp_path / "sample.bin"
+156:        binary.write_bytes(b"MZ")
+157:
+158:        fake_engine = MagicMock()
+159:        fake_engine.find_vulnerabilities.return_value = []
+160:
+161:        async def _run():
+162:            with patch.dict("sys.modules", {"angr": MagicMock()}):
+163:                with patch(
+164:                    "reveng.security.symbolic_execution_engine.SymbolicExecutionEngine",
+165:                    return_value=fake_engine,
+166:                    create=True,
+167:                ):
+168:                    # Import path happens inside handler — patch after injecting fake module
+169:                    import sys
+170:                    import types
+171:
+172:                    mod = types.ModuleType("reveng.security.symbolic_execution_engine")
+173:
+174:                    class SymbolicExecutionEngine:
+175:                        def __init__(self, *a, **k):
+176:                            pass
+177:
+178:                        def find_vulnerabilities(self):
+179:                            return []
+180:
+181:                    mod.SymbolicExecutionEngine = SymbolicExecutionEngine
+182:                    sys.modules["reveng.security.symbolic_execution_engine"] = mod
+183:                    try:
+184:                        return await server.find_vulnerabilities(
+185:                            {"path": str(binary), "use_symbolic_execution": True}
+186:                        )
+187:                    finally:
+188:                        sys.modules.pop("reveng.security.symbolic_execution_engine", None)
+189:
+190:        out = asyncio.run(_run())
+191:        assert out.get("status", "success") == "success"
+192:        assert out.get("measurement") == "measured"
+193:        assert out.get("vulnerabilities") == []
+194:        assert "Found 0 vulnerabilities" in out["content"][0]["text"]
+195:
+196:
+197:class TestEnableAiSurfaces:
+198:    def test_cli_exposes_no_ai_and_passes_enable_ai_false(self):
+199:        parser = create_parser()
+200:        args = parser.parse_args(["analyze", "sample.exe", "--no-ai"])
+201:        assert args.no_ai is True
+202:
+203:        with patch("reveng.cli.REVENGAnalyzer") as analyzer_cls:
+204:            analyzer_cls.return_value.binary_path = "missing-does-not-exist.exe"
+205:            analyzer_cls.return_value.analysis_folder = Path(".")
+206:            from reveng.cli import handle_analyze_command
+207:
+208:            handle_analyze_command(args)
+209:            assert analyzer_cls.call_args.kwargs.get("enable_ai") is False
+210:
+211:    def test_cli_default_enable_ai_true(self):
+212:        parser = create_parser()
+213:        args = parser.parse_args(["analyze", "sample.exe"])
+214:        assert getattr(args, "no_ai", False) is False
+215:
+216:        with patch("reveng.cli.REVENGAnalyzer") as analyzer_cls:
+217:            analyzer_cls.return_value.binary_path = "missing-does-not-exist.exe"
+218:            analyzer_cls.return_value.analysis_folder = Path(".")
+219:            from reveng.cli import handle_analyze_command
+220:
+221:            handle_analyze_command(args)
+222:            assert analyzer_cls.call_args.kwargs.get("enable_ai") is True
+223:
+224:    def test_core_mcp_schema_exposes_enable_ai(self):
+225:        server = _core_server()
+226:        schema = server.tools["analyze_binary"].to_dict()["inputSchema"]
+227:        assert "enable_ai" in schema["properties"]
+228:
+229:
+230:class TestEnableAiMcpConstruct:
+231:    def test_enable_ai_false_kwarg(self, tmp_path):
+232:        server = _core_server()
+233:        binary = tmp_path / "x.bin"
+234:        binary.write_bytes(b"MZ")
+235:        constructed = {}
+236:
+237:        class FakeAnalyzer:
+238:            def __init__(self, *a, **k):
+239:                constructed.update(k)
+240:
+241:            def analyze_binary(self):
+242:                return {}
+243:
+244:        async def _run():
+245:            with patch("reveng.analysis.analyzer.REVENGAnalyzer", FakeAnalyzer):
+246:                return await server.analyze_binary({"path": str(binary), "enable_ai": False})
+247:
+248:        asyncio.run(_run())
+249:        assert constructed.get("enable_ai") is False
+250:
+251:
+252:class TestNativeQuarantinePin:
+253:    def test_default_framework_excludes_native(self):
+254:        # Regression pin: current product path must not register native.
+255:        fw = create_default_framework()
+256:        assert "native" not in fw.adapters
+257:
+258:    def test_mcp_language_enum_excludes_native(self):
+259:        server = _core_server()
+260:        props = server.tools["reverse_engineer_app"].input_schema["properties"]
+261:        enum = props["language"]["enum"]
+262:        assert "native" not in enum
+263:
+264:
+265:class TestJavaAiCloudUnsupported:
+266:    def test_openai_raises_at_construction(self):
+267:        with pytest.raises(NotImplementedError, match="OpenAI"):
+268:            JavaAIAnalyzer(ai_provider="openai")
+269:
+270:    def test_anthropic_raises_at_construction(self):
+271:        with pytest.raises(NotImplementedError, match="Anthropic"):
+272:            JavaAIAnalyzer(ai_provider="anthropic")
+273:
+274:    def test_ollama_construction_does_not_raise_ni(self):
+275:        # May set ai_available False if ollama config absent — must not raise NI
+276:        analyzer = JavaAIAnalyzer(ai_provider="ollama")
+277:        assert analyzer.ai_provider == "ollama"
+278:
+279:
+280:class TestHealthMonitorFailClosed:
+281:    def test_real_package_imports_healthy(self):
+282:        checker = CoreREVENGHealthChecker()
+283:        health = checker.check_health()
+284:        module_metrics = [m for m in health.metrics if m.name.startswith("module_")]
+285:        assert module_metrics, "positive control: module metrics exist"
+286:        unhealthy = [m for m in module_metrics if m.status == "critical"]
+287:        assert unhealthy == [], f"unexpected critical modules: {unhealthy}"
+288:
+289:    def test_missing_module_fail_closed(self):
+290:        checker = CoreREVENGHealthChecker()
+291:        real_import = __import__
+292:
+293:        def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+294:            if isinstance(name, str) and name.startswith("reveng."):
+295:                raise ImportError("boom")
+296:            return real_import(name, globals, locals, fromlist, level)
+297:
+298:        with patch("builtins.__import__", side_effect=fake_import):
+299:            health = checker.check_health()
+300:        assert health.status == "critical"
+301:        assert any(m.status == "critical" for m in health.metrics)
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git diff -- src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py src/reveng/agent_sdk/mcp/servers/reveng_server.py src/reveng/cli/__init__.py src/reveng/app_reverse_engineering/adapters/native.py src/reveng/tools/utils/java_ai_analyzer.py src/reveng/tools/enterprise/enhanced_health_monitor.py docs/architecture/reveng-system-paper.md docs/changelogs/v4.0.md docs/changelogs/v5.0.md docs/changelogs/v6.0.md' in C:\dev\projects\reveng-main
+ succeeded in 1400ms:
+diff --git a/docs/architecture/reveng-system-paper.md b/docs/architecture/reveng-system-paper.md
+index 8f972e00..13f86114 100644
+--- a/docs/architecture/reveng-system-paper.md
++++ b/docs/architecture/reveng-system-paper.md
+@@ -1,3 +1,5 @@
++> **Historical document — not a support claim.** Product maturity is beta/preview; see `docs/support/support-matrix.md` and `docs/support_matrix.json`. Invented success rates in this file are **not** validated GA evidence.
++
+ # REVENG: Toward an AI-Assisted Reverse-Engineering and Binary Reconstruction Platform
+ 
+ ## Abstract
+@@ -19,8 +21,8 @@ This paper focuses on the present repository state and answers two practical que
+ 
+ This paper is based on direct inspection of the repository, especially the following files:
+ 
+-- `reveng.py`
+-- `src/reveng/analyzer.py`
++- `python -m reveng` / `src/reveng/cli/reveng.py`
++- `src/reveng/analysis/analyzer.py`
+ - `src/reveng/api.py`
+ - `src/reveng/ai_api.py`
+ - `src/reveng/cli/reveng.py`
+@@ -45,7 +47,7 @@ At a product level, REVENG is designed to do three things:
+ 2. reconstruct higher-level understanding and, in some cases, source-like outputs
+ 3. expose those capabilities to both humans and AI agents
+ 
+-The main entry wrapper in `reveng.py` delegates to the production CLI in `src/reveng/cli/`. The repository documentation and package metadata describe support for PE, ELF, Mach-O, JAR, and .NET analysis, plus JavaScript deobfuscation and malware-oriented workflows. The packaging metadata also shows explicit optional dependencies for AI, web, Java, and Ghidra integration in `pyproject.toml`.
++The main entry wrapper in `python -m reveng` / `src/reveng/cli/reveng.py` delegates to the production CLI in `src/reveng/cli/`. The repository documentation and package metadata describe support for PE, ELF, Mach-O, JAR, and .NET analysis, plus JavaScript deobfuscation and malware-oriented workflows. The packaging metadata also shows explicit optional dependencies for AI, web, Java, and Ghidra integration in `pyproject.toml`.
+ 
+ ### 3.2 Public integration surfaces
+ 
+@@ -62,7 +64,7 @@ This is a good architectural pattern. It separates the orchestration core from h
+ 
+ ### 4.1 Core orchestrator
+ 
+-The central class is `REVENGAnalyzer` in `src/reveng/analyzer.py`. Its responsibilities include:
++The central class is `REVENGAnalyzer` in `src/reveng/analysis/analyzer.py`. Its responsibilities include:
+ 
+ - locating and validating the target binary
+ - creating an `analysis_<binary-name>` output directory
+diff --git a/docs/changelogs/v4.0.md b/docs/changelogs/v4.0.md
+index c2693965..d4a0eba4 100644
+--- a/docs/changelogs/v4.0.md
++++ b/docs/changelogs/v4.0.md
+@@ -1,3 +1,5 @@
++> **Historical document — not a support claim.** Product maturity is beta/preview; see `docs/support/support-matrix.md` and `docs/support_matrix.json`. Invented success rates in this file are **not** validated GA evidence.
++
+ # REVENG v4.0.0 - Revolutionary Release
+ 
+ ## 🚀 Major Release: World-Class Reverse Engineering Platform
+diff --git a/docs/changelogs/v5.0.md b/docs/changelogs/v5.0.md
+index 126220d1..062b1d43 100644
+--- a/docs/changelogs/v5.0.md
++++ b/docs/changelogs/v5.0.md
+@@ -1,3 +1,5 @@
++> **Historical document — not a support claim.** Product maturity is beta/preview; see `docs/support/support-matrix.md` and `docs/support_matrix.json`. Invented success rates in this file are **not** validated GA evidence.
++
+ # REVENG v5.0 - Enterprise Release
+ 
+ **Release Date:** 2025-01-07
+diff --git a/docs/changelogs/v6.0.md b/docs/changelogs/v6.0.md
+index 10461d8f..7d0da7d9 100644
+--- a/docs/changelogs/v6.0.md
++++ b/docs/changelogs/v6.0.md
+@@ -1,3 +1,5 @@
++> **Historical document — not a support claim.** Product maturity is beta/preview; see `docs/support/support-matrix.md` and `docs/support_matrix.json`. Invented success rates in this file are **not** validated GA evidence.
++
+ # REVENG v6.0 - World-Class JavaScript Deobfuscation
+ 
+ **Implementation Date:** 2025-01-07
+diff --git a/src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py b/src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py
+index f119225a..ddee3cdc 100644
+--- a/src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py
++++ b/src/reveng/agent_sdk/mcp/servers/reveng_enterprise_server.py
+@@ -2,19 +2,17 @@
+ REVENG Enterprise MCP Server
+ ============================
+ 
+-Production-ready MCP server exposing comprehensive REVENG capabilities to AI agents.
++Preview MCP server exposing REVENG capabilities to AI agents.
+ 
+-This server provides world-class reverse engineering tools via the Model Context Protocol,
+-enabling AI agents to perform sophisticated binary analysis, vulnerability detection,
+-exploit generation, and JavaScript deobfuscation.
++Maturity follows docs/support_matrix.json — exploit generation is experimental;
++native Ghidra paths are limited. Do not treat this surface as GA.
+ 
+ Features:
+-- 15+ specialized reverse engineering tools
++- Specialized reverse engineering tools (capability-graded)
+ - Resource providers for analysis results
+ - Prompt templates for common workflows
+-- Enterprise security (rate limiting, audit logging)
+-- Comprehensive error handling
+-- Production-grade monitoring and metrics
++- Enterprise controls (rate limiting, audit logging) when configured
++- Explicit unsupported/could_not_measure responses for unwired knobs
+ 
+ Example:
+     ```python
+@@ -620,7 +618,10 @@ class REVENGEnterpriseServer(MCPServer):
+         self.register_tool(
+             MCPTool(
+                 name="find_vulnerabilities",
+-                description="Find vulnerabilities using symbolic execution and AI analysis (90%+ accuracy)",
++                description=(
++                    "Find vulnerabilities via symbolic execution when enabled "
++                    "(experimental depth; AI-typed filters unsupported in this path)"
++                ),
+                 input_schema={
+                     "type": "object",
+                     "properties": {
+@@ -745,7 +746,7 @@ class REVENGEnterpriseServer(MCPServer):
+                         "file_path": {"type": "string", "description": "Or path to .js file"},
+                         "use_ml_renaming": {
+                             "type": "boolean",
+-                            "description": "Use ML for intelligent variable renaming (60-80% accuracy)",
++                            "description": "Use ML for intelligent variable renaming when available",
+                         },
+                         "use_llm_analysis": {
+                             "type": "boolean",
+@@ -1935,59 +1936,96 @@ class REVENGEnterpriseServer(MCPServer):
+     async def find_vulnerabilities(self, args: Dict[str, Any]) -> Dict[str, Any]:
+         """Find vulnerabilities in binary"""
+         try:
+-            from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
+-
+             path = self._require_existing_file(args, "path")
+             use_symbolic = args.get("use_symbolic_execution", True)
++            vulnerability_types = args.get("vulnerability_types")
++            use_ai_analysis = args.get("use_ai_analysis")
+ 
+-            if use_symbolic:
+-                engine = SymbolicExecutionEngine(path)
+-                loop = asyncio.get_running_loop()
+-                vulnerabilities = await loop.run_in_executor(None, engine.find_vulnerabilities)
+-
+-                text = f"Vulnerability Analysis: {path}\n"
+-                text += "=" * 70 + "\n\n"
+-                text += f"Found {len(vulnerabilities)} vulnerabilities\n\n"
++            unsupported_knobs: List[str] = []
++            if vulnerability_types:
++                unsupported_knobs.append("vulnerability_types")
++            if use_ai_analysis is True:
++                unsupported_knobs.append("use_ai_analysis")
+ 
+-                for vuln in vulnerabilities[:10]:
+-                    text += f"• {vuln.type}: {vuln.description}\n"
+-                    text += f"  Location: {vuln.address}\n"
+-                    text += f"  Severity: {vuln.severity}\n\n"
++            if unsupported_knobs:
++                knobs = ", ".join(unsupported_knobs)
++                return build_mcp_tool_response(
++                    tool_name="find_vulnerabilities",
++                    text=(
++                        f"Requested knobs unsupported in this MCP path: {knobs}. "
++                        "Omit them or use symbolic-only mode without AI/type filters."
++                    ),
++                    payload={
++                        "vulnerabilities": [],
++                        "supported": False,
++                        "unsupported_knobs": unsupported_knobs,
++                        "reason": "find_vulnerabilities_knobs_unsupported",
++                    },
++                    status="unsupported",
++                    error="find_vulnerabilities_knobs_unsupported",
++                )
+ 
+-                serialized = [
+-                    self._serialize_vulnerability(vulnerability)
+-                    for vulnerability in vulnerabilities
+-                ]
++            if not use_symbolic:
+                 return build_mcp_tool_response(
+                     tool_name="find_vulnerabilities",
+-                    text=text,
+-                    payload={"vulnerabilities": serialized},
+-                    provenance={
+-                        "inputs": [
+-                            make_evidence_item(
+-                                "binary_input",
+-                                path=path,
+-                                trace_id=f"enterprise:mcp:vulns:{Path(path).name}",
+-                                evidence_kind="input_binary",
+-                                confidence=1.0,
+-                                source_result_type="mcp_tool_result",
+-                            )
+-                        ],
+-                        "artifacts": [],
+-                        "stages": [
+-                            "mcp_tool_execution",
+-                            "symbolic_vulnerability_analysis",
+-                            "result_contract_serialization",
+-                        ],
+-                        "references": [],
+-                        "tools": ["find_vulnerabilities", "symbolic_execution_engine"],
++                    text=(
++                        "Vulnerability scan not measured: use_symbolic_execution=false "
++                        "and no alternate analyzer ran."
++                    ),
++                    payload={
++                        "vulnerabilities": [],
++                        "measurement": "could_not_measure",
++                        "reason": "symbolic_execution_disabled",
+                     },
++                    status="could_not_measure",
++                    error="symbolic_execution_disabled",
+                 )
+ 
++            from reveng.security.symbolic_execution_engine import SymbolicExecutionEngine
++
++            engine = SymbolicExecutionEngine(path)
++            loop = asyncio.get_running_loop()
++            vulnerabilities = await loop.run_in_executor(None, engine.find_vulnerabilities)
++
++            text = f"Vulnerability Analysis: {path}\n"
++            text += "=" * 70 + "\n\n"
++            text += f"Found {len(vulnerabilities)} vulnerabilities\n\n"
++
++            for vuln in vulnerabilities[:10]:
++                text += f"• {vuln.type}: {vuln.description}\n"
++                text += f"  Location: {vuln.address}\n"
++                text += f"  Severity: {vuln.severity}\n\n"
++
++            serialized = [
++                self._serialize_vulnerability(vulnerability) for vulnerability in vulnerabilities
++            ]
+             return build_mcp_tool_response(
+                 tool_name="find_vulnerabilities",
+-                text="No vulnerabilities found",
+-                payload={"vulnerabilities": []},
++                text=text,
++                payload={
++                    "vulnerabilities": serialized,
++                    "measurement": "measured",
++                },
++                provenance={
++                    "inputs": [
++                        make_evidence_item(
++                            "binary_input",
++                            path=path,
++                            trace_id=f"enterprise:mcp:vulns:{Path(path).name}",
++                            evidence_kind="input_binary",
++                            confidence=1.0,
++                            source_result_type="mcp_tool_result",
++                        )
++                    ],
++                    "artifacts": [],
++                    "stages": [
++                        "mcp_tool_execution",
++                        "symbolic_vulnerability_analysis",
++                        "result_contract_serialization",
++                    ],
++                    "references": [],
++                    "tools": ["find_vulnerabilities", "symbolic_execution_engine"],
++                },
+             )
+ 
+         except Exception as e:
+@@ -2256,6 +2294,7 @@ class REVENGEnterpriseServer(MCPServer):
+             use_ml = args.get("use_ml_renaming", True)
+             use_llm = args.get("use_llm_analysis", False)
+             detect_malware = args.get("detect_malware", True)
++            unbundle_webpack = bool(args.get("unbundle_webpack", False))
+ 
+             # Read from file if provided
+             if file_path and not code:
+@@ -2292,10 +2331,19 @@ class REVENGEnterpriseServer(MCPServer):
+             text += "-" * 70 + "\n"
+             text += result.deobfuscated_code[:2000]
+ 
+-            response = {
++            response: Dict[str, Any] = {
+                 "deobfuscated_code": result.deobfuscated_code,
+                 "confidence": result.confidence,
++                "unbundle_webpack_applied": False,
+             }
++            warnings: List[str] = []
++            if unbundle_webpack:
++                warnings.append("unbundle_webpack_unsupported")
++                response["unsupported_knobs"] = ["unbundle_webpack"]
++                text += (
++                    "\n\nNote: unbundle_webpack requested but unsupported in this MCP path "
++                    "(not applied).\n"
++                )
+ 
+             # Malware detection
+             if detect_malware:
+@@ -2310,6 +2358,9 @@ class REVENGEnterpriseServer(MCPServer):
+                 if malware_result.is_malicious:
+                     text += f"\n\n⚠️  MALWARE DETECTED (score: {malware_result.threat_score}/100)\n"
+ 
++            if warnings:
++                response["warnings"] = warnings
++
+             return build_mcp_tool_response(
+                 tool_name="deobfuscate_javascript",
+                 text=text,
+diff --git a/src/reveng/agent_sdk/mcp/servers/reveng_server.py b/src/reveng/agent_sdk/mcp/servers/reveng_server.py
+index 6321eb52..2afb13d9 100644
+--- a/src/reveng/agent_sdk/mcp/servers/reveng_server.py
++++ b/src/reveng/agent_sdk/mcp/servers/reveng_server.py
+@@ -54,6 +54,13 @@ class REVENGMCPServer(MCPServer):
+                     "properties": {
+                         "path": {"type": "string", "description": "Path to binary file"},
+                         "quick_mode": {"type": "boolean", "description": "Use quick analysis mode"},
++                        "enable_ai": {
++                            "type": "boolean",
++                            "description": (
++                                "When false, skip AI steps / Ollama preflight on REVENGAnalyzer "
++                                "(default true)"
++                            ),
++                        },
+                     },
+                     "required": ["path"],
+                 },
+@@ -157,8 +164,15 @@ class REVENGMCPServer(MCPServer):
+ 
+             path = args["path"]
+             quick_mode = args.get("quick_mode", False)
+-
+-            analyzer = REVENGAnalyzer(binary_path=path, check_ollama=not quick_mode)
++            enable_ai = args.get("enable_ai", True)
++            if enable_ai is None:
++                enable_ai = True
++
++            analyzer = REVENGAnalyzer(
++                binary_path=path,
++                check_ollama=not quick_mode,
++                enable_ai=bool(enable_ai),
++            )
+ 
+             # Run analysis in executor to avoid blocking
+             loop = asyncio.get_event_loop()
+diff --git a/src/reveng/app_reverse_engineering/adapters/native.py b/src/reveng/app_reverse_engineering/adapters/native.py
+index fdbea2ee..08f2d843 100644
+--- a/src/reveng/app_reverse_engineering/adapters/native.py
++++ b/src/reveng/app_reverse_engineering/adapters/native.py
+@@ -1,4 +1,10 @@
+-"""Native adapter for the shared app reverse-engineering framework."""
++"""Native adapter for the shared app reverse-engineering framework.
++
++Honesty: ``NativeAppAdapter`` is **not** registered in
++``create_default_framework()`` and is **not** a supported app-RE CUJ.
++Do not document or market it as GA; keep ``required: false`` / fixture-only
++until hermetic native analyze is measured and Sol-authorized.
++"""
+ 
+ from __future__ import annotations
+ 
+diff --git a/src/reveng/cli/__init__.py b/src/reveng/cli/__init__.py
+index 61f91d49..ccb5e8aa 100644
+--- a/src/reveng/cli/__init__.py
++++ b/src/reveng/cli/__init__.py
+@@ -84,6 +84,11 @@ def create_parser() -> argparse.ArgumentParser:
+         default=0,
+         help="Number of retries for the Ghidra analysis stage (default: 0)",
+     )
++    analyze_parser.add_argument(
++        "--no-ai",
++        action="store_true",
++        help="Disable AI-assisted analysis steps (enable_ai=False on REVENGAnalyzer)",
++    )
+ 
+     # App reverse-engineering command
+     reverse_app_parser = subparsers.add_parser(
+@@ -923,6 +928,7 @@ def handle_analyze_command(args):
+         check_ollama=not args.no_ollama_check,
+         enhanced_features=enhanced_features,
+         analysis_folder=args.output_dir,
++        enable_ai=not bool(getattr(args, "no_ai", False)),
+     )
+ 
+     # Check if binary exists
+diff --git a/src/reveng/tools/enterprise/enhanced_health_monitor.py b/src/reveng/tools/enterprise/enhanced_health_monitor.py
+index c9ded218..374421c9 100644
+--- a/src/reveng/tools/enterprise/enhanced_health_monitor.py
++++ b/src/reveng/tools/enterprise/enhanced_health_monitor.py
+@@ -91,10 +91,10 @@ class CoreREVENGHealthChecker(HealthChecker):
+ 
+         # Check if core modules can be imported
+         core_modules = [
+-            "reveng_analyzer",
+-            "tools.language_detector",
+-            "tools.config_manager",
+-            "tools.ollama_preflight",
++            "reveng.analysis.analyzer",
++            "reveng.tools.languages.language_detector",
++            "reveng.tools.config.config_manager",
++            "reveng.agents.ai.ollama_preflight",
+         ]
+ 
+         for module in core_modules:
+diff --git a/src/reveng/tools/utils/java_ai_analyzer.py b/src/reveng/tools/utils/java_ai_analyzer.py
+index b9c29d2f..09ffd839 100644
+--- a/src/reveng/tools/utils/java_ai_analyzer.py
++++ b/src/reveng/tools/utils/java_ai_analyzer.py
+@@ -71,6 +71,9 @@ class JavaAIAnalyzer:
+             else:
+                 logger.warning(f"Unknown AI provider: {self.ai_provider}")
+ 
++        except NotImplementedError:
++            self.ai_available = False
++            raise
+         except ImportError as e:
+             logger.warning(f"AI client not available: {e}")
+             self.ai_available = False
+@@ -106,14 +109,30 @@ class JavaAIAnalyzer:
+             logger.warning(f"Ollama initialization failed: {e}")
+ 
+     def _init_openai(self):
+-        """Initialize OpenAI client"""
+-        # Placeholder for OpenAI implementation
+-        logger.warning("OpenAI support not yet implemented")
++        """Initialize OpenAI client — unsupported (preflight)."""
++        self.ai_available = False
++        raise NotImplementedError(
++            "OpenAI provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
++        )
+ 
+     def _init_anthropic(self):
+-        """Initialize Anthropic client"""
+-        # Placeholder for Anthropic implementation
+-        logger.warning("Anthropic support not yet implemented")
++        """Initialize Anthropic client — unsupported (preflight)."""
++        self.ai_available = False
++        raise NotImplementedError(
++            "Anthropic provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
++        )
++
++    def _query_openai(self, prompt: str) -> str:
++        """Query OpenAI — unsupported."""
++        raise NotImplementedError(
++            "OpenAI provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
++        )
++
++    def _query_anthropic(self, prompt: str) -> str:
++        """Query Anthropic — unsupported."""
++        raise NotImplementedError(
++            "Anthropic provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
++        )
+ 
+     def analyze_java_class(
+         self, class_name: str, java_source: str
+@@ -228,14 +247,6 @@ Return ONLY valid JSON, no additional text.
+         result = response.json()
+         return result.get("response", "")
+ 
+-    def _query_openai(self, prompt: str) -> str:
+-        """Query OpenAI (placeholder)"""
+-        raise NotImplementedError("OpenAI support not yet implemented")
+-
+-    def _query_anthropic(self, prompt: str) -> str:
+-        """Query Anthropic (placeholder)"""
+-        raise NotImplementedError("Anthropic support not yet implemented")
+-
+     def _parse_ai_response(self, class_name: str, response: str) -> JavaAIAnalysisResult:
+         """Parse AI response into structured result"""
+         try:
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "rg -n -C 3 \"enable_ai|check_ollama|self\\.enable_ai\" src/reveng/analysis/analyzer.py; rg -n \"unbundle_webpack|could_not_measure|use_ai_analysis|vulnerability_types|enable_ai|--no-ai|NativeAppAdapter|fixture-only|OpenAI|Anthropic|world-class-wiring|opus-world-class\" docs/reference/mcp-tools.md docs/reference/cli.md docs/explanation/ai-providers.md docs/ops/README.md docs/support/support-matrix.md docs/support_matrix.json" in C:\dev\projects\reveng-main
+ succeeded in 1626ms:
+112-    def __init__(
+113-        self,
+114-        binary_path: str = None,
+115:        check_ollama: bool = True,
+116-        enhanced_features: Optional[EnhancedAnalysisFeatures] = None,
+117-        progress_callback: Optional[Callable[[str, Dict[str, Any]], None]] = None,
+118-        analysis_folder: Optional[str] = None,
+119:        enable_ai: bool = True,
+120-    ):
+121-        """
+122-        Initialize the REVENG analyzer
+123-
+124-        Args:
+125-            binary_path: Path to binary to analyze
+126:            check_ollama: Whether to run Ollama preflight check (default: True)
+127-            enhanced_features: Enhanced analysis feature configuration
+128-            progress_callback: Optional callback for structured progress reporting.
+129-                             Signature: callback(event_type: str, data: Dict[str, Any])
+130-            analysis_folder: Custom output directory (default: analysis_{binary_name})
+131:            enable_ai: When False, skip AI steps 1/3, Ollama preflight, and enhanced AI modules
+132-        """
+133-        self.binary_path = binary_path or self._find_binary()
+134-        # Convert to absolute path for server compatibility
+--
+145-        self.file_type = None
+146-        self.audit_logger = None
+147-        self.progress_callback = progress_callback
+148:        self.enable_ai = bool(enable_ai)
+149-
+150-        # Enhanced analysis configuration
+151-        self.enhanced_features = enhanced_features or EnhancedAnalysisFeatures()
+152:        if not self.enable_ai:
+153-            self.enhanced_features.enable_enhanced_analysis = False
+154-            self.enhanced_features.enable_corporate_exposure = False
+155-            self.enhanced_features.enable_vulnerability_discovery = False
+--
+205-        # Detect file type using language detector
+206-        self._detect_file_type()
+207-
+208:        # Run Ollama preflight check if requested (suppressed when enable_ai=False)
+209:        effective_check_ollama = bool(self.enable_ai) and bool(check_ollama)
+210:        if effective_check_ollama:
+211:            self._check_ollama_availability()
+212-
+213-        # Validate critical tool availability at startup
+214-        self._validate_environment()
+--
+476-            logger.warning(f"Error detecting file type: {e}")
+477-            self.file_type = None
+478-
+479:    def _check_ollama_availability(self):
+480-        """Check if Ollama is available and properly configured"""
+481-        try:
+482-            from reveng.agents.ai.ollama_preflight import OllamaPreflightChecker
+--
+486-            config = get_config()
+487-            self.ai_config = config.get_ai_config()
+488-
+489:            if not self.ai_config.enable_ai:
+490-                logger.info("AI analysis disabled in configuration")
+491-                self.ollama_available = False
+492-                return
+--
+628-                {"step": 1, "name": "AI-Powered Binary Analysis", "icon": "CHART"},
+629-            )
+630-            logger.info("[CHART] Step 1: AI-Powered Binary Analysis...")
+631:            if self.enable_ai:
+632-                self._step1_ai_analysis()
+633-            else:
+634:                self.results["step1"] = {"status": "skipped", "reason": "enable_ai_false"}
+635-
+636-            # Step 2: Complete disassembly
+637-            self._emit_progress(
+--
+651-                },
+652-            )
+653-            logger.info("[BRAIN] Step 3: AI Inspection with Extra Thinking...")
+654:            if self.enable_ai:
+655-                self._step3_ai_inspection()
+656-            else:
+657:                self.results["step3"] = {"status": "skipped", "reason": "enable_ai_false"}
+658-
+659-            # Step 4: Specification library creation
+660-            self._emit_progress(
+docs/explanation/ai-providers.md:25:| `anthropic` | `anthropic_analyzer.py` — `AnthropicAnalyzer` | Cloud API |
+docs/explanation/ai-providers.md:26:| `openai` | `openai_analyzer.py` — `OpenAIAnalyzer` | Cloud API |
+docs/explanation/ai-providers.md:37:## `enable_ai` gates
+docs/explanation/ai-providers.md:43:- Constructor flag `enable_ai: bool = True`
+docs/explanation/ai-providers.md:45:  - Steps 1 and 3 are skipped (`reason: enable_ai_false`)
+docs/explanation/ai-providers.md:47:  - Ollama preflight is suppressed (`effective_check_ollama = enable_ai and check_ollama`)
+docs/explanation/ai-providers.md:49:MCP enterprise path threads the same knob (`enable_ai` tool arg → `REVENGAnalyzer(..., enable_ai=...)`) — see `reveng_enterprise_server.py` and `tests/unit/test_mcp_enterprise_knobs.py`. Silently ignoring `enable_ai` is a contract bug.
+docs/explanation/ai-providers.md:59:When Ollama **is** desired: run a local daemon, keep `REVENG_AI_PROVIDER=ollama` (or omit), and leave `enable_ai=True`.
+docs/ops/README.md:23:| World-class wiring audit | [`../architecture/opus-world-class-audit-2026-08-09.md`](../architecture/opus-world-class-audit-2026-08-09.md) |
+docs/ops/README.md:24:| Wiring honesty plan | [`../superpowers/plans/2026-08-09-world-class-wiring-honesty.md`](../superpowers/plans/2026-08-09-world-class-wiring-honesty.md) |
+docs/reference/mcp-tools.md:71:- `unbundle_webpack=true` on `deobfuscate_javascript` is **unsupported** (warning in payload; not applied).
+docs/reference/mcp-tools.md:72:- `find_vulnerabilities`: `vulnerability_types` / `use_ai_analysis` are **unsupported**; `use_symbolic_execution=false` returns `could_not_measure` — agents must not treat that as a clean “no vulns” scan.
+docs/reference/mcp-tools.md:73:- Core `analyze_binary` accepts `enable_ai` (default true).
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "rg -n \"NativeAppAdapter|native adapter|fixture.only|not.*CUJ|unwired\" docs src/reveng/app_reverse_engineering/adapters/__init__.py src/reveng/app_reverse_engineering/framework.py; rg -n \"95%|90%|60-80%\" docs/changelogs/v4.0.md docs/changelogs/v5.0.md docs/changelogs/v6.0.md docs/architecture/reveng-system-paper.md; rg -n \"reveng\\.py|src/reveng/analyzer\\.py|src/reveng/api\\.py|src/reveng/ai_api\\.py\" docs/architecture/reveng-system-paper.md" in C:\dev\projects\reveng-main
+ succeeded in 1247ms:
+docs\architecture\ceo-update-2026-08-06-wave2.md:14:2. **Honest labels** — those toys are registered as `fixture_only` / `required: false`. Building them ≠ analyzing them.
+docs\architecture\bun-real-sample-matrix.md:7:The Bun pipeline now has strong fixture coverage and contract coverage, but fixture-only confidence is not enough for product claims.
+docs\explanation\analysis-pipeline.md:74:- Native fixtures under `test_samples/native/` are often **fixture_only** until analyze evidence is measured green ([maturity badges](../support/maturity-badges.md)).
+docs\explanation\ghidra-boundary.md:41:- `NativeAppAdapter` in `adapters/native.py` is **not** registered in `create_default_framework()` — do not treat it as the supported app RE surface.
+docs\explanation\ghidra-boundary.md:42:- `test_samples/native/` fixtures often prove CLI byte-stability only (`fixture_only`) — not analyze GA ([maturity badges](../support/maturity-badges.md)).
+docs\explanation\architecture-overview.md:74:- `fixture_only` samples and process `completed` are not native GA ([honesty rules](../support/honesty-rules.md)).
+docs\how-to\engineer\add-adapter.md:27:`NativeAppAdapter` (`adapters/native.py`) is a cautionary example: the class can exist **without** being product-supported if it is never registered ([App RE dispatch](../../explanation/app-re-dispatch.md)).
+docs\how-to\engineer\update-support-matrix.md:42:- Do not mark native analyze GA because a fixture exists (`fixture_only`).
+docs\reference\cli.md:83:- Native fixture samples under `test_samples/native/` prove CLI wiring only (**fixture_only**), not native analyze GA.
+docs\README.md:29:| [Maturity badges](support/maturity-badges.md) | What supported / limited / experimental / unsupported / fixture_only mean |
+docs\explanation\app-re-dispatch.md:40:### `NativeAppAdapter` exists but is NOT default-registered
+docs\explanation\app-re-dispatch.md:42:`NativeAppAdapter` lives in `src/reveng/app_reverse_engineering/adapters/native.py` and is documented in `adapters/claude.md`, but **`create_default_framework()` does not import or register it**. Callers that use the default framework will never dispatch to native via this path. Do not document native app-adapter support as GA because the class file exists — match `docs/support_matrix.json` languages for `app_reverse_engineering`.
+docs\explanation\app-re-dispatch.md:44:To experiment with native, construct a framework yourself and `register(NativeAppAdapter())`, then treat it as research until the matrix and corpus say otherwise.
+docs\reference\corpus-and-ga-scripts.md:32:**What not to claim:** process `completed` (returncode 0) ≠ native GA. Check semantic fields (DF-5). `tool_absent` / `input_absent` / timeout → `could_not_measure` — that is **not** “research done.” Fixtures under `test_samples/native/` remain **fixture_only** until analyze is measured green.
+docs\tutorials\analyst\03-reading-outputs.md:63:Badge vocabulary: [Maturity badges](../../support/maturity-badges.md) (`fixture_only`, `limited`, `experimental`, …).
+docs\tutorials\engineer\02-run-unit-and-honesty-gates.md:65:Remember: process `completed` ≠ native GA (**DF-5**). `test_samples/native/` is **fixture_only** until measured green with required evidence — see [Maturity badges](../../support/maturity-badges.md).
+docs\support\maturity-badges.md:14:| **fixture_only** | Sample proves CLI byte-stability only — **not** analyze GA | `test_samples/native/`, DF-5 |
+docs\support\maturity-badges.md:29:4. `fixture_only` and process `completed` are **not** native GA (see [Honesty rules](honesty-rules.md)).
+docs\superpowers\plans\2026-08-07-reveng-phase-04-hexyl-vrl.md:74:| Native GA manifest | `required: false` / `fixture_only` for native fixtures — **no hollow `required: true`** |
+docs\support\support-matrix.md:67:| fixture_only | Native micro-fixtures without hermetic analyze GA |
+docs\how-to\analyst\when-ghidra-is-required.md:27:`NativeAppAdapter` may exist in the codebase for experiments, but the **default app RE registry** is the managed languages — do not market native app RE as the GA path.
+docs\how-to\analyst\when-ghidra-is-required.md:74:| Fixture PE “works” in CLI | `fixture_only` | [Honesty rules](../../support/honesty-rules.md) · native README |
+docs\superpowers\specs\2026-08-09-junior-docs-ecosystem-design.md:29:| fixture_only | Sample proves CLI bytes only, not analyze GA |
+docs\superpowers\plans\2026-08-07-reveng-phase-07-native-depth.md:25:- [ ] `required: true` flip only if analyze ≤120s **without** Ghidra on the fixture set; else stay `required: false` / `fixture_only`.
+docs\architecture\lessons-learned-scope-c-2026-08.md:51:Native micro-CLIs under `test_samples/native/` prove **byte-stable CLI surfaces**, not that REVENG analyzes them. Manifest entries stay `required: false` / `status: fixture_only` with a `status_note` naming the gap; a unit test forbids flipping status to `ga`/`verified`/`supported` without evidence. Measured analyze outcomes live only in `reports/native_analyze_probe/`.
+docs\superpowers\plans\2026-08-07-reveng-wave-c-multi-track.md:9:Add hello_rust micro-CLI (+ optional 5th). Register fixture_only. Families C/Go/Rust. Do NOT flip required:true unless analyze hermetic proven.
+docs\architecture\opus-world-class-audit-2026-08-09.md:14:| W-04 | `NativeAppAdapter` exists but unwired from default framework + MCP language enum | `adapters/native.py`; missing from `adapters/__init__.py` / `create_default_framework()`; MCP enum omits `native` | Dead code looks like a feature | Either register + matrix+tests **or** document fixture_only/unwired and quarantine from docs as CUJ | S (doc) / L (register for real) |
+docs\architecture\opus-world-class-audit-2026-08-09.md:43:- Registering NativeAppAdapter as **supported** without corpus proof
+docs\architecture\opus-world-class-audit-2026-08-09.md:58:5. **W-04** Doc/quarantine NativeAppAdapter as unwired (do **not** claim supported)  
+docs\superpowers\plans\2026-08-09-world-class-wiring-honesty.md:7:**Architecture:** Prefer explicit `unsupported` / `could_not_measure` tool results over silent no-ops; strip brochure % from agent-facing schemas; quarantine unwired adapters in docs; fail-closed health checks.
+docs\superpowers\plans\2026-08-09-world-class-wiring-honesty.md:22:- **Intent:** Honesty + wiring for MCP enterprise silent knobs, AI disable on CLI, native adapter quarantine, java cloud NI, historical doc banners, health monitor fail-closed.
+docs\superpowers\plans\2026-08-09-world-class-wiring-honesty.md:24:- **Out of scope:** Engine research (RALPH-2), registering NativeAppAdapter as supported, LibAFL, exploit GA.
+docs\superpowers\plans\2026-08-09-world-class-wiring-honesty.md:60:### Task 5 — W-04 Quarantine NativeAppAdapter
+docs\superpowers\plans\2026-08-09-world-class-wiring-honesty.md:62:- [ ] Docs + module docstring: unwired / not CUJ
+docs\superpowers\plans\2026-08-06-reveng-scope-c-phase-native-fixtures.md:34:  -> two new entries, required=false, status="fixture_only", evidence_ref -> probe path
+docs\superpowers\plans\2026-08-06-reveng-scope-c-phase-native-fixtures.md:174:  - `test_native_fixture_entries_are_not_required` — the two new ids (`native_hello_c`, `native_hello_go`) exist, `required is False`, `status == "fixture_only"`.
+docs\superpowers\plans\2026-08-06-reveng-scope-c-phase-native-fixtures.md:176:  - `test_fixture_entry_must_not_claim_ga` — assert no new entry's `status` is in `{"ga", "verified", "supported"}`. This is the machine-checked form of the honesty rule; a future edit flipping `fixture_only` → `ga` without evidence goes red here.
+docs\superpowers\plans\2026-08-06-reveng-scope-c-phase-native-fixtures.md:192:    "status": "fixture_only",
+docs\superpowers\plans\2026-08-06-reveng-scope-c-phase-native-fixtures.md:208:- [ ] Commit: `git add .reveng/source_binary_benchmarks.ga.json tests/unit/test_source_binary_benchmarks_manifest.py && git commit -m "chore(benchmarks): register native fixtures as required=false with fixture_only status"`
+docs\architecture\sol-phase-05-thin-auth-packet.md:15:- Native fixtures stay `required: false` / fixture_only until measured (DF-5).
+docs\architecture\sol-phase-05-thin-auth-verdict.md:29:- Native fixtures stay `required: false` / fixture_only until measured (DF-5).
+docs\architecture\thinktank-tg-audit-fixups-plan-r4.md:178:- Do **not** add `**kwargs` to Python/JVM/dotnet/native adapters.
+docs/changelogs/v4.0.md:15:| Decompilation Success | 84.6% | 95%+ | +12% |
+docs/changelogs/v4.0.md:16:| Recompilation Success | 70% | 95%+ | **+36%** |
+docs/changelogs/v4.0.md:19:| Type Accuracy | 60% | 90%+ | +50% |
+docs/changelogs/v4.0.md:20:| Vulnerability Detection | 90% | 95%+ | +6% |
+docs/changelogs/v4.0.md:55:**Impact:** 90%+ first-attempt success rate (up from 70%)
+docs/changelogs/v4.0.md:82:**Impact:** 95%+ recompilation accuracy (up from 70%)
+docs/changelogs/v4.0.md:100:# 95% chance of successful recompilation!
+docs/changelogs/v4.0.md:166:**Impact:** 90%+ accuracy in type inference
+docs/changelogs/v4.0.md:327:| **Type Reconstruction** | ✅ ML-based (90%) | ⚠️ Basic | ⚠️ Basic | ✅ Good | N/A |
+docs/changelogs/v5.0.md:16:**Lines of Code:** 2,000+ | **Impact:** 95%+ recompilation accuracy guarantee
+docs/changelogs/v5.0.md:308:- **Accuracy:** 95%+ divergence detection
+docs/changelogs/v5.0.md:322:- **Accuracy:** 60-80% for common obfuscation
+docs/changelogs/v6.0.md:19:- **95%+ success rate** on complex obfuscation
+docs/changelogs/v6.0.md:59:- ✅ 60-80% accuracy
+docs/changelogs/v6.0.md:158:- 90%+ hit rate on repeated files
+docs/changelogs/v6.0.md:346:| Webpack | 90-95% | 95-98% |
+docs/changelogs/v6.0.md:347:| obfuscator.io | 70-85% | 85-95% |
+docs/changelogs/v6.0.md:348:| CFG flattened | 60-80% | 75-90% |
+docs/changelogs/v6.0.md:371:| Hit rate (typical) | 70-90% |
+docs/changelogs/v6.0.md:570:- ✅ 90%+ automation of JS reverse engineering
+docs/changelogs/v6.0.md:584:- ✅ **Most accurate** - 95%+ success rate with LLM
+24:- `python -m reveng` / `src/reveng/cli/reveng.py`
+26:- `src/reveng/api.py`
+27:- `src/reveng/ai_api.py`
+28:- `src/reveng/cli/reveng.py`
+50:The main entry wrapper in `python -m reveng` / `src/reveng/cli/reveng.py` delegates to the production CLI in `src/reveng/cli/`. The repository documentation and package metadata describe support for PE, ELF, Mach-O, JAR, and .NET analysis, plus JavaScript deobfuscation and malware-oriented workflows. The packaging metadata also shows explicit optional dependencies for AI, web, Java, and Ghidra integration in `pyproject.toml`.
+80:`REVENGAPI` in `src/reveng/api.py` provides a script-friendly facade over the analyzer and ML integration. It standardizes outputs into dictionaries containing binary metadata, classification results, analysis summaries, warnings, errors, and confidence values.
+82:`REVENG_AI_API` in `src/reveng/ai_api.py` pushes further toward agent-centric use. It wraps instant triage and natural-language interaction into typed dataclasses such as `TriageResult`, `CryptoDetails`, and `NetworkDetails`. This is one of the cleaner parts of the design because it acknowledges that AI consumers benefit from structured, serializable outputs rather than free-form text.
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'rg --files src/reveng | rg "(''^|/|'"\\\\)(api\\.py|ai_api\\.py|cli/reveng\\.py)"'$"; rg -n -C 4 "def check_health|except|HealthStatus|module_" src/reveng/tools/enterprise/enhanced_health_monitor.py; rg -n -C 3 "def __init__|_init_ai_client|ai_provider" src/reveng/tools/utils/java_ai_analyzer.py' in C:\dev\projects\reveng-main
+ succeeded in 1163ms:
+src/reveng\ai_api.py
+src/reveng\api.py
+68-    def __init__(self, component_name: str):
+69-        self.component_name = component_name
+70-        self.start_time = datetime.now()
+71-
+72:    def check_health(self) -> ComponentHealth:
+73-        """Check component health - to be implemented by subclasses"""
+74-        raise NotImplementedError
+75-
+76-    def get_uptime(self) -> float:
+--
+83-
+84-    def __init__(self):
+85-        super().__init__("core_reveng")
+86-
+87:    def check_health(self) -> ComponentHealth:
+88-        """Check core REVENG component health"""
+89-        metrics = []
+90-        error_count = 0
+91-
+--
+101-            try:
+102-                __import__(module)
+103-                metrics.append(
+104-                    HealthMetric(
+105:                        name=f"module_{module.split('.')[-1]}",
+106-                        value="available",
+107-                        status="healthy",
+108-                        timestamp=datetime.now(),
+109-                        message=f"Module {module} is available",
+110-                    )
+111-                )
+112:            except ImportError as e:
+113-                error_count += 1
+114-                metrics.append(
+115-                    HealthMetric(
+116:                        name=f"module_{module.split('.')[-1]}",
+117-                        value="unavailable",
+118-                        status="critical",
+119-                        timestamp=datetime.now(),
+120-                        message=f"Module {module} import failed: {e}",
+--
+176-
+177-    def __init__(self):
+178-        super().__init__("enhanced_modules")
+179-
+180:    def check_health(self) -> ComponentHealth:
+181-        """Check enhanced modules health"""
+182-        metrics = []
+183-        error_count = 0
+184-
+--
+196-            try:
+197-                __import__(module)
+198-                metrics.append(
+199-                    HealthMetric(
+200:                        name=f"module_{module.split('.')[-1]}",
+201-                        value="available",
+202-                        status="healthy",
+203-                        timestamp=datetime.now(),
+204-                        message=f"Enhanced module {module} is available",
+205-                    )
+206-                )
+207:            except ImportError as e:
+208-                error_count += 1
+209-                metrics.append(
+210-                    HealthMetric(
+211:                        name=f"module_{module.split('.')[-1]}",
+212-                        value="unavailable",
+213-                        status="critical",
+214-                        timestamp=datetime.now(),
+215-                        message=f"Enhanced module {module} import failed: {e}",
+--
+228-                    timestamp=datetime.now(),
+229-                    message=f"{UniversalAnalysisResult.__name__} is available",
+230-                )
+231-            )
+232:        except ImportError as e:
+233-            error_count += 1
+234-            metrics.append(
+235-                HealthMetric(
+236-                    name="data_models",
+--
+264-
+265-    def __init__(self):
+266-        super().__init__("ai_service")
+267-
+268:    def check_health(self) -> ComponentHealth:
+269-        """Check AI service health"""
+270-        metrics = []
+271-        error_count = 0
+272-
+--
+321-                        message=f"Ollama unavailable: {results.get('errors', [])}",
+322-                    )
+323-                )
+324-
+325:        except ImportError as e:
+326-            error_count += 1
+327-            metrics.append(
+328-                HealthMetric(
+329-                    name="ollama_service",
+--
+350-                    message=f"AI provider: {ai_config.provider}, model: {ai_config.model}",
+351-                )
+352-            )
+353-
+354:        except Exception as e:
+355-            error_count += 1
+356-            metrics.append(
+357-                HealthMetric(
+358-                    name="ai_configuration",
+--
+386-
+387-    def __init__(self):
+388-        super().__init__("system_resources")
+389-
+390:    def check_health(self) -> ComponentHealth:
+391-        """Check system resources health"""
+392-        metrics = []
+393-        error_count = 0
+394-
+--
+478-                    threshold_critical=float(cpu_count * 2),
+479-                    message=f"Load average: {load_avg[0]:.2f} (1min), {load_avg[1]:.2f} (5min), {load_avg[2]:.2f} (15min)",
+480-                )
+481-            )
+482:        except AttributeError:
+483-            # getloadavg not available on Windows
+484-            pass
+485-
+486-        # Determine overall status
+--
+557-                    # Call alert callbacks
+558-                    for callback in self.alert_callbacks:
+559-                        try:
+560-                            callback(alert_msg, component_health)
+561:                        except Exception as e:
+562-                            logger.error(f"Alert callback failed: {e}")
+563-
+564:            except Exception as e:
+565-                logger.error(f"Health check failed for {name}: {e}")
+566-                components[name] = ComponentHealth(
+567-                    component_name=name,
+568-                    status="unknown",
+--
+632-                        logger.warning(f"Alert: {alert}")
+633-                else:
+634-                    logger.debug("System health: healthy")
+635-
+636:            except Exception as e:
+637-                logger.error(f"Health monitoring error: {e}")
+638-
+639-            # Wait for next check
+640-            time.sleep(self.check_interval)
+--
+712-                json.dump(health_data, f, indent=2, default=str)
+713-
+714-            logger.info(f"Health data exported to {output_path}")
+715-
+716:        except Exception as e:
+717-            logger.error(f"Error exporting health data: {e}")
+718-            raise
+719-
+720-
+--
+763-            # Keep running until interrupted
+764-            while True:
+765-                time.sleep(1)
+766-
+767:        except KeyboardInterrupt:
+768-            logger.info("Shutting down health monitor...")
+769-            monitor.stop_monitoring()
+770-
+771-
+43-    Uses LLMs to understand obfuscated code and suggest improvements
+44-    """
+45-
+46:    def __init__(self, ai_provider: str = "ollama", model: str = "auto"):
+47-        """
+48-        Initialize AI analyzer
+49-
+50-        Args:
+51:            ai_provider: 'ollama', 'openai', or 'anthropic'
+52-            model: Model name or 'auto' for best available
+53-        """
+54:        self.ai_provider = ai_provider
+55-        self.model = model
+56-        self.ai_available = False
+57-        self.ai_client = None
+--
+62-    def _initialize_ai_client(self):
+63-        """Initialize AI client based on provider"""
+64-        try:
+65:            if self.ai_provider == "ollama":
+66-                self._init_ollama()
+67:            elif self.ai_provider == "openai":
+68-                self._init_openai()
+69:            elif self.ai_provider == "anthropic":
+70-                self._init_anthropic()
+71-            else:
+72:                logger.warning(f"Unknown AI provider: {self.ai_provider}")
+73-
+74-        except NotImplementedError:
+75-            self.ai_available = False
+--
+112-        """Initialize OpenAI client — unsupported (preflight)."""
+113-        self.ai_available = False
+114-        raise NotImplementedError(
+115:            "OpenAI provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
+116-        )
+117-
+118-    def _init_anthropic(self):
+119-        """Initialize Anthropic client — unsupported (preflight)."""
+120-        self.ai_available = False
+121-        raise NotImplementedError(
+122:            "Anthropic provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
+123-        )
+124-
+125-    def _query_openai(self, prompt: str) -> str:
+126-        """Query OpenAI — unsupported."""
+127-        raise NotImplementedError(
+128:            "OpenAI provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
+129-        )
+130-
+131-    def _query_anthropic(self, prompt: str) -> str:
+132-        """Query Anthropic — unsupported."""
+133-        raise NotImplementedError(
+134:            "Anthropic provider unsupported in JavaAIAnalyzer; use ai_provider='ollama'"
+135-        )
+136-
+137-    def analyze_java_class(
+--
+210-
+211-    def _query_ai(self, prompt: str) -> str:
+212-        """Query AI with prompt"""
+213:        if self.ai_provider == "ollama":
+214-            return self._query_ollama(prompt)
+215:        elif self.ai_provider == "openai":
+216-            return self._query_openai(prompt)
+217:        elif self.ai_provider == "anthropic":
+218-            return self._query_anthropic(prompt)
+219-        else:
+220:            raise ValueError(f"Unknown AI provider: {self.ai_provider}")
+221-
+222-    def _query_ollama(self, prompt: str) -> str:
+223-        """Query Ollama"""
+--
+323-    def save_results(self, results: List[JavaAIAnalysisResult], output_file: Path):
+324-        """Save AI analysis results to JSON file"""
+325-        output_data = {
+326:            "ai_provider": self.ai_provider,
+327-            "model": self.model,
+328-            "total_classes": len(results),
+329-            "results": [asdict(r) for r in results],
+--
+360-    class_name = Path(args.java_file).stem
+361-
+362-    # Analyze
+363:    analyzer = JavaAIAnalyzer(ai_provider=args.provider, model=args.model)
+364-
+365-    if not analyzer.ai_available:
+366-        print("ERROR: AI not available")
+
+codex
+The implementation has the main behavior changes, but several plan-mandated proofs are weaker than advertised. Most notably, the health checker only catches `ImportError`, while the plan requires any probe exception to fail closed; the test exercises a second `ImportError`, not the exception arm. I’m doing the targeted test run and final line-level cross-check now.
+2026-08-09T05:28:54.834738Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'python -m pytest tests/unit/test_world_class_wiring_honesty_2026_08_09.py -q --no-cov -p no:cacheprovider'` rejected: blocked by policy
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'python -m pytest tests/unit/test_world_class_wiring_honesty_2026_08_09.py -q --no-cov -p no:cacheprovider' in C:\dev\projects\reveng-main
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'python -m pytest tests/unit/test_world_class_wiring_honesty_2026_08_09.py -q --no-cov -p no:cacheprovider'` rejected: blocked by policy
+codex
+## Verdict: FAIL
+
+Core changes mostly exist, but the implementation does not satisfy all plan-mandated bidirectional requirements.
+
+- [HIGH] W-06 is not fail-closed for arbitrary probe exceptions: only `ImportError` is caught; `RuntimeError` propagates. The test’s “exception” arm merely raises another `ImportError`. [enhanced_health_monitor.py](C:/dev/projects/reveng-main/src/reveng/tools/enterprise/enhanced_health_monitor.py:101), [test](C:/dev/projects/reveng-main/tests/unit/test_world_class_wiring_honesty_2026_08_09.py:289)
+- [MEDIUM] W-03’s injected `90%` fixture is not passed through the production offender scan; a separate regex assertion cannot prove the scan would fail. The scan is also non-recursive over serialized schemas. [test](C:/dev/projects/reveng-main/tests/unit/test_world_class_wiring_honesty_2026_08_09.py:36)
+- [MEDIUM] W-05 lacks the required AI-path spy: tests verify constructor arguments, not that default/true invokes AI and false skips it. Core MCP has no default/true handler test. [test](C:/dev/projects/reveng-main/tests/unit/test_world_class_wiring_honesty_2026_08_09.py:197)
+- [MEDIUM] W-05’s required `docs/reference/cli.md` update is absent; `--no-ai` is undocumented there. [plan](C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:57)
+- [MEDIUM] W-07’s Ollama positive control checks construction only, not that the local path remains callable or is explicitly skipped. The required Java-specific provider documentation is also absent. [test](C:/dev/projects/reveng-main/tests/unit/test_world_class_wiring_honesty_2026_08_09.py:274)
+- [LOW] W-02 tests individual unsupported knobs, but not actual knob combinations or an import trap proving rejection occurs before angr import. Implementation ordering itself is correct.
+- [LOW] No W-09 regression test covers banners/path repairs, despite the audit’s “each item: code + pytest” requirement.
+- W-01, W-02 primary behavior, W-04 quarantine pins, W-09 banners/path fixes, and ops index links otherwise match the plan.
+- I could not independently rerun the claimed 18 tests because execution was rejected by the read-only policy. No files were edited.
+## Verdict: FAIL
+
+Core changes mostly exist, but the implementation does not satisfy all plan-mandated bidirectional requirements.
+
+- [HIGH] W-06 is not fail-closed for arbitrary probe exceptions: only `ImportError` is caught; `RuntimeError` propagates. The test’s “exception” arm merely raises another `ImportError`. [enhanced_health_monitor.py](C:/dev/projects/reveng-main/src/reveng/tools/enterprise/enhanced_health_monitor.py:101), [test](C:/dev/projects/reveng-main/tests/unit/test_world_class_wiring_honesty_2026_08_09.py:289)
+- [MEDIUM] W-03’s injected `90%` fixture is not passed through the production offender scan; a separate regex assertion cannot prove the scan would fail. The scan is also non-recursive over serialized schemas. [test](C:/dev/projects/reveng-main/tests/unit/test_world_class_wiring_honesty_2026_08_09.py:36)
+- [MEDIUM] W-05 lacks the required AI-path spy: tests verify constructor arguments, not that default/true invokes AI and false skips it. Core MCP has no default/true handler test. [test](C:/dev/projects/reveng-main/tests/unit/test_world_class_wiring_honesty_2026_08_09.py:197)
+- [MEDIUM] W-05’s required `docs/reference/cli.md` update is absent; `--no-ai` is undocumented there. [plan](C:/dev/projects/reveng-main/docs/superpowers/plans/2026-08-09-world-class-wiring-honesty.md:57)
+- [MEDIUM] W-07’s Ollama positive control checks construction only, not that the local path remains callable or is explicitly skipped. The required Java-specific provider documentation is also absent. [test](C:/dev/projects/reveng-main/tests/unit/test_world_class_wiring_honesty_2026_08_09.py:274)
+- [LOW] W-02 tests individual unsupported knobs, but not actual knob combinations or an import trap proving rejection occurs before angr import. Implementation ordering itself is correct.
+- [LOW] No W-09 regression test covers banners/path repairs, despite the audit’s “each item: code + pytest” requirement.
+- W-01, W-02 primary behavior, W-04 quarantine pins, W-09 banners/path fixes, and ops index links otherwise match the plan.
+tokens used- I could not independently rerun the claimed 18 tests because execution was rejected by the read-only policy. No files were edited.
+
+46,134
