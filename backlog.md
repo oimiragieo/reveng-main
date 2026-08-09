@@ -129,7 +129,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | CI-DOCS-LINK-1 | docs-link-check fails on main (215 errors; Windows abs paths in thinktank HTML) | partial | soft-fail via docs.yml continue-on-error; root cause open; Wave 1 disposition |
 | CI-UNICORN-BUILD-1 | Tests matrix: angr/unicorn wheel build fails (cmake_minimum_required) | partial | soft-fail containment; root cause https://github.com/unicorn-engine/unicorn/issues/2263 (accessed 2026-08-09); not claiming angr green |
 | LINT-IMPORTS-HOST-1 | Host `/usr/bin/python3.9` lacks importlinter for local lint-imports | open | could_not_measure locally; CI Code Quality still owns import contracts |
-| R-MCP-ANNOTATION-1 | Research: actlint-style declared-vs-derived MCP annotation honesty | open | https://github.com/formael/actlint (accessed 2026-08-09); not product GA |
+| R-MCP-ANNOTATION-1 | Research: actlint-style declared-vs-derived MCP annotation honesty | open | https://github.com/formael/actlint + DEV writeup https://dev.to/formael/are-your-mcp-servers-safety-labels-honest-a-one-command-check-and-what-it-found-on-31-popular-1ml3 (accessed 2026-08-09); not product GA |
 | EDGE-RECOMPILE-DIFF-1 | Research: competitor recompile-diff parity vs VRL | open | could_not_measure; cite https://github.com/kidoz/sleuthre (accessed 2026-08-09); no parity claim |
 
 ## I. Decisions / waivers
@@ -202,9 +202,9 @@ Tier-3 rows are `parked` (honesty non-goals). Phase column uses Scope C catalog 
 | FEAT-8 | Better MCP productization | reveng-feature-roadmap.md | 8 | open | Schemas, streaming, approval hooks; overlaps EPIC-5 |
 | FEAT-9 | Stronger local-model orchestration | reveng-feature-roadmap.md | 8 | open | Ollama profiles/routing; overlaps EPIC-6 |
 | FEAT-10 | Recompilation developer kit | reveng-feature-roadmap.md | 12 | open | Compiler profiles, shims, artifact comparison |
-| REV-P0-INSTALLERS | Finish or deprecate dependency-manager installer stubs | REVOLUTION_PLAN.md | 1 | partial | Wave 1 deprecate stubs (`deprecated_stub`); finish installers future Sol; see `policy-rev-p0-installers.md` |
+| REV-P0-INSTALLERS | Finish or deprecate dependency-manager installer stubs | REVOLUTION_PLAN.md | 1 | partial | Wave 1 deprecate stubs (`deprecated_stub`); finish installers future Sol; see [policy-rev-p0-installers.md](docs/architecture/policy-rev-p0-installers.md) |
 | REV-P0-EVIDENCE-AUDIT | Evidence propagation adoption-matrix audit | REVOLUTION_PLAN.md | 1 | open | Read-only audit incomplete in prior session |
-| REV-P0-ANALYSIS-CLEANUP | Cleanup policy for analysis_* dirs at repo root | REVOLUTION_PLAN.md | 1 | partial | Policy landed `docs/architecture/policy-rev-p0-analysis-cleanup.md`; automated enforcement open |
+| REV-P0-ANALYSIS-CLEANUP | Cleanup policy for analysis_* dirs at repo root | REVOLUTION_PLAN.md | 1 | partial | Policy landed [policy-rev-p0-analysis-cleanup.md](docs/architecture/policy-rev-p0-analysis-cleanup.md); automated enforcement open |
 | REV-P1-LLM-REFINER | Iterative LLM refiner on oracle divergence | REVOLUTION_PLAN.md | 4 | open | Phase 1.5; feeds failing I/O + source to Claude/GPT |
 | REV-P1-WHOLE-PROGRAM | Whole-program context / type propagation | REVOLUTION_PLAN.md | 12 | open | Cross-function types before LLM decomp |
 | REV-P1-CI-CORPUS | Regression-gated CI on benchmark corpus | REVOLUTION_PLAN.md | 5 | partial | Thin equivalence evidence CI landed; full corpus residual overlaps M4 |
