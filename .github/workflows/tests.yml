@@ -41,23 +41,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    # Wave 2 W2-3 (CI-UNICORN-BUILD-1): macOS uses slim reqs (no angr/unicorn/claripy).
-    # Upstream: https://github.com/unicorn-engine/unicorn/issues/2263 (accessed 2026-08-09).
-    # Not a claim that angr is green. Ubuntu/Windows keep full requirements.
-    - name: Install dependencies (Linux/Windows)
-      if: matrix.os != 'macos-latest'
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install -r requirements.txt
         python -m pip install -r requirements-dev.txt
-        python -m pip install -e . --no-deps
-
-    - name: Install dependencies (macOS slim)
-      if: matrix.os == 'macos-latest'
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install -r requirements-ci-macos-slim.txt
-        python -m pip install -r requirements-ci-macos-slim-dev.txt
         python -m pip install -e . --no-deps
 
     - name: Lint with flake8

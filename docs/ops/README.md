@@ -9,7 +9,7 @@ Most ops artifacts still live under `docs/architecture/` and `docs/superpowers/`
 | Kind | Where |
 | --- | --- |
 | Living backlog | [`../../backlog.md`](../../backlog.md) |
-| Latest CEO update | [`../architecture/ceo-update-2026-08-08-tg-audit-merge.md`](../architecture/ceo-update-2026-08-08-tg-audit-merge.md) |
+| Latest CEO update | [`../architecture/ceo-update-2026-08-09-waves1-2.md`](../architecture/ceo-update-2026-08-09-waves1-2.md) |
 | Lessons learned | [`../architecture/lessons-learned-scope-c-2026-08.md`](../architecture/lessons-learned-scope-c-2026-08.md) |
 | Wave exit criteria | `../architecture/wave-b-exit-criteria.md`, `wave-c-exit-criteria.md` |
 | Thinktank / Sol packets | `../architecture/thinktank-*.md`, `sol-*.md` |

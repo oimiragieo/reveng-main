@@ -265,20 +265,6 @@ class REVENGEnterpriseServer(MCPServer):
         "run_app_corpus": {"risk_level": "low", "requires_policy_acknowledgement": False},
     }
 
-    # Wave 2 explicit denylist — MCP spec hints (not every risk_level=high).
-    _MCP_HINT_DENYLIST: Dict[str, Dict[str, bool]] = {
-        "generate_exploit": {
-            "destructiveHint": True,
-            "readOnlyHint": False,
-            "openWorldHint": True,
-        },
-        "recompile_binary": {
-            "destructiveHint": True,
-            "readOnlyHint": False,
-            "openWorldHint": True,
-        },
-    }
-
     def __init__(self, enable_rate_limiting: bool = True, enable_audit_log: bool = True):
         super().__init__("reveng-enterprise", "4.0.0")
 
@@ -365,15 +351,11 @@ class REVENGEnterpriseServer(MCPServer):
                 tool_name,
                 {"risk_level": "moderate", "requires_policy_acknowledgement": False},
             )
-            annotations: Dict[str, Any] = {
+            tool.annotations = {
                 "risk_level": policy["risk_level"],
                 "requires_policy_acknowledgement": policy["requires_policy_acknowledgement"],
                 "least_privilege_reviewed": True,
             }
-            mcp_hints = self._MCP_HINT_DENYLIST.get(tool_name)
-            if mcp_hints:
-                annotations.update(mcp_hints)
-            tool.annotations = annotations
             if policy["requires_policy_acknowledgement"]:
                 properties = tool.input_schema.setdefault("properties", {})
                 properties.setdefault(
