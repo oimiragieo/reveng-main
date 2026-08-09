@@ -1,64 +1,72 @@
 # REVENG Documentation
 
-This directory now keeps a small set of current reference docs instead of multiple overlapping guides.
+> **Product maturity:** beta `4.0.0` · **public preview** — not full Scope C GA.  
+> Start with the [Support matrix](support/support-matrix.md) and [Honesty rules](support/honesty-rules.md).
 
-## Start Here
+This site is organized with **[Diátaxis](https://diataxis.fr/)**: tutorials (learn), how-to guides (goals), explanation (understand), and reference (look up). There are **two doors** for juniors.
 
-### Getting Started
+## Choose your door
 
-- [Project README](../README.md) — product overview and main capabilities
-- [Getting Started](getting-started/installation.md) — install, verify, and run your first analysis
-- [CLI Usage](user-guide/cli-usage.md) — command reference and common workflows
-- [MCP Guide](mcp/README.md) — MCP setup and agent-facing tooling
+### Analyst track — “How do I use REVENG and trust the output?”
 
-### User Guide
+1. [Install and triage](tutorials/analyst/01-install-and-triage.md)
+2. [First app reverse-engineer](tutorials/analyst/02-app-reverse-engineer.md)
+3. [Reading outputs & grades](tutorials/analyst/03-reading-outputs.md)
+4. How-tos: [PE triage](how-to/analyst/triage-pe.md) · [YARA & VT](how-to/analyst/yara-and-vt.md) · [Bun](how-to/analyst/bun-executable.md) · [When Ghidra is required](how-to/analyst/when-ghidra-is-required.md)
+5. Language CUJs: [JS](how-to/analyst/app-re-javascript.md) · [JVM](how-to/analyst/app-re-jvm.md) · [Python](how-to/analyst/app-re-python.md) · [.NET](how-to/analyst/app-re-dotnet.md)
 
-- [CLI Usage](user-guide/cli-usage.md)
-- [Support Matrix](user-guide/support-matrix.md)
-- [Bun Executable Reversing](user-guide/bun-reversing.md)
-- [MCP Guide](mcp/README.md)
+### Engineer track — “How is this wired, and where do I change it?”
 
-## Engineering References
+1. [Dev setup](tutorials/engineer/01-dev-setup.md)
+2. [Unit & honesty gates](tutorials/engineer/02-run-unit-and-honesty-gates.md)
+3. Explanation: [Architecture](explanation/architecture-overview.md) · [App RE dispatch](explanation/app-re-dispatch.md) · [Result contracts](explanation/result-contracts.md) · [VRL](explanation/vrl-and-verification.md)
+4. How-tos: [Add adapter](how-to/engineer/add-adapter.md) · [Extend CLI](how-to/engineer/extend-cli.md) · [Wire MCP tool](how-to/engineer/wire-mcp-tool.md) · [Update support matrix](how-to/engineer/update-support-matrix.md) · [Scoped git](how-to/engineer/scoped-git-and-commits.md)
 
-### Developer Guide
+## Support & trust
 
-- [Architecture Overview](architecture/overview.md)
-- [Bun Escalation Paths](architecture/bun-escalation-paths.md)
-- [Bun Real-Sample Matrix](architecture/bun-real-sample-matrix.md)
-- [REVENG System Paper](architecture/reveng-system-paper.md)
-- [Feature Research Roadmap](architecture/reveng-feature-roadmap.md)
-- [World-Class Implementation Roadmap](architecture/reveng-world-class-implementation-roadmap.md)
-- [World-Class Execution Backlog](architecture/reveng-world-class-execution-backlog.md)
-- [GA Master Plan](architecture/reveng-ga-master-plan.md)
-- [Release Checklist](../.github/RELEASE_CHECKLIST.md)
-- [GA Asset Provisioning Manifest](../.reveng/ga_asset_manifest.json)
-- [App Reverse Engineering TDD Plan](architecture/app-reverse-engineering-tdd-plan.md)
-- [App Reverse Engineering Corpus](architecture/app-reverse-engineering-corpus.md)
-- [Current Platform Status](architecture/current-platform-status.md)
-- [TDD Microservices Plan](architecture/reveng-tdd-microservices-plan.md)
-- [TDD Implementation Backlog](architecture/reveng-tdd-implementation-backlog.md)
-- [API Reference](api/API_REFERENCE.md)
-- [Developer Guide](developer-guide/DEVELOPER_GUIDE.md)
-- [Contributing](../CONTRIBUTING.md)
+| Doc | Purpose |
+| --- | --- |
+| [Maturity badges](support/maturity-badges.md) | What supported / limited / experimental / unsupported / fixture_only mean |
+| [Support matrix](support/support-matrix.md) | Customer-facing boundary (mirrors JSON) |
+| [Honesty rules](support/honesty-rules.md) | Fixture ≠ capability, no hollow claims |
+| [Reading validation grades](support/reading-validation-grades.md) | App RE grades vs VRL grades |
+| [GA-ish path checklist](support/ga-path-checklist.md) | One-pager for supported analyst workflows |
 
-### API Reference
+Machine SoT: [`support_matrix.json`](support_matrix.json).
 
-- [API Reference](api/API_REFERENCE.md)
+## Reference (look up)
 
-### Deployment
+- [CLI](reference/cli.md)
+- [Python API](reference/python-api.md)
+- [MCP tools](reference/mcp-tools.md)
+- [Config & env](reference/config-and-env.md)
+- [Corpus & GA scripts](reference/corpus-and-ga-scripts.md)
+- Legacy long MCP setup notes: [mcp/README.md](mcp/README.md) (honesty-rewritten; prefer [reference/mcp-tools.md](reference/mcp-tools.md) for capability status)
 
-- [Deployment Notes](deployment/README.md)
-- [Release Evidence Verification](deployment/release-evidence-verification.md)
-- [Privacy Notes](legal/PRIVACY.md)
+## Explanation (understand)
 
-## Release History
+- [Architecture overview](explanation/architecture-overview.md)
+- [Analysis pipeline](explanation/analysis-pipeline.md)
+- [App RE dispatch](explanation/app-re-dispatch.md)
+- [VRL & verification](explanation/vrl-and-verification.md)
+- [Result contracts](explanation/result-contracts.md)
+- [Ghidra boundary](explanation/ghidra-boundary.md)
+- [AI providers](explanation/ai-providers.md)
+- [pipeline vs pipelines](explanation/pipeline-vs-pipelines.md)
+- [Security & exploits](explanation/security-and-exploits.md)
 
-- [v4.0](changelogs/v4.0.md)
-- [v5.0](changelogs/v5.0.md)
-- [v6.0](changelogs/v6.0.md)
+## Ops / program (not product tutorials)
 
-## Documentation Scope
+- [Ops index](ops/README.md) — CEO updates, backlog, thinktank, wave criteria
+- Living backlog: [`../backlog.md`](../backlog.md)
 
-- Historical audit reports, redundant setup guides, and placeholder indexes were removed.
-- The long-form MCP guide was kept intact in `docs/mcp/README.md`.
-- If you need implementation history beyond the remaining docs, use `git log` and the root `CHANGELOG.md`.
+## Older paths (still linked)
+
+- [Getting started (install)](getting-started/installation.md)
+- [CLI usage (user guide)](user-guide/cli-usage.md)
+- [Bun reversing](user-guide/bun-reversing.md)
+- [Developer guide](developer-guide/DEVELOPER_GUIDE.md)
+- [API reference (legacy)](api/API_REFERENCE.md)
+- [Deployment](deployment/README.md)
+
+Prefer the **Tutorials / How-to / Explanation / Reference** trees above when learning.

@@ -23,7 +23,7 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 5. **Fixture ≠ capability** — `test_samples/native/` proves CLI byte-stability only. Keep `required: false` / `fixture_only` until analyze is measured green.
 6. **Probe status contract (v1.2)** — `completed` only for returncode 0; timeout measured; nonzero / `tool_absent` / `input_absent` / OSError → `could_not_measure` (exit 2). Process `completed` ≠ native GA (check semantic fields / DF-5).
 7. **Evidence directory hygiene** — exactly one `20*.json` stamp byte-identical to `latest.json`; scrub orphans after merge; bump `probe_version` on semantic changes.
-8. **Research honesty** — `tool_absent` → backlog **blocked**, not done. Split BASELINE rows from engine rows (exact id match).
+8. **Research honesty** — `tool_absent` / `input_absent` ≠ research done (do not close the question). Split BASELINE rows from engine rows (exact id match).
 9. **Exploits stay experimental** — R-SEC-1 decision is Docker-only preview; no expansion without sandbox proofs; keep watermarks.
 10. **Match claims to `support_matrix`** — preview vs GA language.
 11. **Wave-scope plans** — do not plan “close all Scope C” in one PR; use Wave B exit criteria for engine work.
@@ -45,8 +45,18 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 
 ## Canonical docs
 
-- `docs/architecture/ceo-update-2026-08-06-wave3.md` (latest CEO)
-- `docs/architecture/ceo-update-2026-08-06-wave2.md` / `ceo-update-2026-08-06.md`
-- `docs/architecture/lessons-learned-scope-c-2026-08.md` (L1–L24)
-- `docs/architecture/wave-b-exit-criteria.md`
+- `docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md` (latest CEO)
+- `docs/architecture/ceo-update-2026-08-07-scope-c-charter.md` / `ceo-update-2026-08-06-wave3.md` (priors)
+- `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L32**)
+- `docs/architecture/wave-b-exit-criteria.md` / `wave-c-exit-criteria.md`
 - Root `backlog.md`
+- Junior docs home: `docs/README.md` (Analyst + Engineer tracks); support badges: `docs/support/`
+
+## CI honesty install (L28)
+
+Wave B / Phase 5 workflows must use `requirements-honesty.txt` + `pip install -e . --no-deps`.
+Do **not** `pip install -r requirements.txt` in those jobs — py3.9 hits `resolution-too-deep`.
+
+## Fake pins (L29)
+
+Never restore `ghidramcp>=0.1.0` in requirements-java/security without a real PyPI package.

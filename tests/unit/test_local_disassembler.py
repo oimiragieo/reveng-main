@@ -16,7 +16,7 @@ from reveng.integrations.local_disassembler import DisassemblyResult, LocalDisas
 # ``_instruction_to_pseudocode``, ``_resolve_call_target``, etc.) that does
 # NOT exist in the shipped ``reveng.integrations.local_disassembler`` module —
 # that module is a deliberate minimal Capstone fallback. The renderer is not
-# yet implemented (tracking issue pending), so the tests exercising it are
+# yet implemented (GitHub #101), so the tests exercising it are
 # marked xfail (non-strict) instead of failing the suite.
 #
 # The marker is SCOPED so that genuinely-passing tests are not masked: the
@@ -25,8 +25,8 @@ from reveng.integrations.local_disassembler import DisassemblyResult, LocalDisas
 # ---------------------------------------------------------------------------
 
 _RENDERER_NOT_IMPLEMENTED_REASON = (
-    "rich local pseudocode renderer not yet implemented (tracking issue "
-    "pending); shipped local_disassembler is a deliberate minimal fallback"
+    "rich local pseudocode renderer not yet implemented (GitHub #101); "
+    "shipped local_disassembler is a deliberate minimal fallback"
 )
 
 # Tests that pass against the shipped minimal fallback and must stay unmarked

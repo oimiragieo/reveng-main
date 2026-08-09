@@ -11,7 +11,8 @@
 requests>=2.31.0,<3.0.0
 
 # Ghidra MCP integration for professional disassembly
-ghidramcp>=0.1.0,<1.0.0
+# Ghidra MCP — not on PyPI at >=0.1.0; leave commented (same as requirements.txt note).
+# ghidramcp>=0.1.0,<1.0.0
 
 # =============================================================================
 # BINARY MANIPULATION - Security-hardened versions

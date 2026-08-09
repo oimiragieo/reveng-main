@@ -23,14 +23,14 @@ Ops backlog: [`backlog.md`](backlog.md). Release evidence: `reports/ga_readiness
 
 The codebase is best understood as an ambitious reverse-engineering platform under active hardening, not a finished product brochure. It contains substantial implementation across binary analysis, source recovery, malware workflows, decompilation helpers, and agent-facing integration, but maturity is uneven across subsystems.
 
-For a grounded architecture view, start with:
+For how the product and codebase work (junior-friendly), start with the **docs dual doors**:
 
-- [System Paper](docs/architecture/reveng-system-paper.md)
-- [World-Class Implementation Roadmap](docs/architecture/reveng-world-class-implementation-roadmap.md)
-- [World-Class Execution Backlog](docs/architecture/reveng-world-class-execution-backlog.md)
-- [App Reverse Engineering TDD Plan](docs/architecture/app-reverse-engineering-tdd-plan.md)
-- [Current Platform Status](docs/architecture/current-platform-status.md)
-- [Support Matrix](docs/user-guide/support-matrix.md)
+- [Docs home — Analyst & Engineer tracks](docs/README.md)
+- [Support matrix](docs/support/support-matrix.md) · [Honesty rules](docs/support/honesty-rules.md) · [Maturity badges](docs/support/maturity-badges.md) · [GA path checklist](docs/support/ga-path-checklist.md)
+- [Architecture explanation](docs/explanation/architecture-overview.md)
+- [CLI reference](docs/reference/cli.md)
+
+Ops / program depth (not product tutorials): [Ops index](docs/ops/README.md), [backlog.md](backlog.md), [System Paper](docs/architecture/reveng-system-paper.md).
 
 ## Quick Start
 
@@ -49,9 +49,10 @@ reveng-js --help
 
 Start with:
 
-- [Installation](INSTALLATION.md)
-- [Getting Started Installation Guide](docs/getting-started/installation.md)
-- [CLI Reference](CLI_REFERENCE.md)
+- [Analyst tutorial: install and triage](docs/tutorials/analyst/01-install-and-triage.md)
+- [Analyst tutorial: app reverse-engineer](docs/tutorials/analyst/02-app-reverse-engineer.md)
+- [Getting Started (legacy install page)](docs/getting-started/installation.md)
+- [CLI reference](docs/reference/cli.md)
 
 ## Key Features
 
@@ -63,12 +64,19 @@ Start with:
 
 ## Documentation
 
-- [Docs Index](docs/README.md)
-- [MCP Guide](docs/mcp/README.md)
-- [System Paper](docs/architecture/reveng-system-paper.md)
-- [World-Class Implementation Roadmap](docs/architecture/reveng-world-class-implementation-roadmap.md)
-- [Current Platform Status](docs/architecture/current-platform-status.md)
-- [Support Matrix](docs/user-guide/support-matrix.md)
+The documentation ecosystem is Diátaxis-shaped (tutorials → how-to → explanation → reference) with **Analyst** and **Engineer** tracks:
+
+| Door | Start here |
+| --- | --- |
+| Home | [docs/README.md](docs/README.md) |
+| Support / trust | [Support matrix](docs/support/support-matrix.md) · [Honesty rules](docs/support/honesty-rules.md) · [Validation grades](docs/support/reading-validation-grades.md) · [GA checklist](docs/support/ga-path-checklist.md) |
+| Analyst tutorials | [Install & triage](docs/tutorials/analyst/01-install-and-triage.md) · [App RE](docs/tutorials/analyst/02-app-reverse-engineer.md) · [Reading outputs](docs/tutorials/analyst/03-reading-outputs.md) |
+| Engineer tutorials | [Dev setup](docs/tutorials/engineer/01-dev-setup.md) · [Honesty gates](docs/tutorials/engineer/02-run-unit-and-honesty-gates.md) |
+| Explanation | [Architecture](docs/explanation/architecture-overview.md) · [VRL](docs/explanation/vrl-and-verification.md) · [Result contracts](docs/explanation/result-contracts.md) |
+| Reference | [CLI](docs/reference/cli.md) · [Python API](docs/reference/python-api.md) · [MCP tools](docs/reference/mcp-tools.md) |
+| Ops | [Ops index](docs/ops/README.md) · [backlog.md](backlog.md) |
+
+MkDocs nav mirrors this tree (`mkdocs.yml`). Legacy pages under `docs/user-guide/`, `docs/mcp/`, and `docs/architecture/` remain linked where useful; prefer the new tracks for learning.
 
 ## Practical Entry Points
 

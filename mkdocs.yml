@@ -36,32 +36,65 @@ theme:
 
 nav:
   - Home: README.md
-  - Getting Started:
-    - Installation: getting-started/installation.md
-  - User Guide:
-    - CLI Usage: user-guide/cli-usage.md
-    - Bun Executable Reversing: user-guide/bun-reversing.md
-    - MCP Guide: mcp/README.md
-  - Developer Guide:
-    - Developer Guide: developer-guide/DEVELOPER_GUIDE.md
-    - API Reference: api/API_REFERENCE.md
-  - Architecture:
-    - Overview: architecture/overview.md
-    - REVENG System Paper: architecture/reveng-system-paper.md
-    - Feature Research Roadmap: architecture/reveng-feature-roadmap.md
-    - World-Class Implementation Roadmap: architecture/reveng-world-class-implementation-roadmap.md
-    - World-Class Execution Backlog: architecture/reveng-world-class-execution-backlog.md
-    - TDD Microservices Plan: architecture/reveng-tdd-microservices-plan.md
-    - TDD Implementation Backlog: architecture/reveng-tdd-implementation-backlog.md
-    - Bun Escalation Paths: architecture/bun-escalation-paths.md
-    - Bun Real-Sample Matrix: architecture/bun-real-sample-matrix.md
+  - Support:
+    - Maturity badges: support/maturity-badges.md
+    - Support matrix: support/support-matrix.md
+    - Honesty rules: support/honesty-rules.md
+    - Reading validation grades: support/reading-validation-grades.md
+    - GA-ish path checklist: support/ga-path-checklist.md
+  - Tutorials:
+    - Analyst:
+      - Install and triage: tutorials/analyst/01-install-and-triage.md
+      - App reverse-engineer: tutorials/analyst/02-app-reverse-engineer.md
+      - Reading outputs: tutorials/analyst/03-reading-outputs.md
+    - Engineer:
+      - Dev setup: tutorials/engineer/01-dev-setup.md
+      - Unit and honesty gates: tutorials/engineer/02-run-unit-and-honesty-gates.md
+  - How-to:
+    - Analyst:
+      - Triage PE: how-to/analyst/triage-pe.md
+      - YARA and VT: how-to/analyst/yara-and-vt.md
+      - Bun executable: how-to/analyst/bun-executable.md
+      - When Ghidra is required: how-to/analyst/when-ghidra-is-required.md
+      - App RE JavaScript: how-to/analyst/app-re-javascript.md
+      - App RE JVM: how-to/analyst/app-re-jvm.md
+      - App RE Python: how-to/analyst/app-re-python.md
+      - App RE .NET: how-to/analyst/app-re-dotnet.md
+    - Engineer:
+      - Add adapter: how-to/engineer/add-adapter.md
+      - Extend CLI: how-to/engineer/extend-cli.md
+      - Wire MCP tool: how-to/engineer/wire-mcp-tool.md
+      - Update support matrix: how-to/engineer/update-support-matrix.md
+      - Scoped git and commits: how-to/engineer/scoped-git-and-commits.md
+  - Explanation:
+    - Architecture overview: explanation/architecture-overview.md
+    - Analysis pipeline: explanation/analysis-pipeline.md
+    - App RE dispatch: explanation/app-re-dispatch.md
+    - VRL and verification: explanation/vrl-and-verification.md
+    - Result contracts: explanation/result-contracts.md
+    - Ghidra boundary: explanation/ghidra-boundary.md
+    - AI providers: explanation/ai-providers.md
+    - pipeline vs pipelines: explanation/pipeline-vs-pipelines.md
+    - Security and exploits: explanation/security-and-exploits.md
+  - Reference:
+    - CLI: reference/cli.md
+    - Python API: reference/python-api.md
+    - MCP tools: reference/mcp-tools.md
+    - Config and env: reference/config-and-env.md
+    - Corpus and GA scripts: reference/corpus-and-ga-scripts.md
+  - Legacy guides:
+    - Getting started install: getting-started/installation.md
+    - CLI usage: user-guide/cli-usage.md
+    - Bun reversing: user-guide/bun-reversing.md
+    - MCP setup notes: mcp/README.md
+    - Developer guide: developer-guide/DEVELOPER_GUIDE.md
+    - API reference: api/API_REFERENCE.md
+  - Ops:
+    - Ops index: ops/README.md
   - Deployment:
-    - Deployment Notes: deployment/README.md
-    - Privacy Notes: legal/PRIVACY.md
-  - Release History:
-    - v4.0: changelogs/v4.0.md
-    - v5.0: changelogs/v5.0.md
-    - v6.0: changelogs/v6.0.md
+    - Deployment notes: deployment/README.md
+    - Release evidence: deployment/release-evidence-verification.md
+    - Privacy: legal/PRIVACY.md
 
 plugins:
   - search:
@@ -95,16 +128,8 @@ markdown_extensions:
       slugify: !!python/object/apply:pymdownx.slugs.slugify
         kwds:
           case: lower
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.emoji:
@@ -119,9 +144,5 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/oimiragieo/reveng-main
-    - icon: fontawesome/brands/twitter
-      link: https://twitter.com/reveng_toolkit
-    - icon: fontawesome/brands/docker
-      link: https://hub.docker.com/r/reveng/cli
   version:
     provider: mike

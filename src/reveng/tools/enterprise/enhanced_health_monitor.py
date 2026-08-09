@@ -91,10 +91,10 @@ class CoreREVENGHealthChecker(HealthChecker):
 
         # Check if core modules can be imported
         core_modules = [
-            "reveng_analyzer",
-            "tools.language_detector",
-            "tools.config_manager",
-            "tools.ollama_preflight",
+            "reveng.analysis.analyzer",
+            "reveng.tools.languages.language_detector",
+            "reveng.tools.config.config_manager",
+            "reveng.agents.ai.ollama_preflight",
         ]
 
         for module in core_modules:
@@ -109,7 +109,7 @@ class CoreREVENGHealthChecker(HealthChecker):
                         message=f"Module {module} is available",
                     )
                 )
-            except ImportError as e:
+            except Exception as e:
                 error_count += 1
                 metrics.append(
                     HealthMetric(

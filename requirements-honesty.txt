@@ -1,0 +1,7 @@
+# Minimal deps for Wave B / Phase 5 honesty CI gates.
+# Full requirements.txt triggers pip resolution-too-deep on Python 3.9 in GHA.
+# Honesty suites are file/script/pytest only — they do not need angr/torch/etc.
+
+pytest>=7.4.0,<9
+pytest-timeout>=2.1.0,<3.0.0
+PyYAML>=6.0.1,<7.0.0
