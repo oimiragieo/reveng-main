@@ -108,4 +108,4 @@ def test_generate_skip_inventory_can_exclude_internal_report_tests(tmp_path: Pat
     )
 
     assert report["summary"]["total_skip_sites"] == 1
-    assert report["entries"][0]["path"] == "tests\\unit\\test_real.py"
+    assert report["entries"][0]["path"] == "tests/unit/test_real.py"

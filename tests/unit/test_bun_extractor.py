@@ -7,6 +7,13 @@ from pathlib import Path
 
 import pytest
 
+
+def _path_endswith(path: str | None, suffix: str) -> bool:
+    """OS-agnostic suffix check for recovered filesystem / virtual paths."""
+    if path is None:
+        return False
+    return Path(path).as_posix().endswith(Path(suffix).as_posix())
+
 from reveng.tools.anti_analysis.bun_extractor import (
     BunExecutableExtractor,
     BunSourcemapProvenance,
@@ -696,7 +703,7 @@ def _fixture_matrix_cases():
             {
                 "detect": {"section_name": ".bun", "container": "pe"},
                 "recovery": {"mode": "path_scan", "module_layout": None},
-                "manifest": {"discovered_path_count": 1, "primary_suffix": "root\\droid.exe"},
+                "manifest": {"discovered_path_count": 1, "primary_suffix": "root/droid.exe"},
             },
         ),
         (
@@ -705,7 +712,7 @@ def _fixture_matrix_cases():
             {
                 "detect": {"section_name": ".bun", "container": "pe"},
                 "recovery": {"mode": "path_scan", "module_layout": None},
-                "manifest": {"sourcemap_suffix": "root\\droid.exe.map"},
+                "manifest": {"sourcemap_suffix": "root/droid.exe.map"},
             },
         ),
         (
@@ -714,7 +721,7 @@ def _fixture_matrix_cases():
             {
                 "detect": {"section_name": ".bun", "container": "pe"},
                 "recovery": {"mode": "path_scan", "module_layout": None},
-                "manifest": {"supporting_suffix": "root\\module.wasm"},
+                "manifest": {"supporting_suffix": "root/module.wasm"},
             },
         ),
         (
@@ -723,7 +730,7 @@ def _fixture_matrix_cases():
             {
                 "detect": {"section_name": ".bun", "container": "pe"},
                 "recovery": {"mode": "path_scan", "module_layout": None},
-                "manifest": {"supporting_suffix": "root\\styles.css"},
+                "manifest": {"supporting_suffix": "root/styles.css"},
             },
         ),
         (
@@ -732,7 +739,7 @@ def _fixture_matrix_cases():
             {
                 "detect": {"section_name": ".bun", "container": "pe"},
                 "recovery": {"mode": "path_scan", "module_layout": None},
-                "manifest": {"discovered_path_count": 1, "primary_suffix": "root\\droid.exe"},
+                "manifest": {"discovered_path_count": 1, "primary_suffix": "root/droid.exe"},
             },
         ),
         (
@@ -743,8 +750,8 @@ def _fixture_matrix_cases():
                 "recovery": {"mode": "path_scan", "module_layout": None},
                 "manifest": {
                     "discovered_path_count": 3,
-                    "primary_suffix": "root\\src\\main.ts",
-                    "supporting_suffix": "root\\package.json",
+                    "primary_suffix": "root/src/main.ts",
+                    "supporting_suffix": "root/package.json",
                 },
             },
         ),
@@ -791,16 +798,18 @@ def test_bun_fixture_matrix_characterization(tmp_path: Path, case_name: str, bui
     if "discovered_path_count" in expected["manifest"]:
         assert manifest["discovered_path_count"] == expected["manifest"]["discovered_path_count"]
     if "primary_suffix" in expected["manifest"]:
-        assert manifest["artifacts"]["primary_source_path"].endswith(
-            expected["manifest"]["primary_suffix"]
+        assert _path_endswith(
+            manifest["artifacts"]["primary_source_path"],
+            expected["manifest"]["primary_suffix"],
         )
     if "sourcemap_suffix" in expected["manifest"]:
-        assert manifest["artifacts"]["recovered_sourcemap_path"].endswith(
-            expected["manifest"]["sourcemap_suffix"]
+        assert _path_endswith(
+            manifest["artifacts"]["recovered_sourcemap_path"],
+            expected["manifest"]["sourcemap_suffix"],
         )
     if "supporting_suffix" in expected["manifest"]:
         assert any(
-            path.endswith(expected["manifest"]["supporting_suffix"])
+            _path_endswith(path, expected["manifest"]["supporting_suffix"])
             for path in manifest["artifacts"]["recovered_supporting_artifacts"]
         )
 
@@ -1353,7 +1362,7 @@ def test_bun_extractor_parses_module_graph_and_recovers_virtual_files(tmp_path: 
     assert graph.compile_exec_argv == "--compile"
     assert len(graph.modules) == 2
     assert graph.modules[0].virtual_path == "B:/~BUN/root/src/index.js"
-    assert graph.modules[0].recovered_path.endswith("root\\src\\index.js")
+    assert _path_endswith(graph.modules[0].recovered_path, "root/src/index.js")
     assert recovery.success is True
     assert recovery.manifest_path is not None
     manifest = json.loads(Path(recovery.manifest_path).read_text(encoding="utf-8"))
@@ -1421,7 +1430,7 @@ def test_bun_extractor_recovers_metadata_when_module_graph_layout_is_unknown(tmp
     assert manifest["offsets"]["modules_length"] == 35
     assert manifest["discovered_path_count"] == 1
     assert manifest["discovered_paths"][0]["virtual_path"] == "B:/~BUN/root/droid.exe"
-    assert manifest["artifacts"]["primary_source_path"].endswith("root\\droid.exe")
+    assert _path_endswith(manifest["artifacts"]["primary_source_path"], "root/droid.exe")
     assert (output_dir / "root" / "droid.exe").exists()
     assert "fallback bun payload" in (output_dir / "root" / "droid.exe").read_text(encoding="utf-8")
     assert (output_dir / "bundle_tail.bin").exists()
@@ -1439,8 +1448,10 @@ def test_bun_extractor_recovers_inline_sourcemap_during_path_scan_fallback(tmp_p
     assert recovery.success is True
     assert recovery.recovery_mode == "path_scan"
     manifest = json.loads(Path(recovery.manifest_path).read_text(encoding="utf-8"))
-    assert manifest["artifacts"]["primary_source_path"].endswith("root\\droid.exe")
-    assert manifest["artifacts"]["recovered_sourcemap_path"].endswith("root\\droid.exe.bunmap")
+    assert _path_endswith(manifest["artifacts"]["primary_source_path"], "root/droid.exe")
+    assert _path_endswith(
+        manifest["artifacts"]["recovered_sourcemap_path"], "root/droid.exe.bunmap"
+    )
     assert manifest["artifacts"]["recovered_sourcemap_provenance"]["origin"] == "inline_data_url"
     assert manifest["artifacts"]["recovered_sourcemap_provenance"]["parse_status"] == "valid_json"
     assert (
@@ -1461,8 +1472,8 @@ def test_bun_extractor_recovers_external_sourcemap_during_path_scan_fallback(tmp
     assert recovery.success is True
     assert recovery.recovery_mode == "path_scan"
     manifest = json.loads(Path(recovery.manifest_path).read_text(encoding="utf-8"))
-    assert manifest["artifacts"]["primary_source_path"].endswith("root\\droid.exe")
-    assert manifest["artifacts"]["recovered_sourcemap_path"].endswith("root\\droid.exe.map")
+    assert _path_endswith(manifest["artifacts"]["primary_source_path"], "root/droid.exe")
+    assert _path_endswith(manifest["artifacts"]["recovered_sourcemap_path"], "root/droid.exe.map")
     assert (
         manifest["artifacts"]["recovered_sourcemap_provenance"]["origin"]
         == "referenced_virtual_path"
@@ -1487,8 +1498,8 @@ def test_bun_extractor_recovers_supporting_json_artifacts_during_path_scan_fallb
     assert recovery.recovery_mode == "path_scan"
     manifest = json.loads(Path(recovery.manifest_path).read_text(encoding="utf-8"))
     supporting = manifest["artifacts"]["recovered_supporting_artifacts"]
-    assert any(path.endswith("root\\package.json") for path in supporting)
-    assert any(path.endswith("root\\tsconfig.json") for path in supporting)
+    assert any(_path_endswith(path, "root/package.json") for path in supporting)
+    assert any(_path_endswith(path, "root/tsconfig.json") for path in supporting)
     package_json = json.loads((output_dir / "root" / "package.json").read_text(encoding="utf-8"))
     assert package_json["name"] == "fallback-demo"
     tsconfig = json.loads((output_dir / "root" / "tsconfig.json").read_text(encoding="utf-8"))
@@ -1506,8 +1517,8 @@ def test_bun_extractor_recovers_supporting_text_artifacts_during_path_scan_fallb
     assert recovery.recovery_mode == "path_scan"
     manifest = json.loads(Path(recovery.manifest_path).read_text(encoding="utf-8"))
     supporting = manifest["artifacts"]["recovered_supporting_artifacts"]
-    assert any(path.endswith("root\\.env") for path in supporting)
-    assert any(path.endswith("root\\config.ts") for path in supporting)
+    assert any(_path_endswith(path, "root/.env") for path in supporting)
+    assert any(_path_endswith(path, "root/config.ts") for path in supporting)
     env_text = (output_dir / "root" / ".env").read_text(encoding="utf-8")
     assert "API_BASE=https://example.test" in env_text
     config_text = (output_dir / "root" / "config.ts").read_text(encoding="utf-8")
@@ -1525,7 +1536,7 @@ def test_bun_extractor_recovers_supporting_wasm_artifact_during_path_scan_fallba
     assert recovery.recovery_mode == "path_scan"
     manifest = json.loads(Path(recovery.manifest_path).read_text(encoding="utf-8"))
     supporting = manifest["artifacts"]["recovered_supporting_artifacts"]
-    assert any(path.endswith("root\\module.wasm") for path in supporting)
+    assert any(_path_endswith(path, "root/module.wasm") for path in supporting)
     wasm_bytes = (output_dir / "root" / "module.wasm").read_bytes()
     assert wasm_bytes.startswith(b"\x00asm\x01\x00\x00\x00")
 
@@ -1543,10 +1554,10 @@ def test_bun_extractor_recovers_supporting_web_and_config_artifacts_during_path_
     assert recovery.recovery_mode == "path_scan"
     manifest = json.loads(Path(recovery.manifest_path).read_text(encoding="utf-8"))
     supporting = manifest["artifacts"]["recovered_supporting_artifacts"]
-    assert any(path.endswith("root\\styles.css") for path in supporting)
-    assert any(path.endswith("root\\index.html") for path in supporting)
-    assert any(path.endswith("root\\app.yaml") for path in supporting)
-    assert any(path.endswith("root\\bunfig.toml") for path in supporting)
+    assert any(_path_endswith(path, "root/styles.css") for path in supporting)
+    assert any(_path_endswith(path, "root/index.html") for path in supporting)
+    assert any(_path_endswith(path, "root/app.yaml") for path in supporting)
+    assert any(_path_endswith(path, "root/bunfig.toml") for path in supporting)
     assert "background: #111" in (output_dir / "root" / "styles.css").read_text(encoding="utf-8")
     assert (
         "<!doctype html>"
@@ -1570,7 +1581,7 @@ def test_bun_extractor_recovers_metadata_with_invalid_offsets_path_scan(tmp_path
     assert manifest["recovery_mode"] == "path_scan"
     assert manifest["offsets"] is None
     assert manifest["artifacts"]["module_records_path"] is None
-    assert manifest["artifacts"]["primary_source_path"].endswith("root\\droid.exe")
+    assert _path_endswith(manifest["artifacts"]["primary_source_path"], "root/droid.exe")
     assert "invalid offsets fallback" in (output_dir / "root" / "droid.exe").read_text(
         encoding="utf-8"
     )
@@ -1587,10 +1598,10 @@ def test_bun_extractor_prefers_code_path_for_sparse_mixed_path_scan(tmp_path: Pa
     manifest = json.loads(Path(recovery.manifest_path).read_text(encoding="utf-8"))
     assert manifest["recovery_mode"] == "path_scan"
     assert manifest["discovered_path_count"] == 3
-    assert manifest["artifacts"]["primary_source_path"].endswith("root\\src\\main.ts")
+    assert _path_endswith(manifest["artifacts"]["primary_source_path"], "root/src/main.ts")
     supporting = manifest["artifacts"]["recovered_supporting_artifacts"]
-    assert any(path.endswith("root\\package.json") for path in supporting)
-    assert any(path.endswith("root\\.env") for path in supporting)
+    assert any(_path_endswith(path, "root/package.json") for path in supporting)
+    assert any(_path_endswith(path, "root/.env") for path in supporting)
     assert "sparse mixed fallback payload" in (output_dir / "root" / "src" / "main.ts").read_text(
         encoding="utf-8"
     )
