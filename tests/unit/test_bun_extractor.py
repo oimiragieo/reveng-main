@@ -7,13 +7,6 @@ from pathlib import Path
 
 import pytest
 
-
-def _path_endswith(path: str | None, suffix: str) -> bool:
-    """OS-agnostic suffix check for recovered filesystem / virtual paths."""
-    if path is None:
-        return False
-    return Path(path).as_posix().endswith(Path(suffix).as_posix())
-
 from reveng.tools.anti_analysis.bun_extractor import (
     BunExecutableExtractor,
     BunSourcemapProvenance,
@@ -28,6 +21,12 @@ from reveng.tools.anti_analysis.bun_extractor import (
 )
 from reveng.tools.anti_analysis.packer_detector import PackerDetector
 from reveng.tools.anti_analysis.universal_unpacker import UniversalUnpacker
+
+def _path_endswith(path: str | None, suffix: str) -> bool:
+    """OS-agnostic suffix check for recovered filesystem / virtual paths."""
+    if path is None:
+        return False
+    return Path(path).as_posix().endswith(Path(suffix).as_posix())
 
 
 def _build_pe_with_bun_section(

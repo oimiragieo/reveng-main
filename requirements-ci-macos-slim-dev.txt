@@ -15,8 +15,9 @@
 # =============================================================================
 
 # Python code formatter (black)
-# Cap <26: black 26+ requires Python>=3.10; project floor is 3.9
-black>=25.11.0,<26
+# Wave 2: macos matrix includes Python 3.9; black 25.11+ needs >=3.10 (PyPI).
+# Cap <25 so slim macos-3.9 install stays installable (unicorn mitigation lane).
+black>=24.8.0,<25
 
 # Python import sorter
 isort>=5.12.0,<6.0.0
