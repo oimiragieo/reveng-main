@@ -32,7 +32,7 @@ capstone>=5.0.1,<6.0.0
 # =============================================================================
 
 # Control flow graph analysis (security updates)
-networkx>=3.1,<4.0.0
+networkx>=3.4.2,<4.0.0
 
 # Graph visualization (security updates)
 pydot>=1.4.2,<2.0.0

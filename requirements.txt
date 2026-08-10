@@ -36,7 +36,7 @@ capstone>=5.0.0,<6.0.0
 # =============================================================================
 
 # Control flow graph analysis (security updates)
-networkx>=3.1,<4.0.0
+networkx>=3.4.2,<4.0.0
 
 # Graph visualization (requires Graphviz)
 pydot>=1.4.2,<2.0.0
@@ -119,7 +119,7 @@ scipy>=1.10.0,<2.0.0  # Already listed above, needed for Hungarian algorithm
 # macOS: brew install afl-fuzz
 
 # Exploit Chain Generation
-# networkx>=3.1,<4.0.0  # Already listed above for graph-based analysis
+# networkx>=3.4.2,<4.0.0  # Already listed above for graph-based analysis
 # Note: ROPgadget tool recommended - pip install ropgadget
 
 # Intel PT Hardware Analysis
