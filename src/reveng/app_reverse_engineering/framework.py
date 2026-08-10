@@ -75,6 +75,7 @@ class AppReverseEngineeringFramework:
         run_restringer: bool = False,
         run_wakaru: bool = False,
         run_js_deobfuscator: bool = False,
+        bun_vfs_dir: Optional[str] = None,
     ) -> AppReverseEngineeringResult:
         """Run the selected adapter and return a normalized result."""
         selected_language = self.infer_language(input_path) if language == "auto" else language
@@ -103,6 +104,7 @@ class AppReverseEngineeringFramework:
                 run_restringer=run_restringer,
                 run_wakaru=run_wakaru,
                 run_js_deobfuscator=run_js_deobfuscator,
+                bun_vfs_dir=bun_vfs_dir,
                 **base_kwargs,
             )
         else:

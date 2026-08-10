@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 from reveng.javascript.bundle_reverse_engineer import JavaScriptBundleReverseEngineer
 
 from ..js_oracle_scorecard import compute_js_project_file_scorecard
+from ..js_project_materialize import materialize_js_project_tree
+from ..js_structural_identifiers import collect_structural_identifier_hints
 from ..models import AppReverseEngineeringResult
 
-_JS_SUFFIXES = {".js", ".cjs", ".mjs"}
+_JS_SUFFIXES = {".js", ".cjs", ".mjs", ".ts", ".tsx", ".jsx"}
 
 
 def _project_recovered_root(output_dir: Path) -> Optional[Path]:
@@ -56,6 +59,7 @@ class JavaScriptAppAdapter:
         run_restringer: bool = False,
         run_wakaru: bool = False,
         run_js_deobfuscator: bool = False,
+        bun_vfs_dir: Optional[str] = None,
     ) -> AppReverseEngineeringResult:
         """Run bundle RE; attach filename-set scorecard when oracle_dir is usable.
 
@@ -95,11 +99,30 @@ class JavaScriptAppAdapter:
         if result.deep_deobfuscation_output:
             primary_artifacts["deobfuscated_bundle"] = result.deep_deobfuscation_output
 
-        recovered_root = _project_recovered_root(Path(output_dir))
+        out_path = Path(output_dir)
+        vfs_candidate = Path(bun_vfs_dir) if bun_vfs_dir else (out_path / "bunfs")
+        materialize = materialize_js_project_tree(
+            output_dir=out_path,
+            normalized_bundle=result.normalized_bundle,
+            input_path=Path(input_path),
+            bun_vfs_dir=vfs_candidate if vfs_candidate.is_dir() else None,
+        )
+        recovered_root = _project_recovered_root(out_path)
         recovered_paths: List[Path] = []
         if recovered_root is not None:
             primary_artifacts["reconstructed_project"] = recovered_root
             recovered_paths = _collect_project_files(recovered_root)
+
+        hints_path = out_path / "artifacts" / "structural_identifier_hints.json"
+        try:
+            hints = collect_structural_identifier_hints(
+                Path(result.normalized_bundle) if result.normalized_bundle else Path(input_path)
+            )
+            hints_path.parent.mkdir(parents=True, exist_ok=True)
+            hints_path.write_text(json.dumps(hints, indent=2) + "\n", encoding="utf-8")
+            primary_artifacts["structural_identifier_hints"] = hints_path
+        except Exception as exc:  # pragma: no cover - non-fatal
+            warnings.append(f"structural_identifier_hints_failed:{exc}")
 
         metadata: Dict[str, Any] = {
             "obfuscation_types": result.obfuscation_types,
@@ -109,6 +132,9 @@ class JavaScriptAppAdapter:
             "slash_commands": result.slash_commands,
             "topic_match_counts": result.topic_match_counts,
             "ralph_knobs": ralph_knobs,
+            "materialization_mode": materialize.mode,
+            "materialization_notes": list(materialize.notes),
+            "materialization_files_written": materialize.files_written,
         }
 
         if oracle_dir is not None:
@@ -123,14 +149,17 @@ class JavaScriptAppAdapter:
                     recovered_paths,
                     recovered_root=recovered_root,
                 )
-                if recovered_root is None:
-                    notes = scorecard.get("notes") or []
-                    if isinstance(notes, list):
-                        if "no_recovered_project_files" not in notes:
-                            notes.append("no_recovered_project_files")
-                        scorecard["notes"] = notes
-                    else:
-                        scorecard["notes"] = f"{notes};no_recovered_project_files"
+                notes = scorecard.get("notes") or []
+                if not isinstance(notes, list):
+                    notes = [str(notes)]
+                notes = list(notes)
+                notes.append(f"materialization_mode:{materialize.mode}")
+                for note in materialize.notes:
+                    if note not in notes:
+                        notes.append(note)
+                if recovered_root is None and "no_recovered_project_files" not in notes:
+                    notes.append("no_recovered_project_files")
+                scorecard["notes"] = notes
                 metadata["benchmark_scorecard"] = scorecard
 
         return AppReverseEngineeringResult(

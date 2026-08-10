@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "purpose": "example_only_do_not_fill_with_anthropic_paths_in_git",
+  "package": "@anthropic-ai/claude-code",
+  "version": "REPLACE_ME",
+  "artifact_sha256": "REPLACE_ME",
+  "extract_tool": "reveng.tools.anti_analysis.bun_extractor",
+  "extract_root": "/tmp/claude_bun_extract/REPLACE_ME",
+  "materialization_mode": "bun_vfs",
+  "oracle_tree": "operator-local-only",
+  "ralph_report": "/tmp/REPLACE_ME/ralph_report.json",
+  "notes": "Copy to /tmp and fill locally. Never commit real Anthropic trees."
+}
