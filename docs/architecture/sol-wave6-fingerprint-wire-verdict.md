@@ -1,6 +1,6 @@
 # Sol verdict — Wave 6 fingerprint wire (W6-A)
 
-**Reviewed HEAD SHA:** TBD  
+**Reviewed HEAD SHA:** `9efe73a6ecffb06e0661593792967a1a945a0247`  
 **Plan:** `docs/superpowers/plans/2026-08-09-wave6-r-ralph2-fingerprint-engine.md`  
 **Packet:** `docs/architecture/sol-wave6-fingerprint-wire-packet.md`
 
