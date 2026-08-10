@@ -12,6 +12,22 @@ Reaching **0.80+ recall** on a real minified `cli.js` still depends on **engine 
 
 From repository root (after `pip install -e .` or `PYTHONPATH=src`):
 
+**Wave 3 note (2026-08-09):** current npm `@anthropic-ai/claude-code` ships a native `claude.exe` and **does not** publish `cli.js`. Prefer the checked-in interim surface until a legitimate large JS bundle input exists again (see `docs/architecture/research-r-ralph-2.md`).
+
+```bash
+# Interim tracked micro-bundle (repo-local; not "cli.js GA")
+python scripts/ralph_js_oracle_loop.py \
+  --input test_samples/js_tracked_bundle_artifact/bundle.js \
+  --oracle test_samples/js_tracked_bundle_source \
+  --output-dir reports/js_oracle_ralph_tracked \
+  --target-recall 0.80 \
+  --max-attempts 1 \
+  --no-plateau \
+  --no-js-behavior-probe
+```
+
+Historical large-bundle shape (obsolete on current npm packaging — keep only if you still have a real `cli.js`):
+
 ```bash
 python scripts/ralph_js_oracle_loop.py \
   --input "C:/Users/you/AppData/Roaming/npm/node_modules/@anthropic-ai/claude-code/cli.js" \

@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "result_type": "ralph_js_oracle_loop_report",
+  "input_path": "/mnt/c/dev/projects/reveng-main/test_samples/js_tracked_bundle_artifact/bundle.js",
+  "oracle_dir": "/mnt/c/dev/projects/reveng-main/test_samples/js_tracked_bundle_source",
+  "output_root": "/tmp/ralph_w3_raw",
+  "target_project_file_recall": 0.8,
+  "variant_count": 5,
+  "stop_on_plateau": false,
+  "plateau_attempts_configured": 12,
+  "effective_plateau_attempts": null,
+  "max_attempts_limit": 1,
+  "best_attempt": 1,
+  "best_project_file_recall": 0.0,
+  "best_project_file_precision": 0.0,
+  "best_js_behavior_probe_tier": 0,
+  "completion_reason": "max_attempts_reached",
+  "attempt_count": 1,
+  "attempts": [
+    {
+      "attempt": 1,
+      "label": "baseline",
+      "variant": {
+        "run_webcrack": false,
+        "run_restringer": false,
+        "run_deobfuscator": false,
+        "run_wakaru": false,
+        "run_js_deobfuscator": false,
+        "max_snippets": 12
+      },
+      "project_file_recall": 0.0,
+      "project_file_precision": 0.0,
+      "js_behavior_probe_tier": 0,
+      "validation_grade": "evidence_backed",
+      "analysis_file": "/tmp/ralph_w3_raw/attempt_001_baseline/analysis.json",
+      "improved": true,
+      "ralph_knobs": {
+        "run_deobfuscator": "not_requested",
+        "run_js_deobfuscator": "not_requested",
+        "run_webcrack": "not_requested",
+        "run_restringer": "not_requested",
+        "run_wakaru": "not_requested"
+      }
+    }
+  ],
+  "best_benchmark_scorecard": {
+    "project_file_recall": 0.0,
+    "project_file_precision": 0.0,
+    "matched_oracle_file_count": 0,
+    "oracle_file_count": 5,
+    "recovered_file_count": 0,
+    "reconstruction_mode": "filename_set",
+    "match_mode": "none",
+    "overall_score": 0.0,
+    "token_signal_score": 0.0,
+    "token_signal_mode": "filename_set_basename_jaccard_all",
+    "notes": [
+      "no_recovered_root",
+      "no_recovered_project_files"
+    ]
+  },
+  "variant_schedule": {
+    "variants_json_only": false,
+    "no_default_variants": false,
+    "variants_json": null,
+    "append_wakaru": false,
+    "append_js_deobfuscator": false,
+    "variant_count": 5,
+    "variant_labels": [
+      "baseline",
+      "webcrack",
+      "webcrack_more_snippets",
+      "webcrack_restringer",
+      "deobfuscator_pass"
+    ],
+    "run_js_behavior_probe": false,
+    "until_target": false,
+    "stop_on_plateau": false,
+    "max_attempts_resolved": 1,
+    "plateau_attempts_resolved": 12
+  },
+  "wave3_honesty": {
+    "surface": "js_tracked_bundle_artifact",
+    "not_cli_js": true,
+    "interpreter": "/usr/bin/python3.9",
+    "accessed": "2026-08-09",
+    "harness_exit_code": 2,
+    "path_note": "input_path/oracle_dir/output_root may be absolute host paths from the dogfood run; see mismatch_control.md"
+  }
+}

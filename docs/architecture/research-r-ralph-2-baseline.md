@@ -3,6 +3,8 @@
 **Question:** What is the smallest engine wedge that reaches 0.8+ recall on tracked `cli.js`?  
 **Wave A answer:** Not decidable without a measured baseline. This doc records the baseline attempt only. It does **not** close `R-RALPH-2` / product `RALPH-2`.
 
+**Wave 3 update (2026-08-09):** npm `@anthropic-ai/claude-code` no longer ships `cli.js` (native `claude.exe`). See [`research-r-ralph-2.md`](research-r-ralph-2.md) for packaging evidence + interim tracked-bundle score. This BASELINE row stays **done**; product/engine `R-RALPH-2` stays **open**.
+
 ## Measured baseline
 
 | field | value |

@@ -46,8 +46,8 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 
 ## Canonical docs
 
-- `docs/architecture/ceo-update-2026-08-09-waves1-2.md` (latest CEO; Waves 0–2 **merged**)
-- `docs/architecture/ceo-update-2026-08-09-wave0.md` / `ceo-update-2026-08-08-tg-audit-merge.md` (priors)
+- `docs/architecture/ceo-update-2026-08-09-wave3.md` (latest CEO; Wave 3 R-RALPH-2 re-baseline — **not** Phase 6 close)
+- `docs/architecture/ceo-update-2026-08-09-waves1-2.md` / `ceo-update-2026-08-09-wave0.md` (priors)
 - `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L50**)
 - `docs/architecture/wave-b-exit-criteria.md` / `wave-c-exit-criteria.md`
 - Root `backlog.md` (ALL ids; §L = #101 dispositions — issue **#101** still OPEN)
@@ -61,8 +61,9 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 | 0 | #131 | merged |
 | 1 | #132 → `41add7d1` | merged |
 | 2 | #133 → `1eff22f8` | **MERGED** (not OPEN); Sol PASS_WITH_NITS on tip `34d5b99d`; post-merge note `00e9f65b` |
+| 3 | `feat/wave3-r-ralph-2-rebaseline` | Thinktank APPROVE Wave3=A; packaging re-baseline + interim tracked Ralph score; R-RALPH-2 stays **open** |
 
-Roadmap / RALPH-2 / phases 6–13 remain open — Waves 0–2 are honesty/CI hygiene, **not** “all backlog closed”.
+Roadmap / RALPH-2 / phases 6–13 remain open — Waves 0–3 are honesty/research, **not** “all backlog closed” or enterprise GA.
 
 ## CI honesty install (L28 + L35 + L36)
 
