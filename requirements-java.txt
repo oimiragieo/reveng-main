@@ -23,7 +23,7 @@ capstone>=5.0.0
 networkx>=3.0
 pydot>=1.4.2
 tqdm>=4.64.0
-pyyaml>=6.0
+pyyaml>=6.0.3
 
 # =============================================================================
 # JAVA-SPECIFIC DEPENDENCIES
