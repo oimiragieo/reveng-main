@@ -314,6 +314,9 @@ external/ghidramcp/
 # Claude Code workflow worktrees + transcripts (scratch)
 .claude/worktrees/
 .claude/thinktank_*.md
+docs/architecture/thinktank-*/
+docs/architecture/thinktank-*.md
+docs/architecture/thinktank-*-out/
 
 # Agent / local worktree scratch (never publish)
 .worktrees/
