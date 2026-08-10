@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI for the JS recovery toolkit (Wave 7)."""
+"""CLI for the JS recovery toolkit (Wave 7–8)."""
 
 from __future__ import annotations
 
@@ -21,6 +21,18 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Also try npx webcrack / @wakaru/cli (network; non-hermetic)",
     )
+    parser.add_argument(
+        "--enable-llm-digest",
+        action="store_true",
+        help="AST-chunked LLM summarize on unlocked modules (local :8000 / ollama / anthropic)",
+    )
+    parser.add_argument("--llm-prefer", default=None, help="openai_compat|ollama|anthropic")
+    parser.add_argument("--llm-max-modules", type=int, default=40)
+    parser.add_argument(
+        "--no-llm-tag-boost",
+        action="store_true",
+        help="Skip second defrag pass from LLM tags",
+    )
     args = parser.parse_args(argv)
 
     # Ensure src layout importable when run from repo
@@ -37,6 +49,10 @@ def main(argv: list[str] | None = None) -> int:
         oracle_dir=args.oracle,
         bun_binary=args.bun_binary,
         run_external=bool(args.run_external),
+        enable_llm_digest=bool(args.enable_llm_digest),
+        llm_prefer=args.llm_prefer,
+        llm_max_modules=int(args.llm_max_modules),
+        llm_tag_boost=not bool(args.no_llm_tag_boost),
     )
     print(json.dumps(report.to_serializable(), indent=2)[:4000])
     return 0

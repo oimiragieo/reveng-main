@@ -1,11 +1,11 @@
-"""End-to-end JS recovery toolkit pipeline (Wave 7)."""
+"""End-to-end JS recovery toolkit pipeline (Wave 7–8)."""
 
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from reveng.app_reverse_engineering.js_project_materialize import materialize_js_project_tree
 from reveng.app_reverse_engineering.js_stale_map_transfer import (
@@ -14,6 +14,8 @@ from reveng.app_reverse_engineering.js_stale_map_transfer import (
 )
 
 from .behavior_probe import behavior_token_overlap
+from .bun_serialized_sourcemap import materialize_serialized_sources, parse_serialized_sourcemap
+from .coverage_union import singleton_literal_hits, union_coverage
 from .ensemble_index import build_ensemble_index_from_sourcemap, scan_ensemble
 from .external_tools import (
     probe_external_tools,
@@ -23,6 +25,12 @@ from .external_tools import (
     write_tool_probe_json,
 )
 from .graph_complete import suggest_graph_completions
+from .iterative_defrag import run_iterative_defrag
+from .llm_digest import heuristic_summarize_fn, summarize_unlocked_modules
+from .provider_summarize import build_summarize_fn, probe_providers
+from .readable_normalize import readable_normalize
+from .structural_match import match_sources_to_bundle
+from .tag_boost import run_tag_boost_defrag
 
 
 @dataclass
@@ -58,17 +66,21 @@ def run_recovery_toolkit(
     oracle_dir: Optional[Path] = None,
     bun_binary: Optional[Path] = None,
     run_external: bool = False,
+    enable_llm_digest: bool = False,
+    llm_prefer: Optional[str] = None,
+    llm_max_modules: int = 40,
+    llm_tag_boost: bool = True,
 ) -> ToolkitReport:
     """Run materialize → fingerprint → ensemble → graph → behavior (+ optional externals)."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     report = ToolkitReport(output_dir=output_dir)
-    report.notes.append("toolkit_wave7")
+    report.notes.append("toolkit_wave8")
 
     tools_probe = write_tool_probe_json(output_dir / "tool_probe.json")
     report.stages["tool_probe"] = tools_probe
 
-    # Optional Bun binary extract
+    # Optional Bun binary extract (+ SerializedSourceMap when present)
     if bun_binary is not None and Path(bun_binary).is_file():
         bun_out = output_dir / "bun_extract"
         bun_res = try_bun_extract_in_tree(Path(bun_binary), bun_out)
@@ -84,6 +96,21 @@ def run_recovery_toolkit(
         candidates = list(bun_out.rglob("*.js")) if bun_out.exists() else []
         if candidates and bundle is None:
             bundle = max(candidates, key=lambda p: p.stat().st_size)
+        # Decode any adjacent .bunmap SerializedSourceMap blobs
+        sm_recovered = 0
+        sm_notes: List[str] = []
+        for sm_path in bun_out.rglob("*.bunmap") if bun_out.exists() else []:
+            parsed = parse_serialized_sourcemap(sm_path.read_bytes())
+            sm_notes.extend(parsed.notes)
+            if parsed.sources:
+                sm_recovered += materialize_serialized_sources(
+                    parsed, bun_out / "from_serialized_map"
+                )
+        report.stages["bun_serialized_sourcemap"] = {
+            "blobs_seen": (len(list(bun_out.rglob("*.bunmap"))) if bun_out.exists() else 0),
+            "files_recovered": sm_recovered,
+            "notes": sm_notes[:20],
+        }
 
     if bundle is None or not Path(bundle).is_file():
         report.notes.append("bundle_absent")
@@ -93,7 +120,14 @@ def run_recovery_toolkit(
         return report
 
     bundle = Path(bundle)
-    bundle_text = bundle.read_text(encoding="utf-8", errors="replace")
+    raw_bundle_text = bundle.read_text(encoding="utf-8", errors="replace")
+    # Wave 9: beautify-lite before fingerprint/defrag (not CFF/string-array undo)
+    norm = readable_normalize(raw_bundle_text)
+    bundle_text = norm.text or raw_bundle_text
+    report.stages["readable_normalize"] = norm.to_serializable()
+    (output_dir / "artifacts").mkdir(parents=True, exist_ok=True)
+    (output_dir / "artifacts" / "bundle.readable.js").write_text(bundle_text, encoding="utf-8")
+    report.notes.append("toolkit_wave9_readable")
 
     # Materialize from sibling map
     mat = materialize_js_project_tree(
@@ -205,6 +239,139 @@ def run_recovery_toolkit(
                 for h in hints
             ],
         }
+
+        # Wave 8: singleton literals + structural MinHash + coverage union
+        attributed: Dict[str, str] = {}
+        for h in ehits:
+            attributed[h.source_path] = "ensemble"
+        # Fingerprint paths (if serialized on transfer)
+        fp_paths = transfer.metrics.get("first_party_confirmed_paths") or []
+        if isinstance(fp_paths, list):
+            for p in fp_paths:
+                attributed.setdefault(str(p), "fingerprint_v5")
+        single_hits, survivors = singleton_literal_hits(path_bodies, bundle_text)
+        for p in single_hits:
+            attributed.setdefault(p, "singleton_literal")
+        remaining = {
+            p: body
+            for p, body in path_bodies.items()
+            if p.startswith("src/") and p not in attributed
+        }
+        structural = match_sources_to_bundle(
+            remaining,
+            bundle_text,
+            threshold=0.55,
+            already_confirmed=set(attributed),
+            max_sources=min(400, len(remaining)),
+        )
+        for m in structural:
+            attributed.setdefault(m.source_path, "structural_minhash")
+        # Survivors = independent presence evidence (literals / ensemble / fp), not structural
+        survivors |= {h.source_path for h in ehits}
+        if isinstance(fp_paths, list):
+            survivors |= {str(p) for p in fp_paths}
+        oracle_paths: Set[str] = {p for p in path_bodies if p.startswith("src/")}
+        cov = union_coverage(
+            oracle_paths=oracle_paths,
+            attributed={p: m for p, m in attributed.items() if p in oracle_paths},
+            survivor_paths={p for p in survivors if p in oracle_paths},
+        )
+        report.stages["coverage_union"] = cov.to_serializable()
+        report.stages["structural_match"] = {
+            "confirmed": len(structural),
+            "paths": [m.source_path for m in structural],
+            "scores": {m.source_path: m.score for m in structural},
+        }
+        report.stages["singleton_literal"] = {
+            "confirmed": len(single_hits & oracle_paths),
+            "survivor_detection": len(survivors & oracle_paths),
+        }
+        (output_dir / "artifacts" / "coverage_union.json").write_text(
+            json.dumps(cov.to_serializable(), indent=2) + "\n", encoding="utf-8"
+        )
+        if cov.survivor_coverage >= 1.0 and cov.survivor_count > 0:
+            report.notes.append("survivor_coverage_100pct")
+        if cov.oracle_coverage >= 1.0 and cov.oracle_count > 0:
+            report.notes.append("oracle_coverage_100pct")
+
+        # Wave 8.5: iterative defrag + TF-IDF word-map (option C)
+        defrag = run_iterative_defrag(
+            sources=path_bodies,
+            bundle_text=bundle_text,
+            seed_attributed={p: m for p, m in attributed.items() if p in oracle_paths},
+            max_rounds=8,
+        )
+        for path, method in defrag.attributed.items():
+            attributed.setdefault(path, method)
+        report.stages["iterative_defrag"] = defrag.to_serializable()
+        report.notes.append("toolkit_wave85")
+        final_cov = union_coverage(
+            oracle_paths=oracle_paths,
+            attributed={p: m for p, m in attributed.items() if p in oracle_paths},
+            survivor_paths=set(defrag.attributed.keys())
+            | {p for p in survivors if p in oracle_paths},
+        )
+        report.stages["coverage_union_final"] = final_cov.to_serializable()
+        (output_dir / "artifacts" / "iterative_defrag.json").write_text(
+            json.dumps(defrag.to_serializable(), indent=2) + "\n", encoding="utf-8"
+        )
+        if defrag.survivor_coverage >= 1.0 and defrag.unlockable_count > 0:
+            report.notes.append("defrag_survivor_coverage_100pct")
+        if defrag.oracle_coverage >= 1.0 and defrag.unlockable_count > 0:
+            report.notes.append("defrag_oracle_coverage_100pct")
+
+        # Wave 9/9b: AST-chunked LLM digest + tag-boost defrag (optional)
+        if enable_llm_digest:
+            summarize_fn, provider_notes = build_summarize_fn(prefer=llm_prefer)
+            # Prefer diverse unlocked paths (largest first) for richer tags
+            unlocked = sorted(
+                defrag.attributed.keys(),
+                key=lambda p: len(path_bodies.get(p, "")),
+                reverse=True,
+            )
+            # Also probe a few unattributed neighbors for tag unlock
+            remaining = [
+                p
+                for p in sorted(
+                    oracle_paths, key=lambda x: len(path_bodies.get(x, "")), reverse=True
+                )
+                if p not in defrag.attributed
+            ][: max(0, llm_max_modules // 2)]
+            probe_paths = unlocked[: max(1, llm_max_modules - len(remaining))] + remaining
+            digests = summarize_unlocked_modules(
+                path_to_body=path_bodies,
+                unlocked_paths=probe_paths,
+                summarize_fn=summarize_fn,
+                max_modules=llm_max_modules,
+            )
+            report.stages["llm_digest"] = {
+                "enabled": True,
+                "provider_probe": probe_providers(),
+                "provider_notes": provider_notes,
+                "module_count": len(digests),
+                "digests": [d.to_serializable() for d in digests],
+                "notes": [
+                    "not_full_bundle_dump",
+                    "ast_chunked_modules",
+                    "humanify_pattern",
+                ],
+            }
+            report.llm_used = True
+            report.notes.append("llm_digest_enabled")
+            if llm_tag_boost and digests:
+                boost = run_tag_boost_defrag(
+                    sources=path_bodies,
+                    bundle_text=bundle_text,
+                    seed_attributed={p: m for p, m in attributed.items() if p in oracle_paths},
+                    digests=digests,
+                    max_rounds=4,
+                )
+                for path, method in boost.defrag.attributed.items() if boost.defrag else []:
+                    attributed.setdefault(path, method)
+                report.stages["llm_tag_boost"] = boost.to_serializable()
+                report.notes.append("llm_tag_boost")
+                if boost.defrag and boost.defrag.oracle_coverage >= 1.0:
+                    report.notes.append("tag_boost_oracle_coverage_100pct")
     else:
         report.notes.append("sourcemap_absent")
 
@@ -227,14 +394,14 @@ def run_recovery_toolkit(
             "notes": overlap.notes,
         }
 
-    # Optional externals (off by default for hermetic CI)
+    # Optional externals: webcrack FIRST (CFF/string-array), then wakaru (unminify)
     if run_external:
-        report.stages["external_webcrack"] = try_webcrack(
-            bundle, output_dir / "external" / "webcrack"
-        ).__dict__
+        wc_out = output_dir / "external" / "webcrack"
+        report.stages["external_webcrack"] = try_webcrack(bundle, wc_out).__dict__
         report.stages["external_wakaru"] = try_wakaru(
             bundle, output_dir / "external" / "wakaru"
         ).__dict__
+        report.notes.append("external_chain_webcrack_then_wakaru")
 
     (output_dir / "toolkit_report.json").write_text(
         json.dumps(report.to_serializable(), indent=2) + "\n", encoding="utf-8"

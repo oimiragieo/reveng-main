@@ -38,7 +38,11 @@ def test_adapter_wires_fingerprint() -> None:
 def test_tracked_recall_not_falsely_closed() -> None:
     data = json.loads(REPORT.read_text(encoding="utf-8"))
     assert float(data["best_project_file_recall"]) == 0.4
-    assert "R-RALPH-2" not in (data.get("wave_note") or "") or "open" in (data.get("wave_note") or "").lower() or True
+    assert (
+        "R-RALPH-2" not in (data.get("wave_note") or "")
+        or "open" in (data.get("wave_note") or "").lower()
+        or True
+    )
     # must not claim 0.8
     assert float(data["best_project_file_recall"]) < 0.8
 

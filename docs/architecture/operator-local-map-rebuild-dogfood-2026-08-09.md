@@ -47,8 +47,33 @@ Interpretation: fingerprint transfer attributes hundreds of first-party `src/` p
 
 Synthetic fixtures under `test_samples/js_stale_map_transfer/`: mismatch confirms **0**; positive confirms α with ≥2 signals (unit tests).
 
+### D — Wave 8 coverage union (stale map → Bun)
+
+| Metric | Value |
+|--------|------:|
+| ensemble | 553 |
+| singleton extras | +68 |
+| **union attributed** | **621** |
+| **oracle_coverage** | **0.3265** |
+| **survivor_coverage** | **1.0** |
+| structural MinHash adds | 0 |
+| Claude SEA `sourcemap_size>0` | 0 |
+| `decoded_exe_claim` | false |
+
+### E — Wave 8.5 iterative defrag + word-map
+
+| Metric | Value |
+|--------|------:|
+| seed | 621 |
+| after defrag | **990** |
+| **oracle_coverage** | **0.5205** |
+| **survivor/unlockable** | **1.0** |
+| new unlocks | +369 (cooccur 278, word_map 73, graph 18) |
+| `decoded_exe_claim` | false |
+
 ## Honesty bounds
 
 - Fixture/dogfood ≠ product capability on current npm `claude.exe` packaging.
 - VLQ remap of stale map onto Bun bytecode remains invalid (line-ratio ~0.31 historically); fingerprint path is the approved wedge.
+- Survivor/unlockable 100% ≠ oracle 100% of the old tree.
 - R-RALPH-2 / Phase 6 remain **open**.

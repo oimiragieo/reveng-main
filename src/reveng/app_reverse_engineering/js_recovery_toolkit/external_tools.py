@@ -36,14 +36,32 @@ def probe_external_tools() -> Dict[str, bool]:
 
 
 def try_webcrack(bundle: Path, output_dir: Path, *, timeout_s: int = 120) -> ExternalToolResult:
-    """Unpack/unminify via ``npx webcrack`` when Node is available."""
+    """Unpack/unminify via ``npx webcrack`` when Node is available.
+
+    Prefer an empty ``output_dir`` — webcrack refuses if the directory exists.
+    For large Bun SEAs allow a high ``timeout_s`` (tens of minutes).
+    """
     out = ExternalToolResult(tool="webcrack", available=False, ran=False)
     if _which("npx") is None:
         out.notes.append("npx_absent")
         return out
     out.available = True
-    output_dir.mkdir(parents=True, exist_ok=True)
-    cmd = ["npx", "--yes", "webcrack", str(bundle), "-o", str(output_dir)]
+    if output_dir.exists():
+        # webcrack errors with "output directory already exists"
+        import shutil as _shutil
+
+        _shutil.rmtree(output_dir, ignore_errors=True)
+    # Do NOT mkdir — webcrack creates the output path itself
+    cmd = [
+        "npx",
+        "--yes",
+        "webcrack",
+        str(bundle),
+        "-o",
+        str(output_dir),
+        "-f",
+        "--no-jsx",
+    ]
     try:
         proc = subprocess.run(
             cmd,
@@ -56,10 +74,22 @@ def try_webcrack(bundle: Path, output_dir: Path, *, timeout_s: int = 120) -> Ext
         out.exit_code = proc.returncode
         out.output_dir = str(output_dir)
         if proc.returncode != 0:
-            out.error = (proc.stderr or proc.stdout or "")[:500]
+            out.error = (proc.stderr or proc.stdout or "")[:800]
             out.notes.append("webcrack_nonzero")
         else:
             out.notes.append("webcrack_ok")
+            # Count outputs
+            try:
+                files = list(output_dir.rglob("*"))
+                out.notes.append(f"output_entries:{len(files)}")
+            except OSError:
+                pass
+    except subprocess.TimeoutExpired as exc:
+        out.ran = True
+        out.exit_code = -1
+        out.error = f"timeout:{timeout_s}s"
+        out.notes.append("webcrack_timeout")
+        out.notes.append(str(exc)[:200])
     except Exception as exc:  # pragma: no cover
         out.error = str(exc)
         out.notes.append("webcrack_failed")

@@ -314,6 +314,47 @@ external/ghidramcp/
 # Claude Code workflow worktrees + transcripts (scratch)
 .claude/worktrees/
 .claude/thinktank_*.md
+docs/architecture/thinktank-*/
+docs/architecture/thinktank-*.md
+docs/architecture/thinktank-*-out/
+
+# Agent / local worktree scratch (never publish)
+.worktrees/
+.tmp_tt/
+tmpreveng-*/
+**/.tensor-grep/
+.tensor-grep/
+
+# Operator-local JS recovery dogfood (Bun extracts, webcrack outs, LLM receipts)
+# Keep hermetic fixtures under test_samples/; never commit Anthropic trees or /tmp extracts.
+reports/js_recovery_toolkit_*/
+reports/wave*_dogfood*/
+**/webcrack_out/
+**/claude_bun_extract/
+**/claude_sea_extract/
+**/bun_extract/
+cli.js.map
+**/deobfuscated.js
+!test_samples/**/deobfuscated.js
+
+# Local MCP / secrets (example stays tracked)
+mcp-config.json
+mcp-config.*.json
+!mcp-config.example.json
+*.pem
+*.key
+credentials.json
+.openai_api_key
+.anthropic_api_key
+
+# Local GA audit dumps (regenerable; not product fixtures)
+reports/ga_readiness_tg_audit_*.json
+reports/ga_readiness_*.local.json
+
+# In-tree scratch drops (OS temp stays outside the repo)
+/tmp_reveng_*/
+/_tmp_*/
+/reveng_w*/
 
 # Reconstructed/normalized node artifacts under reports/ (regenerable RE outputs;
 # were triggering Dependabot false positives on recovered third-party deps)

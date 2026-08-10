@@ -6,7 +6,6 @@ import re
 from dataclasses import dataclass
 from typing import Set
 
-
 _TOKEN_RE = re.compile(r"""(?:--[a-z][a-z0-9\-]{2,}|/[a-z][a-z0-9_\-/]{2,}|[A-Z][A-Z0-9_]{5,})""")
 
 
