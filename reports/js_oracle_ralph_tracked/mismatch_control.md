@@ -1,21 +1,32 @@
-# Mismatch control — Wave 3 tracked Ralph surface
+# Wave 4 mismatch control — recovered-root materialization
 
-**Date:** 2026-08-09  
-**Interpreter:** `/usr/bin/python3.9`
-
-## Arms
-
-| Arm | Input | Oracle | `best_project_file_recall` | Notes |
+| Arm | Input | Oracle | Recall | Notes |
 | --- | --- | --- | --- | --- |
-| Treatment | `test_samples/js_tracked_bundle_artifact/bundle.js` | `test_samples/js_tracked_bundle_source` | `0.0` | `no_recovered_root`, `no_recovered_project_files` |
-| Mismatch | same bundle | `test_samples/native/hello_go` | `0.0` | same notes |
+| Treatment | `test_samples/js_tracked_bundle_artifact/bundle.js` | `test_samples/js_tracked_bundle_source` | `0.4` | `materialization_mode:source_map`, `sourcemap:bundle.js.map` — **no** `no_recovered_root` |
+| Mismatch | same bundle | `test_samples/native/hello_go` | `0.0` | same materialization mode; filename-set match fails against native oracle |
 
 ## Interpretation
 
-Both arms fail before filename-set matching because the JS adapter did not materialize `output_dir/project`. This control is **instrument-limited and non-discriminatory**: it does **not** prove the two oracles are equally hard, and it does **not** prove scorer correctness. It only documents that the interim baseline zero is a **recovery-root gap**.
+This pair **discriminates**: treatment recovers `src/index.ts` + `src/lib/greet.ts` from sibling `bundle.js.map` `sourcesContent` (2/5 oracle files = 0.4). Mismatch keeps recovered TS files but scores 0.0 against an unrelated native tree.
 
-Positive control for scorecard arithmetic: existing unit tests for `js_oracle_scorecard` / `ralph_js_loop` (see `tests/unit/test_ralph_js_loop.py`).
+Ship gate tokens: treatment recall **> 0**, mismatch recall **<** treatment, mode `source_map`.
 
-## Path / report hygiene
+Does **not** close `R-RALPH-2` / Phase 6 (target 0.8 not reached; product `cli.js` surface still obsolete).
 
-`ralph_report.json` keeps harness scoring fields as emitted. Absolute host paths in `input_path` / `oracle_dir` / `output_root` / attempt paths are expected on dogfood hosts. A small `wave3_honesty` sidecar records surface identity + harness exit code `2` — it must not rewrite recall/notes.
+Commands:
+
+```bash
+/usr/bin/python3.9 scripts/ralph_js_oracle_loop.py \
+  --input test_samples/js_tracked_bundle_artifact/bundle.js \
+  --oracle test_samples/js_tracked_bundle_source \
+  --output-dir /tmp/ralph_w4_raw \
+  --target-recall 0.80 --max-attempts 1 --no-plateau --no-js-behavior-probe
+
+/usr/bin/python3.9 scripts/ralph_js_oracle_loop.py \
+  --input test_samples/js_tracked_bundle_artifact/bundle.js \
+  --oracle test_samples/native/hello_go \
+  --output-dir /tmp/ralph_w4_mismatch \
+  --target-recall 0.80 --max-attempts 1 --no-plateau --no-js-behavior-probe
+```
+
+Wave 3 frozen baseline (pre-materialize): `wave3_ralph_report.json` (recall `0.0`, `no_recovered_root`).

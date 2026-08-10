@@ -28,16 +28,28 @@ Oracle source tree still present at `/mnt/c/dev/projects/claude-code-main`, but 
 
 Do **not** market the micro-bundle score as “cli.js recall” or enterprise JS GA (fixture ≠ capability).
 
-## Measured interim baseline
+## Measured interim baseline (Wave 3 frozen)
 
 | field | value |
 | --- | --- |
 | status | scored (harness exit 2 — target not met) |
 | `best_project_file_recall` | `0.0` |
 | scorecard notes | `no_recovered_root`, `no_recovered_project_files` |
-| Report | [`reports/js_oracle_ralph_tracked/ralph_report.json`](../../reports/js_oracle_ralph_tracked/ralph_report.json) |
+| Report | [`reports/js_oracle_ralph_tracked/wave3_ralph_report.json`](../../reports/js_oracle_ralph_tracked/wave3_ralph_report.json) |
 | Interpreter | `/usr/bin/python3.9` |
 | Command | `python3.9 scripts/ralph_js_oracle_loop.py --input test_samples/js_tracked_bundle_artifact/bundle.js --oracle test_samples/js_tracked_bundle_source --output-dir reports/js_oracle_ralph_tracked --target-recall 0.80 --max-attempts 1 --no-plateau --no-js-behavior-probe` |
+
+## Wave 4 recovered-root wedge (tracked surface)
+
+| field | value |
+| --- | --- |
+| status | scored — materialize `project/` from sibling `.map` `sourcesContent` |
+| `best_project_file_recall` | `0.4` (2/5 oracle files; target 0.8 **not** met) |
+| scorecard notes | `materialization_mode:source_map`, `sourcemap:bundle.js.map` — **no** `no_recovered_root` |
+| Report | [`reports/js_oracle_ralph_tracked/ralph_report.json`](../../reports/js_oracle_ralph_tracked/ralph_report.json) |
+| Evidence | [`research-wave4-tracked-ralph-evidence.md`](research-wave4-tracked-ralph-evidence.md) |
+
+**Still open:** product `RALPH-2` / research `R-RALPH-2` / Phase 6 until 0.8+ on an authorized large surface (or honest redefinition + Sol GO).
 
 Scoring keys live in `src/reveng/app_reverse_engineering/ralph_js_loop.py` (`oracle_recall_precision` / `best_project_file_recall`) and `js_oracle_scorecard.py` (emits `no_recovered_root` when `output_dir/project` is missing — see `adapters/javascript.py` `_project_recovered_root`).
 

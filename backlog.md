@@ -6,13 +6,14 @@ Ops index for the full roadmap clearance program. Update `status` when work land
 **Execution charter:** [`docs/architecture/scope-c-execution-charter.md`](docs/architecture/scope-c-execution-charter.md)
 (not one clearance wave for phases 4–13; disposition ≠ capability `done`).
 
-**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-09-wave3.md`](docs/architecture/ceo-update-2026-08-09-wave3.md)  
-**Prior CEO:** [`ceo-update-2026-08-09-waves1-2.md`](docs/architecture/ceo-update-2026-08-09-waves1-2.md) · [`ceo-update-2026-08-09-wave0.md`](docs/architecture/ceo-update-2026-08-09-wave0.md) · [`ceo-update-2026-08-08-tg-audit-merge.md`](docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md) · charter · wave2 · wave1  
+**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-09-wave4.md`](docs/architecture/ceo-update-2026-08-09-wave4.md)  
+**Prior CEO:** [`ceo-update-2026-08-09-wave3.md`](docs/architecture/ceo-update-2026-08-09-wave3.md) · [`ceo-update-2026-08-09-waves1-2.md`](docs/architecture/ceo-update-2026-08-09-waves1-2.md) · [`ceo-update-2026-08-09-wave0.md`](docs/architecture/ceo-update-2026-08-09-wave0.md) · [`ceo-update-2026-08-08-tg-audit-merge.md`](docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md) · charter · wave2 · wave1  
 **Wave 0 closeout plan:** [`docs/superpowers/plans/2026-08-09-backlog-closeout-program.md`](docs/superpowers/plans/2026-08-09-backlog-closeout-program.md) (Thinktank **APPROVE Wave 0**; PR #131 merged)  
 **Wave 1 plan:** [`docs/superpowers/plans/2026-08-09-wave1-honesty-deep-dive.md`](docs/superpowers/plans/2026-08-09-wave1-honesty-deep-dive.md) (PR **#132** merged)  
 **Wave 2 plan:** [`docs/superpowers/plans/2026-08-09-wave2-honesty-deep-dive.md`](docs/superpowers/plans/2026-08-09-wave2-honesty-deep-dive.md) (PR **#133** merged `1eff22f8`)  
 **Wave 2 closeout plan:** [`docs/superpowers/plans/2026-08-09-wave2-closeout.md`](docs/superpowers/plans/2026-08-09-wave2-closeout.md) (Thinktank **APPROVE_WITH_NITS**; Sol **PASS_WITH_NITS** tip `34d5b99d`)  
 **Wave 3 plan:** [`docs/superpowers/plans/2026-08-09-wave3-r-ralph-2-rebaseline.md`](docs/superpowers/plans/2026-08-09-wave3-r-ralph-2-rebaseline.md) (Thinktank **APPROVE Wave3=A**; R-RALPH-2 re-baseline — not all-backlog)  
+**Wave 4 plan:** [`docs/superpowers/plans/2026-08-09-wave4-js-recovered-root-naming.md`](docs/superpowers/plans/2026-08-09-wave4-js-recovered-root-naming.md) (recovered-root + hints; R-RALPH-2 stays **open**)  
 **Wave B exit criteria:** [`docs/architecture/wave-b-exit-criteria.md`](docs/architecture/wave-b-exit-criteria.md)  
 **Wave C exit criteria:** [`docs/architecture/wave-c-exit-criteria.md`](docs/architecture/wave-c-exit-criteria.md)  
 **Lessons:** [`docs/architecture/lessons-learned-scope-c-2026-08.md`](docs/architecture/lessons-learned-scope-c-2026-08.md) (**L1–L48**)
@@ -55,7 +56,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | --- | --- | --- | --- | --- | --- |
 | M1-NATIVE-FAM | ≥5 native / ≥3 families hermetic | 2 | open | see R-NATIVE-1 + fixtures | C+Go micro-CLIs landed (`test_samples/native/`); `required:false`/`fixture_only`. Close when analyze completes ≤120s on both without Ghidra + flip required true. Host C linker may skip hello_c. |
 | RALPH-1 | Source-map path alias recall | 6 | partial | open (await Sol stop/go)| file overlap fixed |
-| RALPH-2 | cli.js 0.8+ recall | 6 | open | **yes R-RALPH-2** | harness done; npm `cli.js` obsolete (Wave 3); interim tracked-bundle recall 0.0 (`no_recovered_root`); engine long pole |
+| RALPH-2 | cli.js 0.8+ recall | 6 | open | **yes R-RALPH-2** | harness done; npm `cli.js` obsolete (Wave 3); Wave 4 tracked recall **0.4** via source_map materialize (not 0.8); engine long pole |
 | M5-PIPE | pipeline vs pipelines merge | 9 | partial | open (await Sol stop/go)| documented split freeze; Wave B merge optional |
 | M0 | Baseline reporting discipline | exec | done | | preview reporting discipline: probe v1.2 + evidence hygiene (exact one stamp≡latest) + scoped git (DF-4); CI corpus gates remain **M4 residual** |
 | M1 | Multi-codebase corpus gate | exec | open | see R-NATIVE-1 | overlaps M1-NATIVE-FAM |
@@ -70,7 +71,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | --- | --- | --- |
 | R-NATIVE-1 | Linux-hermetic native CLI set for ≥5/≥3 families | **done** — `docs/architecture/research-r-native-1-linux-hermetic-candidates.md` |
 | R-RALPH-2-BASELINE | Measure current cli.js recall (or label could_not_measure) | **done** — `docs/architecture/research-r-ralph-2-baseline.md` |
-| R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | **open** — Wave 3 packaging re-baseline + interim tracked score in `research-r-ralph-2.md`; product cli.js-class still blocked; Phase 6 |
+| R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | **open** — Wave 4 recovered-root wedge: tracked recall 0.4 (`source_map`); Wave 3 freeze in `wave3_ralph_report.json`; product cli.js-class still blocked; Phase 6 |
 | R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **done** (measured) — `docs/architecture/research-r-hex-1-hexyl-timed-run.md` + `reports/native_analyze_probe/latest.json` (`hexyl_subject` status=`completed`, elapsed≈5.10s (R-HEX-1 historical ≈4.68s)); Phase 4 Track A honesty attribution evidenced (`phase-04-m2-hexyl-frontier.md`) — **not** world-class M2 closeout; M2 stays **partial**; VRL-LLM-1 done; Phase 4 honesty go |
 | R-TSX-1 | Ship `tsx` probe vs keep smoke stub | **done** — optional tsx runner in behavior probe |
 | R-PIPE-1 | Merge pipeline packages vs permanent split | **done** — decision: permanent documented split; see `docs/architecture/decision-r-pipe-1-pipeline-packages.md` |
@@ -146,6 +147,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈5.10s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
 | 2026-08-07 | Phase 4 **honesty go** (Sol APPROVE_WITH_NITS waiver: M2 split). Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: Sol REJECT hollow ACK-ping → forgeable `candidate_hash_changed` → corpus registration of `vrl_llm_micro_go` + gate SHA/applied-source harden; dogfood loads seeds from corpus; VRL-LLM-1 **done** (load-bearing, Sol-ready evidence); Phase 4 **honesty go** recorded (M2 world-class still open/partial; hexyl C refine `vrl_compile_toolchain_broken`). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
 | 2026-08-08 | PR #119 merge (tg-audit + Scope C history). Follow-up: honesty slim install + drop ghidramcp PyPI fiction; CEO `ceo-update-2026-08-08-tg-audit-merge.md`; lessons L25–L32. |
+| 2026-08-09 | Wave 4 recovered-root: tracked Ralph recall **0.4** via sibling `.map` `sourcesContent` (`source_map`); mismatch arm 0.0; R-RALPH-2 / Phase 6 stay **open**. Plan `2026-08-09-wave4-js-recovered-root-naming.md`. |
 | 2026-08-09 | Thinktank **APPROVE Wave3=A** R-RALPH-2 packaging re-baseline (REJECT close-all). Interim tracked-bundle Ralph score 0.0 (`no_recovered_root`); npm `cli.js` obsolete; R-RALPH-2 stays **open**. |
 | 2026-08-09 | Wave 2 closeout **merged** PR #133 (`1eff22f8`); Sol PASS_WITH_NITS on tip `34d5b99d`; honesty-unit+lint-python green; matrix soft-red L42. Not all-backlog. |
 | 2026-08-09 | Thinktank **APPROVE_WITH_NITS Wave 2** honesty (MCP denylist + path-sep + macos slim); not all-backlog. |

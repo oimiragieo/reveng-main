@@ -14,6 +14,8 @@ From repository root (after `pip install -e .` or `PYTHONPATH=src`):
 
 **Wave 3 note (2026-08-09):** current npm `@anthropic-ai/claude-code` ships a native `claude.exe` and **does not** publish `cli.js`. Prefer the checked-in interim surface until a legitimate large JS bundle input exists again (see `docs/architecture/research-r-ralph-2.md`).
 
+**Wave 4 note:** sibling `bundle.js.map` materializes `output_dir/project/` (`source_map`); tracked recall is **0.4** (not 0.8). Operator-local Claude dogfood: `docs/architecture/operator_local_claude.md` + `operator_local_provenance.example.json` (never commit Anthropic trees).
+
 ```bash
 # Interim tracked micro-bundle (repo-local; not "cli.js GA")
 python scripts/ralph_js_oracle_loop.py \

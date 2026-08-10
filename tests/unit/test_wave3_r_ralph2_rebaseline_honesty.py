@@ -8,7 +8,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RESEARCH = REPO_ROOT / "docs" / "architecture" / "research-r-ralph-2.md"
-REPORT = REPO_ROOT / "reports" / "js_oracle_ralph_tracked" / "ralph_report.json"
+REPORT = REPO_ROOT / "reports" / "js_oracle_ralph_tracked" / "wave3_ralph_report.json"
 BACKLOG = REPO_ROOT / "backlog.md"
 
 _INV = REPO_ROOT / "tests" / "unit" / "test_backlog_wave_a_invariants.py"
@@ -45,8 +45,8 @@ def test_research_r_ralph_2_doc_exists_and_records_packaging_shift() -> None:
 
 def test_tracked_ralph_report_scored_not_invented() -> None:
     assert REPORT.is_file(), (
-        "Missing reports/js_oracle_ralph_tracked/ralph_report.json — "
-        "Wave 3 needs a scored harness report (or explicit could_not_measure doc)"
+        "Missing reports/js_oracle_ralph_tracked/wave3_ralph_report.json — "
+        "Wave 3 needs a frozen scored harness report (live Wave 4 report is separate)"
     )
     data = json.loads(REPORT.read_text(encoding="utf-8"))
     assert "best_project_file_recall" in data
