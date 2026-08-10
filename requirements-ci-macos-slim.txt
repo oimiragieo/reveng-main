@@ -105,7 +105,7 @@ pycparser>=2.21,<3.0.0  # C code parsing for type analysis
 
 # Binary Lifting and LLVM Integration
 # Note: Requires LLVM toolchain installed (see system requirements)
-pyelftools>=0.29,<1.0.0  # ELF binary parsing
+pyelftools>=0.33,<1.0.0  # ELF binary parsing
 
 # Malware signature scanning
 yara-python>=4.5.4
