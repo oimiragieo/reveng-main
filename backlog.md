@@ -6,7 +6,7 @@ Ops index for the full roadmap clearance program. Update `status` when work land
 **Execution charter:** [`docs/architecture/scope-c-execution-charter.md`](docs/architecture/scope-c-execution-charter.md)
 (not one clearance wave for phases 4–13; disposition ≠ capability `done`).
 
-**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-09-wave5.md`](docs/architecture/ceo-update-2026-08-09-wave5.md)  
+**CEO briefing (latest):** [`docs/architecture/ceo-update-2026-08-09-wave6.md`](docs/architecture/ceo-update-2026-08-09-wave5.md)  
 **Prior CEO:** [`ceo-update-2026-08-09-wave4.md`](docs/architecture/ceo-update-2026-08-09-wave4.md) · [`ceo-update-2026-08-09-wave3.md`](docs/architecture/ceo-update-2026-08-09-wave3.md) · [`ceo-update-2026-08-09-waves1-2.md`](docs/architecture/ceo-update-2026-08-09-waves1-2.md) · [`ceo-update-2026-08-09-wave0.md`](docs/architecture/ceo-update-2026-08-09-wave0.md) · [`ceo-update-2026-08-08-tg-audit-merge.md`](docs/architecture/ceo-update-2026-08-08-tg-audit-merge.md) · charter · wave2 · wave1  
 **Wave 0 closeout plan:** [`docs/superpowers/plans/2026-08-09-backlog-closeout-program.md`](docs/superpowers/plans/2026-08-09-backlog-closeout-program.md) (Thinktank **APPROVE Wave 0**; PR #131 merged)  
 **Wave 1 plan:** [`docs/superpowers/plans/2026-08-09-wave1-honesty-deep-dive.md`](docs/superpowers/plans/2026-08-09-wave1-honesty-deep-dive.md) (PR **#132** merged)  
@@ -72,7 +72,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | --- | --- | --- |
 | R-NATIVE-1 | Linux-hermetic native CLI set for ≥5/≥3 families | **done** — `docs/architecture/research-r-native-1-linux-hermetic-candidates.md` |
 | R-RALPH-2-BASELINE | Measure current cli.js recall (or label could_not_measure) | **done** — `docs/architecture/research-r-ralph-2-baseline.md` |
-| R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | **open** — Wave 5 fingerprint attribution (Tier A) is evidence only; Wave 4 recovered-root recall 0.4; product cli.js-class still blocked; Phase 6 |
+| R-RALPH-2 | Smallest engine wedge for 0.8+ recall (baseline first) | **open** — Wave 6-A wire landed; tracked recall still **0.4** (fp 0 on micro-bundle); operator-local stale→Bun confirms 232; Phase 6 |
 | R-HEX-1 | Fresh hexyl timed run: still timeout-only? | **done** (measured) — `docs/architecture/research-r-hex-1-hexyl-timed-run.md` + `reports/native_analyze_probe/latest.json` (`hexyl_subject` status=`completed`, elapsed≈5.10s (R-HEX-1 historical ≈4.68s)); Phase 4 Track A honesty attribution evidenced (`phase-04-m2-hexyl-frontier.md`) — **not** world-class M2 closeout; M2 stays **partial**; VRL-LLM-1 done; Phase 4 honesty go |
 | R-TSX-1 | Ship `tsx` probe vs keep smoke stub | **done** — optional tsx runner in behavior probe |
 | R-PIPE-1 | Merge pipeline packages vs permanent split | **done** — decision: permanent documented split; see `docs/architecture/decision-r-pipe-1-pipeline-packages.md` |
@@ -148,6 +148,7 @@ Statuses: `open` · `in_progress` · `done` · `partial` · `parked` · `blocked
 | 2026-08-06 | Wave B honesty slice: thin PR gate (`.github/workflows/wave-b-honesty.yml`); M0/DF-5 done (reporting discipline); M4 **partial** (corpus residual); R-HEX-1 **done** (measured) via hexyl-subject probe (`completed` ≈5.10s); M2 remains open; see `docs/architecture/wave-c-exit-criteria.md` |
 | 2026-08-07 | Phase 4 **honesty go** (Sol APPROVE_WITH_NITS waiver: M2 split). Phase 4 Track A: probe v1.3 re-stamp + honesty attribution doc (not world-class M2 closeout — M2 **partial**); Track B: Sol REJECT hollow ACK-ping → forgeable `candidate_hash_changed` → corpus registration of `vrl_llm_micro_go` + gate SHA/applied-source harden; dogfood loads seeds from corpus; VRL-LLM-1 **done** (load-bearing, Sol-ready evidence); Phase 4 **honesty go** recorded (M2 world-class still open/partial; hexyl C refine `vrl_compile_toolchain_broken`). See `docs/architecture/phase-04-m2-hexyl-frontier.md`, `docs/architecture/evidence-vrl-llm-honesty-phase-04.md`. |
 | 2026-08-08 | PR #119 merge (tg-audit + Scope C history). Follow-up: honesty slim install + drop ghidramcp PyPI fiction; CEO `ceo-update-2026-08-08-tg-audit-merge.md`; lessons L25–L32. |
+| 2026-08-09 | Wave 6 Thinktank **APPROVE_W6A**: fingerprint wired in JS adapter; tracked Ralph still **0.4** (fp confirmed 0 on micro-bundle); mismatch 0.0; operator-local dogfood 232 confirms / map rebuild 1.0; M1 flip **blocked** (`native_fallback_empty`); R-RALPH-2 open. |
 | 2026-08-09 | Operator-local map rebuild dogfood: materialize src_recall **1.0**; stale-map→Bun fingerprint confirms **232** (hashed, under src/); not exe decode; R-RALPH-2 open. Receipt `operator-local-map-rebuild-dogfood-2026-08-09.md`. |
 | 2026-08-09 | Wave 5 Thinktank **APPROVE_WITH_NITS** stale-map fingerprint Tier A (hashed index, dual controls); Bun Tier B demoted to spike; R-RALPH-2 / Phase 6 stay **open**. Not exe decode. |
 | 2026-08-09 | Wave 4 recovered-root: tracked Ralph recall **0.4** via sibling `.map` `sourcesContent` (`source_map`); mismatch arm 0.0; R-RALPH-2 / Phase 6 stay **open**. Plan `2026-08-09-wave4-js-recovered-root-naming.md`. |

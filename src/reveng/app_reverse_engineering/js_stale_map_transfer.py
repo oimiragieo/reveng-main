@@ -285,6 +285,64 @@ def index_has_raw_secret_literals(serialized: Mapping[str, Any], secrets: Iterab
     return any(secret in blob for secret in secrets)
 
 
+def _sourcemap_content_by_path(map_path: Path) -> Dict[str, str]:
+    """Map normalized source path → sourcesContent body (first wins)."""
+    data = json.loads(Path(map_path).read_text(encoding="utf-8"))
+    sources = data.get("sources") or []
+    contents = data.get("sourcesContent") or []
+    out: Dict[str, str] = {}
+    if not isinstance(sources, list) or not isinstance(contents, list):
+        return out
+    for src, body in zip(sources, contents):
+        if body is None:
+            continue
+        path = _normalize_source_path(str(src))
+        if path is None or path in out:
+            continue
+        out[path] = str(body)
+    return out
+
+
+def apply_fingerprint_backed_missing(
+    *,
+    map_path: Path,
+    bundle_text: str,
+    project_dir: Path,
+    min_signals: int = _MIN_SIGNALS_CONFIRMED,
+) -> Tuple[TransferResult, int, List[str]]:
+    """Write map ``sourcesContent`` for fingerprint-confirmed paths missing under project.
+
+    Attribution alone never creates empty stubs — only real map bodies are written.
+    Returns ``(transfer, files_written, notes)``.
+    """
+    index = build_index_from_sourcemap(map_path)
+    transfer = scan_bundle(index, bundle_text, min_signals=min_signals)
+    bodies = _sourcemap_content_by_path(map_path)
+    project_dir = Path(project_dir)
+    project_dir.mkdir(parents=True, exist_ok=True)
+    written = 0
+    notes: List[str] = [
+        "fingerprint_backed_write",
+        "content_from_sourcemap_only",
+        "not_empty_stub",
+        "not_decoded_exe",
+    ]
+    for conf in transfer.confirmed:
+        rel = conf.source_path
+        dest = project_dir / rel
+        if dest.is_file():
+            continue
+        body = bodies.get(rel)
+        if body is None:
+            notes.append(f"confirmed_without_map_body:{rel}")
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(body, encoding="utf-8")
+        written += 1
+    notes.append(f"fingerprint_files_written:{written}")
+    return transfer, written, notes
+
+
 __all__ = [
     "FingerprintIndex",
     "TransferResult",
@@ -293,4 +351,5 @@ __all__ = [
     "build_index_from_sources",
     "scan_bundle",
     "index_has_raw_secret_literals",
+    "apply_fingerprint_backed_missing",
 ]
