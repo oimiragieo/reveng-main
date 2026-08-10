@@ -34,7 +34,12 @@ Exa MCP research + in-tree toolkit. **Not** exe decode / R-RALPH-2 close / enter
 | Ensemble signals | `ensemble_signals` + `ensemble_index` | yes |
 | Graph complete | `graph_complete` | yes |
 | Behavior overlap | `behavior_probe` | yes |
+| Singleton + structural + coverage | `coverage_union`, `structural_match` | yes (Wave 8) |
+| Bun SerializedSourceMap | `bun_serialized_sourcemap` | yes when blob present |
 | webcrack / wakaru | `external_tools.try_*` | optional (`--run-external`) |
+
+See also Wave 8: `docs/architecture/research-wave8-structural-bun-100-2026-08-09.md`.
+
 
 CLI: `scripts/js_recovery_toolkit.py`
 

@@ -315,6 +315,20 @@ external/ghidramcp/
 .claude/worktrees/
 .claude/thinktank_*.md
 
+# Agent / local worktree scratch (never publish)
+.worktrees/
+.tmp_tt/
+tmpreveng-*/
+**/.tensor-grep/
+.tensor-grep/
+
+# Operator-local JS recovery dogfood (Bun extracts, webcrack outs, LLM receipts)
+# Keep hermetic fixtures under test_samples/; never commit Anthropic trees or /tmp extracts.
+reports/js_recovery_toolkit_*/
+reports/wave*_dogfood*/
+**/webcrack_out/
+**/claude_bun_extract/
+
 # Reconstructed/normalized node artifacts under reports/ (regenerable RE outputs;
 # were triggering Dependabot false positives on recovered third-party deps)
 reports/**/reconstructed_project/

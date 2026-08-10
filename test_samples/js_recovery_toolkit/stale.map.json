@@ -5,14 +5,16 @@
     "webpack://project/src/cli.ts",
     "webpack://project/src/core.ts",
     "webpack://project/src/util.ts",
+    "webpack://project/src/neighbor.ts",
     "webpack://project/src/vendor_skip.ts",
     "webpack://project/node_modules/leftpad/index.js"
   ],
   "sourcesContent": [
     "export function runCliMain() {\n  const flag = \"--toolkit-enable-recovery\";\n  const cmd = \"/toolkit-recover\";\n  console.error(\"TOOLKIT_CLI_FATAL_MISSING_CONFIG_W7\");\n  displayName = \"ToolkitCliPanel\";\n  require(\"./core\");\n  require(\"./util\");\n  return flag + cmd;\n}\n",
-    "export const CORE_UNIQUE_FINGERPRINT_TOKEN_W7ABCDEF = \"CORE_UNIQUE_FINGERPRINT_TOKEN_W7ABCDEF\";\nexport function loadCoreEngine() {\n  throw new Error(\"TOOLKIT_CORE_ENGINE_BOOT_FAILURE_W7\");\n  require(\"./util\");\n  const pathish = \"src/core/internal/boot.ts\";\n  return pathish;\n}\n",
+    "export const CORE_UNIQUE_FINGERPRINT_TOKEN_W7ABCDEF = \"CORE_UNIQUE_FINGERPRINT_TOKEN_W7ABCDEF\";\nexport function loadCoreEngine() {\n  throw new Error(\"TOOLKIT_CORE_ENGINE_BOOT_FAILURE_W7\");\n  require(\"./util\");\n  require(\"./neighbor\");\n  const pathish = \"src/core/internal/boot.ts\";\n  return pathish;\n}\n",
     "export const UTIL_UNIQUE_FINGERPRINT_TOKEN_W7XYZ123 = \"UTIL_UNIQUE_FINGERPRINT_TOKEN_W7XYZ123\";\nexport function formatToolkitHelp() {\n  return \"--toolkit-help-verbose\";\n}\n",
-    "// not vendor path but shared boilerplate\nexport const x = \"application/json\";\n",
+    "export function loadNeighborProbe() {\n  const weak = \"NW8WEAK\";\n  return weak;\n}\n",
+    "// not vendor path but shared boilerplate\nexport const x = \"application/json\";\nexport const VENDOR_SKIP_UNIQUE_TOKEN_W8SURVIVE = \"VENDOR_SKIP_UNIQUE_TOKEN_W8SURVIVE\";\n",
     "export const LEFTPAD_VENDOR_ONLY_TOKEN_W7 = \"LEFTPAD_VENDOR_ONLY_TOKEN_W7\";"
   ],
   "mappings": "AAAA"
