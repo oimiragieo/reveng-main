@@ -1,0 +1,15 @@
+{
+  "version": 3,
+  "sources": [
+    "../oracle/src/alpha.ts",
+    "../oracle/src/beta.ts",
+    "../oracle/src/shared_boilerplate.ts",
+    "../node_modules/left-pad/index.js"
+  ],
+  "sourcesContent": [
+    "export function alphaHelper(name: string): string {\n  const marker = \"ALPHA_UNIQUE_FINGERPRINT_TOKEN_W5\";\n  const metric = \"reveng.wave5.alpha.metric.count\";\n  return marker + name + metric;\n}\n",
+    "export const betaHelper = () => {\n  return \"BETA_UNIQUE_FINGERPRINT_TOKEN_W5\";\n};\n",
+    "export function logInfo(msg: string) {\n  console.log(\"application/json\");\n  return msg;\n}\n",
+    "module.exports = function leftPad(str) {\n  return \"LEFTPAD_VENDOR_ONLY_TOKEN_SHOULD_EXCLUDE\";\n};\n"
+  ]
+}
