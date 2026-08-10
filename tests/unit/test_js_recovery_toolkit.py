@@ -6,9 +6,7 @@ import json
 from pathlib import Path
 
 from reveng.app_reverse_engineering.js_recovery_toolkit import run_recovery_toolkit
-from reveng.app_reverse_engineering.js_recovery_toolkit.behavior_probe import (
-    behavior_token_overlap,
-)
+from reveng.app_reverse_engineering.js_recovery_toolkit.behavior_probe import behavior_token_overlap
 from reveng.app_reverse_engineering.js_recovery_toolkit.ensemble_index import (
     build_ensemble_index_from_sourcemap,
     scan_ensemble,

@@ -5,9 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from reveng.app_reverse_engineering.adapters.javascript import _project_recovered_root
-from reveng.app_reverse_engineering.js_project_materialize import (
-    materialize_js_project_tree,
-)
+from reveng.app_reverse_engineering.js_project_materialize import materialize_js_project_tree
 
 REPO = Path(__file__).resolve().parents[2]
 TRACKED_DIR = REPO / "test_samples" / "js_tracked_bundle_artifact"
