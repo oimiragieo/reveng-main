@@ -1,6 +1,6 @@
 # Sol verdict — Wave 3 R-RALPH-2 re-baseline
 
-**Reviewed HEAD SHA:** TBD
+**Reviewed HEAD SHA:** `1a6a70915bb1158d26d840c27cad2bec18f1e3ce`
 
 **Status:** pending Sol (`gpt-5.6-sol`) on tip2
 
