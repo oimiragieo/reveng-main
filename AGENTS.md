@@ -2,7 +2,7 @@
 
 ## Release honesty (read first for GA / ship claims)
 
-- Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO: `docs/architecture/ceo-update-2026-08-09-wave6.md` (Wave 5 fingerprint attribution — **not** exe decode / Phase 6 / enterprise GA; Wave 4: `ceo-update-2026-08-09-wave4.md`).
+- Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO: `docs/architecture/ceo-update-2026-08-09-wave7.md` (Wave 5 fingerprint attribution — **not** exe decode / Phase 6 / enterprise GA; Wave 4: `ceo-update-2026-08-09-wave4.md`).
 - Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L50**). Wave B: `docs/architecture/wave-b-exit-criteria.md`.
 - **Project skills** (`.cursor/skills/`): `reveng-release-honesty`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`. Personal skill index: `~/.claude/skills/INDEX.md`. Wave closeout workflow: `~/.claude/workflows/reveng-wave-honesty-closeout.md`. Agent memory: `.claude/MEMORY.md`.
 - **Junior docs:** start at `docs/README.md` (Analyst + Engineer Diátaxis tracks). Customer boundary: `docs/support/support-matrix.md` + `docs/support_matrix.json`. Ops/CEO packets are not product tutorials (`docs/ops/README.md`).
