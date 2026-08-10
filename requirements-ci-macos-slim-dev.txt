@@ -20,7 +20,7 @@
 black>=24.8.0,<25
 
 # Python import sorter
-isort>=5.12.0,<6.0.0
+isort>=5.12.0,<9.0.0
 
 # Python linter
 pylint>=2.17.0,<4.0.0
