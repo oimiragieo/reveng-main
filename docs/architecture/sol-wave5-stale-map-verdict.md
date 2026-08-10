@@ -1,6 +1,6 @@
 # Sol verdict — Wave 5 stale-map fingerprint transfer
 
-**Reviewed HEAD SHA:** TBD  
+**Reviewed HEAD SHA:** `08c1132a152ffdcfc8d3736977156a29c7693c4c`  
 **Plan:** `docs/superpowers/plans/2026-08-09-wave5-stale-map-fingerprint.md`  
 **Packet:** `docs/architecture/sol-wave5-stale-map-packet.md`
 
