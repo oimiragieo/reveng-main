@@ -109,10 +109,10 @@ def materialize_js_project_tree(
 
 ### Task W4-9 — Sol tip1/tip2 + PR
 
-- [ ] Sol PASS tip2 + PR
+- [x] Sol tip1 REJECT → tip2 PASS (`b687e0d2`); PR next
 
 ## Acceptance
 
 - [x] Tracked Ralph: `source_map`, recall>0, mismatch lower, no Anthropic IP committed
 - [x] R-RALPH-2 still open
-- [ ] Sol PASS tip2
+- [x] Sol PASS tip2
