@@ -1,0 +1,24 @@
+8923ab7f feat(js): Wave 4 recovered-root materialize + structural hints
+M	AGENTS.md
+M	backlog.md
+A	docs/architecture/ceo-update-2026-08-09-wave4.md
+A	docs/architecture/operator_local_claude.md
+M	docs/architecture/research-r-ralph-2.md
+A	docs/architecture/research-wave4-js-recovered-root-2026-08-09.md
+A	docs/architecture/research-wave4-tracked-ralph-evidence.md
+A	docs/architecture/sol-wave4-recovered-root-packet.md
+A	docs/architecture/sol-wave4-recovered-root-verdict.md
+A	docs/superpowers/plans/2026-08-09-wave4-js-recovered-root-naming.md
+M	examples/use-cases/js-oracle-ralph/README.md
+A	examples/use-cases/js-oracle-ralph/operator_local_provenance.example.json
+M	reports/js_oracle_ralph_tracked/mismatch_control.md
+M	reports/js_oracle_ralph_tracked/ralph_report.json
+A	reports/js_oracle_ralph_tracked/wave3_ralph_report.json
+M	src/reveng/app_reverse_engineering/adapters/javascript.py
+M	src/reveng/app_reverse_engineering/framework.py
+A	src/reveng/app_reverse_engineering/js_project_materialize.py
+A	src/reveng/app_reverse_engineering/js_structural_identifiers.py
+A	tests/unit/test_js_project_materialize.py
+A	tests/unit/test_js_structural_identifiers.py
+M	tests/unit/test_wave3_r_ralph2_rebaseline_honesty.py
+A	tests/unit/test_wave4_recovered_root_honesty.py
