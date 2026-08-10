@@ -83,7 +83,7 @@ ollama>=0.1.0,<1.0.0
 # Commands enabled:
 #   - Python API: analyzer.get_ast()
 #   - Python API: analyzer.get_translation_hints()
-pycparser>=2.22,<3.0.0
+pycparser>=3.0,<4.0.0
 
 # =============================================================================
 # DEVELOPMENT TOOLS - Formatting and Linting

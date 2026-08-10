@@ -96,7 +96,7 @@ z3-solver>=4.12.0,<5.0.0  # SMT solver for constraints
 claripy>=9.2.0,<10.0.0  # Constraint solver (installed with angr)
 
 # Type Reconstruction and Analysis
-pycparser>=2.21,<3.0.0  # C code parsing for type analysis
+pycparser>=3.0,<4.0.0  # C code parsing for type analysis
 
 # Binary Lifting and LLVM Integration
 # Note: Requires LLVM toolchain installed (see system requirements)
