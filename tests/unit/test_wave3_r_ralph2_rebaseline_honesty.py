@@ -70,9 +70,7 @@ def test_tracked_ralph_report_scored_not_invented() -> None:
 
 def test_r_ralph_2_remains_open() -> None:
     status = _backlog_status("R-RALPH-2")
-    assert status == "open", (
-        f"R-RALPH-2 must stay open after Wave 3 honesty; got {status!r}"
-    )
+    assert status == "open", f"R-RALPH-2 must stay open after Wave 3 honesty; got {status!r}"
 
 
 def test_r_ralph_2_baseline_row_stays_done() -> None:

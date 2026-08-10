@@ -22,7 +22,9 @@ from reveng.app_reverse_engineering.js_stale_map_transfer import (  # noqa: E402
 
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--map", required=True, type=Path, help="Stale .map or .map.json with sourcesContent")
+    p.add_argument(
+        "--map", required=True, type=Path, help="Stale .map or .map.json with sourcesContent"
+    )
     p.add_argument("--bundle", required=True, type=Path, help="Target JS bundle to scan")
     p.add_argument("--output-dir", required=True, type=Path)
     p.add_argument("--salt", default="reveng-wave5-stale-map-v1")

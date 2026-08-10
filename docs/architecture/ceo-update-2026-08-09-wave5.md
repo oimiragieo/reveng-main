@@ -20,4 +20,4 @@ Wave 5 lands **Tier A** only: hermetic stale-map fingerprint transfer as **attri
 
 ## Next
 
-Optional operator-local dogfood against map-era Claude trees; Bun-unpack feasibility spike; Sol tip2 closeout.
+Operator-local map rebuild + fingerprint dogfood **measured** (receipt: `operator-local-map-rebuild-dogfood-2026-08-09.md`): materialize src recall **1.0**; stale-map→Bun first-party confirms **232**. Still not R-RALPH-2 / exe decode. Wave 6 = engine wedge using fingerprint evidence; M1-NATIVE-FAM flip blocked while `native_fallback_empty`.

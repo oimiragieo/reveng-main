@@ -7,7 +7,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 RESEARCH = REPO / "docs" / "architecture" / "research-stale-map-fingerprint-transfer-2026-08-09.md"
-SYNTHESIS = REPO / "docs" / "architecture" / "thinktank-stale-map-fingerprint-transfer-2026-08-09.md"
+SYNTHESIS = (
+    REPO / "docs" / "architecture" / "thinktank-stale-map-fingerprint-transfer-2026-08-09.md"
+)
 CEO = REPO / "docs" / "architecture" / "ceo-update-2026-08-09-wave5.md"
 PLAN = REPO / "docs" / "superpowers" / "plans" / "2026-08-09-wave5-stale-map-fingerprint.md"
 MODULE = REPO / "src" / "reveng" / "app_reverse_engineering" / "js_stale_map_transfer.py"
@@ -30,7 +32,9 @@ def test_forbidden_decode_exe_claims_absent_from_wave5_docs() -> None:
     for path in (RESEARCH, SYNTHESIS, CEO, PLAN, MODULE):
         text = path.read_text(encoding="utf-8").lower()
         # Must document the boundary, not claim decode
-        assert "not" in text or "does not" in text or "≠" in text or "!=" in text or "forbid" in text
+        assert (
+            "not" in text or "does not" in text or "≠" in text or "!=" in text or "forbid" in text
+        )
         for bad in (
             "decoded the new exe",
             "decompiled claude.exe",

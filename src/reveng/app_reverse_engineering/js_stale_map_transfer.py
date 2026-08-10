@@ -97,8 +97,7 @@ class FingerprintIndex:
             "salt_id": self.salt,
             "entry_count": len(entries),
             "entries": entries,
-            "notes": list(self.notes)
-            + ["raw_values_omitted", "hashed_fingerprints_only"],
+            "notes": list(self.notes) + ["raw_values_omitted", "hashed_fingerprints_only"],
         }
 
 
@@ -170,7 +169,11 @@ def build_index_from_sources(
     """Index unique-to-one-source signals. Vendor paths skipped."""
     # value_key -> set of source paths
     owners: Dict[Tuple[str, str], Set[str]] = {}
-    notes: List[str] = ["unique_to_one_source", "vendor_excluded", f"min_literal_len:{_MIN_LITERAL_LEN}"]
+    notes: List[str] = [
+        "unique_to_one_source",
+        "vendor_excluded",
+        f"min_literal_len:{_MIN_LITERAL_LEN}",
+    ]
     for path, body in sources:
         if _is_vendor_path(path):
             notes.append(f"skip_vendor:{path}")
