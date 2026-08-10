@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from reveng.app_reverse_engineering.js_stale_map_transfer import (
+    apply_fingerprint_backed_missing,
     build_index_from_sourcemap,
     index_has_raw_secret_literals,
     scan_bundle,
@@ -72,3 +73,32 @@ def test_deterministic_repeat() -> None:
     a = scan_bundle(index, text).to_serializable()
     b = scan_bundle(index, text).to_serializable()
     assert a == b
+
+
+def test_fingerprint_backed_write_fills_missing_with_map_body(tmp_path: Path) -> None:
+    """W6-A: confirmed paths get real sourcesContent — never empty stubs."""
+    project = tmp_path / "project"
+    transfer, written, notes = apply_fingerprint_backed_missing(
+        map_path=MAP,
+        bundle_text=POSITIVE.read_text(encoding="utf-8"),
+        project_dir=project,
+    )
+    assert transfer.metrics["first_party_confirmed_count"] >= 1
+    assert written >= 1
+    assert "not_empty_stub" in notes
+    alpha = next(project.rglob("*alpha*"))
+    body = alpha.read_text(encoding="utf-8")
+    assert "ALPHA_UNIQUE_FINGERPRINT_TOKEN_W5" in body
+    assert body.strip() != ""
+
+
+def test_fingerprint_backed_write_mismatch_writes_zero(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    transfer, written, _notes = apply_fingerprint_backed_missing(
+        map_path=MAP,
+        bundle_text=MISMATCH.read_text(encoding="utf-8"),
+        project_dir=project,
+    )
+    assert transfer.metrics["first_party_confirmed_count"] == 0
+    assert written == 0
+    assert list(project.rglob("*")) == []

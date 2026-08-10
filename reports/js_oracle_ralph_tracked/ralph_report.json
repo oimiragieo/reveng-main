@@ -3,7 +3,7 @@
   "result_type": "ralph_js_oracle_loop_report",
   "input_path": "/mnt/c/dev/projects/reveng-main/test_samples/js_tracked_bundle_artifact/bundle.js",
   "oracle_dir": "/mnt/c/dev/projects/reveng-main/test_samples/js_tracked_bundle_source",
-  "output_root": "/tmp/ralph_w4_raw",
+  "output_root": "/tmp/ralph_w6_tracked",
   "target_project_file_recall": 0.8,
   "variant_count": 5,
   "stop_on_plateau": false,
@@ -32,7 +32,7 @@
       "project_file_precision": 1.0,
       "js_behavior_probe_tier": 0,
       "validation_grade": "evidence_backed",
-      "analysis_file": "/tmp/ralph_w4_raw/attempt_001_baseline/analysis.json",
+      "analysis_file": "/tmp/ralph_w6_tracked/attempt_001_baseline/analysis.json",
       "improved": true,
       "ralph_knobs": {
         "run_deobfuscator": "not_requested",
@@ -79,10 +79,11 @@
     "max_attempts_resolved": 1,
     "plateau_attempts_resolved": 12
   },
-  "wave4_honesty": {
-    "materialization_expected": "source_map",
-    "tracked_surface": true,
-    "not_cli_js": true,
-    "harness_exit_code": 0
+  "wave": 6,
+  "wave_note": "W6-A fingerprint wired in adapter; tracked recall still 0.4 (fingerprint confirmed 0 on micro-bundle \u2014 signals below uniqueness/length floors). Mismatch 0.0. R-RALPH-2 open. Not exe decode.",
+  "fingerprint_dogfood_operator_local": {
+    "receipt": "docs/architecture/operator-local-map-rebuild-dogfood-2026-08-09.md",
+    "stale_map_to_bun_confirmed": 232,
+    "map_rebuild_src_recall": 1.0
   }
 }

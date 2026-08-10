@@ -10,6 +10,7 @@ from reveng.javascript.bundle_reverse_engineer import JavaScriptBundleReverseEng
 
 from ..js_oracle_scorecard import compute_js_project_file_scorecard
 from ..js_project_materialize import materialize_js_project_tree
+from ..js_stale_map_transfer import apply_fingerprint_backed_missing
 from ..js_structural_identifiers import collect_structural_identifier_hints
 from ..models import AppReverseEngineeringResult
 
@@ -113,6 +114,57 @@ class JavaScriptAppAdapter:
             primary_artifacts["reconstructed_project"] = recovered_root
             recovered_paths = _collect_project_files(recovered_root)
 
+        # Wave 6-A: fingerprint attribution → content-backed fills for missing paths
+        fingerprint_meta: Dict[str, Any] = {
+            "ran": False,
+            "decoded_exe_claim": False,
+            "llm_used": False,
+        }
+        map_candidates = [
+            Path(str(input_path) + ".map"),
+            Path(input_path).with_suffix(Path(input_path).suffix + ".map"),
+        ]
+        if result.normalized_bundle:
+            map_candidates.append(Path(str(result.normalized_bundle) + ".map"))
+        sibling_map = next((p for p in map_candidates if p.is_file()), None)
+        if sibling_map is not None:
+            try:
+                bundle_for_scan = Path(
+                    result.normalized_bundle if result.normalized_bundle else input_path
+                )
+                bundle_text = bundle_for_scan.read_text(encoding="utf-8", errors="replace")
+                project = out_path / "project"
+                transfer, fp_written, fp_notes = apply_fingerprint_backed_missing(
+                    map_path=sibling_map,
+                    bundle_text=bundle_text,
+                    project_dir=project,
+                )
+                fp_path = out_path / "artifacts" / "fingerprint_transfer.json"
+                fp_path.parent.mkdir(parents=True, exist_ok=True)
+                payload = transfer.to_serializable()
+                payload["notes"] = list(payload.get("notes") or []) + list(fp_notes)
+                payload["fingerprint_files_written"] = fp_written
+                fp_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+                primary_artifacts["fingerprint_transfer"] = fp_path
+                fingerprint_meta = {
+                    "ran": True,
+                    "decoded_exe_claim": False,
+                    "llm_used": False,
+                    "first_party_confirmed_count": transfer.metrics.get(
+                        "first_party_confirmed_count", 0
+                    ),
+                    "fingerprint_files_written": fp_written,
+                    "notes": fp_notes,
+                }
+                # Re-collect after content-backed writes
+                recovered_root = _project_recovered_root(out_path)
+                if recovered_root is not None:
+                    primary_artifacts["reconstructed_project"] = recovered_root
+                    recovered_paths = _collect_project_files(recovered_root)
+            except Exception as exc:  # pragma: no cover - non-fatal
+                warnings.append(f"fingerprint_transfer_failed:{exc}")
+                fingerprint_meta["error"] = str(exc)
+
         hints_path = out_path / "artifacts" / "structural_identifier_hints.json"
         try:
             hints = collect_structural_identifier_hints(
@@ -135,6 +187,7 @@ class JavaScriptAppAdapter:
             "materialization_mode": materialize.mode,
             "materialization_notes": list(materialize.notes),
             "materialization_files_written": materialize.files_written,
+            "fingerprint_transfer": fingerprint_meta,
         }
 
         if oracle_dir is not None:
