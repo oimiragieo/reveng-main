@@ -66,9 +66,9 @@ def test_mismatch_control_doc_discriminates() -> None:
             treatment = recall
         elif arm == "mismatch":
             mismatch = recall
-    assert treatment is not None and mismatch is not None, (
-        "mismatch_control.md must table Treatment and Mismatch recall floats"
-    )
+    assert (
+        treatment is not None and mismatch is not None
+    ), "mismatch_control.md must table Treatment and Mismatch recall floats"
     assert treatment > 0.0
     assert mismatch < treatment
 

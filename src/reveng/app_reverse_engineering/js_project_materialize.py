@@ -71,7 +71,9 @@ def _write_text(dest: Path, content: str) -> None:
     dest.write_text(content, encoding="utf-8")
 
 
-def _find_sibling_map(input_path: Optional[Path], normalized_bundle: Optional[Path]) -> Optional[Path]:
+def _find_sibling_map(
+    input_path: Optional[Path], normalized_bundle: Optional[Path]
+) -> Optional[Path]:
     candidates: List[Path] = []
     for base in (input_path, normalized_bundle):
         if base is None:
