@@ -73,7 +73,7 @@ capstone>=5.0.0
 unicorn>=2.0.0
 
 # PE file analysis (Windows)
-pefile>=2023.2.7
+pefile>=2024.8.26
 
 # ELF file analysis (Linux)
 pyelftools>=0.29
