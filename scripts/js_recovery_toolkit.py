@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI for the JS recovery toolkit (Wave 7–8)."""
+"""CLI for the JS recovery toolkit (Waves 7–10; Option C climb)."""
 
 from __future__ import annotations
 

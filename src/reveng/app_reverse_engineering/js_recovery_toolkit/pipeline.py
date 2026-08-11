@@ -1,4 +1,4 @@
-"""End-to-end JS recovery toolkit pipeline (Wave 7–8)."""
+"""End-to-end JS recovery toolkit pipeline (Waves 7–10; Option C climb)."""
 
 from __future__ import annotations
 

@@ -2,10 +2,11 @@
 name: reveng-release-honesty
 description: >-
   REVENG GA/release honesty rules from Scope C 2026-08 (Waves 0–2 honesty
-  closeout merged). Use when verifying GA readiness, editing
-  verify_ga_readiness, support matrix claims, capability reports, managed
-  recompile, JS behavior grades, native fixtures / analyze probes, Sol/Fable
-  plan-validate loops, backlog clearance waves, or writing CEO/release status.
+  closeout merged; Waves 3–10 JS recovery climb in progress; R-RALPH-2 open).
+  Use when verifying GA readiness, editing verify_ga_readiness, support matrix
+  claims, capability reports, managed recompile, JS behavior grades, native
+  fixtures / analyze probes, Sol/Fable plan-validate loops, backlog clearance
+  waves, JS recovery Option C metrics, or writing CEO/release status.
 ---
 
 # REVENG release honesty
@@ -27,6 +28,7 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 9. **Exploits stay experimental** — R-SEC-1 decision is Docker-only preview; no expansion without sandbox proofs; keep watermarks.
 10. **Match claims to `support_matrix`** — preview vs GA language.
 11. **Wave-scope plans** — do not plan “close all Scope C” in one PR (L33); use Wave B exit criteria for engine work. Disposition ≠ shipped (L34). Soft-fail ≠ done (L42). MCP hints = explicit denylist (L45).
+12. **JS recovery Option C** — unlockable/survivor coverage is the ship bar (1.0); `oracle_coverage` is aspirational; report BOTH (+ recoverable when tombstones run). Hermetic fixtures ≠ Claude dogfood. Operator receipts under `/mnt/c/tmp/reveng_w*` never commit. See `reveng-js-recovery-climb`.
 
 ## Agent seating
 
@@ -46,13 +48,14 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 
 ## Canonical docs
 
-- `docs/architecture/ceo-update-2026-08-09-wave3.md` (latest CEO; Wave 3 R-RALPH-2 re-baseline — **not** Phase 6 close)
-- `docs/architecture/ceo-update-2026-08-09-waves1-2.md` / `ceo-update-2026-08-09-wave0.md` (priors)
+- `docs/architecture/ceo-update-2026-08-10-wave10.md` (**latest CEO** — JS climb Option C / soft-assign + tombstones — **not** Phase 6 / GA)
+- `docs/architecture/ceo-update-2026-08-09-wave3.md` (R-RALPH-2 re-baseline charter — stays open)
+- `docs/architecture/ceo-update-2026-08-09-waves1-2.md` / `ceo-update-2026-08-09-wave0.md` (honesty closeout priors)
 - `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L50**)
 - `docs/architecture/wave-b-exit-criteria.md` / `wave-c-exit-criteria.md`
 - Root `backlog.md` (ALL ids; §L = #101 dispositions — issue **#101** still OPEN)
 - Junior docs home: `docs/README.md` (Analyst + Engineer tracks); support badges: `docs/support/`
-- Related project skills: `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty` (same `.cursor/skills/` tree); workflow `~/.claude/workflows/reveng-wave-honesty-closeout.md`
+- Related project skills: `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty` (same `.cursor/skills/` tree); workflows `~/.claude/workflows/reveng-js-recovery-climb.md` · `reveng-wave-honesty-closeout.md`
 
 ## Wave status (do not regress)
 
@@ -61,9 +64,13 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 | 0 | #131 | merged |
 | 1 | #132 → `41add7d1` | merged |
 | 2 | #133 → `1eff22f8` | **MERGED** (not OPEN); Sol PASS_WITH_NITS on tip `34d5b99d`; post-merge note `00e9f65b` |
-| 3 | `feat/wave3-r-ralph-2-rebaseline` | Thinktank APPROVE Wave3=A; packaging re-baseline + interim tracked Ralph score; R-RALPH-2 stays **open** |
+| 3 | Wave3=A R-RALPH-2 re-baseline | packaging re-baseline; R-RALPH-2 stays **open** |
+| 4–6 | #135–#137 | recovered-root / fingerprint / wire — R-RALPH-2 still open |
+| 7 | #138 | JS recovery toolkit ensemble |
+| 8–9b | #149 → `838ef12e` | structural → defrag → LLM tag-boost |
+| 10 | #150 | Hungarian soft_assign + unique-token tombstones |
 
-Roadmap / RALPH-2 / phases 6–13 remain open — Waves 0–3 are honesty/research, **not** “all backlog closed” or enterprise GA.
+Roadmap / RALPH-2 / phases 6–13 remain open — honesty Waves 0–2 and JS climb Waves 7–10 are **not** “all backlog closed” or enterprise GA.
 
 ## CI honesty install (L28 + L35 + L36)
 

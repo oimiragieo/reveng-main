@@ -9,7 +9,7 @@ Most ops artifacts still live under `docs/architecture/` and `docs/superpowers/`
 | Kind | Where |
 | --- | --- |
 | Living backlog | [`../../backlog.md`](../../backlog.md) |
-| Latest CEO update | [`../architecture/ceo-update-2026-08-09-waves1-2.md`](../architecture/ceo-update-2026-08-09-waves1-2.md) (Waves 0–2 **merged** 2026-08-09) |
+| Latest CEO update | [`../architecture/ceo-update-2026-08-10-wave10.md`](../architecture/ceo-update-2026-08-10-wave10.md) (JS climb Option C; honesty Waves 0–2 priors in `ceo-update-2026-08-09-waves1-2.md`) |
 | Lessons learned | [`../architecture/lessons-learned-scope-c-2026-08.md`](../architecture/lessons-learned-scope-c-2026-08.md) (**L1–L50**) |
 | Wave exit criteria | `../architecture/wave-b-exit-criteria.md`, `wave-c-exit-criteria.md` |
 | Thinktank / Sol packets | `../architecture/thinktank-*.md`, `sol-*.md` |
@@ -18,8 +18,9 @@ Most ops artifacts still live under `docs/architecture/` and `docs/superpowers/`
 
 ## Skills / workflow
 
-- Project skills: [`.cursor/skills/`](../../.cursor/skills/) — `reveng-release-honesty`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`
-- Closeout workflow: `~/.claude/workflows/reveng-wave-honesty-closeout.md`
+- Project skills: [`.cursor/skills/`](../../.cursor/skills/) — `reveng-release-honesty`, `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`
+- Climb workflow: `~/.claude/workflows/reveng-js-recovery-climb.md`
+- Honesty closeout workflow: `~/.claude/workflows/reveng-wave-honesty-closeout.md`
 - Lessons: [`../architecture/lessons-learned-scope-c-2026-08.md`](../architecture/lessons-learned-scope-c-2026-08.md) (**L1–L50**)
 
 ## Rule
