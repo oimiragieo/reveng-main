@@ -3,6 +3,7 @@
 ## Release honesty (read first for GA / ship claims)
 
 - Living ops index: root `backlog.md` (not `docs/BACKLOG.md`). Latest CEO: `docs/architecture/ceo-update-2026-08-10-wave10.md` (Wave 10 Hungarian soft-assign + unique-token tombstones / Option C — **not** exe decode / R-RALPH-2 / Phase 6 / enterprise GA). Prior climb: wave9b · wave9 · wave85 · wave8 · wave7. R-RALPH-2 charter: `ceo-update-2026-08-09-wave3.md`.
+- **JS 100% ceiling:** unlockable/survivor **100% already met** (ship bar). Full-oracle 100% on stale-map→Claude SEA (`sourcemap_size=0`) is **not** honest for ~874 tombstones; **is** possible with same-era `.map` (oracle 1.0) or embedded SerializedSourceMap. ~82% recoverable / ~18% residue climbable ≠ FP-free 100%. Pretty close ≠ 100%. Skill: `reveng-js-recovery-climb`.
 - Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L50**). Wave B: `docs/architecture/wave-b-exit-criteria.md`.
 - **Project skills** (`.cursor/skills/`): `reveng-release-honesty`, `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`. Personal skill index: `~/.claude/skills/INDEX.md`. Workflows: `~/.claude/workflows/reveng-js-recovery-climb.md` (Option C climb) · `reveng-wave-honesty-closeout.md` (honesty waves). Agent memory: `.claude/MEMORY.md`.
 - **Junior docs:** start at `docs/README.md` (Analyst + Engineer Diátaxis tracks). Customer boundary: `docs/support/support-matrix.md` + `docs/support_matrix.json`. Ops/CEO packets are not product tutorials (`docs/ops/README.md`).

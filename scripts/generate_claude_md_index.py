@@ -727,7 +727,9 @@ def write_master_claude() -> Path:
         "`~/.claude/workflows/reveng-js-recovery-climb.md` (Option C JS climb) · "
         "`~/.claude/workflows/reveng-wave-honesty-closeout.md` (honesty waves). Lessons **L1–L50** in "
         "`docs/architecture/lessons-learned-scope-c-2026-08.md`. Latest CEO: "
-        "`docs/architecture/ceo-update-2026-08-10-wave10.md` (JS climb; honesty Waves 0–2 "
+        "`docs/architecture/ceo-update-2026-08-10-wave10.md` (JS climb Option C; "
+        "unlockable 100% ship bar already met; full-oracle 100% on SEA tombstones "
+        "not honest — see `reveng-js-recovery-climb`; honesty Waves 0–2 "
         "merged 2026-08-09).",
         "",
         "## Navigation index",

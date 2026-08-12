@@ -31,6 +31,18 @@ coverage.
 
 Do not invent metrics beyond pinned dogfood (see [references/pins.md](references/pins.md)).
 
+## 100% ceiling honesty (CEO Q&A — do not regress)
+
+| Claim | Truth |
+|-------|--------|
+| Unlockable / survivor **100%** | **Already the ship bar** — achieved on Claude Bun dogfood by construction once modules unlock |
+| Full-oracle **100%** on *this* stale-map → Claude SEA (`sourcemap_size=0`) | **Not honestly possible** for ~**874** unique-token tombstones (no residue in the Bun blob) |
+| Full-oracle **100%** in general | **Yes** when a **same-era `.map`** exists (already measured **1.0**) **or** Bun embeds SerializedSourceMap (`sourcemap_size > 0`) |
+| Unique-residue survivors | ~**82%** recoverable; ~**18%** still climbable with better algorithms — **not** guaranteed to 100% without false positives |
+| “Pretty close” / ~57% oracle | **≠ 100%** — never redefine near-miss as done |
+
+Refuse status language that collapses these into one “100% recovery” claim.
+
 ## Wave map (do not renumber casually)
 
 | Wave | Focus |
@@ -100,6 +112,8 @@ JS recovery climb:
 | "Skip unlockable; oracle moved +3pp" | Option C: unlockable 100% is the bar; oracle climb is bonus. |
 | "`git add -A` after dogfood" | Named-path only; tmp receipts must stay unstaged. |
 | "Any token in bundle ⇒ survivor" | Use unique-owner tokens or mega-bundles mark everything alive. |
+| "57% oracle / 82% recoverable ≈ 100%" | Pretty close ≠ 100%. Tombstones block full-oracle on SEA. |
+| "Smarter algo will unlock tombstones" | No unique residue ⇒ not an algorithm miss; need map/embed or accept ceiling. |
 
 ## Measured dogfood (Claude SEA, operator-local — not in git)
 

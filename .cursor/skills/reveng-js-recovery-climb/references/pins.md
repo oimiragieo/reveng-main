@@ -70,6 +70,25 @@ Receipts live under `/mnt/c/tmp/reveng_w*` only. Never commit.
 | Sinkhorn / assignment (1707.07285) | https://arxiv.org/abs/1707.07285 | 2026-08-10 |
 | Unsupervised clone measures (2401.09885) | https://arxiv.org/abs/2401.09885 | 2026-08-10 |
 
+## 100% ceiling honesty
+
+Accessed **2026-08-11** (CEO Q&A + Exa evaluation-honesty pins).
+
+| Question | Pin |
+|----------|-----|
+| Unlockable / survivor 100%? | **Yes — ship bar already met** on Claude Bun dogfood |
+| Full-oracle 100% on stale-map → SEA (`sourcemap_size=0`)? | **No** for ~874 unique-token tombstones (no residue) |
+| Full-oracle 100% when same-era `.map` / embedded SerializedSourceMap? | **Yes** (map path already **oracle 1.0**; Wave 8 decoder ready when `sourcemap_size > 0`) |
+| Unique-residue leftover (~18% of survivors)? | Climbable with better algos; **not** FP-free guaranteed to 100% |
+| Pretty close (~57% oracle / ~82% recoverable)? | **≠ 100%** — never redefine |
+
+Evaluation discipline (cite; not product claims):
+
+- Report **triple coverage** (unlockable + oracle + recoverable); unitless similarity ≠ semantic recovery — [LLM4Decompile](https://arxiv.org/abs/2403.05286), [DecompileBench](https://arxiv.org/html/2505.11340v1) (accessed 2026-08-11).
+- Tombstones are accounting, not “misses” folded into failure rate — Option C + Wave 10 unique-token locks.
+- Hungarian / Sinkhorn assign is a **candidate generator**; accept only under margin / validators — [arXiv:1707.07285](https://arxiv.org/abs/1707.07285); BinSlayer-style bipartite validation (accessed 2026-08-11).
+- Map-absent SEA unlockable 1.0 ≠ enterprise / exe / native GA.
+
 ## Honesty boundaries (do not regress)
 
 - **Not** R-RALPH-2 close

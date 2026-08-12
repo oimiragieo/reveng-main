@@ -30,3 +30,15 @@ Receipt (operator-local, not in git): `/mnt/c/tmp/reveng_w10/wave10_probe.json`
 
 ## Honesty
 Still **not** enterprise GA / R-RALPH-2 close / exe decode. Neural clone models (CodeBERT etc.) stay optional research lanes. Soft-assign on shared-token-only paths is suppressed by the unique-residue filter.
+
+## 100% ceiling (CEO Q&A)
+
+| Question | Answer |
+|----------|--------|
+| Unlockable / survivor 100%? | **Already met** (ship bar) |
+| Full-oracle 100% on this stale-map → SEA? | **Not honest** for ~874 unique-token tombstones (no residue) |
+| Full-oracle 100% with same-era `.map` / embedded SerializedSourceMap? | **Yes** (map path already oracle 1.0) |
+| ~18% unique-residue leftover? | Climbable; not FP-free guaranteed to 100% |
+| Pretty close (~57% / ~82%)? | **≠ 100%** |
+
+Skill: `.cursor/skills/reveng-js-recovery-climb/` · Workflow: `~/.claude/workflows/reveng-js-recovery-climb.md`

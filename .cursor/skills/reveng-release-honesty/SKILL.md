@@ -28,7 +28,7 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 9. **Exploits stay experimental** — R-SEC-1 decision is Docker-only preview; no expansion without sandbox proofs; keep watermarks.
 10. **Match claims to `support_matrix`** — preview vs GA language.
 11. **Wave-scope plans** — do not plan “close all Scope C” in one PR (L33); use Wave B exit criteria for engine work. Disposition ≠ shipped (L34). Soft-fail ≠ done (L42). MCP hints = explicit denylist (L45).
-12. **JS recovery Option C** — unlockable/survivor coverage is the ship bar (1.0); `oracle_coverage` is aspirational; report BOTH (+ recoverable when tombstones run). Hermetic fixtures ≠ Claude dogfood. Operator receipts under `/mnt/c/tmp/reveng_w*` never commit. See `reveng-js-recovery-climb`.
+12. **JS recovery Option C** — unlockable/survivor coverage is the ship bar (1.0); `oracle_coverage` is aspirational; report BOTH (+ recoverable when tombstones run). Hermetic fixtures ≠ Claude dogfood. Operator receipts under `/mnt/c/tmp/reveng_w*` never commit. Full-oracle 100% on stale-map SEA with unique-token tombstones is **not** an honest ship claim; pretty close ≠ 100%. See `reveng-js-recovery-climb`.
 
 ## Agent seating
 

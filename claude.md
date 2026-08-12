@@ -51,7 +51,7 @@ lint-imports --no-cache          # import-linter architecture contracts (.import
 
 ## Agent skills & honesty
 
-Contributor conventions and release honesty: **`AGENTS.md`**. Durable cross-session facts: **`.claude/MEMORY.md`**. Project Cursor skills live under **`.cursor/skills/`** (`reveng-release-honesty`, `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`); personal index: `~/.claude/skills/INDEX.md`. Workflows: `~/.claude/workflows/reveng-js-recovery-climb.md` (Option C JS climb) · `~/.claude/workflows/reveng-wave-honesty-closeout.md` (honesty waves). Lessons **L1–L50** in `docs/architecture/lessons-learned-scope-c-2026-08.md`. Latest CEO: `docs/architecture/ceo-update-2026-08-10-wave10.md` (JS climb; honesty Waves 0–2 merged 2026-08-09).
+Contributor conventions and release honesty: **`AGENTS.md`**. Durable cross-session facts: **`.claude/MEMORY.md`**. Project Cursor skills live under **`.cursor/skills/`** (`reveng-release-honesty`, `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`); personal index: `~/.claude/skills/INDEX.md`. Workflows: `~/.claude/workflows/reveng-js-recovery-climb.md` (Option C JS climb) · `~/.claude/workflows/reveng-wave-honesty-closeout.md` (honesty waves). Lessons **L1–L50** in `docs/architecture/lessons-learned-scope-c-2026-08.md`. Latest CEO: `docs/architecture/ceo-update-2026-08-10-wave10.md` (JS climb Option C; unlockable 100% ship bar already met; full-oracle 100% on SEA tombstones not honest — see `reveng-js-recovery-climb`; honesty Waves 0–2 merged 2026-08-09).
 
 ## Navigation index
 
