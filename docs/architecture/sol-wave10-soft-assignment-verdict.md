@@ -1,6 +1,6 @@
 # Sol verdict — Wave 10 soft-assign + tombstones
 
-**Reviewed HEAD SHA:** `TBD`  
+**Reviewed HEAD SHA:** `fbc86c6e0247716a61ac41c3eafade8ffa75a582`  
 **Plan / research:** `docs/architecture/research-wave10-soft-assignment-2026-08-10.md`  
 **Packet:** `docs/architecture/sol-wave10-soft-assignment-packet.md`  
 **PR:** #150
