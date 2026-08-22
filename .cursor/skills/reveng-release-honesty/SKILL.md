@@ -48,10 +48,11 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 
 ## Canonical docs
 
-- `docs/architecture/ceo-update-2026-08-10-wave10.md` (**latest CEO** — JS climb Option C / soft-assign + tombstones — **not** Phase 6 / GA)
+- `docs/architecture/ceo-update-2026-08-21-wave10-closeout.md` (**latest CEO** — Wave 10 merged / plain English — **not** Phase 6 / GA)
+- `docs/architecture/ceo-update-2026-08-10-wave10.md` (Wave 10 feature metrics prior)
 - `docs/architecture/ceo-update-2026-08-09-wave3.md` (R-RALPH-2 re-baseline charter — stays open)
 - `docs/architecture/ceo-update-2026-08-09-waves1-2.md` / `ceo-update-2026-08-09-wave0.md` (honesty closeout priors)
-- `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L50**)
+- `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L56**)
 - `docs/architecture/wave-b-exit-criteria.md` / `wave-c-exit-criteria.md`
 - Root `backlog.md` (ALL ids; §L = #101 dispositions — issue **#101** still OPEN)
 - Junior docs home: `docs/README.md` (Analyst + Engineer tracks); support badges: `docs/support/`
@@ -95,3 +96,9 @@ Never restore `ghidramcp>=0.1.0` in requirements-java/security without a real Py
 - Named-path git only on dirty DrvFS (L38); always verify `git diff --cached --name-status` before commit (L49).
 - CI FAIL is a snapshot (L39); path-sep = assert hygiene; Cursor Task quota death ≠ research clean — parent finishes with tg/codex/web (L48).
 - Merge bar = **honesty-unit + lint-python** (+ Sol PASS / PASS_WITH_NITS), not whole-matrix green (L50); soft-red docs-link/unit fixtures stay L42 unless wave-scoped.
+- **L51:** Thinktank before “close everything”; finish the open wave first.
+- **L52:** Windows thinktank = Git Bash, not WSL bash (path/`rm` hazard).
+- **L53:** Sol sandbox may block `git show` — inlined packet with path+substance is valid.
+- **L54:** Cursor Task quota death ≠ research clean — parent finishes with tg/codex.
+- **L55:** Wave 10 tip2 closeout is the live frozen-tip receipt (`accf553a` → merge `82bc0ec3`).
+- **L56:** Prefer `git commit -F` over PowerShell→bash heredocs.

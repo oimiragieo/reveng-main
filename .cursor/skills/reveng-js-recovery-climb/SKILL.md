@@ -89,7 +89,8 @@ JS recovery climb:
 - CLI: `python scripts/js_recovery_toolkit.py` (prefer `/usr/bin/python3.9`)
 - Tests: `tests/unit/test_wave8_*.py`, `test_wave85_*.py`, `test_wave9*.py`, `test_wave10_*.py`
 - Fixtures: `test_samples/js_recovery_toolkit/`
-- CEO: `docs/architecture/ceo-update-2026-08-10-wave10.md`
+- CEO (closeout, plain English): `docs/architecture/ceo-update-2026-08-21-wave10-closeout.md`
+- CEO (feature metrics): `docs/architecture/ceo-update-2026-08-10-wave10.md`
 - Research: `docs/architecture/research-wave10-soft-assignment-2026-08-10.md` (+ wave8/85/9*)
 
 ## Climb loop (agent)

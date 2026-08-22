@@ -51,6 +51,8 @@ exactly the tip Sol passed. Post-merge docs that stamp the merge SHA are a
 | "I'll pin Sol to tip1 / parent; tip2 is just bookkeeping" | Sol must audit **tip2**. Parent-SHA pin while HEAD moved is process debt. |
 | "Sol FAIL but no file cites — close enough" | Bare FAIL without path+text cites is invalid; re-run Sol. |
 | "Fold merge-SHA into tip2 so one commit ships" | Post-merge stamp is separate by design. |
+| "Sol couldn't `git show` in sandbox — FAIL the wave" | **L53:** inline tip SHAs + must-verify path+substance; still PASS/FAIL on evidence. Wave 10 receipt: PASS tip2 `accf553a`. |
+| "PowerShell bash -lc heredoc for the tip commits" | **L56:** use `git commit -F msg.txt`. |
 
 ## Red flags — STOP
 

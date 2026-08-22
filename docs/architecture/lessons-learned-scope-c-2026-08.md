@@ -205,3 +205,27 @@ On a dirty DrvFS tip, always print `git diff --cached --name-status` after stagi
 
 Wave closeout merges on **honesty-unit + lint-python** green (+ Sol PASS / PASS_WITH_NITS), not a fully green matrix. Docs-link / unit-fixture soft-reds stay **L42 dispositioned** unless the wave scoped them. Treating whole-matrix red as a merge blocker re-opens already-dispositioned debt and stalls Thinktank-approved closeouts.
 
+## L51 — Thinktank Option 1: close the open wave; reject “finish everything”
+
+When an operator asks for all-backlog / “world’s best enterprise product” / merge-every-PR, dispatch Thinktank first. Wave 10 closeout (2026-08-21): 6/7 seats → **Option 1** (finish PR #150) and reject Options that start Wave 11, Ghidra GA, or blind worktree merges while a product wave is open. L33 is not optional under enthusiasm.
+
+## L52 — Git Bash ≠ WSL bash for Windows thinktank / cleanup
+
+`bash` on PATH may be **WSL**. A PowerShell-wrapped `rm -rf "$O"/*` with a mangled/empty `$O` attempted filesystem wipe (permission-denied everywhere — lucky). Prefer `"C:\Program Files\Git\bin\bash.exe"` for `tt_council.sh`, clear out-dirs with PowerShell `Remove-Item`, and never nest unquoted path clears through the wrong bash.
+
+## L53 — Sol sandbox may block `git show`; inlined packet still counts
+
+Wave 10 Sol PASS on tip2 `accf553a` landed after sandbox **Rejected** live `git show`/`git diff`. That is process friction, not a product FAIL. Keep **L17**: inline tip SHAs + path+substance must-verify list. Sol must still name tip2 SHA and cite file substance; do not invent a “self-PASS” workaround.
+
+## L54 — Cursor Task quota death: parent finishes the inventory
+
+A read-only inventory Task died with “out of usage / Increase limits.” Empty or errored Task output is **not** a clean bill (extends L48). Parent continues with `tg find` / local Read / Exa / `codex exec`. Do not stall Wave closeout waiting for a dead seat.
+
+## L55 — Frozen tip2 closeout proven on Wave 10
+
+Live receipt: tip1 `fbc86c6e` (stub TBD + packet + backlog note) → tip2 `accf553a` (pin only) → Sol PASS PR comment → merge `82bc0ec3` → post-merge stamp `d3ac53ba` (separate). No amend after Sol. Skill: `reveng-sol-frozen-tip`.
+
+## L56 — Prefer `git commit -F` over PowerShell→bash heredocs
+
+Nested `bash -lc 'git commit -m "$(cat <<EOF ..."'` through PowerShell mangled quoting (exit 127). Write the message to a temp file and `git commit -F msg.txt`. Still use named-path stage + `git diff --cached --name-status` (L49).
+
