@@ -68,7 +68,7 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 | 4–6 | #135–#137 | recovered-root / fingerprint / wire — R-RALPH-2 still open |
 | 7 | #138 | JS recovery toolkit ensemble |
 | 8–9b | #149 → `838ef12e` | structural → defrag → LLM tag-boost |
-| 10 | #150 | Hungarian soft_assign + unique-token tombstones |
+| 10 | #150 → `82bc0ec3` | **MERGED**; Sol **PASS** on tip2 `accf553a`; Hungarian soft_assign + unique-token tombstones |
 
 Roadmap / RALPH-2 / phases 6–13 remain open — honesty Waves 0–2 and JS climb Waves 7–10 are **not** “all backlog closed” or enterprise GA.
 
