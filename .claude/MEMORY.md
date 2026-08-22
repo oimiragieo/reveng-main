@@ -9,7 +9,7 @@ Cross-session facts for agents working in **reveng-main**. Keep terse; details l
 - Latest CEO: `docs/architecture/ceo-update-2026-08-21-wave10-closeout.md` (Wave 10 **closed/merged**; plain English). Feature metrics: `ceo-update-2026-08-10-wave10.md`. R-RALPH-2 charter: `ceo-update-2026-08-09-wave3.md`.
 - Junior docs ecosystem: Diátaxis dual doors in `docs/README.md` — `docs/support|tutorials|how-to|explanation|reference|ops`
 - Lessons: `docs/architecture/lessons-learned-scope-c-2026-08.md` (**L1–L56**)
-- Project skills: `.cursor/skills/` — `reveng-release-honesty`, `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`. Personal index: `~/.claude/skills/INDEX.md`. Workflows: `reveng-js-recovery-climb.md` · `reveng-wave-honesty-closeout.md`
+- Project skills: `.cursor/skills/` — `reveng-release-honesty`, `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`, `reveng-worktree-hygiene`. Personal index: `~/.claude/skills/INDEX.md`. Workflows: `reveng-js-recovery-climb.md` · `reveng-wave-honesty-closeout.md` · `reveng-worktree-hygiene.md`
 - Wave B / Phase 5 honesty: `requirements-honesty.txt` (+ **pytest-cov**) + `pip install -e . --no-deps`; CI workflows use `python` not `/usr/bin/python3.9`
 
 ## Hard-won facts (through 2026-08-21 — Waves 0–2 honesty + Waves 7–10 JS climb + Wave 10 closeout)

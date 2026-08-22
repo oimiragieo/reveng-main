@@ -56,7 +56,7 @@ Any change that touches release language, GA verifiers, tracked benchmark report
 - `docs/architecture/wave-b-exit-criteria.md` / `wave-c-exit-criteria.md`
 - Root `backlog.md` (ALL ids; §L = #101 dispositions — issue **#101** still OPEN)
 - Junior docs home: `docs/README.md` (Analyst + Engineer tracks); support badges: `docs/support/`
-- Related project skills: `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty` (same `.cursor/skills/` tree); workflows `~/.claude/workflows/reveng-js-recovery-climb.md` · `reveng-wave-honesty-closeout.md`
+- Related project skills: `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`, `reveng-worktree-hygiene` (same `.cursor/skills/` tree); workflows `~/.claude/workflows/reveng-js-recovery-climb.md` · `reveng-wave-honesty-closeout.md` · `reveng-worktree-hygiene.md`
 
 ## Wave status (do not regress)
 

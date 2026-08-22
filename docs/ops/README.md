@@ -18,9 +18,10 @@ Most ops artifacts still live under `docs/architecture/` and `docs/superpowers/`
 
 ## Skills / workflow
 
-- Project skills: [`.cursor/skills/`](../../.cursor/skills/) — `reveng-release-honesty`, `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`
+- Project skills: [`.cursor/skills/`](../../.cursor/skills/) — `reveng-release-honesty`, `reveng-js-recovery-climb`, `reveng-sol-frozen-tip`, `reveng-named-path-commit`, `reveng-mcp-annotation-honesty`, `reveng-worktree-hygiene`
 - Climb workflow: `~/.claude/workflows/reveng-js-recovery-climb.md`
 - Honesty closeout workflow: `~/.claude/workflows/reveng-wave-honesty-closeout.md`
+- Worktree hygiene workflow: `~/.claude/workflows/reveng-worktree-hygiene.md`
 - Lessons: [`../architecture/lessons-learned-scope-c-2026-08.md`](../architecture/lessons-learned-scope-c-2026-08.md) (**L1–L56**)
 
 ## Rule

@@ -28,6 +28,7 @@ coverage.
 | **`oracle_coverage`** | **Aspirational** — climb is real; never the sole merge claim |
 | **`recoverable_oracle_coverage`** | Climb vs map minus unique-token tombstones (Wave 10) |
 | **Reporting** | Always report **BOTH** unlockable and oracle (plus recoverable when tombstones run) |
+| **Wave 10 status** | Soft-assign + tombstones **merged** PR #150 → `82bc0ec3` (Sol PASS tip2 `accf553a`). Closeout CEO: `ceo-update-2026-08-21-wave10-closeout.md`. |
 
 Do not invent metrics beyond pinned dogfood (see [references/pins.md](references/pins.md)).
 

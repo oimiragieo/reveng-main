@@ -46,6 +46,11 @@ On a shared dirty worktree, **only stage exact paths you intend to ship**. Bare
    ```
    Or use `bash scripts/git_status_scoped.sh` for scoped status.
 
+6. **Commit messages (**L56**)** — Prefer `git commit -F msg.txt` over
+   PowerShell→bash nested heredocs (`bash -lc 'git commit -m "$(cat <<EOF"'`
+   mangled quoting / exit 127 on Wave 10 tip1). Write the message file, commit,
+   delete the temp msg file.
+
 ## Pre-commit gate
 
 ```
