@@ -42,12 +42,20 @@ Breadcrumb for AI navigation: this folder’s files, top-level Python symbols, a
 ### `recompile_command.py`
 - **Summary:** Recompile Command - Binary to Source to Binary Pipeline
 - **Functions / coroutines:**
+  - `def is_managed_language_input()` — Return True when recompile should use app adapters instead of Ghidra.
   - `def _console_safe_text()` — Return text that can be printed on the active console encoding.
   - `def _safe_print()` — Print text without crashing on narrow Windows console encodings.
+  - `def _write_recompilation_report()`
+  - `def _stage_rebuilt_artifacts()` — Copy recovered artifacts into a stable rebuilt/ tree for benchmark globs.
+  - `async def _recompile_managed_language()` — Recompile/recover managed-language inputs via app reverse-engineering adapters.
   - `async def recompile_command()` — Run the complete binary recompilation pipeline.
   - `def print_reconstruction_summary()` — Print a beautiful summary of reconstruction results.
   - `def generate_reconstruction_report()` — Generate a comprehensive markdown report.
   - `def run_recompile_command()` — Synchronous wrapper for asyncio command.
+
+### `translations.py`
+- **Functions / coroutines:**
+  - `def get_translator()`
 
 ### `version.py`
 - **Summary:** REVENG Version Information

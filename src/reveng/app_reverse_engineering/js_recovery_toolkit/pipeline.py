@@ -1,4 +1,4 @@
-"""End-to-end JS recovery toolkit pipeline (Wave 7–8)."""
+"""End-to-end JS recovery toolkit pipeline (Waves 7–10; Option C climb)."""
 
 from __future__ import annotations
 
@@ -31,6 +31,7 @@ from .provider_summarize import build_summarize_fn, probe_providers
 from .readable_normalize import readable_normalize
 from .structural_match import match_sources_to_bundle
 from .tag_boost import run_tag_boost_defrag
+from .tombstone import classify_tombstones, recoverable_oracle_coverage
 
 
 @dataclass
@@ -305,10 +306,30 @@ def run_recovery_toolkit(
             attributed.setdefault(path, method)
         report.stages["iterative_defrag"] = defrag.to_serializable()
         report.notes.append("toolkit_wave85")
+        report.notes.append("toolkit_wave10")
+        # Wave 10: tombstone / recoverable-oracle (deleted vs weak residue)
+        tomb = classify_tombstones(
+            {p: path_bodies[p] for p in oracle_paths},
+            bundle_text,
+            min_hits=1,
+        )
+        rec_cov = recoverable_oracle_coverage(
+            oracle_paths=oracle_paths,
+            attributed={p: m for p, m in attributed.items() if p in oracle_paths},
+            tombstones=tomb.tombstones,
+        )
+        tomb_ser = tomb.to_serializable()
+        tomb_ser["recoverable_oracle_coverage"] = rec_cov
+        tomb_ser["oracle_coverage"] = defrag.oracle_coverage
+        report.stages["tombstone"] = tomb_ser
+        (output_dir / "artifacts" / "tombstone.json").write_text(
+            json.dumps(tomb_ser, indent=2) + "\n", encoding="utf-8"
+        )
         final_cov = union_coverage(
             oracle_paths=oracle_paths,
             attributed={p: m for p, m in attributed.items() if p in oracle_paths},
             survivor_paths=set(defrag.attributed.keys())
+            | set(tomb.survivors)
             | {p for p in survivors if p in oracle_paths},
         )
         report.stages["coverage_union_final"] = final_cov.to_serializable()
@@ -319,6 +340,8 @@ def run_recovery_toolkit(
             report.notes.append("defrag_survivor_coverage_100pct")
         if defrag.oracle_coverage >= 1.0 and defrag.unlockable_count > 0:
             report.notes.append("defrag_oracle_coverage_100pct")
+        if rec_cov >= 1.0 and (oracle_paths - tomb.tombstones):
+            report.notes.append("recoverable_oracle_coverage_100pct")
 
         # Wave 9/9b: AST-chunked LLM digest + tag-boost defrag (optional)
         if enable_llm_digest:

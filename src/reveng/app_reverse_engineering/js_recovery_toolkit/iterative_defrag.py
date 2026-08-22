@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Set, Tuple
 
 from .semantic_digest import semantic_overlap_unlock
+from .soft_assignment import soft_assign_sources_to_bundle
 from .word_map import word_map_sources_to_bundle
 
 _REL_IMPORT_RE = re.compile(
@@ -194,6 +195,26 @@ def _word_map_unlock(
     return {p: "word_map" for p in wm.assignments}
 
 
+def _soft_assign_unlock(
+    *,
+    sources: Dict[str, str],
+    attributed: Dict[str, str],
+    bundle_text: str,
+    threshold: float,
+    min_margin: float,
+) -> Dict[str, str]:
+    remaining = {p: b for p, b in sources.items() if p.startswith("src/") and p not in attributed}
+    if not remaining:
+        return {}
+    soft = soft_assign_sources_to_bundle(
+        remaining,
+        bundle_text,
+        threshold=threshold,
+        min_margin=min_margin,
+    )
+    return {p: "soft_assign" for p in soft.assignments}
+
+
 def run_iterative_defrag(
     *,
     sources: Dict[str, str],
@@ -201,13 +222,21 @@ def run_iterative_defrag(
     seed_attributed: Dict[str, str],
     max_rounds: int = 8,
     word_map_threshold: float = 0.35,
+    soft_assign_threshold: float = 0.28,
+    soft_assign_margin: float = 0.03,
 ) -> DefragResult:
     oracle = _oracle(sources)
     attributed = {p: m for p, m in seed_attributed.items() if p in oracle}
     unlockable: Set[str] = set(attributed)
     unique_owner = _build_global_owners({p: sources[p] for p in oracle if p in sources})
     rounds: List[DefragRound] = []
-    notes = ["iterative_defrag_v1", "tfidf_word_map", "graph_cooccur", "semantic_digest"]
+    notes = [
+        "iterative_defrag_v1",
+        "tfidf_word_map",
+        "graph_cooccur",
+        "semantic_digest",
+        "soft_assign_hungarian",
+    ]
 
     for r in range(max_rounds):
         new: Dict[str, str] = {}
@@ -230,6 +259,14 @@ def run_iterative_defrag(
             attributed={**attributed, **new},
             bundle_text=bundle_text,
             threshold=word_map_threshold,
+        ).items():
+            new.setdefault(path, method)
+        for path, method in _soft_assign_unlock(
+            sources=sources,
+            attributed={**attributed, **new},
+            bundle_text=bundle_text,
+            threshold=soft_assign_threshold,
+            min_margin=soft_assign_margin,
         ).items():
             new.setdefault(path, method)
         for path, method in semantic_overlap_unlock(
