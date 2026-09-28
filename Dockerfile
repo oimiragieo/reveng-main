@@ -1,7 +1,7 @@
 # REVENG Universal Reverse Engineering Platform - Production Docker Image
 # ======================================================================
 
-FROM python:3.9-slim as base
+FROM python:3.10-slim as base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
