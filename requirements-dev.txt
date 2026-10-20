@@ -76,7 +76,7 @@ unicorn>=2.0.0
 pefile>=2023.2.7
 
 # ELF file analysis (Linux)
-pyelftools>=0.29
+pyelftools>=0.33
 
 # =============================================================================
 # ADVANCED ANALYSIS TOOLS
