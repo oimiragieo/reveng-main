@@ -41,7 +41,7 @@ pydot>=1.4.2,<2.0.0
 tqdm>=4.66.0,<5.0.0
 
 # Configuration file support (security updates)
-pyyaml>=6.0.1,<7.0.0
+pyyaml>=6.0.3,<7.0.0
 
 # =============================================================================
 # SECURITY REPLACEMENTS FOR VULNERABLE DEPENDENCIES

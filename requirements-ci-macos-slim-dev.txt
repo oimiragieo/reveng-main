@@ -142,7 +142,7 @@ rich>=13.4.0
 tqdm>=4.65.0
 
 # YAML parsing
-pyyaml>=6.0
+pyyaml>=6.0.3
 
 # TOML parsing
 toml>=0.10.2
