@@ -90,7 +90,7 @@ pyelftools>=0.29
 # =============================================================================
 
 # Graph algorithms for control flow analysis
-networkx>=3.0
+networkx>=3.4.2
 
 # Graph visualization
 pydot>=1.4.2
