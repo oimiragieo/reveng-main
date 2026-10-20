@@ -113,7 +113,7 @@ fastapi>=0.100.0
 uvicorn[standard]>=0.23.0
 
 # Quick web UI
-streamlit>=1.25.0
+streamlit>=1.61.1
 
 # Real-time updates
 websockets>=11.0
