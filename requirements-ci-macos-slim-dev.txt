@@ -80,7 +80,7 @@ capstone>=5.0.0
 # CPU emulator (unicorn) omitted — see file header / unicorn#2263
 
 # PE file analysis (Windows)
-pefile>=2023.2.7
+pefile>=2024.8.26
 
 # ELF file analysis (Linux)
 pyelftools>=0.29
