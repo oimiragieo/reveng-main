@@ -9,7 +9,7 @@
 # ==================================================================================
 # Stage 1: Base Image with System Dependencies
 # ==================================================================================
-FROM python:3.11-slim as base
+FROM python:3.12-slim as base
 
 LABEL maintainer="REVENG Development Team <contact@reveng-project.org>"
 LABEL description="REVENG Enterprise MCP Server - AI-Powered Reverse Engineering"
